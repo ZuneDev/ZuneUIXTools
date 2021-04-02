@@ -71,56 +71,19 @@ namespace Microsoft.Iris.Session
 
         public static void ReportError(string message) => TrackReportWorker(-1, -1, false, message);
 
-        public static void ReportError(string format, object param) => TrackReport(-1, -1, false, format, param);
-
-        public static void ReportError(string format, object param1, object param2) => TrackReport(-1, -1, false, format, param1, param2);
-
-        public static void ReportError(string format, object param1, object param2, object param3) => TrackReport(-1, -1, false, format, param1, param2, param3);
-
-        public static void ReportError(
-          string format,
-          object param1,
-          object param2,
-          object param3,
-          object param4)
-        {
-            TrackReport(-1, -1, false, format, param1, param2, param3, param4);
-        }
-
-        public static void ReportError(
-          string format,
-          object param1,
-          object param2,
-          object param3,
-          object param4,
-          object param5)
-        {
-            TrackReport(-1, -1, false, format, param1, param2, param3, param4, param5);
-        }
+        public static void ReportError(string format, params object[] parameters) => TrackReport(-1, -1, false, format, parameters);
 
         public static void ReportError(int line, int column, string message) => TrackReportWorker(line, column, false, message);
 
-        public static void ReportError(int line, int column, string format, object param) => TrackReport(line, column, false, format, param);
-
-        public static void ReportError(
-          int line,
-          int column,
-          string format,
-          object param1,
-          object param2)
-        {
-            TrackReport(line, column, false, format, param1, param2);
-        }
+        public static void ReportError(int line, int column, string format, params object[] parameters) => TrackReport(line, column, false, format, parameters);
 
         public static void ReportWarning(string message) => TrackReportWorker(-1, -1, true, message);
 
-        public static void ReportWarning(string format, object param) => TrackReport(-1, -1, true, format, param);
-
-        public static void ReportWarning(string format, object param1, object param2) => TrackReport(-1, -1, true, format, param1, param2);
+        public static void ReportWarning(string format, params object[] parameters) => TrackReport(-1, -1, true, format, parameters);
 
         public static void ReportWarning(int line, int column, string message) => TrackReportWorker(line, column, true, message);
 
-        public static void ReportWarning(int line, int column, string format, object param) => TrackReport(line, column, true, format, param);
+        public static void ReportWarning(int line, int column, string format, params object[] parameters) => TrackReport(line, column, true, format, parameters);
 
         private static void TrackReportWorker(int line, int column, bool warning, string message)
         {
@@ -150,78 +113,11 @@ namespace Microsoft.Iris.Session
             ++s_totalErrorsReported;
         }
 
-        public static void TrackReport(
-          int line,
-          int column,
-          bool warning,
-          string format,
-          object param)
+        public static void TrackReport(int line, int column, bool warning, string format, params object[] parameters)
         {
             string message = null;
             if (!IgnoringErrors)
-                message = string.Format(format, param);
-            TrackReportWorker(line, column, warning, message);
-        }
-
-        public static void TrackReport(
-          int line,
-          int column,
-          bool warning,
-          string format,
-          object param1,
-          object param2)
-        {
-            string message = null;
-            if (!IgnoringErrors)
-                message = string.Format(format, param1, param2);
-            TrackReportWorker(line, column, warning, message);
-        }
-
-        public static void TrackReport(
-          int line,
-          int column,
-          bool warning,
-          string format,
-          object param1,
-          object param2,
-          object param3)
-        {
-            string message = null;
-            if (!IgnoringErrors)
-                message = string.Format(format, param1, param2, param3);
-            TrackReportWorker(line, column, warning, message);
-        }
-
-        public static void TrackReport(
-          int line,
-          int column,
-          bool warning,
-          string format,
-          object param1,
-          object param2,
-          object param3,
-          object param4)
-        {
-            string message = null;
-            if (!IgnoringErrors)
-                message = string.Format(format, param1, param2, param3, param4);
-            TrackReportWorker(line, column, warning, message);
-        }
-
-        public static void TrackReport(
-          int line,
-          int column,
-          bool warning,
-          string format,
-          object param1,
-          object param2,
-          object param3,
-          object param4,
-          object param5)
-        {
-            string message = null;
-            if (!IgnoringErrors)
-                message = string.Format(format, param1, param2, param3, param4, param5);
+                message = string.Format(format, parameters);
             TrackReportWorker(line, column, warning, message);
         }
 

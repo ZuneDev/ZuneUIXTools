@@ -34,8 +34,7 @@ namespace Microsoft.Iris.Markup
                 try
                 {
                     string str1 = string.Empty;
-                    XmlNodeType nodeType;
-                    while (xmlReader.Read(out nodeType))
+                    while (xmlReader.Read(out XmlNodeType nodeType))
                     {
                         if (parseResult.Root == null || parseStack.Count == 0 && nodeType == XmlNodeType.EndElement)
                         {
@@ -351,7 +350,7 @@ namespace Microsoft.Iris.Markup
 
         private static void ReportError(NativeXmlReader xmlReader, string message) => ErrorManager.ReportError(xmlReader.LineNumber, xmlReader.LinePosition, message);
 
-        private static void ReportError(NativeXmlReader xmlReader, string message, object param) => ErrorManager.ReportError(xmlReader.LineNumber, xmlReader.LinePosition, message, param);
+        private static void ReportError(NativeXmlReader xmlReader, string message, params object[] parameters) => ErrorManager.ReportError(xmlReader.LineNumber, xmlReader.LinePosition, message, parameters);
 
         private enum CodeType
         {
