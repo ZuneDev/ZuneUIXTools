@@ -1,5 +1,5 @@
 <UIX xmlns="http://schemas.microsoft.com/2007/uix">
-    <UI>
+    <UI Name="UIRootTest">
 
     </UI>
 </UIX>

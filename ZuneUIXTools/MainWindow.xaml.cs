@@ -1,7 +1,8 @@
 ﻿using Microsoft.Iris;
 using Microsoft.Iris.Markup;
+using Microsoft.Iris.Session;
 using System;
-using System.Collections.Generic;
+using System.Collections;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -33,6 +34,20 @@ namespace ZuneUIXTools
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             MarkupSystem.Startup(true);
+            ErrorManager.OnErrors += (IList errors) => {
+                foreach (object obj in errors)
+                {
+                    var err = obj as ErrorRecord;
+                    if (err == null) continue;
+
+#if DEBUG
+                    System.Diagnostics.Debug.WriteLine(err.Message);
+                    System.Diagnostics.Debugger.Break();
+#else
+                    Console.WriteLine(err.Message);
+#endif
+                }
+            };
             bool isSuccess = MarkupCompiler.Compile(
                 new[]
                 {

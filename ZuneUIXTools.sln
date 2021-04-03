@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.30907.101
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZuneUIXTools", "ZuneUIXTools\ZuneUIXTools.csproj", "{3F8F7428-4FC3-41B8-BE59-E6F25C11019A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UIX", "UIX\UIX.csproj", "{5681A1BD-B3EC-450B-BF6E-38187204B6BE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UIX", "..\ZuneShell\UIX\UIX.csproj", "{5681A1BD-B3EC-450B-BF6E-38187204B6BE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
