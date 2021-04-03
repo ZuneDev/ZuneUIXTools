@@ -48,17 +48,28 @@ namespace ZuneUIXTools
 #endif
                 }
             };
+
+            string testDir = @"D:\Repos\yoshiask\ZuneUIXTools\test\";
+            string testName = "testA";
+            string sourceFile = System.IO.Path.Combine(testDir, testName) + ".uix";
+            string compiledFile = System.IO.Path.Combine(testDir, testName) + ".uib";
+
             bool isSuccess = MarkupCompiler.Compile(
                 new[]
                 {
                     new CompilerInput()
                     {
-                        OutputFileName = @"D:\Repos\yoshiask\ZuneUIXTools\test\testA.uib",
-                        SourceFileName = @"D:\Repos\yoshiask\ZuneUIXTools\test\testA.uix"
+                        SourceFileName = sourceFile,
+                        OutputFileName = compiledFile
                     }
                 },
                 new CompilerInput()
             );
+
+            Microsoft.Iris.Application.Initialize();
+            Microsoft.Iris.Application.Window.SetBackgroundColor(new WindowColor(80, 0, 0));
+            Microsoft.Iris.Application.Window.RequestLoad("file://" + compiledFile + "#UIRootTest");
+            Microsoft.Iris.Application.Run();
         }
     }
 }

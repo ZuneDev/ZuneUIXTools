@@ -1,5 +1,10 @@
 <UIX xmlns="http://schemas.microsoft.com/2007/uix">
     <UI Name="UIRootTest">
-
+        <Content>
+            <Text>
+                <Content>Howdy from Microsoft.Iris!</Content>
+                <Color>white</Color>
+            </Text>
+        </Content>
     </UI>
 </UIX>
