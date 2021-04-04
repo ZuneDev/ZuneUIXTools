@@ -31,6 +31,8 @@ namespace ZuneUIXTools
     /// </summary>
     public partial class MainWindow : Window
     {
+        private const string FILE_FORMAT_FILTER = "Microsoft Iris UI (*.uix)|*.uix|XML files (*.xml)|*.xml";
+
         public string DocumentPath { get; set; }
         public string UIRoot { get; set; }
 
@@ -176,13 +178,32 @@ namespace ZuneUIXTools
         {
             OpenFileDialog openFileDialog = new OpenFileDialog
             {
-                Filter = "Microsoft Iris UI (*.uix)|*.uix|XML files (*.xml)|*.xml"
+                Filter = FILE_FORMAT_FILTER
             };
             if (openFileDialog.ShowDialog() != System.Windows.Forms.DialogResult.OK)
                 return;
 
             DocumentPath = openFileDialog.FileName;
             textEditor.Load(DocumentPath);
+        }
+
+        private void Save_Click(object sender, RoutedEventArgs e)
+        {
+            textEditor.Save(DocumentPath);
+        }
+
+        private void SaveAs_Click(object sender, RoutedEventArgs e)
+        {
+            SaveFileDialog saveFileDialog = new SaveFileDialog
+            {
+                Filter = FILE_FORMAT_FILTER,
+                FileName = DocumentPath
+            };
+            if (saveFileDialog.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+                return;
+
+            DocumentPath = saveFileDialog.FileName;
+            textEditor.Save(DocumentPath);
         }
     }
 }

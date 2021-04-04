@@ -18,10 +18,12 @@
         <Ribbon Title="Microsoft Iris IDE">
             <Ribbon.ApplicationMenu>
                 <RibbonApplicationMenu SmallImageSource="Images/ZuneShell.ico" Background="Black" BorderBrush="Black">
-                    <RibbonApplicationMenuItem Header="Open" ImageSource="Images/OpenProject_16x.png"
+                    <RibbonApplicationMenuItem Header="Open..." ImageSource="Images/OpenProject_16x.png"
                                                KeyTip="O" Click="Open_Click" />
-                    <RibbonApplicationMenuItem Header="Save" ImageSource="Images/Save_16x.png" KeyTip="S" />
-                    <RibbonApplicationSplitMenuItem Header="Save As" ImageSource="Images/SaveAs_16x.png" KeyTip="Shift+S"/>
+                    <RibbonApplicationMenuItem Header="Save" ImageSource="Images/Save_16x.png"
+                                               KeyTip="S" Click="Save_Click" />
+                    <RibbonApplicationSplitMenuItem Header="Save As..." ImageSource="Images/SaveAs_16x.png"
+                                                    KeyTip="Shift+S" Click="SaveAs_Click"/>
                 </RibbonApplicationMenu>
             </Ribbon.ApplicationMenu>
 
