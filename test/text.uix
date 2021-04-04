@@ -1,60 +1,60 @@
 <UIX xmlns="http://schemas.microsoft.com/2007/uix"
   xmlns:me="Me">
 
-  <UI Name="TextDisplay">
-    <!-- This UI displays the other UIs. -->
-    <Locals>
+    <UI Name="TextDisplay">
+        <!-- This UI displays the other UIs. -->
+        <Locals>
 
-      <Font Name="SmallFont" Font="Bahnschrift,10" />
-      <Font Name="BigFont" FontName="JetBrains Mono" FontSize="18" FontStyle="Bold,Italic"/>
-    </Locals>
+            <Font Name="SmallFont" Font="Bahnschrift,10" />
+            <Font Name="BigFont" FontName="JetBrains Mono" FontSize="18" FontStyle="Bold,Italic"/>
+        </Locals>
 
-    <Content>
-      <Panel>
-        <Layout>
-          <FlowLayout Orientation="Vertical" Spacing="50,0" />
-        </Layout>
-        <Children>
-          <me:TextSettings/>
-          <me:UsingMargins/>
-          <me:UsingColorfillWithText/>
-        </Children>
-      </Panel>
-    </Content>
-  </UI>
+        <Content>
+            <Panel>
+                <Layout>
+                    <FlowLayout Orientation="Vertical" Spacing="50,0" />
+                </Layout>
+                <Children>
+                    <me:TextSettings/>
+                    <me:UsingMargins/>
+                    <me:UsingColorfillWithText/>
+                </Children>
+            </Panel>
+        </Content>
+    </UI>
 
-  <UI Name="TextSettings">
-    <!-- This UI provides an example for the MaximumLines and WordWrap settings. -->
-    <Content>
-      <Panel Layout="VerticalFlow" MaximumSize="140,0">
-        <Children>
-          <Text HighlightColor="Gold" Font="{me:BigFont}" MaximumLines="3" WordWrap="true" Content="This large text will wrap.  This sentence won't be displayed because it exceeds the 3 line maximum." />
-        </Children>
-      </Panel>
-    </Content>
-  </UI>
+    <UI Name="TextSettings">
+        <!-- This UI provides an example for the MaximumLines and WordWrap settings. -->
+        <Content>
+            <Panel Layout="VerticalFlow" MaximumSize="140,0">
+                <Children>
+                    <Text HighlightColor="Gold" Font="{me:BigFont}" MaximumLines="3" WordWrap="true" Content="This large text will wrap.  This sentence won't be displayed because it exceeds the 3 line maximum." />
+                </Children>
+            </Panel>
+        </Content>
+    </UI>
 
-  <UI Name="UsingMargins">
-    <!-- This UI provides an example of using margins to create space between text items. -->
-    <Content>
-      <Panel Layout="VerticalFlow">
-        <Children>
-          <Text Color="Aquamarine" Font="{me:SmallFont}" Content="You can use margins to create space between text items:" />
-          <Text Margins="0,20,0,0" Color="SkyBlue" Font="{me:SmallFont}" Content="This sentence has a top margin of 20 pixels." />
-        </Children>
-      </Panel>
-    </Content>
-  </UI>
+    <UI Name="UsingMargins">
+        <!-- This UI provides an example of using margins to create space between text items. -->
+        <Content>
+            <Panel Layout="VerticalFlow">
+                <Children>
+                    <Text Color="Aquamarine" Font="{me:SmallFont}" Content="You can use margins to create space between text items:" />
+                    <Text Margins="0,20,0,0" Color="SkyBlue" Font="{me:SmallFont}" Content="This sentence has a top margin of 20 pixels." />
+                </Children>
+            </Panel>
+        </Content>
+    </UI>
 
-  <UI Name="UsingColorfillWithText">
-    <!-- This UI provides an example of placing text inside a ColorFill view item. -->
-    <Content>
-      <Panel Layout="VerticalFlow" MinimumSize="500,40">
-        <Children>
-          <Text LineAlignment="Center" Color="Maroon" Font="{me:SmallFont}" Content="This text is placed in a ColorFill view item." />
-        </Children>
-      </Panel>
-    </Content>
-  </UI>
+    <UI Name="UsingColorfillWithText">
+        <!-- This UI provides an example of placing text inside a ColorFill view item. -->
+        <Content>
+            <Panel Layout="VerticalFlow" MinimumSize="500,40">
+                <Children>
+                    <Text LineAlignment="Center" Color="Maroon" Font="{me:SmallFont}" Content="This text is placed in a ColorFill view item." />
+                </Children>
+            </Panel>
+        </Content>
+    </UI>
 
 </UIX>
