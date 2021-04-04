@@ -4,9 +4,46 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ZuneUIXTools"
+        xmlns:avalonEdit="http://icsharpcode.net/sharpdevelop/avalonedit"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="Zune UIX Tools" Height="450" Width="800">
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto" MaxHeight="400"/>
+        </Grid.RowDefinitions>
 
+        <Ribbon Title="Microsoft Iris IDE">
+            <Ribbon.ApplicationMenu>
+                <RibbonApplicationMenu SmallImageSource="Images/ZuneShell.ico" Background="Black" BorderBrush="Black">
+                    <RibbonApplicationMenuItem Header="Open" ImageSource="Images/OpenProject_16x.png"
+                                               KeyTip="O" Click="Open_Click" />
+                    <RibbonApplicationMenuItem Header="Save" ImageSource="Images/Save_16x.png" KeyTip="S" />
+                    <RibbonApplicationSplitMenuItem Header="Save As" ImageSource="Images/SaveAs_16x.png" KeyTip="Shift+S"/>
+                </RibbonApplicationMenu>
+            </Ribbon.ApplicationMenu>
+
+            <RibbonTab Header="Home">
+                <RibbonGroup Header="Build">
+                    <RibbonButton Label="Build" SmallImageSource="Images/BuildSolution_16x.png" Click="Build_Click"/>
+                    <RibbonButton Label="Start Without Debugging" SmallImageSource="Images/StartWithoutDebug_16x.png"/>
+                    <RibbonTextBox Name="UIRootBox" Label="UI Root" ToolTip="The UI element to load and display"/>
+                </RibbonGroup>
+            </RibbonTab>
+        </Ribbon>
+
+        <avalonEdit:TextEditor Name="textEditor" Grid.Row="1" Padding="4" ShowLineNumbers="True"
+                               SyntaxHighlighting="XML" FontFamily="JetBrains Mono" FontSize="10pt"/>
+
+        <GridSplitter Grid.Row="2"
+                      HorizontalAlignment="Stretch"
+                      VerticalAlignment="Center"
+                      Background="LightGray" 
+                      ShowsPreview="True"
+                      Height="5" />
+
+        <StackPanel Name="ErrorPanel" Grid.Row="3" Margin="4,4,4,0"/>
     </Grid>
 </Window>
