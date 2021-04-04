@@ -5,6 +5,7 @@ using System;
 using System.Collections;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -33,6 +34,14 @@ namespace ZuneUIXTools
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
+            Thread newWindowThread = new Thread(new ThreadStart(TestCompile));
+            newWindowThread.SetApartmentState(ApartmentState.STA);
+            newWindowThread.IsBackground = true;
+            newWindowThread.Start();
+        }
+
+        private void TestCompile()
+        {
             MarkupSystem.Startup(true);
             ErrorManager.OnErrors += (IList errors) => {
                 foreach (object obj in errors)
@@ -50,7 +59,7 @@ namespace ZuneUIXTools
             };
 
             string testDir = @"D:\Repos\yoshiask\ZuneUIXTools\test\";
-            string testName = "testA";
+            string testName = "text";
             string sourceFile = System.IO.Path.Combine(testDir, testName) + ".uix";
             string compiledFile = System.IO.Path.Combine(testDir, testName) + ".uib";
 
@@ -68,7 +77,7 @@ namespace ZuneUIXTools
 
             Microsoft.Iris.Application.Initialize();
             Microsoft.Iris.Application.Window.SetBackgroundColor(new WindowColor(80, 0, 0));
-            Microsoft.Iris.Application.Window.RequestLoad("file://" + compiledFile + "#UIRootTest");
+            Microsoft.Iris.Application.Window.RequestLoad("file://" + compiledFile + "#TextDisplay");
             Microsoft.Iris.Application.Run();
         }
     }
