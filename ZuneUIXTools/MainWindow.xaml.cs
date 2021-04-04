@@ -185,23 +185,4 @@ namespace ZuneUIXTools
             textEditor.Load(DocumentPath);
         }
     }
-
-    internal class MyScheduler : TaskScheduler
-    {
-        protected override System.Collections.Generic.IEnumerable<Task> GetScheduledTasks()
-        {
-            return Enumerable.Empty<Task>();
-        }
-
-        protected override void QueueTask(Task task)
-        {
-            base.TryExecuteTask(task);
-        }
-
-        protected override bool TryExecuteTaskInline(Task task, bool taskWasPreviouslyQueued)
-        {
-            base.TryExecuteTask(task);
-            return true;
-        }
-    }
 }
