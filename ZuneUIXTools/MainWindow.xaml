@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:ZuneUIXTools"
         xmlns:avalonEdit="http://icsharpcode.net/sharpdevelop/avalonedit"
         mc:Ignorable="d"
-        Title="Zune UIX Tools" Height="450" Width="800">
+        Title="Zune UIX Tools" Height="800" Width="1000">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -44,6 +44,8 @@
                       ShowsPreview="True"
                       Height="5" />
 
-        <StackPanel Name="ErrorPanel" Grid.Row="3" Margin="4,4,4,0"/>
+        <ScrollViewer Grid.Row="3">
+            <StackPanel Name="ErrorPanel" Margin="4,4,4,0"/>
+        </ScrollViewer>
     </Grid>
 </Window>

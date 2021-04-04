@@ -48,6 +48,8 @@ namespace ZuneUIXTools
 
         private void BuildAndRun()
         {
+            Dispatcher.Invoke(() => ErrorPanel.Children.Clear());
+
             MarkupSystem.Startup(true);
             ErrorManager.OnErrors += (IList errors) => {
                 foreach (object obj in errors)
@@ -63,34 +65,66 @@ namespace ZuneUIXTools
 
                     Dispatcher.Invoke(() =>
                     {
-                        ErrorPanel.Children.Add(new TextBlock
+                        TextBlock errBlock = new TextBlock
                         {
                             Text = $"Ln {err.Line}, Col {err.Column}: {err.Message}",
                             Margin = new Thickness(0, 0, 0, 4)
-                        });
+                        };
 
-                        // Highlight the error in the code editor
-                        int offset = textEditor.Document.GetOffset(err.Line, err.Column);
-                        textEditor.SelectionStart = offset;
-                        //textEditor.SelectionLength = err.
-                        //var anchor = textEditor.Document.CreateAnchor(offset);
-                        //textEditor.Document.GetLineByOffset(offset)
+                        if (err.Line >= 0 && err.Column >= 0)
+                        {
+                            errBlock.MouseDown += (object sender, MouseButtonEventArgs args) =>
+                            {
+                                // Highlight the error in the code editor
+                                int offset = textEditor.Document.GetOffset(err.Line, err.Column);
+                                textEditor.SelectionStart = offset + 1;
+                                textEditor.SelectionLength = 1;
+                                textEditor.ScrollTo(err.Line, err.Column);
+                            };
+                        }
+
+                        ErrorPanel.Children.Add(errBlock);
                     });
                 }
             };
 
             string compiledFile = System.IO.Path.ChangeExtension(DocumentPath, "uib");
-            bool isSuccess = MarkupCompiler.Compile(
-                new[]
-                {
-                    new CompilerInput()
+            bool isSuccess = false;
+            try
+            {
+                isSuccess = MarkupCompiler.Compile(
+                    new[]
                     {
-                        SourceFileName = DocumentPath,
-                        OutputFileName = compiledFile
-                    }
-                },
-                new CompilerInput()
-            );
+                        new CompilerInput()
+                        {
+                            SourceFileName = DocumentPath,
+                            OutputFileName = compiledFile
+                        }
+                    },
+                    new CompilerInput()
+                );
+            }
+            catch (Exception ex)
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    ErrorPanel.Children.Add(new TextBlock
+                    {
+                        Text = $"Build failed: {ex.Message}",
+                        Margin = new Thickness(0, 0, 0, 4)
+                    });
+                });
+            }
+
+            if (!isSuccess)
+            {
+                var dialogResult = System.Windows.MessageBox.Show(
+                    "There were build errors. Would you like to contine and run the last successful build?",
+                    "Zune UIX Tools", MessageBoxButton.YesNo, MessageBoxImage.Information
+                );
+                if (dialogResult != MessageBoxResult.Yes)
+                    return;
+            }
 
             try
             {
@@ -102,23 +136,24 @@ namespace ZuneUIXTools
             {
                 Microsoft.Iris.Application.Window.SetBackgroundColor(new WindowColor(0xE6, 0xE6, 0xE6));
                 Microsoft.Iris.Application.Window.RequestLoad("file://" + compiledFile + (string.IsNullOrEmpty(UIRoot) ? string.Empty : "#" + UIRoot));
+                Microsoft.Iris.Application.Window.CloseRequested += (object sender, WindowCloseRequestedEventArgs args) =>
+                {
+                    args.BlockCloseRequest();
+                    Microsoft.Iris.Application.Window.Visible = false;
+                };
                 Microsoft.Iris.Application.Run();
             }
             catch (Exception ex)
             {
                 Dispatcher.Invoke(() =>
+                {
                     ErrorPanel.Children.Add(new TextBlock
                     {
-                        Text = $"Load Failed: {ex.Message}",
+                        Text = $"Load failed: {ex.Message}",
                         Margin = new Thickness(0, 0, 0, 4)
-                    })
-                );
+                    });
+                });
             }
-
-            //Microsoft.Iris.Application.Window.
-            //Microsoft.Iris.Application.Shutdown();
-
-            // This code is run AFTER the Iris window is closed
         }
 
         private void Build_Click(object sender, RoutedEventArgs e)
@@ -131,10 +166,10 @@ namespace ZuneUIXTools
             // Set UI root
             UIRoot = UIRootBox.Text;
 
-            Thread newWindowThread = new Thread(new ThreadStart(BuildAndRun));
-            newWindowThread.SetApartmentState(ApartmentState.STA);
-            newWindowThread.IsBackground = true;
-            newWindowThread.Start();
+            var _buildThread = new Thread(new ThreadStart(BuildAndRun));
+            _buildThread.SetApartmentState(ApartmentState.STA);
+            _buildThread.IsBackground = true;
+            _buildThread.Start();
         }
 
         private void Open_Click(object sender, RoutedEventArgs e)
@@ -148,6 +183,25 @@ namespace ZuneUIXTools
 
             DocumentPath = openFileDialog.FileName;
             textEditor.Load(DocumentPath);
+        }
+    }
+
+    internal class MyScheduler : TaskScheduler
+    {
+        protected override System.Collections.Generic.IEnumerable<Task> GetScheduledTasks()
+        {
+            return Enumerable.Empty<Task>();
+        }
+
+        protected override void QueueTask(Task task)
+        {
+            base.TryExecuteTask(task);
+        }
+
+        protected override bool TryExecuteTaskInline(Task task, bool taskWasPreviouslyQueued)
+        {
+            base.TryExecuteTask(task);
+            return true;
         }
     }
 }
