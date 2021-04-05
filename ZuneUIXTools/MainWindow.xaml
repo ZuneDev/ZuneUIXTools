@@ -5,17 +5,51 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ZuneUIXTools"
         xmlns:avalonEdit="http://icsharpcode.net/sharpdevelop/avalonedit"
+        xmlns:syncfusion="http://schemas.syncfusion.com/wpf"
+        xmlns:syncfusionskin="clr-namespace:Syncfusion.SfSkinManager;assembly=Syncfusion.SfSkinManager.WPF"
         mc:Ignorable="d"
-        Title="Zune UIX Tools" Height="800" Width="1000">
+        Title="Zune UIX Tools" Height="800" Width="1000"
+        syncfusionskin:SfSkinManager.Theme="{syncfusionskin:SkinManagerExtension ThemeName=VisualStudio2015}">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto" MaxHeight="400"/>
+            <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <Ribbon Title="Microsoft Iris IDE">
+        <syncfusion:MenuAdv>
+            <syncfusion:MenuItemAdv Header="File">
+                <syncfusion:MenuItemAdv Header="Open..." Click="Open_Click">
+                    <Image Source="Images/OpenProject_16x.png"/>
+                </syncfusion:MenuItemAdv>
+                <syncfusion:MenuItemAdv Header="Save" Click="Save_Click">
+                    <Image Source="Images/Save_16x.png"/>
+                </syncfusion:MenuItemAdv>
+                <syncfusion:MenuItemAdv Header="Save As..." Click="SaveAs_Click">
+                    <Image Source="Images/SaveAs_16x.png"/>
+                </syncfusion:MenuItemAdv>
+            </syncfusion:MenuItemAdv>
+            <syncfusion:MenuItemAdv Header="Edit" />
+            <syncfusion:MenuItemAdv Header="Build">
+                <syncfusion:MenuItemAdv Header="Build" Click="Build_Click">
+                    <Image Source="Images/BuildSolution_16x.png"/>
+                </syncfusion:MenuItemAdv>
+                <syncfusion:MenuItemAdv Header="Build and Run" Click="BuildAndRun_Click">
+                    <Image Source="Images/StartWithoutDebug_16x.png"/>
+                </syncfusion:MenuItemAdv>
+            </syncfusion:MenuItemAdv>
+        </syncfusion:MenuAdv>
+
+        <syncfusion:ToolBarAdv Name="ToolBar" Grid.Row="1">
+            <syncfusion:SplitButton ToolTip="Build and Run" SmallIcon="Images/StartWithoutDebug_16x.png" Label="Build and Run"
+                                    Click="BuildAndRun_Click"/>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="UI Root" VerticalAlignment="Center" Margin="8,0,4,0"/>
+                <TextBox Name="UIRootBox" ToolTip="The UI element to load and display" MinWidth="150"/>
+            </StackPanel>
+        </syncfusion:ToolBarAdv>
+
+        <!--<Ribbon Title="Microsoft Iris IDE">
             <Ribbon.ApplicationMenu>
                 <RibbonApplicationMenu SmallImageSource="Images/ZuneShell.ico" Background="Black" BorderBrush="Black">
                     <RibbonApplicationMenuItem Header="Open..." ImageSource="Images/OpenProject_16x.png"
@@ -34,20 +68,30 @@
                     <RibbonTextBox Name="UIRootBox" Label="UI Root" ToolTip="The UI element to load and display"/>
                 </RibbonGroup>
             </RibbonTab>
-        </Ribbon>
+        </Ribbon>-->
 
-        <avalonEdit:TextEditor Name="textEditor" Grid.Row="1" Padding="4" ShowLineNumbers="True"
-                               SyntaxHighlighting="XML" FontFamily="JetBrains Mono" FontSize="10pt"/>
+        <syncfusion:DockingManager x:Name="DockingManager" Grid.Row="2" ContainerMode="TDI">
+            <ContentControl x:Name="SolutionExplorer" syncfusion:DockingManager.Header="Solution Explorer"
+                            syncfusion:DockingManager.State="Dock" syncfusion:DockingManager.SideInDockedMode="Right"/>
+            <ContentControl x:Name="ToolBox" syncfusion:DockingManager.Header="Toolbox"
+                            syncfusion:DockingManager.State="AutoHidden"/>
+            <ContentControl x:Name="Properties" syncfusion:DockingManager.Header="Properties"
+                            syncfusion:DockingManager.State="AutoHidden"/>
+            <ContentControl x:Name="ErrorList" syncfusion:DockingManager.Header="Error List"
+                            syncfusion:DockingManager.State="Dock" syncfusion:DockingManager.SideInDockedMode="Bottom">
+                <ScrollViewer Grid.Row="3">
+                    <StackPanel Name="ErrorPanel" Margin="4,4,4,0"/>
+                </ScrollViewer>
+            </ContentControl>
+        </syncfusion:DockingManager>
 
-        <GridSplitter Grid.Row="2"
+
+        <!--<GridSplitter Grid.Row="2"
                       HorizontalAlignment="Stretch"
                       VerticalAlignment="Center"
                       Background="LightGray" 
                       ShowsPreview="True"
-                      Height="5" />
+                      Height="5" />-->
 
-        <ScrollViewer Grid.Row="3">
-            <StackPanel Name="ErrorPanel" Margin="4,4,4,0"/>
-        </ScrollViewer>
     </Grid>
 </Window>
