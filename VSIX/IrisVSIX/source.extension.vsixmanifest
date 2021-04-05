@@ -3,7 +3,7 @@
     <Metadata>
         <Identity Id="IrisVSIX.d94f4fc2-8bd9-4406-a3aa-d6e1b150381d" Version="1.0" Language="en-US" Publisher="Joshua Askharoun" />
         <DisplayName>Iris UI Development</DisplayName>
-        <Description xml:space="preserve">Adds development tools and templates for creating apps that utilize Microsoft's Iris UI Framework.</Description>
+        <Description xml:space="preserve">Development tools and templates for creating apps that utilize Microsoft's Iris UI Framework.</Description>
         <Preview>true</Preview>
     </Metadata>
     <Installation>
@@ -17,5 +17,6 @@
     </Prerequisites>
     <Assets>
         <Asset Type="Microsoft.VisualStudio.VsPackage" d:Source="Project" d:ProjectName="%CurrentProject%" Path="|%CurrentProject%;PkgdefProjectOutputGroup|" />
+        <Asset Type="Microsoft.VisualStudio.ProjectTemplate" d:Source="File" Path="ProjectTemplates" d:TargetPath="ProjectTemplates\Iris UI Application.zip" />
     </Assets>
 </PackageManifest>
