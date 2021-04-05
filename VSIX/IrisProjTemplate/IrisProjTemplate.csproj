@@ -6,7 +6,7 @@
         <UseWPF>true</UseWPF>
     </PropertyGroup>
 
-    <UsingTask AssemblyFile="D:\Repos\yoshiask\ZuneUIXTools\VSIX\UIXBuildTask\bin\Debug\UIXBuildTask.dll" TaskName="UIXBuild" />
+    <UsingTask AssemblyFile="lib\UIXBuildTask.dll" TaskName="UIXBuild" />
     
     <ItemGroup>
         <UIXSources Include="**\*.uix" />
