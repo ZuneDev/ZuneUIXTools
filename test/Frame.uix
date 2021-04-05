@@ -1,0 +1,563 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX xmlns="http://schemas.microsoft.com/2007/uix"
+    xmlns:sys="assembly://mscorlib/System"
+    xmlns:zune="assembly://ZuneShell/ZuneUI"
+    xmlns:iris="assembly://UIX/Microsoft.Iris"
+    xmlns:uixctl="assembly://UIXControls/UIXControls"
+    xmlns:styles="res://ZuneShellResources!Styles.uix"
+    xmlns:page="res://ZuneShellResources!PageStack.uix"
+    xmlns:toptoolbar="res://ZuneShellResources!TopToolbar.uix"
+    xmlns:popuplayer="res://ZuneShellResources!PopupLayer.uix"
+    xmlns:jil="res://ZuneShellResources!JumpInList.uix"
+    xmlns:bottomtoolbar="res://ZuneShellResources!BottomToolbar.uix"
+    xmlns:mnav="res://ZuneMarketplaceResources!Navigation.uix"
+    xmlns:cnav="res://ZuneShellResources!CollectionNavigation.uix"
+    xmlns:snav="res://ZuneShellResources!SocialNavigation.uix"
+    xmlns:managenav="res://ZuneShellResources!ManagementNavigation.uix"
+    xmlns:animations="res://ZuneShellResources!Animations.uix"
+    xmlns:nonclient="res://ZuneShellResources!NonClientControls.uix"
+    xmlns:focus="res://ZuneShellResources!FocusRect.uix"
+    xmlns:ctl="res://ZuneShellResources!Controls.uix"
+    xmlns:nowplaying="res://ZuneShellResources!NowPlayingMusicBackground.uix"
+    xmlns:whatsnew="res://ZuneShellResources!WhatsNew.uix"
+    xmlns:me="Me">
+
+    <UI Name="Frame" Base="page:PageStack">
+        <Properties>
+            <zune:Shell Name="Shell" Shell="{(zune:Shell)zune:Shell.DefaultInstance}"/>
+        </Properties>
+
+        <Locals>
+            <zune:DictionaryCommandHandler Name="ShellCommandHandlers">
+                <Handlers>
+
+                    <zune:CurrentPageCommandHandler Name="Page"/>
+
+                    <zune:DictionaryCommandHandler Name="Marketplace" DictionaryCommandHandler="{mnav:Navigation.Root}"/>
+
+                    <zune:DictionaryCommandHandler Name="Collection" DictionaryCommandHandler="{cnav:Navigation.Root}"/>
+
+                    <zune:DictionaryCommandHandler Name="Device" DictionaryCommandHandler="{cnav:DeviceNavigation.Root}"/>
+
+                    <zune:DictionaryCommandHandler Name="Social" DictionaryCommandHandler="{snav:Navigation.Root}"/>
+
+                    <zune:DictionaryCommandHandler Name="Settings" DictionaryCommandHandler="{managenav:Navigation.Root}"/>
+
+                    <zune:WebUrlCommandHandler Name="Web"/>
+
+                    <zune:HelpCommandHandler Name="Help"/>
+
+                </Handlers>
+            </zune:DictionaryCommandHandler>
+            <jil:JumpInList Name="JumpInList"/>
+
+
+            <ctl:ControlsInitialization Name="CreatingMeInitializesStuff"/>
+
+            <Int32 Name="MouseActivityTimeout" Int32="5000"/>
+
+            <sys:Boolean Name="AutoHideToolbars"/>
+            <Timer Name="KeyIdleTimer" Interval="{MouseActivityTimeout}" AutoRepeat="false" Enabled="false"/>
+            <styles:WindowState Name="WindowState"/>
+
+            <Timer Name="ShowNowPlayingBackgroundTimer" AutoRepeat="false" Enabled="false"/>
+            <zune:TransportControls Name="TransportControls" TransportControls="{zune:TransportControls.Instance}"/>
+
+            <Timer Name="ShowWhatsNewTimer" Interval="4000" AutoRepeat="false" Enabled="false"/>
+            <sys:Boolean Name="WhatsNewNotShown" Boolean="true"/>
+        </Locals>
+
+        <Input>
+
+            <ClickHandler Name="MouseDown" ClickType="Mouse" HandlerTransition="Down" HandlerStage="Routed" Handle="false"/>
+
+
+            <KeyHandler Name="CancelSettings" Key="Escape" DisallowedModifiers="Alt,Shift,Windows,Ctrl" HandlerStage="Bubbled" />
+
+            <ShortcutHandler Name="ShortcutPlay" Shortcut="Play" HandlerStage="Bubbled" Command="{zune:TransportControls.Instance.Play}"/>
+            <ShortcutHandler Name="ShortcutPause" Shortcut="Pause" HandlerStage="Bubbled" Command="{zune:TransportControls.Instance.Pause}"/>
+            <ShortcutHandler Name="ShortcutPlayPause" Shortcut="PlayPause" HandlerStage="Bubbled"/>
+            <ShortcutHandler Name="ShortcutStop" Shortcut="Stop" HandlerStage="Bubbled" Command="{zune:TransportControls.Instance.Stop}"/>
+            <ShortcutHandler Name="ShortcutSkipBack" Shortcut="SkipBack" HandlerStage="Bubbled" Command="{zune:TransportControls.Instance.Back}"/>
+            <ShortcutHandler Name="ShortcutSkipForward" Shortcut="SkipForward" HandlerStage="Bubbled" Command="{zune:TransportControls.Instance.Forward}"/>
+
+            <KeyHandler Name="KeyHandlerForward" Key="F" RequiredModifiers="Ctrl" DisallowedModifiers="Alt,Shift,Windows" HandlerStage="Bubbled" Command="{zune:TransportControls.Instance.Forward}"/>
+            <KeyHandler Name="KeyHandlerBack" Key="B" RequiredModifiers="Ctrl" DisallowedModifiers="Alt,Shift,Windows" HandlerStage="Bubbled" Command="{zune:TransportControls.Instance.Back}"/>
+            <KeyHandler Name="KeyHandlerStop" Key="S" RequiredModifiers="Ctrl" DisallowedModifiers="Alt,Shift,Windows" HandlerStage="Bubbled" Command="{zune:TransportControls.Instance.Stop}"/>
+            <KeyHandler Name="KeyHandlerPlayPause" Key="P" RequiredModifiers="Ctrl" DisallowedModifiers="Alt,Shift,Windows" HandlerStage="Bubbled"/>
+            <KeyHandler Name="KeyHandlerToggleShuffle" Key="H" RequiredModifiers="Ctrl" DisallowedModifiers="Alt,Shift,Windows" HandlerStage="Bubbled"/>
+            <KeyHandler Name="KeyHandlerToggleRepeat" Key="T" RequiredModifiers="Ctrl" DisallowedModifiers="Alt,Shift,Windows" HandlerStage="Bubbled"/>
+            <KeyHandler Name="KeyHandlerHelp" Key="F1" DisallowedModifiers="Alt,Shift,Ctrl,Windows" HandlerStage="Bubbled"/>
+            <KeyHandler Name="KeyHandlerToggleMute" Key="F7" DisallowedModifiers="Alt,Shift,Ctrl,Windows" HandlerStage="Bubbled"/>
+            <KeyHandler Name="KeyHandlerVolumeDown" Key="F8" DisallowedModifiers="Alt,Shift,Ctrl,Windows" HandlerStage="Bubbled"/>
+            <KeyHandler Name="KeyHandlerVolumeUp" Key="F9" DisallowedModifiers="Alt,Shift,Ctrl,Windows" HandlerStage="Bubbled"/>
+            <KeyHandler Name="KeyHandlerFastForward" Key="F" RequiredModifiers="Ctrl,Shift" DisallowedModifiers="Alt,Windows" HandlerStage="Bubbled" Command="{zune:TransportControls.Instance.FastforwardHotkey}"/>
+            <KeyHandler Name="KeyHandlerRewind" Key="B" RequiredModifiers="Ctrl,Shift" DisallowedModifiers="Alt,Windows" HandlerStage="Bubbled" Command="{zune:TransportControls.Instance.RewindHotkey}"/>
+            <KeyHandler Name="KeyHandlerSearchFocus" Key="E" RequiredModifiers="Ctrl" DisallowedModifiers="Alt,Shift,Windows" HandlerStage="Bubbled" Command="{zune:Search.Instance.SearchFocusHotkey}"/>
+
+            <FocusHandler Name="FocusChangedUsingKeyboard" Reason="Key" HandlerStage="Bubbled"/>
+            <KeyHandler Name="ShowFocusRectF10" Key="F10" Handle="false" HandlerStage="Routed"/>
+            <KeyHandler Name="ShowFocusRectApps" Key="Apps" Handle="false" HandlerStage="Routed"/>
+
+            <KeyHandler Name="SpaceKeyHandler" Key="Space" RequiredModifiers="Alt" DisallowedModifiers="Ctrl,Shift,Windows" HandlerStage="Routed" Repeat="false" />
+
+            <KeyHandler Name="AnyKeys" Key="Any" HandlerStage="Routed" Handle="false"/>
+        </Input>
+
+        <Scripts>
+
+            <Script>
+                zune:Shell.DefaultInstance.CommandHandler = ShellCommandHandlers;
+            </Script>
+
+
+            <Script>
+                MouseDown.Command = PopupLayer.MouseDownCommand;
+            </Script>
+
+
+            <Script>
+                zune:ZunePage page = #Shell.CurrentPage#;
+                if (page is zune:CategoryPage)
+                {
+                    CancelSettings.Command = ((zune:CategoryPage) page).CancelButton;
+                }
+                else
+                {
+                    CancelSettings.Command = null;
+                }
+            </Script>
+
+
+            <Script>
+                bool modalPopup = #PopupLayer.IsModal#;
+                bool backArrow = #Shell.CurrentPage.ShowBackArrow#;
+                bool computerIcon = (#Shell.CurrentPage.ShowComputerIcon# != zune:ComputerIconState.Hide);
+                bool nowPlayingX = #Shell.CurrentPage.ShowNowPlayingX#;
+
+                
+                CanGoBack = !modalPopup &amp;&amp; (computerIcon || backArrow || nowPlayingX);
+            </Script>
+
+
+
+            <Script>
+                ResizeBorders.Visible = (!iris:Application.Window.ShowWindowFrame) &amp;&amp;
+                                        (#iris:Application.Window.WindowState# != iris:WindowState.Maximized);
+            </Script>
+
+            <Script>
+                if (#iris:Application.Window.WindowState# == iris:WindowState.Maximized)
+                {
+                    Grabber.Visible = false;
+                }
+                else
+                {
+                    Grabber.Visible = true;
+                }
+            </Script>
+
+
+            <Script>
+                AutoHideToolbars = #Shell.CurrentPage.AutoHideToolbars# &amp;&amp; #WindowState.CanHideMouse#;
+
+                iris:Application.Window.HideMouseOnIdle = AutoHideToolbars;
+            </Script>
+
+
+            <Script>
+                iris:Application.Window.MouseIdleTimeout = MouseActivityTimeout;
+            </Script>
+
+
+            <Script>
+                [DeclareTrigger(Shell.CurrentPage)]
+                WindowState.PageInputActivity = false;
+            </Script>
+
+
+            <Script>
+                bool inputActive = #iris:Application.Window.MouseActive# || #WindowState.KeysActive#;
+                WindowState.InputActive = inputActive;
+                AnyKeys.StopRoute = !inputActive;
+                FocusRect.Alpha = (float)inputActive;
+            </Script>
+
+
+            <Script>
+                bool hideNow = (#AutoHideToolbars# &amp;&amp; !#WindowState.InputActive#);
+                
+                TopToolbar.InvisibleMode    = hideNow;
+                BottomToolbar.InvisibleMode = hideNow;
+            </Script>
+
+            <Script>
+                [DeclareTrigger(AnyKeys.Pressing)]
+                WindowState.KeysActive = true;
+                KeyIdleTimer.Stop();
+                KeyIdleTimer.Start();
+            </Script>
+
+            <Script>
+                [DeclareTrigger(KeyIdleTimer.Tick)]
+                WindowState.KeysActive = false;
+            </Script>
+
+
+
+
+            <Script>
+                [DeclareTrigger(ShortcutPlayPause.Invoked)]
+                [DeclareTrigger(KeyHandlerPlayPause.Invoked)]
+                if (zune:TransportControls.Instance.Playing)
+                {
+                    zune:TransportControls.Instance.Pause.Invoke();
+                }
+                else
+                {
+                    zune:TransportControls.Instance.Play.Invoke();
+                }
+            </Script>
+
+
+            <Script>
+                bool shouldBeVisible = #uixctl:JumpInListManager.Instance.IsActive#;
+
+                if (shouldBeVisible &amp;&amp; !JumpInList.Helper.IsVisible)
+                {
+                    JumpInList.Helper.Show(JumpInList);
+                }
+                else if (!shouldBeVisible &amp;&amp; JumpInList.Helper.IsVisible)
+                {
+                    JumpInList.Helper.Hide();
+                }
+            </Script>
+
+
+            <Script>
+                if (!#JumpInList.Helper.IsVisible#)
+                {
+                    uixctl:JumpInListManager.Instance.Clear();
+                }
+            </Script>
+
+            <Script>
+                SpaceKeyHandler.Command = TopToolbar.MenuCommand;
+            </Script>
+
+            <Script>
+                [DeclareTrigger(KeyHandlerToggleShuffle.Invoked)]
+                zune:TransportControls.Instance.Shuffling.NextValue(true);
+            </Script>
+
+            <Script>
+                [DeclareTrigger(KeyHandlerToggleRepeat.Invoked)]
+                zune:TransportControls.Instance.Repeating.NextValue(true);
+            </Script>
+
+            <Script>
+                [DeclareTrigger(KeyHandlerToggleMute.Invoked)]
+                zune:TransportControls.Instance.Muted.NextValue(true);
+            </Script>
+
+            <Script>
+                [DeclareTrigger(KeyHandlerVolumeDown.Invoked)]
+                zune:TransportControls.Instance.Volume.Value = zune:TransportControls.Instance.Volume.Value - 10.0;
+            </Script>
+
+            <Script>
+                [DeclareTrigger(KeyHandlerVolumeUp.Invoked)]
+                zune:TransportControls.Instance.Volume.Value = zune:TransportControls.Instance.Volume.Value + 10.0;
+            </Script>
+
+
+            <Script>
+                [DeclareTrigger(KeyHandlerHelp.Invoked)]
+                zune:Shell.DefaultInstance.LaunchHelp();
+            </Script>
+
+
+            <Script>
+                [DeclareTrigger(FocusChangedUsingKeyboard.GainedFocus)]
+                [DeclareTrigger(ShowFocusRectF10.Invoked)]
+                [DeclareTrigger(ShowFocusRectApps.Invoked)]
+                FocusRect.Visible = true;
+            </Script>
+
+
+            <Script>
+                if (!#iris:Application.Window.Active# || !#zune:DialogManager.Instance.AnyDialogs#)
+                {
+                    FocusRect.Visible = false;
+                }
+            </Script>
+
+
+            <Script>
+                [DeclareTrigger(iris:Application.Window.Active)]
+                
+                if (iris:Application.Window.Active)
+                {
+                    NowPlayingBackground.RequestSource(null);
+                }
+            </Script>
+
+
+            <Script>
+                [DeclareTrigger(TransportControls.Playing)]
+                [DeclareTrigger(WindowState.InputActive)]
+
+                int timeout = ((zune:Shell)zune:Shell.DefaultInstance).ShowNowPlayingBackgroundOnIdleTimeout;
+                if (timeout > 0 &amp;&amp; iris:Application.Window.Active)
+                {
+                    if (!WindowState.InputActive)
+                    {
+                        
+                        ShowNowPlayingBackgroundTimer.Interval = sys:Math.Max(1, timeout - 5) * 1000;
+                        ShowNowPlayingBackgroundTimer.Enabled = true;
+                    }          
+                    else
+                    {
+                        ShowNowPlayingBackgroundTimer.Enabled = false;
+                    }
+                }
+
+                
+                if (iris:Application.Window.Active &amp;&amp; (WindowState.InputActive || !TransportControls.Playing))
+                {
+                    NowPlayingBackground.RequestSource(null);
+                }
+            </Script>
+
+            <Script>
+                [DeclareTrigger(ShowNowPlayingBackgroundTimer.Tick)]
+                
+                
+                zune:ZunePage page = zune:Shell.DefaultInstance.CurrentPage;
+                if ((page == null || page.ShowNowPlayingBackgroundOnIdle) &amp;&amp; 
+                    !PopupLayer.IsModal &amp;&amp;
+                    (!WindowState.InputActive || !iris:Application.Window.Active) &amp;&amp; 
+                    TransportControls.Playing &amp;&amp; !TransportControls.PlayingVideo)
+                {
+                    NowPlayingBackground.RequestSource(typeof(nowplaying:NowPlayingMusicBackground), "LaunchedAsScreenSaver", true);
+                }
+            </Script>
+
+            <Script>
+                [DeclareTrigger(Shell.CurrentPage.OverlayUI)]
+                
+                OverlayUI.RequestSource(Shell.CurrentPage.OverlayUI);
+            </Script>
+
+            <Script>
+                if (iris:Application.RenderingQuality == iris:RenderingQuality.MaxQuality)
+                {
+                    if (#animations:AnimationState.InMixView.Value#)
+                    {
+                        ClientArea.PlayAnimation(animations:Animations.MixClientShrink);
+                    }
+                    else
+                    {
+                        ClientArea.PlayAnimation(animations:Animations.MixClientRestore);
+                    }
+                }
+            </Script>
+
+
+            <Script>
+                if (#Shell.CurrentPage.ShowPivots# AND !Shell.SettingsFrame.IsCurrent AND WhatsNewNotShown)
+                {
+                    ShowWhatsNewTimer.Start();
+                }
+            </Script>
+
+            <Script>
+                [DeclareTrigger(ShowWhatsNewTimer.Tick)]
+                if (Shell.CurrentPage.ShowPivots AND !Shell.SettingsFrame.IsCurrent AND Shell.ShowWhatsNew AND WhatsNewNotShown)
+                {
+                    WhatsNewNotShown = false;
+                    WhatsNew.RequestSource(typeof(whatsnew:WhatsNew));
+                }
+            </Script>
+
+            <Script>
+                [DeclareTrigger(Shell.ShowWhatsNew)]
+                if (!Shell.ShowWhatsNew)
+                {
+                    WhatsNew.RequestSource(null);
+                }
+            </Script>
+        </Scripts>
+
+        <Content>
+            <Panel Layout="Anchor">
+                <Children>
+
+
+                    <Host Name="NowPlayingBackground" Alignment="Fill"/>
+
+
+                    <focus:FocusRect Name="FocusRect" Visible="false">
+                        <LayoutInput>
+                            <AnchorLayoutInput Left="Focus,0,-1" Right="Focus,1,1" Top="Focus,0,-1" Bottom="Focus,1,1" ContributesToHeight="false" ContributesToWidth="false"/>
+                        </LayoutInput>
+                    </focus:FocusRect>
+
+                    <nonclient:WindowResizeBorderLayer Name="ResizeBorders" Alignment="Fill"/>
+
+                    <popuplayer:PopupLayer Name="PopupLayer" Alignment="Fill"/>
+
+                    <Graphic Name="Grabber" Content="{styles:Styles.Grabber}" MaximumSize="8,8" Alignment="Fill">
+                        <LayoutInput>
+                            <AnchorLayoutInput Name="GrabberLayout" Bottom="Parent,1,-1" Right="Parent,1,-1"/>
+                        </LayoutInput>
+                    </Graphic>
+
+
+                    <Host Name="WhatsNew" Alignment="Fill"/>
+
+                    <Host Name="OverlayUI" Alignment="Fill"/>
+
+                    <Panel Layout="Anchor" Navigation="RememberFocus,ContainAll,WrapTabOrder" FocusOrder="0">
+                        <Children>
+                            <Panel Name="ClientArea" Layout="Dock">
+                                <Children>
+
+
+                                    <toptoolbar:TopToolbar Name="TopToolbar" Shell="{Shell}" EmbeddedInMainFrame="true" FocusOrder="1">
+                                        <LayoutInput>
+                                            <DockLayoutInput Position="Top"/>
+                                        </LayoutInput>
+                                    </toptoolbar:TopToolbar>
+
+
+                                    <bottomtoolbar:BottomToolbar Name="BottomToolbar" Shell="{Shell}" EmbeddedInMainFrame="true" FocusOrder="4">
+                                        <LayoutInput>
+                                            <DockLayoutInput Position="Bottom"/>
+                                        </LayoutInput>
+                                    </bottomtoolbar:BottomToolbar>
+
+
+
+                                    <page:PageBase Name="ForegroundUI" Shell="{Shell}" Page="{Shell.CurrentPage}" FocusOrder="2" Margins="{styles:Styles.FrameMargins}">
+                                        <LayoutInput>
+                                            <DockLayoutInput Position="Client"/>
+                                        </LayoutInput>
+                                    </page:PageBase>
+
+                                </Children>
+                            </Panel>
+
+
+                            <page:PageBase Name="BackgroundUI" Shell="{Shell}" Page="{Shell.CurrentPage}" FocusOrder="3" Alignment="Fill"/>
+
+                        </Children>
+                    </Panel>
+
+
+                    <me:Background Shell="{Shell}"/>
+
+                </Children>
+            </Panel>
+        </Content>
+    </UI>
+
+
+
+
+    <UI Name="Background">
+        <Properties>
+            <zune:Shell Name="Shell" Shell="$Required"/>
+            <Boolean Name="ShowManagementBackground"/>
+
+            <Animation Name="ContentChangeShow" Animation="{null}"/>
+            <Animation Name="ContentChangeHide" Animation="{null}"/>
+        </Properties>
+
+        <Scripts>
+            <Script>
+                if (#iris:Application.Window.Active#)
+                {
+                    RightBorder.Alpha = 1.0;
+                    BottomBorder.Alpha = 1.0;
+                }       
+                else
+                {
+                    RightBorder.Alpha = 0.0;
+                    BottomBorder.Alpha = 0.0;
+                }
+            </Script>
+
+
+            <Script>
+                [DeclareTrigger(iris:Application.Window.WindowState)]
+                [InitialEvaluate(true)]
+                
+                if (iris:Application.Window.WindowState == iris:WindowState.Maximized)
+                {
+                    RightBorder.Alpha = 0.0;
+                    BottomBorder.Alpha = 0.0;
+                }
+                else
+                {
+                    RightBorder.Alpha = 1.0;
+                    BottomBorder.Alpha = 1.0;
+                }
+            </Script>
+
+            <Script> Graphic.Visible = #Shell.CurrentPage.ShowAppBackground#; </Script>
+
+            <Script>
+                Image image;
+                if (ShowManagementBackground &amp;&amp; !String.IsNullOrEmpty(#Shell.Management.BackgroundImage#))
+                {
+                    image = new Image(Shell.Management.BackgroundImage);
+                }
+                else if (!String.IsNullOrEmpty(#Shell.BackgroundImage#))
+                {
+                    image = new Image(Shell.BackgroundImage);
+                }
+                else
+                {
+                    image = styles:Styles.DefaultBackgroundImage;
+                }
+
+                Graphic.Content = image;
+            </Script>
+        </Scripts>
+
+        <Content>
+            <Panel Layout="Form">
+                <Children>
+
+                    <ColorFill Name="RightBorder" Content="{styles:Styles.Pink}" Alignment="-,Fill" MaximumSize="1,0">
+                        <LayoutInput>
+                            <FormLayoutInput Right="Parent,1"/>
+                        </LayoutInput>
+                    </ColorFill>
+
+                    <ColorFill Name="BottomBorder" Content="{styles:Styles.Pink}" Alignment="Fill,-" MaximumSize="0,1">
+                        <LayoutInput>
+                            <FormLayoutInput Bottom="Parent,1"/>
+                        </LayoutInput>
+                    </ColorFill>
+
+                    <Graphic Name="Graphic" HorizontalAlignment="Center" VerticalAlignment="Near" SizingPolicy="SizeToConstraint" StretchingPolicy="UniformToFill" ErrorImage="{styles:Styles.DefaultBackgroundImage}" Margins="0,0,-1,-1">
+
+
+                        <Animations>
+                            <Animation Animation="{animations:Animations.MainBackgroundPageTransitionHide}"/>
+                            <Animation Animation="{ContentChangeShow}"/>
+                            <Animation Animation="{ContentChangeHide}"/>
+                        </Animations>
+                        <LayoutInput>
+                            <DockLayoutInput Position="Client"/>
+                        </LayoutInput>
+                    </Graphic>
+
+                </Children>
+            </Panel>
+        </Content>
+    </UI>
+
+</UIX>

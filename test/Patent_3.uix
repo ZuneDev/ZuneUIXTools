@@ -1,0 +1,52 @@
+<UIX xmlns="http://schemas.microsoft.com/2007/uix">
+    <UI Name="TextRun">
+        <Properties>
+            <TextRunData Name="Data" TextRunData="$Required"/>
+            <code:BooleanChoice Name="FragmentMouseFocus"/>
+            <code:BooleanChoice Name="FragmentKeyFocus"/>
+            <code:BooleanChoice Name="FragmentClicking"/>
+        </Properties>
+        <Scripts>
+            <Script>
+                if ([FragmentMouseFocus.Value])
+                    Renderer.Color = Color.Blue;
+                else
+                    Renderer.Color = Data.Color;
+            </Script>
+            <Script>
+                [DeclareTrigger(FragmentClicking.Value)]
+                if (FragmentClicking.Value)
+                {
+                    ColorFill.Scale = new Vector3(1.2,1.2,1.2);
+                    ColorFill.Rotation = new Rotation(2);
+                }
+                else
+                {
+                    ColorFill.Scale = new Vector3(1.0,1.0,1.0);
+                    ColorFill.Rotation = new Rotation(0);
+                }
+            </Script>
+        </Scripts>
+        <Content>
+            <ColorFill Name="ColorFill" Content="Transparent" Layout="HorizontalFlow">
+                <Animations>
+                    <Animation Type="Scale" CenterPointPercent="0.5, 0.5, 0">
+                        <Keyframes>
+                            <ScaleKeyframe Time="0.0" RelativeTo="Current"/>
+                            <ScaleKeyframe Time="0.1" RelativeTo="Final"/>
+                        </Keyframes>
+                    </Animation>
+                    <Animation Type="Rotate" CenterPointPercent="0.5, 0.5, 0">
+                        <Keyframes>
+                            <RotateKeyframe Time="0.0" RelativeTo="Current"/>
+                            <RotateKeyframe Time="0.1" RelativeTo="Final"/>
+                        </Keyframes>
+                    </Animation>
+                </Animations>
+                <Children>
+                    <TextRunRenderer Name="Renderer" Data="{Data}"/>
+                </Children>
+            </ColorFill>
+        </Content>
+    </UI>
+</UIX>

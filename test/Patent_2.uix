@@ -1,0 +1,128 @@
+<UIX xmlns="http://schemas.microsoft.com/2007/uix"
+    xmlns:code="assembly://UIX/Acme.Iris"
+    xmlns:me="Me"
+    xmlns:sys="assembly://accorlib/System">
+    <UI Name="Default">
+        <Content>
+            <ColorFill Content="White" Layout="VerticalFlow">
+                <Children>
+                    <me:Hyperlink Visible="True">
+                        <Content><![CDATA[Named for the way they traded sounds and ideas, the Postal Service is an electronica-meets-indie rock supergroup featuring Jimmy Tamborello (of <Artist ID="1111">Dntel</Artist> and <Artist ID="1234">Figurine</Artist>), and <Artist ID="10">Death Cab for Cutie</Artist>'s <Artist ID="5">Ben Gibbard</Artist>; <Artist>Rilo Kiley</Artist>'s <Artist>Jenny Lewis</Artist>, and former <Artist>Tattle Tale</Artist> and solo artist <Artist>Jen Wood</Artist> provide backing vocals. Tamborello and <Artist>Gibbard</Artist> first worked together on the title track of <Artist>Dntel</Artist>'s <Album>This Is The Dream Of Evan And Chan</Album> EP; from there, the duo continued to collaborate via mail, with Tamborello sending electronic pieces and <Artist>Gibbard</Artist> adding guitars, vocals, and lyrics. The result, <Album>Give Up</Album>, were released in early 2003 by Sub Pop. ~ Heather Phares, All Music Guide ]]></Content>
+                    </me:Hyperlink>
+                </Children>
+            </ColorFill>
+        </Content>
+    </UI>
+    <UI Name="Hyperlink">
+        <Properties>
+            <sys:String Name="Content" String="$Required"/>
+            <HorizontalAlignment Name="HorizontalAlignment" HorizontalAlignment="Near"/>
+            <sys:Boolean Name="WordWrap" Boolean="True"/>
+        </Properties>
+        <Scripts>
+            <Script>HyperlinkRepeater.Source = [Text.Fragments];</Script>
+        </Scripts>
+        <Content>
+            <ColorFill Content="White">
+                <Children>
+                    <Text Name="Text" Color="Black" Font="Arial,20" WordWrap="{WordWrap}" Content="{Content}" HorizontalAlignment="{HorizontalAlignment}">
+                        <NamedStyles>
+                            <TextStyle Name="Artist" Color="Orange" Fragment="true"/>
+                            <TextStyle Name="Album" Color="Red" Fragment="true"/>
+                        </NamedStyles>
+                    </Text>
+                    <Repeater Name="HyperlinkRepeater">
+                        <Content>
+                            <me:HyperlinkFragment TextFragment="{(TextFragment)RepeatedItem}"/>
+                        </Content>
+                    </Repeater>
+                </Children>
+            </ColorFill>
+        </Content>
+    </UI>
+    <UI Name="HyperlinkFragment">
+        <Properties>
+            <TextFragment Name="TextFragment" TextFragment="$Required"/>
+        </Properties>
+        <Locals>
+            <code:BooleanChoice Name="FragmentMouseFocus"/>
+            <code:BooleanChoice Name="FragmentKeyFocus"/>
+            <code:BooleanChoice Name="FragmentClicking"/>
+        </Locals>
+        <Input>
+            <ClickHandler Name="Clicker"/>
+        </Input>
+        <Scripts>
+            <Script>UI.AllowDoubleClicks = false;</Script>
+            <Script>FragmentMouseFocus.Value = [UI.MouseFocus];</Script>
+            <Script>FragmentKeyFocus.Value = [UI.KeyFocus];</Script>
+            <Script>FragmentClicking.Value = [Clicker.Clicking];</Script>
+            <Script>TextRunRepeater.Source = TextFragment.Runs;</Script>
+        </Scripts>
+        <Content>
+            <Panel>
+                <Children>
+                    <Repeater Name="TextRunRepeater">
+                        <Content>
+                            <me:TextRun Name="TextRun" Data="{(TextRunData)RepeatedItem}" FragmentMouseFocus="{FragmentMouseFocus}" FragmentKeyFocus="{FragmentKeyFocus}" FragmentClicking="{FragmentClicking}" MouseInteractive="True">
+                                <Margins>
+                                    <Inset Left="{((TextRunData)RepeatedItem).Position.X}" Top="{((TextRunData)RepeatedItem).Position.Y}"/>
+                                </Margins>
+                            </me:TextRun>
+                        </Content>
+                    </Repeater>
+                </Children>
+            </Panel>
+        </Content>
+    </UI>
+    <UI Name="TextRun">
+        <Properties>
+            <TextRunData Name="Data" TextRunData="$Required"/>
+            <code:BooleanChoice Name="FragmentMouseFocus"/>
+            <code:BooleanChoice Name="FragmentKeyFocus"/>
+            <code:BooleanChoice Name="FragmentClicking"/>
+        </Properties>
+        <Scripts>
+            <Script>
+                if ([FragmentMouseFocus.Value])
+                    Renderer.Color = Color.Blue;
+                else
+                    Renderer.Color = Data.Color;
+            </Script>
+            <Script>
+                [DeclareTrigger(FragmentClicking.Value)]
+                if (FragmentClicking.Value)
+                {
+                    ColorFill.Scale = new Vector3(1.2,1.2,1.2);
+                    ColorFill.Rotation = new Rotation(2); 
+                }
+                else
+                {
+                    ColorFill.Scale = new Vector3(1.0,1.0,1.0);
+                    ColorFill.Rotation = new Rotation(0);
+                }
+            </Script>
+        </Scripts>
+        <Content>
+            <ColorFill Name="ColorFill" Content="Transparent" Layout="HorizontalFlow">
+                <Animations>
+                    <Animation Type="Scale" CenterPointPercent="0.5, 0.5, 0">
+                        <Keyframes>
+                            <ScaleKeyframe Time="0.0" RelativeTo="Current"/>
+                            <ScaleKeyframe Time="0.1" RelativeTo="Final"/>
+                        </Keyframes>
+                    </Animation>
+                    <Animation Type="Rotate" CenterPointPercent="0.5, 0.5, 0">
+                        <Keyframes>
+                            <RotateKeyframe Time="0.0" RelativeTo="Current"/>
+                            <RotateKeyframe Time="0.1" RelativeTo="Final"/>
+                        </Keyframes>
+                    </Animation>
+                </Animations>
+                <Children>
+                    <TextRunRenderer Name="Renderer" Data="{Data}"/>
+                </Children>
+            </ColorFill>
+        </Content>
+    </UI>
+</UIX>

@@ -338,3 +338,6 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
+/VSIX/IrisProjTemplate/UIXsup.dll
+/VSIX/IrisProjTemplate/UIXrender.dll
+/VSIX/IrisProjTemplate/UIX.renderapi.dll

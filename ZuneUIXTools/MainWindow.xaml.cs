@@ -22,6 +22,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using Application = Microsoft.Iris.Application;
 using Window = System.Windows.Window;
 
 namespace ZuneUIXTools
@@ -130,20 +131,20 @@ namespace ZuneUIXTools
 
             try
             {
-                Microsoft.Iris.Application.Initialize();
+                Application.Initialize();
             }
             catch { }
 
             try
             {
-                Microsoft.Iris.Application.Window.SetBackgroundColor(new WindowColor(0xE6, 0xE6, 0xE6));
-                Microsoft.Iris.Application.Window.RequestLoad("file://" + compiledFile + (string.IsNullOrEmpty(UIRoot) ? string.Empty : "#" + UIRoot));
-                Microsoft.Iris.Application.Window.CloseRequested += (object sender, WindowCloseRequestedEventArgs args) =>
+                Application.Window.SetBackgroundColor(new WindowColor(0xE6, 0xE6, 0xE6));
+                Application.Window.RequestLoad("file://" + compiledFile + (string.IsNullOrEmpty(UIRoot) ? string.Empty : "#" + UIRoot));
+                Application.Window.CloseRequested += (object sender, WindowCloseRequestedEventArgs args) =>
                 {
                     args.BlockCloseRequest();
-                    Microsoft.Iris.Application.Window.Visible = false;
+                    Application.Window.Visible = false;
                 };
-                Microsoft.Iris.Application.Run();
+                Application.Run();
             }
             catch (Exception ex)
             {
