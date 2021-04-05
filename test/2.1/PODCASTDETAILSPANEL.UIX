@@ -1,0 +1,483 @@
+﻿<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:sys="assembly://mscorlib/System"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:lib="res://ZuneShellResources!Library.uix"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:dialogs="res://ZuneShellResources!PodcastDialogs.uix"
+  xmlns:mctl="res://ZuneMarketplaceResources!Controls.uix"  
+  xmlns:button="res://ZuneShellResources!Button.uix"  
+  xmlns:data="res://ZuneShellResources!LibraryData.schema.xml"
+  xmlns:me="Me">
+
+
+  
+  
+  
+  <UI Name="PodcastDetailsPanel" Base="lib:Column">
+    <Properties>
+      <zune:PodcastLibraryPage Name="Page" PodcastLibraryPage="$Required"/>
+      <zune:LibraryPanel Name="Model"/>
+    </Properties>
+
+    <Locals>
+      <Boolean Name="IsSeriesUrlValid" Boolean="true"/>
+    </Locals>
+
+    <Scripts>
+      
+      
+
+      
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(((data:PodcastSeries)Page.SeriesPanel.SelectedItem).FeedUrl)]
+        
+        data:PodcastSeries selectedSeries = (data:PodcastSeries)Page.SeriesPanel.SelectedItem;
+        
+        if ( selectedSeries != null )
+        {
+          IsSeriesUrlValid = !String.IsNullOrEmpty(selectedSeries.FeedUrl);
+        }
+      </Script>
+
+      
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(IsSeriesUrlValid)]
+        [DeclareTrigger(Page.SeriesClicked.Invoked)]
+        [DeclareTrigger(Page.SeriesPanel.SelectedItem)]
+      
+        
+        SeriesPanel.Visible           = IsSeriesUrlValid;
+        EpisodePanel.Visible          = false;
+        GrovelledSeriesPanel.Visible  = !IsSeriesUrlValid;
+      </Script>
+      
+      
+      <Script>
+        [DeclareTrigger(Page.EpisodeClicked.Invoked)]
+        [DeclareTrigger(Page.EpisodePanel.SelectedItem)]
+        
+        
+        SeriesPanel.Visible           = false;
+        EpisodePanel.Visible          = IsSeriesUrlValid;
+        GrovelledSeriesPanel.Visible  = !IsSeriesUrlValid;
+      </Script>
+
+    </Scripts>
+
+    <Content>
+
+      
+      <Panel Padding="10,0,10,0">
+        <Children>
+          <me:SeriesMetadataPanel Name="SeriesPanel" Page="{Page}"/>
+          <me:GrovelledSeriesMetadataPanel Name="GrovelledSeriesPanel" Page="{Page}"/>
+          <me:EpisodeMetadataPanel Name="EpisodePanel" Page="{Page}"/>
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="SeriesMetadataPanel" Base="me:PodcastMetadataPanelBase">
+    <Scripts>
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(((data:PodcastSeries)Page.SeriesPanel.SelectedItem).Title)]
+
+        data:PodcastSeries selectedSeries = (data:PodcastSeries)Page.SeriesPanel.SelectedItem;
+        
+
+        if ( selectedSeries != null )
+        {
+          Worker.Title = selectedSeries.Title;
+          Worker.DescriptionTitle = zune:Shell.LoadString(zune:StringId.IDS_SERIES_DESCRIPTION);
+          Worker.Description = selectedSeries.Description;
+          Worker.Owner = selectedSeries.OwnerName;
+          Worker.Author = selectedSeries.Author;
+          Worker.Explicit = selectedSeries.Explicit;
+          Worker.Copyright = selectedSeries.Copyright;
+        }
+      </Script>
+    </Scripts>
+  </UI>
+
+  
+  
+  
+  <UI Name="EpisodeMetadataPanel" Base="me:PodcastMetadataPanelBase">
+    <Scripts>
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(Page.EpisodePanel.SelectedItem)]
+
+        data:PodcastEpisode selectedEpisode = (data:PodcastEpisode)Page.EpisodePanel.SelectedItem;
+        data:PodcastSeries selectedSeries = (data:PodcastSeries)Page.SeriesPanel.SelectedItem;
+        
+        if ( selectedEpisode != null )
+        {
+          Worker.Title = selectedEpisode.SeriesTitle;
+          Worker.DescriptionTitle = zune:Shell.LoadString(zune:StringId.IDS_EPISODE_DESCRIPTION);
+          Worker.Description = selectedEpisode.Description;
+          Worker.Owner = null;
+          Worker.Duration = zune:Shell.TimeSpanToString(selectedEpisode.Duration);
+          Worker.Author = selectedEpisode.Author;
+          Worker.Explicit = selectedEpisode.Explicit;
+          if ( selectedSeries != null )
+          {
+            Worker.Copyright = selectedSeries.Copyright;
+          }
+          else
+          {
+            Worker.Copyright = null;
+          }
+        }
+      </Script>
+    </Scripts>
+  </UI>
+
+  
+  
+  
+  <UI Name="PodcastMetadataPanelBase">
+    
+    <Properties>
+      <zune:PodcastLibraryPage Name="Page" PodcastLibraryPage="$Required"/>
+      
+      <iris:Command Name="OfficialWebSiteCommand" Description="{zune:Shell.LoadString(zune:StringId.IDS_OFFICIAL_WEBSITE_BUTTON)}"/>
+      <iris:Command Name="SeriesStateCommand" Description="{zune:Shell.LoadString(zune:StringId.IDS_UNSUBSCRIBE_BUTTON)}"/>
+      <iris:Command Name="SeriesSettingsCommand" Description="{zune:Shell.LoadString(zune:StringId.IDS_SERIES_SETTINGS_BUTTON)}"/>
+    </Properties>
+
+    <Locals>
+      <dialogs:UnsubscribeDialog Name="UnsubscribeDialog" Page="{Page}"/>
+      <dialogs:SettingsDialog Name="SettingsDialog" Page="{Page}"/>
+      <String Name="WebSiteUrl"/>
+    </Locals>
+
+    <Scripts>
+      
+      
+      
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(Page.SeriesState)]
+
+        if ( Page.IsSubscribed() )
+        {
+          SeriesStateCommand.Description = zune:Shell.LoadString(zune:StringId.IDS_UNSUBSCRIBE_BUTTON);
+        }
+        else
+        {
+          SeriesStateCommand.Description = zune:Shell.LoadString(zune:StringId.IDS_SUBSCRIBE_BUTTON);
+        }
+      </Script>
+      
+      
+      <Script>
+        [DeclareTrigger(SeriesStateCommand.Invoked)]
+
+        if (Page.SelectedSeriesId != -1)
+        {
+          if (Page.IsSubscribed())
+          {
+            UnsubscribeDialog.SeriesId = Page.SelectedSeriesId;
+            UnsubscribeDialog.Helper.Show(UnsubscribeDialog);
+          }
+          else
+          {
+            Page.Resubscribe(Page.SelectedSeriesId);
+          }
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(((data:PodcastSeries)Page.SeriesPanel.SelectedItem).FeedUrl)]
+        
+        data:PodcastSeries selectedSeries = (data:PodcastSeries)Page.SeriesPanel.SelectedItem;
+        
+        WebSiteUrl = null;
+        
+        if ( selectedSeries != null )
+        {
+          WebSiteUrl = selectedSeries.HomeUrl;
+        }
+        
+        OfficialWebSiteButton.Visible = !string.IsNullOrEmpty(WebSiteUrl);
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(OfficialWebSiteCommand.Invoked)]
+        Page.OpenOfficialWebSite( WebSiteUrl );
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(SeriesSettingsCommand.Invoked)]
+        
+        if (Page.SelectedSeriesId != -1)
+        {
+          SettingsDialog.SeriesId = Page.SelectedSeriesId;
+          SettingsDialog.Helper.Show(SettingsDialog);
+        }
+      </Script>
+
+    </Scripts>
+    
+    <Content>
+      <Panel Layout="Dock">
+        <Children>
+          
+          
+          <me:PodcastMetadataPanelWorker Name="Worker">
+            <LayoutInput>
+              <DockLayoutInput Position="Client"/>
+            </LayoutInput>
+          </me:PodcastMetadataPanelWorker>
+
+          
+          <Panel Layout="VerticalFlow">
+            <LayoutInput>
+              <DockLayoutInput Position="Bottom"/>
+            </LayoutInput>
+            <Children>
+              
+              <mctl:ExternalLink Name="OfficialWebSiteButton" OverrideStyle="{styles:SharedStyles.ListItemStyle}"  Model="{OfficialWebSiteCommand}" Margins="4,4,0,2"/>
+              
+              <core:BigActionButton Name="SeriesStateButton" Model="{SeriesStateCommand}" Margins="0,4,0,0"/>
+              
+              <core:BigActionButton Name="SeriesSettingsButton" Model="{SeriesSettingsCommand}" Margins="0,4,0,0"/>
+              
+            </Children>
+          </Panel>
+          
+        </Children>
+      </Panel>
+
+    </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="GrovelledSeriesMetadataPanel">
+    <Properties>
+      <zune:PodcastLibraryPage Name="Page" PodcastLibraryPage="$Required"/>
+    </Properties>
+
+    <Locals>
+      <dialogs:EnterUrlDialog Name="EnterUrlDialog" Page="{Page}"/>
+      <iris:Command Name="EnterUrlCommand" Description="{zune:Shell.LoadString(zune:StringId.IDS_ENTER_URL_BUTTON)}"/>
+      <iris:Command Name="DeleteCommand" Description="{zune:Shell.LoadString(zune:StringId.IDS_PODCAST_UNSUBSCRIBE_DELETE)}"/>
+    </Locals>
+
+    <Scripts>
+
+      
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(Page.SeriesPanel.SelectedItem)]
+        [DeclareTrigger(Page.EpisodePanel.SelectedItem)]
+        
+        data:PodcastSeries selectedSeries = (data:PodcastSeries)Page.SeriesPanel.SelectedItem;
+        data:PodcastEpisode selectedEpisode = (data:PodcastEpisode)Page.EpisodePanel.SelectedItem;
+        
+        bool isUnknownSeries    = false;
+        bool isEpisodeSelected  = false;
+        
+        if ( selectedSeries != null )
+        {
+          isUnknownSeries = (selectedSeries.Title == zune:Shell.LoadString(zune:StringId.IDS_SERIES_UNKNOWNSERIES_TITLE));
+          isEpisodeSelected = selectedEpisode != null;
+          
+
+          Worker.Title = selectedSeries.Title;
+          if ( isUnknownSeries )
+            Worker.Description = zune:Shell.LoadString(zune:StringId.IDS_SERIES_UNKNOWNSERIES_DESCRIPTION);
+          else
+            Worker.Description = zune:Shell.LoadString(zune:StringId.IDS_SERIES_GROVELLED_SERIES_DESCRIPTION);
+        }
+        
+        EnterUrlCommand.Available = (isUnknownSeries == isEpisodeSelected);
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(EnterUrlCommand.Invoked)]
+        data:PodcastSeries selectedSeries = (data:PodcastSeries)Page.SeriesPanel.SelectedItem;
+
+        if ( selectedSeries != null )
+        {
+          bool isSeriesUrlInvalid = String.IsNullOrEmpty(selectedSeries.FeedUrl);
+          bool isUnknownSeries = selectedSeries.Title == zune:Shell.LoadString(zune:StringId.IDS_SERIES_UNKNOWNSERIES_TITLE);
+          
+          EnterUrlDialog.IsUnkownSeries = isUnknownSeries;
+          
+          
+          if (isSeriesUrlInvalid)
+          {
+            EnterUrlDialog.Helper.Show(EnterUrlDialog);
+          }
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(DeleteCommand.Invoked)]
+        data:PodcastSeries selectedSeries = (data:PodcastSeries)Page.SeriesPanel.SelectedItem;
+
+        if ( selectedSeries != null )
+        {
+          Page.Unsubscribe( selectedSeries.LibraryId, true );
+        }
+      </Script>
+
+    </Scripts>
+
+    <Content>
+      <Panel Layout="Dock">
+        <Children>
+
+          
+          <me:PodcastMetadataPanelWorker Name="Worker">
+            <LayoutInput>
+              <DockLayoutInput Position="Client"/>
+            </LayoutInput>
+          </me:PodcastMetadataPanelWorker>
+
+          
+          <Panel Layout="VerticalFlow">
+            <LayoutInput>
+              <DockLayoutInput Position="Bottom"/>
+            </LayoutInput>
+            <Children>
+              <core:ActionButton Name="EnterUrlButton" Model="{EnterUrlCommand}" Margins="0,4,0,0"/>
+              <core:ActionButton Name="DeleteButton" Model="{DeleteCommand}" Margins="0,4,0,0"/>
+            </Children>
+          </Panel>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="PodcastMetadataPanelWorker">
+    
+    <Properties>
+      <string Name="Title" string="{null}"/>
+      <string Name="Owner" string="{null}"/>
+      <string Name="Author" string="{null}"/>
+      <string Name="DescriptionTitle" string="{null}"/>
+      <string Name="Description" string="{null}"/>
+      <string Name="Copyright" string="{null}"/>
+      <string Name="Duration" string="{null}"/>
+      <bool Name="Explicit" bool="false"/>
+    </Properties>
+
+    <Scripts>
+      <Script>
+        TitleText.Content = [Title];
+      </Script>
+      
+      <Script>
+        AuthorText.Content = [Author];
+        OwnerText.Content = [Owner];
+        AuthorText.Visible = sys:String.Compare( Author, Owner, true ) != 0;
+      </Script>
+
+      <Script>
+        DurationText.Content = [Duration];
+      </Script>
+      
+      <Script>
+        DescriptionText.Content = [Description];
+      </Script>
+      
+      <Script>
+        if (!String.IsNullOrEmpty(Copyright) &amp;&amp; !((sys:String)Copyright).Contains("©"))
+        {
+          Copyright = sys:String.Format( zune:Shell.LoadString(zune:StringId.IDS_PODCAST_COPYRIGHT_REPLACEMENT), Copyright );
+        }
+        CopyrightText.Content = [Copyright];
+      </Script>
+     
+      <Script>
+        ExplicitText.Visible = [Explicit];
+      </Script>
+
+      <Script>
+        ScrollBar.RegionHover = [UI.DeepMouseFocus];
+      </Script>
+    </Scripts>
+
+    <Locals>
+      <ScrollingData Name="ScrollData"/>
+    </Locals>
+
+    <Input>
+      <ScrollingHandler Name="ScrollHandler" ScrollingData="{ScrollData}"/>
+    </Input>
+
+    <Content>
+      <Panel Layout="Dock">
+        <Children>
+          <Panel Layout="VerticalFlow">
+            <LayoutInput>
+              <DockLayoutInput Position="Top"/>
+            </LayoutInput>
+            <Children>
+
+              <button:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_DETAILS_HEADER)}" Style="{styles:SharedStyles.ColumnHeaderStyle}" Margins="0,0,0,28"/>
+              <button:Label Name="TitleText" Style="{styles:SharedStyles.PodcastTitle}" Margins="0,0,0,4" ShowToolTipWhenClipped="true"/>
+              <button:Label Name="OwnerText" WordWrap="true" Style="{styles:SharedStyles.PodcastText}"/>
+              <button:Label Name="AuthorText" WordWrap="true" Style="{styles:SharedStyles.PodcastText}"/>
+              <button:Label Name="DurationText" WordWrap="true" Style="{styles:SharedStyles.PodcastText}" Margins="0,4,0,0"/>
+              <mctl:ExplicitText Name="ExplicitText" Margins="0,4,0,0" Visible="false"/>
+              
+            </Children>
+          </Panel>
+
+          <Panel Layout="Dock">
+            <LayoutInput>
+              <DockLayoutInput Position="Client"/>
+            </LayoutInput>
+            <Children>
+              <core:ScrollBar Name="ScrollBar" ScrollData="{ScrollData}">
+                <LayoutInput>
+                  <DockLayoutInput Position="Right"/>
+                </LayoutInput>
+              </core:ScrollBar>
+
+              
+              <Scroller Name="MetaData" Orientation="Vertical" FadeSize="-1" ScrollingData="{ScrollData}">
+                <LayoutInput>
+                  <DockLayoutInput Position="Client"/>
+                </LayoutInput>
+                <Children>
+                  <Panel Layout="VerticalFlow">
+                    <Children>
+                      <button:Label Name="DescriptionText" Style="{styles:SharedStyles.PodcastDesc}" WordWrap="true" Margins="0,14,0,0"/>
+                      <button:Label Name="CopyrightText" Style="{styles:SharedStyles.PodcastCopyright}" WordWrap="true" Margins="0,14,0,10"/>
+                    </Children>
+                  </Panel>
+                </Children>
+              </Scroller>
+            </Children>
+          </Panel>
+        </Children>        
+      </Panel>
+    </Content>
+  </UI>
+</UIX>

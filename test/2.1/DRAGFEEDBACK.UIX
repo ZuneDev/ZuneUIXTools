@@ -1,0 +1,117 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX 
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:zune="assembly://ZuneShell/ZuneUI" 
+  xmlns:popup="res://ZuneShellResources!Popup.uix"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:core="res://ZuneShellResources!CoreControls.uix"
+  xmlns:me="Me"
+  >
+  
+  
+  
+  
+  
+
+  
+  
+  
+  <Class Name="DragInfo" Shared="true">
+    <Properties>
+      <Boolean Name="IsDraggingInternally"/>
+    </Properties>
+  </Class>
+  
+  
+  
+  
+  <Class Name="DragFeedback" Base="popup:Popup">
+    <Properties>
+      <zune:PopupHelper Name="Helper" ZOrder="0"/>
+      <PopupLayoutInput Name="LayoutInput" Placement="FollowMouseOrigin" StayInBounds="false"
+                        Offset="2,-30"/>
+      <String Name="PopupUI" String="res://ZuneShellResources!DragFeedback.uix#DragFeedbackUI"/>
+      
+            
+      <DropAction Name="DropAction"/>
+
+      
+      <Int32 Name="Count" Int32="1"/>
+      
+      <Image Name="Thumbnail" Image="{null}"/>
+    </Properties>
+  </Class>
+
+  
+  
+  
+  <UI Name="DragFeedbackUI" Base="popup:PopupUI">
+    <Properties>
+      <me:DragFeedback Name="Popup" DragFeedback="{null}" />
+    </Properties>
+    
+    <Scripts>
+      <Script>
+        CountLabel.Content = Popup.Count.ToString();
+        if (Popup.Thumbnail == null)
+          Thumbnail.Content = styles:Styles.DragFallback;
+      </Script>
+      
+      <Script> 
+        bool copying = [Popup.DropAction] == DropAction.Copy;
+
+        Operation.Visible = copying;
+        CountPanel.Visible = !copying;
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel Layout="Anchor">
+        <Children>
+          
+          <Panel Name="Indicator">
+            <Children>
+              
+              <Graphic Name="CountPanel" Content="{styles:Styles.DragFeedbackLabel}"
+                   SizingPolicy="SizeToChildren"
+                   MinimumSize="26,26">
+                <Children>
+                  
+                  <core:Label Name="CountLabel"
+                              Style="{styles:SharedStyles.DragFeedbackStyle}" 
+                              Margins="5,3,5,5" Alignment="Center"/>
+                  
+                </Children>
+              </Graphic>
+              
+              <Graphic Name="Operation" 
+                       Content="{styles:Styles.DragCopy}"
+                       SizingPolicy="SizeToContent" StretchingPolicy="None"/>
+              
+            </Children>
+          </Panel>
+          
+          <Graphic Name="ThumbnailPanel"
+                   Content="{styles:Styles.DragFeedbackGlow}"
+                   SizingPolicy="SizeToChildren"
+                   Padding="7,7,7,7" Alpha="0.6">
+            <LayoutInput>
+              <AnchorLayoutInput Right="Indicator,0,20" Top="Indicator,1,-20"
+                   ContributesToWidth="false"
+                   ContributesToHeight="false"/>
+            </LayoutInput>
+            
+            <Children>
+                
+              <Graphic Name="Thumbnail"
+                       Content="{Popup.Thumbnail}" MaximumSize="30,30"
+                       StretchingPolicy="Uniform"/>
+          
+            </Children>
+          </Graphic>
+        </Children>
+      </Panel>
+
+    </Content>
+  </UI>
+</UIX>

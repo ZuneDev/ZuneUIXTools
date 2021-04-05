@@ -1,0 +1,992 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:col="assembly://mscorlib/System.Collections"
+  xmlns:data="res://ZuneShellResources!LibraryData.schema.xml"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:lib="res://ZuneShellResources!Library.uix"
+  xmlns:list="res://ZuneShellResources!ContentList.uix"
+  xmlns:gp="res://ZuneShellResources!GalleryPanel.uix"
+  xmlns:thumbbutton="res://ZuneShellResources!ThumbnailButton.uix"
+  xmlns:dialogs="res://ZuneShellResources!LibraryDialogs.uix"
+  xmlns:dbapi="assembly://ZuneDBApi/"
+  xmlns:playlistdialog="res://ZuneShellResources!PlaylistDialog.uix"
+  xmlns:tpc="res://ZuneShellResources!TracksPanelColumns.uix"
+  xmlns:contextmenu="res://ZuneShellResources!LibraryContextMenu.uix"
+  xmlns:style="res://ZuneShellResources!Style.uix"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:drag="res://ZuneShellResources!DragFeedback.uix"
+  xmlns:me="Me">
+  
+  <Class Name="SortData">
+    <Properties>
+      <List Name="Options" List="$Required"/>
+      <Int32 Name="DefaultIndex" Int32="0"/>
+      <String Name="SaveKey" String="{null}"/>
+      
+      <iris:Choice Name="Sorts"/>
+    </Properties>
+    
+    <Scripts>
+      <Script>
+        Sorts.Options = Options;
+        Sorts.ChosenIndex = zune:Shell.GetInt(SaveKey, 0, Options.Count - 1, DefaultIndex);
+      </Script>
+      
+      <Script>
+        [DeclareTrigger(Sorts.ChosenIndex)]
+
+        if (!String.IsNullOrEmpty(SaveKey))
+        {
+          zune:Shell.SaveInt(SaveKey, Sorts.ChosenIndex);
+        }
+      </Script>
+    </Scripts>
+  </Class>
+
+  
+  
+  
+  <UI Name="LibraryPanelBase" Base="lib:Column">
+    <Properties>
+      <zune:LibraryPage Name="Page" LibraryPage="$Required"/>
+      
+      <zune:ListPanel Name="Model" ListPanel="$Required"/>
+
+      
+      <me:SortData Name="SortData" SortData="{null}"/>
+
+      
+      <SelectionManager Name="SelectionManager"/>
+
+      <Inset Name="ColumnInset" Inset="0,0,0,0"/>
+      <Boolean Name="ShowContextMenuTitle" Boolean="true"/>
+
+      <Boolean Name="RequireSelection" Boolean="false"/>
+      
+      <lib:LibraryListModel Name="ListModel"/>
+      
+      <Boolean Name="BlockUpdatesDuringGrovel" Boolean="true"/>
+      
+      <Int32 Name="SelectionThreshold" Int32="0"/>
+    </Properties>
+
+    <Locals>
+      
+      <me:NavigateIntoItemRequest Name="NavigateIntoArgs"/>
+
+      
+      <contextmenu:LibraryContextMenu Name="ContextMenu"/>
+
+      
+      <Command Name="Execute"/>
+      <zune:MenuItemCommand Name="Play" Description="{zune:Shell.LoadString(zune:StringId.IDS_PLAY)}" Available="false"/>
+      <zune:MenuItemCommand Name="PlayAll" Description="{zune:Shell.LoadString(zune:StringId.IDS_PLAY_ALL)}"/>
+      <zune:MenuItemCommand Name="AddToNowPlaying" Description="{zune:Shell.LoadString(zune:StringId.IDS_MENUITEM_ADD_TO_NOW_PLAYING)}"/>
+      <zune:MenuItemCommand Name="AddToPlaylist" Description="{zune:Shell.LoadString(zune:StringId.IDS_MENUITEM_ADD_TO_DIALOG)}"/>
+      <zune:MenuItemCommand Name="AddToBurnList" Description="{zune:Shell.LoadString(zune:StringId.IDS_MENUITEM_ADD_TO_BURNLIST)}"/>
+
+      <core:MenuDivider Name="SyncDivider"/>
+      <zune:MenuItemCommand Name="Sync"/>
+      <zune:MenuItemCommand Name="SyncAllUnexclude"/>
+      <String Name="SyncBaseText" String="{zune:Shell.LoadString(zune:StringId.IDS_SYNC_TO_DEVICE_MENUITEM)}"/>
+
+      <zune:MenuItemCommand Name="Exclude"/>
+      <String Name="ExcludeBaseText" String="{zune:Shell.LoadString(zune:StringId.IDS_EXCLUDE_ITEM)}"/>
+      <zune:MenuItemCommand Name="Unexclude"/>
+      <String Name="UnexcludeBaseText" String="{zune:Shell.LoadString(zune:StringId.IDS_UNEXCLUDE_ITEM)}"/>
+
+      <iris:Command Name="ReverseSync" Description="{zune:Shell.LoadString(zune:StringId.IDS_REVERSE_SYNC_MENUITEM)}"/>
+
+      <iris:Command Name="DeleteFromDevice"/>
+      <String Name="DeleteFromDeviceBaseText" String="{zune:Shell.LoadString(zune:StringId.IDS_DELETE_FROM_DEVICE_MENUITEM)}"/>
+
+      <iris:Command Name="Delete" Description="{zune:Shell.LoadString(zune:StringId.IDS_LIBRARY_DELETE_MENU_ITEM)}"/>
+      <zune:MenuItemCommand Name="Properties" Description="{zune:Shell.LoadString(zune:StringId.IDS_LIBRARY_PROPERTIES_MENU_ITEM)}"/>
+
+      <iris:Command Name="Edit" Description="{zune:Shell.LoadString(zune:StringId.IDS_LIBRARY_EDIT_MENU_ITEM)}"/>
+
+      <iris:Command Name="ToggleSelectAllCommand"/>
+
+      <contextmenu:RateCommand Name="Rate"/>
+
+      <dialogs:DeleteDialog Name="DeleteDialog" DeleteDialog="{null}"/>
+      <dialogs:PropertiesDialog Name="PropertiesDialog" PropertiesDialog="{null}"/>
+      <playlistdialog:AddToPlaylistDialog Name="AddToPlaylistDialog" AddToPlaylistDialog="{null}"/>
+
+      <iris:BooleanChoice Name="NeverShowDeleteDialogAgain" Description="{zune:Shell.LoadString(zune:StringId.IDS_DONT_SHOW_THIS_MESSAGE_AGAIN)}"/>
+      <iris:Command Name="DoDeleteDeviceMedia" Description="{zune:Shell.LoadString(zune:StringId.IDS_DIALOG_OK)}"/>
+      <List Name="DeleteDeviceMediaSelection" List="{null}"/>
+
+      <list:CommandContainer Name="EditContext" />
+      <Accessible Name="Accessible"/>
+      
+      
+      <Boolean Name="RestoringSelection"/>
+
+      <drag:DragInfo Name="DragInfo"/>
+      <styles:WindowState Name="WindowState"/>
+    </Locals>
+
+    <Input>
+      <KeyHandler Name="DeleteKey" Key="Delete" DisallowedModifiers="Alt,Ctrl,Shift" HandlerStage="Bubbled" Command="{Delete}"/>
+      <KeyHandler Name="EditKey" Key="F2" DisallowedModifiers="Alt,Ctrl,Shift" HandlerStage="Bubbled" Handle="true"/>
+    </Input>
+
+    <Scripts>
+      <Script>
+        EditKey.Enabled = ![Page.ShowDeviceContents];
+      </Script>
+      
+      <Script> 
+        ListModel.Model = Model; 
+        ListModel.ToggleSelectAllCommand = ToggleSelectAllCommand;
+      </Script>
+      
+      <Script> 
+        if (SortData != null)
+          ListModel.Sorts = [SortData.Sorts]; 
+        else
+          ListModel.Sorts = null;
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(EditKey.Invoked)]
+
+        if (EditKey.EventContext is list:ListItemContext)
+        {
+          list:ListItemContext context = (list:ListItemContext)EditKey.EventContext;
+
+          if (context.Edit != null)
+          {
+            context.Edit.Invoke();
+          }
+        }
+
+      </Script>
+
+      
+      <Script>
+        
+        if ((col:IList)SelectionManager.SourceList != Model.Content)
+          SelectionManager.SourceList = [Model.Content];
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(NavigateIntoArgs.LibraryId)]
+        [DeclareTrigger(Model.Content)]
+
+        int libraryId = NavigateIntoArgs.LibraryId;
+
+        if (libraryId >= 0 &amp;&amp; Model.Content != null)
+        {
+          if ( SelectionThreshold == 0 || Model.Content.Count &lt; SelectionThreshold )
+          {
+            int index = Model.GetIndexFromLibraryId(libraryId);          
+          
+            if (index != -1)
+            {
+              NavigateIntoArgs.Index = index;
+              NavigateIntoArgs.Select = true;
+            }            
+          }
+          
+          
+          NavigateIntoArgs.LibraryId = -1;
+        }
+      </Script>
+
+      
+      <Script>
+  <![CDATA[
+        if ([ContextMenu.Helper.IsVisible])
+        {
+          List selectedItems = SelectionManager.SelectedItems;
+
+          bool mediaOnlyList = false;
+          bool mixedSelection = false;
+          data:Media media = null;
+
+          if (SelectionManager.Count != 0)
+          {
+            
+            mediaOnlyList = true;
+          
+            
+            foreach (object obj in selectedItems)
+            {
+              
+              
+              if (mediaOnlyList)
+              {
+                if (!(obj is data:Media))
+                {
+                  
+                  mediaOnlyList = false;
+                  
+                }
+                else
+                {
+                  data:Media found = (data:Media)obj;
+                
+                  
+                  if (media == null)
+                  {
+                    
+                    media = found;
+                  }
+                  else
+                  {
+                    if (found.Type != media.Type)
+                    {
+                      mixedSelection = true;
+                    }
+                  }
+                }
+              }
+            }
+          }
+
+          if (mediaOnlyList)
+          {
+            if (ShowContextMenuTitle)
+            {
+              
+              if (!mixedSelection)
+              {
+                if (selectedItems.Count == 1)
+                {
+                  
+                  ContextMenu.Title = media.Title;
+                }
+                else
+                {
+                  ContextMenu.Title = ((String)me:StringHelper.MenuHeaderNItems.GetItem(media.Type)).Format(selectedItems.Count);
+                }
+              }
+              else
+              {
+                ContextMenu.Title = me:StringHelper.MixedSelection.Format(selectedItems.Count);
+              }
+            }
+            
+            
+            
+            Rate.Command.Available = mixedSelection || media.Type != "MediaFolder";
+
+            
+
+            bool singleSelect = (selectedItems.Count == 1);
+
+            Edit.Available = (EditContext.Model != null) && singleSelect;
+
+            
+
+            Sync.Hidden = false;
+            SyncAllUnexclude.Hidden = true;
+            Boolean syncOperationsEnabled = zune:SyncControls.Instance.CurrentDeviceExists;
+            Exclude.Hidden = true;
+            Unexclude.Hidden = true;
+
+            foreach (object objItem in SelectionManager.SelectedItems)
+            {
+              
+              if (objItem is data:Track ||
+                  objItem is data:Video ||
+                  objItem is data:Photo ||
+                  objItem is data:PodcastEpisode)
+              {
+                if (((data:Media)objItem).SyncState == zune:SyncControls.ConvertSyncStateToInt(dbapi:ESyncState.eSyncStateExcluded))
+                {
+                  
+                  Unexclude.Hidden = false;
+                }
+                else
+                {
+                  
+                  Exclude.Hidden = false;
+                }
+                
+                
+                if (objItem is data:PodcastEpisode &&
+                    ((data:PodcastEpisode)objItem).DownloadState != zune:EpisodeDownloadCommand.ConvertDownloadStatusToInt(dbapi:EEpisodeDownloadState.eDownloadStateDownloaded))
+                {
+                  syncOperationsEnabled = false;
+                }
+              }
+            }
+            
+            if (syncOperationsEnabled)
+            {
+              Boolean currentDeviceIsGuest = zune:SyncControls.Instance.CurrentDeviceIsGuest;
+              
+              Sync.Available = (currentDeviceIsGuest ||
+                                !zune:SyncControls.Instance.GetSyncAll(Model.MediaType));
+              Sync.Hidden = !Sync.Available;
+              SyncAllUnexclude.Available = !Sync.Available;
+              SyncAllUnexclude.Hidden = !SyncAllUnexclude.Available;
+              Exclude.Available = !currentDeviceIsGuest;
+              Unexclude.Available = !currentDeviceIsGuest;
+            }
+            else
+            {
+              Sync.Available = false;
+              SyncAllUnexclude.Available = false;
+              SyncAllUnexclude.Hidden = true;
+              Exclude.Available = false;
+              Unexclude.Available = false;
+            }
+          }
+          else
+          {
+            ContextMenu.Title = null;
+
+            Rate.Command.Available = false;
+            Sync.Available = false;
+            Sync.Hidden = true;
+            SyncAllUnexclude.Available = false;
+            SyncAllUnexclude.Hidden = true;
+            Exclude.Available = false;
+            Exclude.Hidden = true;
+            Unexclude.Available = false;
+            Unexclude.Hidden = true;
+            EditContext.Model = null;
+          }
+          
+          SyncDivider.Visible = !(Sync.Hidden && SyncAllUnexclude.Hidden && Exclude.Hidden && Unexclude.Hidden);
+        }
+      ]]></Script>
+
+      
+      <Script>
+        String name = zune:Shell.LoadString(zune:StringId.IDS_SYNC_DEFAULT_DEVICE_WORD);
+
+        if ([zune:SyncControls.Instance.CurrentDeviceExists])
+        {
+          name = [zune:SyncControls.Instance.CurrentDeviceName];
+        }
+
+        Sync.Description = SyncBaseText.Format(name);
+        SyncAllUnexclude.Description = Sync.Description;
+        Exclude.Description = ExcludeBaseText.Format(name);
+        Unexclude.Description = UnexcludeBaseText.Format(name);
+        DeleteFromDevice.Description = DeleteFromDeviceBaseText.Format(name);
+      </Script>
+
+      
+      <Script>
+        bool hasSelection = [SelectionManager.Count] != 0;
+        Play.Available = hasSelection;
+        Delete.Available = hasSelection;
+        DeleteFromDevice.Available = hasSelection;
+        AddToNowPlaying.Available = hasSelection;
+        AddToPlaylist.Available = hasSelection;
+
+        
+        bool selectedOne = (SelectionManager.Count == 1);
+        Properties.Available = selectedOne;
+        PlayAll.Available = selectedOne;
+        PlayAll.Hidden = !PlayAll.Available;
+      </Script>
+
+      
+      <Script>AddToPlaylist.Hidden = (Page.PlaybackContext != zune:PlaybackContext.Music);</Script>
+
+      
+      <Script>AddToNowPlaying.Hidden = ![zune:TransportControls.Instance.IsPlaybackContextCompatible];</Script>
+      
+      
+      <Script>AddToBurnList.Available = ([SelectionManager.Count] != 0 &amp;&amp; ![zune:CDAccess.Instance.IsBurning]);</Script>
+
+      
+
+
+      <Script>
+        [DeclareTrigger(((List)Model.Content).Count)]
+        
+        bool hasSelectedLibraryIds = !List.IsNullOrEmpty(Model.SelectedLibraryIds);
+        if (hasSelectedLibraryIds || RequireSelection)
+        {
+          if (Model.Content != null &amp;&amp;
+              Model.Content.Count > 0)
+          {
+            bool selectionChanged = false;
+            
+            if ( hasSelectedLibraryIds &amp;&amp; (SelectionThreshold == 0 || Model.Content.Count &lt; SelectionThreshold) )
+            {
+              List selectedIndices = Model.ComputeSelectedIndicies();
+            
+              foreach(Int32 index in selectedIndices)
+              {
+                if (!SelectionManager.IsSelected(index))
+                {
+                  selectionChanged = true;
+                  SelectionManager.Select(index, true);
+                }
+              }
+            }
+            
+            
+            NavigateIntoArgs.Index = SelectionManager.SelectedIndex;
+            NavigateIntoArgs.Select = false;
+            
+            
+            if (RequireSelection &amp;&amp; NavigateIntoArgs.Index == -1)
+            {
+              NavigateIntoArgs.Index = 0;
+              NavigateIntoArgs.Select = true;
+            }
+            else
+            {
+              
+              
+              
+              RestoringSelection = selectionChanged;
+            }
+          }
+          else
+          {
+            
+            
+            
+            RestoringSelection = true;
+          }
+        }
+      </Script>
+      
+      
+      <Script>
+        [DeclareTrigger(SelectionManager.SelectedItems)]
+        
+        
+        if (!RestoringSelection)
+        {
+          if (SelectionManager.Count > 0)
+          {
+            
+            List selectedIds = new col:ArrayList(SelectionManager.Count);
+            foreach (object o in SelectionManager.SelectedItems)
+            {
+              if (o is data:Media)
+                selectedIds.Add(((data:Media)o).LibraryId);
+            }
+            
+            Model.SelectedLibraryIds = selectedIds;
+          }
+          else if (SelectionManager.SourceList != null)
+          {
+            
+            
+            
+            Model.SelectedLibraryIds = null;
+          }
+        }
+        else 
+        {
+          RestoringSelection = false;
+        }
+      </Script>
+      
+      
+      <Script>
+        [DeclareTrigger(Play.Invoked)]
+
+        if (!Page.ShowDeviceContents)
+        {
+          zune:TransportControls.Instance.PlayItems(SelectionManager.SelectedItems);
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(PlayAll.Invoked)]
+
+        if (!Page.ShowDeviceContents)
+        {
+          int startFromIndex = -1;
+          if (SelectionManager.Count == 1) startFromIndex = SelectionManager.SelectedIndex;
+
+          if (!List.IsNullOrEmpty(SelectionManager.SourceList))
+          {
+            zune:TransportControls.Instance.PlayItems(SelectionManager.SourceList, startFromIndex);
+          }
+        }
+      </Script>
+
+      
+      
+      <Script>
+        [DeclareTrigger(Execute.Invoked)]
+
+        if (SelectionManager.Count > 1)
+        {
+          Play.Invoke();
+        }
+        else
+        {
+          PlayAll.Invoke();
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(AddToNowPlaying.Invoked)]
+
+        if (SelectionManager.Count != 0)
+        {
+          zune:TransportControls.Instance.AddToNowPlaying(SelectionManager.SelectedItems);
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(AddToPlaylist.Invoked)]
+
+        if (SelectionManager.Count != 0)
+        {
+          if (AddToPlaylistDialog == null) AddToPlaylistDialog = new playlistdialog:AddToPlaylistDialog();
+          AddToPlaylistDialog.DragItems = SelectionManager.SelectedItems;
+          AddToPlaylistDialog.Helper.Show(AddToPlaylistDialog);
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(AddToBurnList.Invoked)]
+
+        zune:CDAccess.Instance.AddToBurnList(SelectionManager.SelectedItems);
+      </Script>
+      
+      
+      <Script>
+        [DeclareTrigger(Delete.Invoked)]
+
+        
+        if (DeleteDialog == null) DeleteDialog = new dialogs:DeleteDialog();
+
+        
+        List selectedItems = SelectionManager.SelectedItems;
+        if (!List.IsNullOrEmpty(selectedItems))
+        {
+          
+          DeleteDialog.ItemsToDelete = selectedItems;
+          DeleteDialog.Helper.Show(DeleteDialog);
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(Properties.Invoked)]
+
+        if (Properties.Available)
+        {
+          
+          if (PropertiesDialog == null) PropertiesDialog = new dialogs:PropertiesDialog();
+
+          data:Media media = (data:Media)SelectionManager.SelectedItem;
+
+          if (media != null)
+          {
+            if (media is data:PlaylistContentItem)
+            {
+              data:PlaylistContentItem playlistContentItem = (data:PlaylistContentItem)media;
+              PropertiesDialog.LibraryId = playlistContentItem.MediaId;
+              PropertiesDialog.ItemType = zune:Shell.MapIntToMediaType(playlistContentItem.MediaType);
+            }
+            else
+            {
+              PropertiesDialog.LibraryId = media.LibraryId;
+              PropertiesDialog.ItemType = zune:Shell.MapStringToMediaType(media.Type);
+            }
+          }
+
+          PropertiesDialog.Helper.Show(PropertiesDialog);
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(Edit.Invoked)]
+
+        if (EditContext.Model != null)
+        {
+          EditContext.Model.Invoke();
+        }
+      </Script>
+
+      <Script>
+        [DeclareTrigger(Sync.Invoked)]
+        zune:SyncControls.Instance.AddSyncRule(SelectionManager.SelectedItems);
+      </Script>
+
+      <Script>
+        [DeclareTrigger(Exclude.Invoked)]
+        zune:SyncControls.Instance.Exclude(SelectionManager.SelectedItems);
+      </Script>
+
+      <Script>
+        [DeclareTrigger(Unexclude.Invoked)]
+        [DeclareTrigger(SyncAllUnexclude.Invoked)]
+        zune:SyncControls.Instance.Unexclude(SelectionManager.SelectedItems);
+      </Script>
+
+      <Script>
+        [DeclareTrigger(ReverseSync.Invoked)]
+        zune:SyncControls.Instance.ReverseSync(SelectionManager.SelectedItems);
+      </Script>
+
+      <Script>
+        [DeclareTrigger(Rate.Command.Invoked)]
+        foreach (object objItem in SelectionManager.SelectedItems)
+        {
+          if (objItem is data:RateableMedia)
+          {              
+            ((data:RateableMedia)objItem).UserRating = Rate.Rating;
+          }
+        }
+      </Script>
+
+      <Script>
+        ToggleSelectAllCommand.Available = SelectionManager.SourceList != null &amp;&amp;
+                                          [SelectionManager.SourceList.Count] > 0;
+      </Script>
+
+      <Script>
+        [DeclareTrigger(ToggleSelectAllCommand.Invoked)]
+        if (SelectionManager.Count != SelectionManager.SourceList.Count)
+          SelectionManager.SelectRange(0, SelectionManager.SourceList.Count - 1);
+        else
+          SelectionManager.Clear();
+      </Script>
+
+      <Script>
+        [DeclareTrigger(DeleteFromDevice.Invoked)]
+
+        NeverShowDeleteDialogAgain.Value = false;
+        DeleteDeviceMediaSelection = null;
+
+        DeleteDeviceMediaSelection = SelectionManager.SelectedItems;
+        if (!List.IsNullOrEmpty(DeleteDeviceMediaSelection))
+        {
+          if (zune:Management.Instance.ConfirmDeviceMediaDeletion)
+          {
+            string content = null;
+          
+            if (DeleteDeviceMediaSelection.Count == 1)
+            {
+              object selectedItem = DeleteDeviceMediaSelection.GetItem(0);
+              string title = ((data:Media)selectedItem).Title;
+              content = ((String)zune:Shell.LoadString(zune:StringId.IDS_DEVICE_QUESTION_1_ITEM)).Format(title, zune:SyncControls.Instance.CurrentDeviceName);
+            }
+            else
+            {
+              content = ((String)zune:Shell.LoadString(zune:StringId.IDS_DEVICE_QUESTION_N_ITEMS)).Format(DeleteDeviceMediaSelection.Count, zune:SyncControls.Instance.CurrentDeviceName);
+            }
+
+            zune:MessageBox.Show(null, content, DoDeleteDeviceMedia, null, NeverShowDeleteDialogAgain);
+          }
+          else
+          {
+            DoDeleteDeviceMedia.Invoke();
+          }
+        }
+      </Script>
+
+      <Script>
+        [DeclareTrigger(DoDeleteDeviceMedia.Invoked)]
+
+        zune:SyncControls.Instance.DeleteAndExclude(DeleteDeviceMediaSelection);
+
+        if (NeverShowDeleteDialogAgain.Value)
+        {
+          zune:Management.Instance.ConfirmDeviceMediaDeletion = false;
+        }
+
+        NeverShowDeleteDialogAgain.Value = false;
+        DeleteDeviceMediaSelection = null;
+      </Script>
+
+      <Script>
+        if ([Accessible.Enabled])
+        {
+          Accessible.Name = [Model.MediaType].ToString();
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(zune:JumpInListManager.Instance.IsActive)]
+        [DeclareTrigger(UI.DeepKeyFocus)]
+        [DeclareTrigger(Model.Content)]
+        zune:LibraryPage.BlockUpdatesFromDBList(
+            Model.Content, 
+            zune:BlockListUpdatesReason.JumpInList, 
+            zune:JumpInListManager.Instance.IsActive &amp;&amp; UI.DeepKeyFocus);
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(zune:PopupManager.Instance.IsModal)]
+        [DeclareTrigger(Model.Content)]
+        zune:LibraryPage.BlockUpdatesFromDBList(
+            Model.Content, 
+            zune:BlockListUpdatesReason.ModalUI, 
+            zune:PopupManager.Instance.IsModal);
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(DragInfo.IsDraggingInternally)]
+        [DeclareTrigger(Model.Content)]
+        zune:LibraryPage.BlockUpdatesFromDBList(
+            Model.Content, 
+            zune:BlockListUpdatesReason.DragDrop, 
+            DragInfo.IsDraggingInternally);
+      </Script>
+      
+      
+
+      <Script>
+        [DeclareTrigger(zune:MetadataNotifications.Instance.Importing)]
+        [DeclareTrigger(UI.DeepMouseFocus)]
+        [DeclareTrigger(iris:Application.Window.MouseActive)]
+        [DeclareTrigger(UI.DeepKeyFocus)]
+        [DeclareTrigger(WindowState.KeysActive)]
+        [DeclareTrigger(Model.Content)]
+        
+        if (BlockUpdatesDuringGrovel)
+        {
+          zune:LibraryPage.BlockUpdatesFromDBList(
+              Model.Content, 
+              zune:BlockListUpdatesReason.Focus, 
+              zune:MetadataNotifications.Instance.Importing &amp;&amp;
+              ((UI.DeepMouseFocus &amp;&amp; iris:Application.Window.MouseActive) || 
+              (UI.DeepKeyFocus &amp;&amp; styles:WindowState.KeysActive)));
+        }
+      </Script>
+    </Scripts>
+  </UI>
+
+  
+  
+  
+  
+  <UI Name="LibraryGalleryPanel" Base="me:LibraryPanelBase">
+    <Properties>
+      <Type Name="GalleryViewType" Type="{typeof(me:LibraryGalleryView)}"/>
+      <Size Name="LayoutSpacing" Size="10,0"/>
+      <Inset Name="ColumnMargins" Inset="0,0,0,0"/>
+      <Inset Name="HeaderMargins" Inset="0,0,0,22"/>
+      <Inset Name="HeaderPadding" Inset="0,0,0,0"/>
+      <iris:Command Name="SelectedItemClicked" Command="{null}"/>
+    </Properties>
+
+    <Scripts>
+      <Script>Worker.SupportsJumpInList = [SupportsJumpInList];</Script>
+      <Script>Worker.SelectedItemClicked = [SelectedItemClicked];</Script>
+      <Script>Worker.Sorts = [ListModel.Sorts];</Script>
+    </Scripts>
+
+    <Content>
+      <gp:GalleryPanelWorker Name="Worker"
+        Model="{Model}"
+        SelectionManager="{SelectionManager}"
+        ContextMenu="{ContextMenu}"
+        EditContext="{EditContext}"
+        NavigateIntoArgs="{NavigateIntoArgs}"
+        GalleryViewType="{GalleryViewType}"
+        ToggleSelectAllCommand="{ToggleSelectAllCommand}"
+        Padding="{ColumnMargins}"
+        ColumnInset="{ColumnInset}"
+        LayoutSpacing="{LayoutSpacing}" 
+        HeaderMargins="{HeaderMargins}"
+        HeaderPadding="{HeaderPadding}"/>
+    </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="LibraryGalleryView" Base="gp:GalleryView">
+    <Properties>
+      <zune:ListPanel Name="ListModel" ListPanel="$Required"/>
+      <SelectionManager Name="SelectionManager" SelectionManager="$Required"/>
+
+      <Type Name="ProviderType" Type="{typeof(me:ListItemProvider)}"/>
+    </Properties>
+  </UI>
+
+
+  
+  
+  
+  <Class Name="ListItemProvider" Base="thumbbutton:ThumbnailButtonProvider">
+    <Properties>
+      <zune:ListPanel Name="ListModel" ListPanel="$Required"/>
+      <Object Name="Model" Object="$Required"/>
+      <Index Name="Index" Index="$Required"/>
+      <SelectionManager Name="SelectionManager" SelectionManager="$Required"/>
+    </Properties>
+
+    <Scripts>
+      <Script>DragValue = SelectionManager;</Script>
+
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(((data:Media)Model).Title)]
+        if (Model is data:Media)
+        {
+          data:Media media = (data:Media)Model;
+          
+          PrimaryLabel = media.Title;
+        }
+        else if (Model is String)
+        {
+          PrimaryLabel = (String)Model;
+        }
+        else
+        {
+          if (Model == null)
+          {
+            
+          }
+          else
+          {
+            
+          }
+        }
+      </Script>
+
+      <Script><![CDATA[
+          [DeclareTrigger(PrimaryLabelEdited.Invoked)]
+
+          if (Model is data:Media)
+          {
+            ((data:Media)Model).Title = PrimaryLabel;
+          }
+      ]]></Script>
+    </Scripts>
+  </Class>
+
+  <Class Name="StringHelper" Shared="true">
+    <Properties>
+      <Dictionary Name="MenuHeader1Item">
+        <Source>
+          <String Name="Artist" String="{zune:Shell.LoadString(zune:StringId.IDS_LIBRARY_MENUITEM_HEADER_1_ARTIST)}"/>
+          <String Name="Album"  String="{zune:Shell.LoadString(zune:StringId.IDS_LIBRARY_MENUITEM_HEADER_1_ALBUM)}"/>
+          <String Name="Track"  String="{zune:Shell.LoadString(zune:StringId.IDS_LIBRARY_MENUITEM_HEADER_1_TRACK)}"/>
+          <String Name="Photo"  String="{zune:Shell.LoadString(zune:StringId.IDS_LIBRARY_MENUITEM_HEADER_1_PHOTO)}"/>
+          <String Name="Video"  String="{zune:Shell.LoadString(zune:StringId.IDS_LIBRARY_MENUITEM_HEADER_1_VIDEO)}"/>
+          <String Name="Playlist" String="{zune:Shell.LoadString(zune:StringId.IDS_LIBRARY_MENUITEM_HEADER_1_PLAYLIST)}"/>
+          <String Name="PodcastSeries" String="{zune:Shell.LoadString(zune:StringId.IDS_LIBRARY_MENUITEM_HEADER_1_PODCAST)}"/>
+          <String Name="PodcastEpisode" String="{zune:Shell.LoadString(zune:StringId.IDS_LIBRARY_MENUITEM_HEADER_1_PODCASTEPISODE)}"/>
+          <String Name="PlaylistContentItem" String="{zune:Shell.LoadString(zune:StringId.IDS_LIBRARY_MENUITEM_HEADER_1_TRACK)}"/>
+          <String Name="MediaFolder" String="{zune:Shell.LoadString(zune:StringId.IDS_LIBRARY_MENUITEM_HEADER_1_FOLDER)}"/>
+        </Source>
+      </Dictionary>
+      <Dictionary Name="MenuHeaderNItems">
+        <Source>
+          <String Name="Artist" String="{zune:Shell.LoadString(zune:StringId.IDS_LIBRARY_MENUITEM_HEADER_N_ARTISTS)}"/>
+          <String Name="Album"  String="{zune:Shell.LoadString(zune:StringId.IDS_LIBRARY_MENUITEM_HEADER_N_ALBUMS)}"/>
+          <String Name="Track"  String="{zune:Shell.LoadString(zune:StringId.IDS_LIBRARY_MENUITEM_HEADER_N_TRACKS)}"/>
+          <String Name="Photo"  String="{zune:Shell.LoadString(zune:StringId.IDS_LIBRARY_MENUITEM_HEADER_N_PHOTOS)}"/>
+          <String Name="Video"  String="{zune:Shell.LoadString(zune:StringId.IDS_LIBRARY_MENUITEM_HEADER_N_VIDEOS)}"/>
+          <String Name="Playlist" String="{zune:Shell.LoadString(zune:StringId.IDS_LIBRARY_MENUITEM_HEADER_N_PLAYLISTS)}"/>
+          <String Name="PodcastSeries" String="{zune:Shell.LoadString(zune:StringId.IDS_LIBRARY_MENUITEM_HEADER_N_PODCASTS)}"/>
+          <String Name="PodcastEpisode" String="{zune:Shell.LoadString(zune:StringId.IDS_LIBRARY_MENUITEM_HEADER_N_PODCASTEPISODES)}"/>
+          <String Name="PlaylistContentItem" String="{zune:Shell.LoadString(zune:StringId.IDS_LIBRARY_MENUITEM_HEADER_N_TRACKS)}"/>
+          <String Name="MediaFolder" String="{zune:Shell.LoadString(zune:StringId.IDS_LIBRARY_MENUITEM_HEADER_N_FOLDERS)}"/>
+        </Source>
+      </Dictionary>
+      <String Name="MixedSelection" String="{zune:Shell.LoadString(zune:StringId.IDS_LIBRARY_MENUITEM_HEADER_N_ITEMS)}"/>
+    </Properties>
+  </Class>
+
+  
+  
+  
+  <UI Name="ThumbnailCaptionArea" Base="thumbbutton:ThumbnailCaptionArea">
+    <Scripts>
+      <Script>
+        Type hostType = typeof(tpc:SyncCell);
+        style:Style hostStyle = styles:SharedStyles.ListItemStyle;
+        
+        if (zune:Shell.DefaultInstance.CurrentPage is zune:LibraryPage)
+        {
+          if (((zune:LibraryPage)zune:Shell.DefaultInstance.CurrentPage).ShowDeviceContents)
+          {
+            hostType = typeof(tpc:SizeOnDeviceCell);
+            hostStyle = SecondaryLabelStyle;
+          }
+        }
+        
+        DeviceStatus.RequestSource(hostType, "Model", (data:Media)Provider.Model, "Style", hostStyle);
+      </Script>
+    </Scripts>
+    <Content>
+
+      <Panel Layout="Anchor" MinimumSize="{LabelSize}" MaximumSize="{LabelSize}" Margins="{LabelInset}">
+        <Children>
+
+          
+          <Panel Name="StatusContainer">
+            <LayoutInput>
+              <AnchorLayoutInput Right="Parent,1" Top="Parent,0"/>
+            </LayoutInput>
+            <Children>
+
+              <Host Name="DeviceStatus"/>
+
+            </Children>
+          </Panel>
+
+          
+          <thumbbutton:LabelHostBase Name="Label" LabelHostBase="{PrimaryLabelType}" Style="{PrimaryLabelStyle}">
+            <LayoutInput>
+              <AnchorLayoutInput Left="Parent,0" Top="Parent,0" Right="StatusContainer,0"/>
+            </LayoutInput>
+          </thumbbutton:LabelHostBase>
+
+          
+          <thumbbutton:LabelHostBase Name="SecondaryLabel" LabelHostBase="{SecondaryLabelType}" Style="{SecondaryLabelStyle}">
+            <LayoutInput>
+              <AnchorLayoutInput Left="Parent,0" Top="Label,1" Bottom="Parent,1"/>
+            </LayoutInput>
+          </thumbbutton:LabelHostBase>
+
+        </Children>
+      </Panel>
+      
+    </Content>
+  </UI>
+
+  
+  
+  
+  <Class Name="NavigateIntoItemRequest" Base="core:NavigateIntoIndexRequest">
+    <Properties>
+      <Int32 Name="LibraryId" Int32="-1"/>
+    </Properties>
+  </Class>
+  
+  
+  
+  
+  <Class Name="Globals" Shared="true">
+    <Properties>
+      
+      <Dictionary Name="SortAscendingMap"/>
+    </Properties>
+    
+    <Scripts>
+      <Script>
+        SortAscendingMap.SetItem(false, "-");
+        SortAscendingMap.SetItem(true, "+");
+      </Script>
+    </Scripts>
+  </Class>
+</UIX>

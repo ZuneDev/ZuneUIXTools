@@ -1,0 +1,265 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:col="assembly://mscorlib/System.Collections"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:msg="assembly://ZuneDBApi/Microsoft.Zune.Messaging"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:msgdata="res://ZuneShellResources!MessagingData.schema.xml"
+  xmlns:thumbbutton="res://ZuneShellResources!ThumbnailButton.uix"
+  xmlns:inboxdetails="res://ZuneShellResources!InboxBaseDetails.uix"
+  xmlns:me="Me">
+
+  
+  
+  
+  <UI Name="PicturesView" Base="core:GalleryView">
+    <Properties>
+      <iris:ArrayListDataSet Name="PhotoQueries" ArrayListDataSet="$Required"/>
+    </Properties>
+
+    <Content Name="Item">
+      <core:ThumbnailListItemBase Index="{RepeatedItemIndex}" TileSize="{TileSize}">
+        <Provider>
+          <me:PhotoThumbnailButtonProvider
+            Item="{RepeatedItem}"
+            Index="{RepeatedItemIndex}"
+            ImageProvider="{(msgdata:InboxImageProviderQuery)PhotoQueries.get_Item(RepeatedItemIndex.Value)}"/>
+        </Provider>
+      </core:ThumbnailListItemBase>
+    </Content>
+  </UI>
+
+  
+  
+  
+  <Class Name="PhotoThumbnailButtonProvider" Base="thumbbutton:ThumbnailButtonProvider">
+    <Properties>
+      <Object Name="Item" Object="$Required"/>
+      <Index Name="Index" Index="$Required"/>
+      <Image Name="Image" Image="{styles:Styles.NoArtWide}"/>
+      <msgdata:InboxImageProviderQuery Name="ImageProvider" InboxImageProviderQuery="$Required" />
+    </Properties>
+
+    <Scripts>
+      <Script>PrimaryLabel = ImageProvider.Title;</Script>
+      <Script>
+        
+        
+        if (ImageProvider != null &amp;&amp; ImageProvider.Result != null)
+        {
+          if ([ImageProvider.Result.ImagePath] != null &amp;&amp; ImageProvider.Result.Photo != null)
+          {
+            Image = ImageProvider.Result.Photo;
+          }
+        }
+      </Script>
+
+    </Scripts>
+  </Class>
+
+  
+  
+  
+  <UI Name="PhotoDetailsUI" Base="inboxdetails:MessageDetailsProvider">
+    <Locals>
+      <msgdata:UriResourcePhotosQuery Name="PhotosQuery" />
+      <iris:Command Name="PicturesCommand" Available="false"/>
+      <iris:ArrayListDataSet Name="PhotoQueries" />
+      <Int32 Name="Counter" Int32="-1" />
+      <msgdata:InboxImageProviderQuery Name="CurrentQuery" InboxImageProviderQuery="{null}" />
+      <Boolean Name="EvaluateCollectionState" />
+      <Boolean Name="AllInLibrary" />
+      <Boolean Name="ResultReady" />
+    </Locals>
+
+    <Scripts>
+      <Script>
+        if ([MessageDetailsQuery.Status] == iris:DataProviderQueryStatus.Complete)
+        {
+          PhotosQuery.URI = MessageDetailsQuery.Result.AltLink;
+        }
+      </Script>
+      <Script>
+        if ([PhotosQuery.Status] == iris:DataProviderQueryStatus.Complete)
+        {
+          CollectionTitle.Content = PhotosQuery.Result.CollectionName;
+
+          PhotoQueries.Clear();
+          foreach(msgdata:Photo photo in (List)PhotosQuery.Result.Photos)
+          {
+            msgdata:InboxImageProviderQuery queryPhotoImage = new msgdata:InboxImageProviderQuery();
+            PhotoQueries.Add(queryPhotoImage);
+            
+            queryPhotoImage.Title = photo.Title;
+            queryPhotoImage.CollectionName = PhotosQuery.Result.CollectionName;
+            
+            if (!queryPhotoImage.Result.InLibrary)
+            {
+              
+              queryPhotoImage.URL = MessageDetailsQuery.Result.AltLink + photo.Suffix;
+            }
+          }
+          Pictures.Content = PhotosQuery.Result.Photos;
+          
+          EvaluateCollectionState = true;
+        }
+      </Script>
+      <Script>
+        if ([EvaluateCollectionState])
+        {
+          EvaluateCollectionState = false;
+          if (!List.IsNullOrEmpty(PhotoQueries))
+          {
+            bool allInLibrary = true;
+            foreach(msgdata:InboxImageProviderQuery queryPhotoImage in (List)PhotoQueries)
+            {
+              allInLibrary = allInLibrary &amp;&amp; queryPhotoImage.Result.InLibrary;
+            }
+            AllInLibrary = allInLibrary;
+            PicturesCommand.Available = true;
+            PicturesButton.Visible = true;
+          }
+          MessageDetailsCompleted = true;
+        }
+      </Script>
+      <Script>
+        if ([AllInLibrary])
+        {
+          PicturesCommand.Description = zune:Shell.LoadString(zune:StringId.IDS_INCOLLECTION);
+        }
+        else
+        {
+          PicturesCommand.Description = zune:Shell.LoadString(zune:StringId.IDS_DOWNLOADPICTURES);
+        }
+      </Script>
+      <Script>
+        [DeclareTrigger(PicturesCommand.Invoked)]
+        if (AllInLibrary)
+        {
+          
+          col:Hashtable args = new col:Hashtable();
+          args.Add("FolderId", msg:MessagingService.Instance.GetInboxDownloadFolderId(PhotosQuery.Result.CollectionName));
+          zune:Shell.DefaultInstance.Execute("Collection\Photos", args);
+        }
+        else
+        {
+          
+          
+          PicturesCommand.Available = false;
+          
+          Counter = 0;
+        }
+      </Script>
+
+      <Script>
+        [DeclareTrigger(Counter)]
+        if (Counter != -1)
+        {
+          if (Counter == PhotoQueries.Count)
+          {
+            
+            Counter = -1;
+            EvaluateCollectionState = true;
+          }
+          else
+          {
+            
+            msgdata:InboxImageProviderQuery photoQuery = (msgdata:InboxImageProviderQuery)PhotoQueries.get_Item(Counter);
+            CurrentQuery = photoQuery;
+            
+            if (photoQuery.Status == iris:DataProviderQueryStatus.Idle)
+            {
+              
+              msgdata:Photo photo = (msgdata:Photo)PhotosQuery.Result.Photos.get_Item(Counter);
+              photoQuery.Title = photo.Title;
+              photoQuery.CollectionName = PhotosQuery.Result.CollectionName;
+              if (!photoQuery.Result.InLibrary)
+              {
+                
+                photoQuery.URL = MessageDetailsQuery.Result.AltLink + photo.Suffix;
+              }
+            }
+            else
+            {
+              ResultReady = true;
+            }
+          }
+        }
+      </Script>
+
+      <Script>
+        [DeclareTrigger(CurrentQuery.Result.ImagePath)]
+        ResultReady = true;
+      </Script>
+
+      <Script>
+        [DeclareTrigger(ResultReady)]
+        if (ResultReady)
+        {
+          if (CurrentQuery != null)
+          {
+            if (!CurrentQuery.Result.InLibrary)
+            {
+              if (!msg:MessagingService.Instance.AddInboxPhoto(CurrentQuery.Title, PhotosQuery.Result.CollectionName, CurrentQuery.Result.ImagePath))
+              {
+                
+              }
+              else
+              {
+                
+                CurrentQuery.Title = CurrentQuery.Title;
+              }
+            }
+            CurrentQuery = null;
+          }
+          
+          if (Counter >= 0)
+          {
+            Counter = Counter + 1;
+          }
+          ResultReady = false;
+        }
+      </Script>
+
+    </Scripts>
+
+    <Content>
+      <Panel Margins="10,5,0,0">
+        <Layout><DockLayout DefaultLayoutInput="Top,Near"/></Layout>
+        <Children>
+
+          
+          <inboxdetails:MessageDetailsHeader Name="Header" Model="{Model}" MessageDetailsQuery="{MessageDetailsQuery}"/>
+
+          
+          <core:Label Name="CollectionTitle" Margins="10,5,0,0" Style="{styles:SharedStyles.InboxAlbumTitle}"/>
+
+          
+          <core:ActionButton Name="PicturesButton" Visible="false" Model="{PicturesCommand}" Margins="10,0,0,0" />
+
+          
+          <me:PicturesView Name="Pictures" Content="{null}" TileSize="160,120" Margins="10,10,10,0" ScrollOrientation="Vertical" PhotoQueries="{PhotoQueries}" >
+            <ListLayout>
+              <GridLayout Orientation="Horizontal" AllowWrap="true" Spacing="5,5"/>
+            </ListLayout>
+            <LayoutInput>
+              <DockLayoutInput Position="Client"/>
+            </LayoutInput>
+          </me:PicturesView>
+
+          
+          <inboxdetails:MessageDetailsFooter Name="Footer" Model="{Model}" MessageDetailsQuery="{MessageDetailsQuery}" Margins="10,19,0,0">
+            <LayoutInput>
+              <DockLayoutInput Position="Bottom"/>
+            </LayoutInput>
+          </inboxdetails:MessageDetailsFooter>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+</UIX>

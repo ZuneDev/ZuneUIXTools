@@ -1,0 +1,279 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:data="res://ZuneShellResources!LibraryData.schema.xml"
+  xmlns:spreadsheet="res://ZuneShellResources!SpreadSheetViewBase.uix"
+  xmlns:lv="res://ZuneShellResources!ListViewPanel.uix"
+  xmlns:tpc="res://ZuneShellResources!TracksPanelColumns.uix"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:lib="res://ZuneShellResources!Library.uix"
+  xmlns:me="Me">
+
+  
+  <Class Name="PlaylistContentsPanelListModel" Base="lib:LibraryListModel">
+    <Properties>
+      <zune:PlaylistContentsPanel Name="Model" PlaylistContentsPanel="$Required" />
+    </Properties>
+  </Class>
+
+  
+  <Class Name="PlaylistViewData" Shared="True">
+    <Properties>
+
+      
+      
+      <spreadsheet:ColumnInfo Name="StatusColumn"
+                CellType="{typeof(me:StatusCell)}"
+                Resizable="false"
+                CellPadding="4,1,0,0"
+                HighlightHeader="false">
+        <ColumnSize>
+          <SharedSize Size="21,0"/>
+        </ColumnSize>
+        <LayoutInput>
+          <StackLayoutInput Priority="High"/>
+        </LayoutInput>
+      </spreadsheet:ColumnInfo>      
+
+      <spreadsheet:ColumnInfo Name="OrdinalColumn"
+            Header="{zune:Shell.LoadString(zune:StringId.IDS_BLANK_COLUMN_HEADER)}"
+            CellType="{typeof(me:OrdinalCell)}"
+            CellPadding="0,0,0,0">
+        
+        <ColumnSize>
+          <SharedSize Size="70,0" MinimumSize="70,0" MaximumSize="500,0"/>
+        </ColumnSize>
+      </spreadsheet:ColumnInfo>
+      
+      <spreadsheet:ColumnInfo Name="TitleColumn"
+            Header="{zune:Shell.LoadString(zune:StringId.IDS_SONG_COLUMN_HEADER)}"
+            CellType="{typeof(tpc:SongCell)}"
+            CellEditType="{typeof(tpc:SongEditCell)}"
+            CellPadding="5,0,0,0"
+            ShowDivider="false">
+        
+        <ColumnSize>
+          <SharedSize Size="200,0" MinimumSize="50,0" MaximumSize="500,0"/>
+        </ColumnSize>
+      </spreadsheet:ColumnInfo>
+
+      <spreadsheet:ColumnInfo Name="TimeColumn"
+            Header="{zune:Shell.LoadString(zune:StringId.IDS_LENGTH_COLUMN_HEADER)}"
+            CellType="{typeof(me:LengthCell)}">
+        
+        <ColumnSize>
+          <SharedSize Size="75,0" MinimumSize="60,0" MaximumSize="100,0"/>
+        </ColumnSize>
+      </spreadsheet:ColumnInfo>
+
+      
+      <spreadsheet:ColumnInfo Name="ArtistColumn"
+            Header="{zune:Shell.LoadString(zune:StringId.IDS_ARTIST_COLUMN_HEADER)}"
+            CellType="{typeof(me:ArtistCell)}" 
+            CellEditType="{typeof(me:ArtistEditCell)}" 
+            CellPadding="19,0,0,0">
+        
+        <ColumnSize>
+          <SharedSize Size="154,0" MinimumSize="50,0" MaximumSize="500,0"/>
+        </ColumnSize>
+      </spreadsheet:ColumnInfo>
+
+      
+      <spreadsheet:ColumnInfo Name="AlbumColumn"
+            Header="{zune:Shell.LoadString(zune:StringId.IDS_ALBUM_COLUMN_HEADER)}"
+            CellType="{typeof(me:AlbumCell)}" 
+            CellEditType="{typeof(me:AlbumEditCell)}" 
+            CellPadding="17,0,0,0">
+        
+        <ColumnSize>
+          <SharedSize Size="158,0" MinimumSize="50,0" MaximumSize="500,0"/>
+        </ColumnSize>
+      </spreadsheet:ColumnInfo>
+
+      <spreadsheet:ColumnInfo Name="RatingColumn"
+            Header="{zune:Shell.LoadString(zune:StringId.IDS_RATING_COLUMN_HEADER)}"
+            HeaderIcon="{styles:Styles.RatingHeader}"
+            CellType="{typeof(tpc:RatingCell)}"
+            Resizable="false" 
+            CellPadding="4,0,4,0">
+        
+        <ColumnSize>
+          <SharedSize Size="25,0" MinimumSize="25,0"/>
+        </ColumnSize>
+      </spreadsheet:ColumnInfo>
+
+      <spreadsheet:ColumnInfo Name="SyncColumn" 
+            Header="{zune:Shell.LoadString(zune:StringId.IDS_SYNC_STATUS_COLUMN_HEADER)}"
+            HeaderIcon="{styles:Styles.SyncHeader}"
+            CellType="{typeof(tpc:SyncCell)}"
+            Resizable="false"
+            CellPadding="{tpc:Constants.SyncCellPadding}"
+            HeaderPadding="{tpc:Constants.SyncHeaderPadding}">
+        <ColumnSize>
+          <SharedSize Size="25,0"/>
+        </ColumnSize>
+      </spreadsheet:ColumnInfo>
+
+      <spreadsheet:ColumnInfo Name="SizeOnDeviceColumn" Header="{zune:Shell.LoadString(zune:StringId.IDS_SIZE_COLUMN_HEADER)}"
+         CellType="{typeof(tpc:SizeOnDeviceCell)}"
+         Resizable="false">
+        <ColumnSize>
+          <SharedSize Size="75,0"/>
+        </ColumnSize>
+      </spreadsheet:ColumnInfo>
+      
+      <spreadsheet:ColumnData Name="ColumnData" SaveKeyPrefix="Playlist"
+                              SortedColumn="{me:SortInfo.Ordinal}">
+        <Columns>
+          <spreadsheet:ColumnInfo ColumnInfo="{StatusColumn}"/>
+          
+          <spreadsheet:ColumnInfo ColumnInfo="{TitleColumn}"/>
+          <spreadsheet:ColumnInfo ColumnInfo="{TimeColumn}"/>
+          <spreadsheet:ColumnInfo ColumnInfo="{ArtistColumn}"/>
+          <spreadsheet:ColumnInfo ColumnInfo="{AlbumColumn}"/>
+          <spreadsheet:ColumnInfo ColumnInfo="{RatingColumn}"/>
+          
+          <spreadsheet:ColumnInfo ColumnInfo="{SizeOnDeviceColumn}"/>
+        </Columns>
+      </spreadsheet:ColumnData>
+
+    </Properties>
+  </Class>
+
+  
+  <UI Name="PlaylistHeader" Base="spreadsheet:Cell">
+    <Properties>
+      <lib:LibraryListModel Name="ListModel" LibraryListModel="$Required"/>
+    </Properties>
+    <Content>
+      <lv:ColumnPanelHeader ToggleSelectAll="{ListModel.ToggleSelectAllCommand}" Sorts="{ListModel.Sorts}"
+                            SizeToChildren="false"/>
+    </Content>
+  </UI>
+
+  
+  <UI Name="PlaylistCell" Base="spreadsheet:LabelCell">
+    <Properties>
+      <data:Playlist Name="Model" Playlist="$Required"/>
+    </Properties>
+    <Scripts>
+      <Script>Content = [Model.Title];</Script>
+    </Scripts>
+  </UI>
+
+  <UI Name="LabelCell" Base="spreadsheet:LabelCell">
+    <Properties>
+      <data:PlaylistContentItem Name="Model" PlaylistContentItem="$Required"/>
+    </Properties>
+  </UI>
+
+  
+  <UI Name="OrdinalCell" Base="me:LabelCell">
+    <Scripts>
+      <Script>Content = [Model.Ordinal].ToString();</Script>
+    </Scripts>
+  </UI>
+
+  
+  <UI Name="ArtistCell" Base="me:LabelCell">
+    <Scripts>
+      <Script>Content = [Model.ArtistName];</Script>
+    </Scripts>
+  </UI>
+
+  
+  <UI Name="ArtistEditCell" Base="spreadsheet:LabelEditCell">
+    <Properties>
+      <data:PlaylistContentItem Name="Model" PlaylistContentItem="$Required"/>
+    </Properties>
+    <Scripts>
+      <Script>
+        EditableText.Value = Model.ArtistName;
+      </Script>
+
+      <Script>
+        [DeclareTrigger(CommitValue.Invoked)]
+        Model.ArtistName = EditableText.Value;
+      </Script>
+    </Scripts>
+  </UI>
+  
+  
+  <UI Name="AlbumCell" Base="me:LabelCell">
+    <Scripts>
+      <Script>Content = [Model.AlbumName];</Script>
+    </Scripts>
+  </UI>
+
+
+  
+  <UI Name="AlbumEditCell" Base="spreadsheet:LabelEditCell">
+    <Properties>
+      <data:PlaylistContentItem Name="Model" PlaylistContentItem="$Required"/>
+    </Properties>
+    <Scripts>
+      <Script>
+        EditableText.Value = Model.AlbumName;
+      </Script>
+
+      <Script>
+        [DeclareTrigger(CommitValue.Invoked)]
+        Model.AlbumName = EditableText.Value;
+      </Script>
+    </Scripts>
+  </UI>
+  
+  
+  <UI Name="LengthCell" Base="spreadsheet:LengthCell">
+    <Properties>
+      <data:PlaylistContentItem Name="Model" PlaylistContentItem="$Required"/>
+    </Properties>
+    <Scripts>
+      <Script>Length = [Model.Duration];</Script>
+    </Scripts>
+  </UI>
+  
+  
+  <UI Name="StatusCell" Base="spreadsheet:MediaStatusCell">
+    <Properties>
+      <data:PlaylistContentItem Name="Model" PlaylistContentItem="$Required"/>
+      <zune:MediaType Name="MediaType" MediaType="{zune:ZuneShell.MapIntToMediaType(Model.MediaType)}"/>
+      <Int32 Name="MediaId" Int32="{Model.MediaId}"/>
+    </Properties>
+
+    <Scripts>
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(zune:TransportControls.Instance.CurrentTrack)]
+        IsNowPlaying = zune:TransportControls.Instance.IsCurrentLibraryTrack(MediaId, MediaType);
+      </Script>
+      
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(zune:TransportControls.Instance.ErrorCount)]
+        ErrorCode = zune:TransportControls.Instance.GetLibraryErrorCode(MediaId, MediaType);
+      </Script>
+
+      
+      <Script>
+        if (MediaId &lt; 0)
+        {
+          ErrorCode = zune:PlaylistManager.ImportErrorCode;
+        }
+      </Script>
+    </Scripts>
+  </UI>  
+  
+  <Class Name="SortInfo" Shared="true">
+    <Properties>
+      <spreadsheet:SortDescription Name="Ordinal"        Attribute="WM/TrackNumber"  />
+      <spreadsheet:SortDescription Name="Title"          Attribute="Title"           SupportsJumpInList="true"/>
+      <spreadsheet:SortDescription Name="WM_AlbumArtist" Attribute="WM/AlbumArtist"  SupportsJumpInList="true"/>
+      <spreadsheet:SortDescription Name="WM_AlbumTitle"  Attribute="WM/AlbumTitle"   SupportsJumpInList="true"/>
+      <spreadsheet:SortDescription Name="Duration"       Attribute="Duration"        SupportsJumpInList="true"/>
+      <spreadsheet:SortDescription Name="UserRating"     Attribute="UserRating"      />
+    </Properties>
+  </Class>
+
+</UIX>

@@ -1,0 +1,361 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:me="Me"
+  >
+
+  <UI Name="Default">
+    <Properties>
+      <zune:CategoryPage Name="Page" CategoryPage="$Required" />      
+    </Properties>
+    <Locals>
+      <iris:Command Name="InstallNow" Description="{me:Strings.Install}"/>
+      <iris:Command Name="CancelUpdate" Description="{me:Strings.Cancel}"/>
+      <iris:RangedValue Name="ProgressModel" MinValue="0.0" MaxValue="100.0"/>
+      
+      <Timer AutoRepeat="false" Interval="300000" Name="Timer" Enabled="false"/>
+      <zune:FirmwareUpdate Name="Model" FirmwareUpdate="{zune:FirmwareUpdate.Instance}"/>
+      <bool Name="IsAvailable" bool="{Model.IsAvailable}"/>
+      <bool Name="Updating" bool="false"/>
+      <styles:LabelStyle Name="TextAreaStyle" Color="{styles:Styles.SettingsTextActive}" Font="{styles:Styles.StandardSubHeaderText}"/>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        
+        
+        
+        if (Model.NavigatedToWizardModeInvoked)
+        {
+          InstallNow.Invoke();
+        }
+      </Script>
+      <Script>
+        
+        
+        
+        bool showDeviceOptions = true;
+        if (!Page.IsWizard)
+        {
+          bool currentDeviceConnected = [zune:SyncControls.Instance.CurrentDeviceConnected];
+          bool connectedViaUSB = [zune:SyncSetupManager.Instance.ConnectedViaUSB];
+          if (!currentDeviceConnected || !connectedViaUSB)
+          {
+            showDeviceOptions = false;
+            if (!connectedViaUSB)
+            {
+              DeviceNotUpdatableText.Content = me:Strings.USBOnly;
+            }
+            else
+            {
+              DeviceNotUpdatableText.Content = me:Strings.ExistingOnly;
+            }
+          }
+        }
+        DeviceUpdatable.Visible = showDeviceOptions;
+        DeviceNotUpdatable.Visible = !showDeviceOptions;
+      </Script>
+      <Script>
+        if (IsAvailable)
+        {
+          UpdateHeader.Visible = true;
+        }
+        else
+        {
+          SuccessHeader.Visible = true;
+        }
+      </Script>
+      <Script>
+        
+        [DeclareTrigger(InstallNow.Invoked)]
+        
+        
+        if (!Page.IsWizard)
+        {
+          Model.NavigateToWizardMode();
+        }
+        else
+        {
+          bool success = Model.InvokeFirmwareUpdate();
+
+          if (!success)
+          {
+            Model.NavigatedToWizardModeInvoked = false;
+            zune:Shell.DefaultInstance.NavigateBack();
+            if (Model.Error.IsError)
+            {
+              zune:Shell.ShowErrorDialog(Model.Error.Int, me:Strings.Failure);
+            }
+          }
+          else
+          {
+            Timer.Start();
+            Page.CancelButton = CancelUpdate;
+            Page.CancelButton.Available = false;
+            
+            Page.AllowAdvance = false;
+                        
+            Updating = true;
+          }
+        }
+      </Script>
+      <Script>
+        
+        [DeclareTrigger(CancelUpdate.Invoked)]        
+        Updating = false;
+        Page.CancelButton = null;
+        Model.CancelFirmwareUpdate();
+        Page.CancelButton.Invoke();
+      </Script>
+      <Script>
+        CurrentFirmwareVersion.Content = me:Strings.CurrentVersion.Format(Model.FirmwareVersionOnDevice);
+      </Script>
+      <Script>
+        bool isRequired = Model.IsRequired;
+        
+        String newVersion = Model.NewFirmwareVersion;
+        String requiredText;
+        if( isRequired )
+        {
+          requiredText = me:Strings.NewVersionRequired;
+        }
+        else
+        {
+          requiredText = me:Strings.NewVersionOptional;
+        }
+        
+        NewFirmwareVersion.Content = requiredText.Format(newVersion);
+        
+        UpdateRequired.Visible = isRequired;
+        Page.AllowAdvance = !isRequired;
+        Page.AllowSkip = !isRequired &amp;&amp; [IsAvailable];
+      </Script>
+      <Script>
+        
+        [DeclareTrigger(Timer.Tick)]
+        Page.CancelButton.Available = true;
+      </Script>
+      <Script> 
+        ProgressDisplay.Content = [Model.FirmwareUpdateProgressStatus]; 
+      </Script>
+      <Script>
+        
+        bool inProgress = [Model.UpdateInProgress];
+        bool available = [IsAvailable];
+        bool success = false;
+
+        
+        if (Updating &amp;&amp; !inProgress)
+        {
+          
+          Updating = false;
+          Page.CancelButton = null;
+
+          success = Model.Error.IsSuccess;
+          if (success)
+          {
+            Page.AllowAdvance = true;
+            Page.AllowSkip = false;
+            
+            
+            
+            if (Model.NavigatedToWizardModeInvoked)
+            {
+              Model.NavigatedToWizardModeInvoked = false;
+              zune:Shell.DefaultInstance.NavigateBack();
+            }
+          }
+          else
+          {
+            zune:Shell.ShowErrorDialog(Model.Error.Int, me:Strings.Failure);
+          }
+        }
+
+        if (success || !available)
+        {
+          SuccessHeader.Visible = true;
+          Success.Visible = true;
+          UpdateHeader.Visible = false;
+
+          FirmwareVersion.Content = me:Strings.UpdatingVersion.Format(Model.FirmwareVersionOnDevice);
+          Size.Content = me:Strings.Size.Format(Model.DeviceCapacity);            
+        }
+        PreInstall.Visible = available &amp;&amp; !inProgress &amp;&amp; !success;
+        DuringInstall.Visible = inProgress;
+      </Script>
+      <Script>
+        float progressPercentage = (float)[Model.FirmwareUpdateProgressPercentage];
+        ProgressModel.Value = progressPercentage;
+        ProgressPercentage.Content = me:Strings.Percentage.Format(progressPercentage);
+      </Script>
+      <Script>
+        ProgressPanel.Visible = [Model.ProgressPercentageInMotion];
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel>
+        <Children>
+
+          <Panel Name="DeviceUpdatable" Visible="false">
+            <Layout>
+              <FlowLayout Orientation="Vertical" Spacing="4,0" StripAlignment="Near"/>
+            </Layout>
+            <Children>
+
+              <Text Name="SuccessHeader" 
+                    Content="{me:Strings.Success}" 
+                    Color="{styles:Styles.SettingsTextActive}" 
+                    Font="{styles:Styles.SettingsTextSubHeader}" 
+                    Visible="false" 
+                    WordWrap="false"/>
+
+              <Panel Name="UpdateHeader" Visible="false">
+                <Layout>
+                  <FlowLayout Orientation="Vertical" Spacing="4,0" StripAlignment="Near"/>
+                </Layout>
+                <Children>
+                  
+                  <Text Name="PreText" 
+                        Content="{me:Strings.VersionPreText}" 
+                        Color="{styles:Styles.SettingsTextActive}" 
+                        Font="{styles:Styles.ZegoeBold12}" 
+                        WordWrap="false"/>
+                  
+                  <Text Name="CurrentFirmwareVersion" 
+                        Color="{styles:Styles.SettingsTextActive}" 
+                        Font="{styles:Styles.ZegoeSemiBold10}" 
+                        WordWrap="false"/>
+                  
+                  <Text Name="NewFirmwareVersion" 
+                        Color="{styles:Styles.SettingsTextActive}" 
+                        Font="{styles:Styles.ZegoeSemiBold10}" 
+                        WordWrap="false" 
+                        Padding="0,0,0,15"/>
+
+                  <core:TextArea Name="FirmwareDescription" 
+                        Text="{Model.FirmwareDescription}" 
+                        MaximumSize="375,200" 
+                        Style="{TextAreaStyle}" 
+                        Padding="0,0,0,15"/>
+                  
+                </Children>
+              </Panel>
+
+              <Panel Name="PreInstall" Visible="false">
+                <Layout>
+                  <FlowLayout Orientation="Vertical" Spacing="4,0" StripAlignment="Near"/>
+                </Layout>
+                <Children>
+
+                  <Text Name="UpdateRequired" 
+                        Content="{me:Strings.Required}" 
+                        Visible="false" 
+                        Color="{styles:Styles.WarningColor}" 
+                        Font="{styles:Styles.SettingsText}" 
+                        WordWrap="true" 
+                        Padding="0,0,0,15"/>
+
+                  <core:ActionButton Name="InstallButton" Model="{InstallNow}"/>
+                  
+                </Children>
+              </Panel>
+
+              <Panel Name="DuringInstall" Visible="false">
+                <Layout>
+                  <FlowLayout Orientation="Vertical" Spacing="4,0" StripAlignment="Near"/>
+                </Layout>
+                <Children>
+                  
+                  <Panel Name="ProgressPanel">
+                    <Layout>
+                      <FlowLayout Orientation="Horizontal" Spacing="4,0" StripAlignment="Near" ItemAlignment="Center"/>
+                    </Layout>
+                    <Children>
+
+                      <Panel MaximumSize="300,0">
+                        <Children>
+                         <core:Slider Name="ProgressBar"
+                              Model="{ProgressModel}"
+                              FilledBackgroundImage="{styles:Styles.SliderFill}"
+                              MinimumSize="16,16"
+                              ReadOnly="true"/>     
+                        </Children>
+                      </Panel>
+
+                      <Text Name="ProgressPercentage" Color="{styles:Styles.SettingsTextActive}" Font="{styles:Styles.SettingsTextHeader}"/>
+
+                    </Children>
+                  </Panel>
+                  
+                  <Text Content="{me:Strings.Preparing}" 
+                        Name="ProgressDisplay" 
+                        Color="{styles:Styles.SettingsTextActive}" 
+                        Font="{styles:Styles.SettingsText}" 
+                        WordWrap="true" 
+                        Padding="0,0,0,15"/>
+                  
+                </Children>
+              </Panel>         
+
+              <Panel Name="Success" Visible="false">
+                <Layout>
+                  <FlowLayout Orientation="Vertical" Spacing="4,0" StripAlignment="Near"/>
+                </Layout>
+                <Children>
+
+                  <Text Name="Size" 
+                        Color="{styles:Styles.SettingsTextActive}" 
+                        Font="{styles:Styles.SettingsText}" 
+                        WordWrap="true"/>
+                        
+                  <Text Name="FirmwareVersion"  
+                        Color="{styles:Styles.SettingsTextActive}" 
+                        Font="{styles:Styles.SettingsText}" 
+                        WordWrap="true"/>
+
+                </Children>
+              </Panel>
+
+            </Children>
+          </Panel>
+          
+          <Panel Name="DeviceNotUpdatable" Visible="false">
+            <Children>
+            
+              <Text Name="DeviceNotUpdatableText" 
+                    Content="{me:Strings.ExistingOnly}" Color="{styles:Styles.SettingsTextActive}" 
+                    Font="{styles:Styles.SettingsText}" WordWrap="true"/>
+             
+            </Children>
+          </Panel>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  <Class Name="Strings" Shared="true">
+    <Properties>
+      <string Name="Install"            string="{zune:Shell.LoadString(zune:StringId.IDS_INSTALL_BUTTON)}" />
+      <string Name="Cancel"             string="{zune:Shell.LoadString(zune:StringId.IDS_CANCEL_BUTTON)}" />
+      <string Name="VersionPreText"     string="{zune:Shell.LoadString(zune:StringId.IDS_FIRMWARE_VERSION_PRE_TEXT)}" />
+      <string Name="CurrentVersion"     string="{zune:Shell.LoadString(zune:StringId.IDS_FIRMWARE_CURRENT_VERSION)}" />
+      <string Name="NewVersionRequired" string="{zune:Shell.LoadString(zune:StringId.IDS_FIRMWARE_NEW_VERSION_REQUIRED)}" />
+      <string Name="NewVersionOptional" string="{zune:Shell.LoadString(zune:StringId.IDS_FIRMWARE_NEW_VERSION_OPTIONAL)}" />
+      <string Name="UpdatingVersion"    string="{zune:Shell.LoadString(zune:StringId.IDS_FIRMWARE_UPDATING_VERSION)}" />
+      <string Name="Failure"            string="{zune:Shell.LoadString(zune:StringId.IDS_FIRMWARE_UPDATE_FAILURE)}" />
+      <string Name="Percentage"         string="{zune:Shell.LoadString(zune:StringId.IDS_FIRMWARE_UPDATE_PROGRESS)}" />
+      <string Name="Required"           string="{zune:Shell.LoadString(zune:StringId.IDS_FIRMWARE_UPDATE_WARNING)}" />
+      <string Name="Preparing"          string="{zune:Shell.LoadString(zune:StringId.IDS_FIRMWARE_UPDATE_PREPARING)}" />
+      <string Name="Success"            string="{zune:Shell.LoadString(zune:StringId.IDS_FIRMWARE_UPDATE_SUCCESS)}" />
+      <string Name="Size"               string="{zune:Shell.LoadString(zune:StringId.IDS_FIRMWARE_UPDATE_SIZE)}" />
+      <string Name="ExistingOnly"       string="{zune:Shell.LoadString(zune:StringId.IDS_OPTION_FOR_EXISTING_ONLY)}" />
+      <string Name="USBOnly"            string="{zune:Shell.LoadString(zune:StringId.IDS_OPTION_FOR_USB_ONLY)}" />
+    </Properties>
+  </Class>
+</UIX>

@@ -1,0 +1,134 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:svc="assembly://ZuneDBApi/Microsoft.Zune.Service"
+  xmlns:mctl="res://ZuneMarketplaceResources!Controls.uix"
+  xmlns:sys="assembly://mscorlib/System"
+  xmlns:zuneshell="assembly://ZuneShell/Microsoft.Zune.Shell"
+  xmlns:mgmt="res://ZuneShellResources!Management.uix"
+  xmlns:signin="res://ZuneShellResources!SignInDialog.uix"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:styles="res://ZuneShellResources!Styles.uix">
+
+  <UI Name="Default">
+    <Properties>
+      <zune:CategoryPage Name="Page" CategoryPage="$Required" />
+    </Properties>
+
+    <Locals>
+      <zune:Shell Name="Shell" Shell="{(zune:Shell)zune:ZuneShell.DefaultInstance}"/>
+      <zune:SignIn Name="SignIn" SignIn="{zune:SignIn.Instance}"/>
+
+      <zune:ShellCommand Name="AcctMgmtLink" Description="{zune:Shell.LoadString(zune:StringId.IDS_CONTEXT_ACCTMGMT_MENUITEM)}"/>
+      <zune:ShellCommand Name="PrivacySettingsLink" Description="{zune:Shell.LoadString(zune:StringId.IDS_CONTEXT_PRIVACYSETTINGS_MENUITEM)}"/>
+      <zune:ShellCommand Name="ZunePassLink" Description="{zune:Shell.LoadString(zune:StringId.IDS_CONTEXT_ZUNEPASS_MENUITEM)}"/>
+      <zune:ShellCommand Name="PurchasePointsLink" Description="{zune:Shell.LoadString(zune:StringId.IDS_CONTEXT_PURCHPOINTS_MENUITEM)}"/>
+      <zune:ShellCommand Name="RedeemCodeLink" Description="{zune:Shell.LoadString(zune:StringId.IDS_CONTEXT_REDEEMCODE_MENUITEM)}"/>
+
+      <iris:Command Name="SignOutCommand" Description="{zune:Shell.LoadString(zune:StringId.IDS_SIGN_OUT_BUTTON)}"/>
+      <iris:Command Name="SignInCommand" Description="{zune:Shell.LoadString(zune:StringId.IDS_LOGON_BUTTON)}"/>
+
+      <Boolean Name="ServiceEndpointsInitialized"/>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(SignIn.SignedIn)]
+        [DeclareTrigger(SignIn.ZuneTag)]
+        [DeclareTrigger(SignIn.PointsBalance)]
+
+        bool signedIn = SignIn.SignedIn;
+        AccountMgmtPanel.Visible = signedIn;
+        MustLogOnPanel.Visible = !signedIn;
+
+        if (signedIn)
+        {
+          ZuneTagButton.Content       = SignIn.ZuneTag;
+          PointsBalanceButton.Content = sys:String.Format(zune:Shell.LoadString(zune:StringId.IDS_POINTS_TOTAL_FORMAT), SignIn.PointsBalance);
+        }
+
+        if (zuneshell:ZuneApplication.Service.BlockExplicitContent())
+        {
+          PrivacySettingsLink.Description = zune:Shell.LoadString(zune:StringId.IDS_CONTEXT_FAMILYSETTINGS_MENUITEM);
+        }
+        else
+        {
+          PrivacySettingsLink.Description = zune:Shell.LoadString(zune:StringId.IDS_CONTEXT_PRIVACYSETTINGS_MENUITEM);
+        }
+
+      </Script>
+
+      <Script>
+        <![CDATA[
+        if (!ServiceEndpointsInitialized)
+        {
+          ServiceEndpointsInitialized = true;
+          String acctendpoint = svc:Service.GetEndPointUri(svc:EServiceEndpointId.SEID_AccountManagement);
+          string netendpoint = svc:Service.GetEndPointUri(svc:EServiceEndpointId.SEID_ZuneNet);
+          string returnurl = "/social/articles/backtosoftware.htm";
+
+          AcctMgmtLink.Command        = "Web\" + acctendpoint + "/en-US/client/AccountManagement.ashx?ru=" + netendpoint + returnurl + "&aru=" + netendpoint + returnurl;
+          PrivacySettingsLink.Command = "Web\" + acctendpoint + "/en-US/client/PrivacySettings.ashx?ru=" + netendpoint + returnurl + "&aru=" + netendpoint + returnurl;
+          ZunePassLink.Command        = "Web\" + acctendpoint + "/en-US/client/BuyZunePass.ashx?ru=" + netendpoint + returnurl + "&aru=" + netendpoint + returnurl;
+          PurchasePointsLink.Command  = "Web\" + acctendpoint + "/en-US/client/BuyPoints.ashx?ru=" + netendpoint + returnurl + "&aru=" + netendpoint + returnurl;
+          RedeemCodeLink.Command      = "Web\" + acctendpoint + "/en-US/client/RedeemCode.ashx?ru=" + netendpoint + returnurl + "&aru=" + netendpoint + returnurl;
+        }
+        ]]>
+      </Script>
+      
+      <Script>
+        [DeclareTrigger(SignInCommand.Invoked)]
+        SignIn.CancelSignIn();
+        signin:SignInDialog signInDlg = new signin:SignInDialog();
+        signInDlg.Helper.Show(signInDlg);
+      </Script>
+
+      <Script>
+        [DeclareTrigger(SignOutCommand.Invoked)]
+        SignIn.SignOut();
+      </Script>
+
+    </Scripts>
+
+    <Content>
+      <Panel Layout="VerticalFlow" MaximumSize="580,0">
+        <Children>
+          <Panel Name="MustLogOnPanel" Layout="VerticalFlow" MaximumSize="580,0">
+            <Children>
+              <Text Content="{zune:Shell.LoadString(zune:StringId.IDS_ACCOUNT_MUST_LOGON_TEXT)}" Color="{styles:Styles.SettingsTextActive}" Font="{styles:Styles.SettingsText}" WordWrap="true" Padding="0,0,0,15"/>
+              <core:ActionButton Name="SignInButton" Model="{SignInCommand}" />
+            </Children>
+          </Panel>
+
+          <Panel Name="AccountMgmtPanel" Layout="VerticalFlow" MaximumSize="580,0">
+            <Children>
+              <Panel Layout="HorizontalFlow">
+                <Children>
+                  <mgmt:Label Name="ZuneTagButton" />
+                  <mgmt:Label Content=" (" />
+                  <mgmt:Label Name="PointsBalanceButton" />
+                  <Graphic Content="{styles:Styles.Points}" SizingPolicy="SizeToContent" Margins="3,10,0,0"/>
+                  <mgmt:Label Content=")" />
+                </Children>
+              </Panel>
+              <core:ActionButton Model="{SignOutCommand}" Padding="0,5,0,0" />
+
+              <mgmt:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_ZUNE_ACCOUNT_HEADER)}" Margins="0,10,0,3" />
+              <mctl:ExternalLink Name="AcctMgmtButton" Model="{AcctMgmtLink}" IconMargin="7,1,0,0" OverrideStyle="{styles:SharedStyles.ZuneNetLinkStyle}"/>
+              <mctl:ExternalLink Name="PrivacySettingsButton" Model="{PrivacySettingsLink}" IconMargin="7,1,0,0" OverrideStyle="{styles:SharedStyles.ZuneNetLinkStyle}"/>
+
+              <mgmt:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_ZUNE_MARKETPLACE_HEADER)}" Margins="0,10,0,3" />
+              <mctl:ExternalLink Name="ZunePassButton" Model="{ZunePassLink}" IconMargin="7,1,0,0" OverrideStyle="{styles:SharedStyles.ZuneNetLinkStyle}"/>
+              <mctl:ExternalLink Name="PurchasePointsButton" Model="{PurchasePointsLink}" IconMargin="7,1,0,0" OverrideStyle="{styles:SharedStyles.ZuneNetLinkStyle}"/>
+              <mctl:ExternalLink Name="RedeemCodeButton" Model="{RedeemCodeLink}" IconMargin="7,1,0,0" OverrideStyle="{styles:SharedStyles.ZuneNetLinkStyle}"/>
+            </Children>
+          </Panel>
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+</UIX>

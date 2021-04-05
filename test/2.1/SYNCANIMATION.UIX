@@ -1,0 +1,190 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX xmlns="http://schemas.microsoft.com/2007/uix"
+     xmlns:styles="res://ZuneShellResources!Styles.uix"
+     xmlns:animations="res://ZuneShellResources!Animations.uix"
+     xmlns:me="Me"
+     >
+
+  
+  
+  
+  <UI Name="SyncAnimation">
+    <Locals>
+      
+      <List Name="Curves">
+        <Source>
+          <Vector3 Vector3="-15,-15,0"/>
+          <Vector3 Vector3="-15,15,0"/>
+          <Vector3 Vector3="15,-15,0"/>
+          <Vector3 Vector3="15,15,0"/>
+          <Vector3 Vector3="0,-15,0"/>
+          <Vector3 Vector3="0,15,0"/>
+        </Source>
+      </List>
+      
+      <Single Name="FrameOverlap" Single="0.5"/>
+      <Single Name="FrameLength" Single="1.0"/>
+    </Locals>
+    
+    <Content>
+      <Panel Layout="Form" Visible="true">
+        <Animations>
+          
+          <Animation Type="Show">
+            <Keyframes>
+              <AlphaKeyframe Time="0.0" Value="0.0"/>
+              <AlphaKeyframe Time="0.25" Value="1.0" />
+            </Keyframes>
+          </Animation>
+
+        </Animations>
+        <Children>
+
+          <Repeater Name="Repeater" Source="{Curves}">
+            <LayoutInput>
+              <AnchorLayoutInput Left="Indicator,0,-15" Top="Indicator,0,-15" Right="Indicator,1,15" Bottom="Indicator,1,15"/>
+            </LayoutInput>
+            <Content>
+
+              <me:SimpleCurve Image="{styles:Styles.SyncGlow}"
+                              StartX="{(Single)((Vector3)RepeatedItem).X}"
+                              StartY="{(Single)((Vector3)RepeatedItem).Y}"
+                              StartScale="0.3,0.3,1.0"
+                              EndScale="1.2,1.2,1.0"
+                              AnimLength="{FrameLength}"
+                              Overlap="{FrameOverlap}" 
+                              ItemNumber="{(Single)RepeatedItemIndex.Value}"
+                              TotalItems="{(Single)Curves.Count}"
+                              />
+            </Content>
+          </Repeater>
+
+          
+          <Graphic Name="Indicator" Content="{styles:Styles.SyncIconAnimBackground}">
+            <LayoutInput>
+              <FormLayoutInput Horizontal="Center" Vertical="Center"/>
+            </LayoutInput>
+            <Animations>
+              <Animation Animation="{animations:Animations.BasicFadeIn}"/>
+            </Animations>
+          </Graphic>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+
+  
+  
+  <UI Name="SimpleCurve">
+    <Properties>
+      <Image Name="Image"         Image="$Required"/>
+      <Vector3 Name="StartScale"  Vector3="1.0,1.0,1.0"/>
+      <Vector3 Name="EndScale"    Vector3="1.0,1.0,1.0"/>
+      <Single Name="StartX"       Single="$Required"/>
+      <Single Name="StartY"       Single="$Required"/>
+      <Single Name="AnimLength"   Single="1.0"/>
+      <Single Name="Overlap"      Single="0.5"/>
+      <Single Name="ItemNumber"   Single="0.0"/>
+      <Single Name="TotalItems"  Single="1.0"/>
+    </Properties>
+
+    <Locals>
+      <Vector3 Name="VerticalValue"   X="0.0"      Y="{StartY}" Z="0.0"/>
+      <Vector3 Name="HorizontalValue" X="{StartX}" Y="0.0"      Z="0.0"/>
+
+      
+      <Animation Name="VerticalMove" Type="Idle" Loop="-1">
+        <Keyframes>
+          <PositionKeyframe Time="0.0" Value="{VerticalValue}"/>
+          <PositionKeyframe Time="0.5" Value="0,0,0"/>
+        </Keyframes>
+      </Animation>
+      
+      
+      
+      <Animation Name="HorizontalMove" Type="Idle" CenterPointPercent="0.5,0.5,1.0" Loop="-1">
+        <Keyframes>
+          <PositionKeyframe Time="0.0" Value="{HorizontalValue}" Interpolation="Log,1.0"/>
+          <PositionKeyframe Time="0.5" RelativeTo="Final"/>
+          <ScaleKeyframe    Time="0.0" Value="{StartScale}"/>
+          <ScaleKeyframe    Time="0.5" RelativeTo="Final" Interpolation="EaseIn,1.5,0.8"/>
+          <ScaleKeyframe    Time="0.65" Value="{StartScale}"/>
+          <ScaleKeyframe    Time="1.0" Value="{EndScale}"/>
+          <AlphaKeyframe    Time="0.0" Value="0.0"/>
+          <AlphaKeyframe    Time="0.2" Value="1.0"/>
+          <AlphaKeyframe    Time="0.5" Value="1.0" Interpolation="EaseIn,1.5,0.8"/>
+          <AlphaKeyframe    Time="1.0" Value="0.0"/>
+        </Keyframes>
+      </Animation>
+    </Locals>
+    
+    <Content>
+      <Panel Name="Container">
+        <Animations>
+          
+          
+          <TransformAnimation TimeScale="{AnimLength}">
+             <Source>
+
+              
+              
+              
+              <MergeAnimation>
+                <Sources>
+                  
+                  <TransformAnimation Delay="{ItemNumber}">
+                    <Source>
+                      <Animation Animation="{VerticalMove}"/>
+                    </Source>
+                  </TransformAnimation>
+                  
+                  <Animation Loop="-1">
+                    <Keyframes>
+                      <PositionKeyframe Time="{(Single)TotalItems + Overlap}" RelativeTo="Final"/>                      
+                    </Keyframes>
+                  </Animation>
+                </Sources>
+              </MergeAnimation>
+            </Source>
+          </TransformAnimation>
+        </Animations>
+
+        <Children>
+          <Graphic Content="{Image}">
+            <Animations>
+              <TransformAnimation TimeScale="{AnimLength}">
+                <Source>
+
+                  
+                  
+                  
+                  <MergeAnimation>
+                    <Sources>
+                      <TransformAnimation Delay="{ItemNumber}">
+                        <Source>
+                          <Animation Animation="{HorizontalMove}"/>
+                        </Source>
+                      </TransformAnimation>
+                      
+                      <Animation Loop="-1">
+                        <Keyframes>
+                          <PositionKeyframe Time="{(Single)TotalItems + Overlap}" RelativeTo="Final"/>
+                          <ScaleKeyframe Time="{(Single)TotalItems + Overlap}" RelativeTo="Final"/>   
+                          <AlphaKeyframe Time="{(Single)TotalItems + Overlap}" Value="0.0"/>
+                        </Keyframes>
+                      </Animation>
+                    </Sources>
+                  </MergeAnimation>
+                </Source>
+              </TransformAnimation>
+            </Animations>
+          </Graphic>
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+  
+
+</UIX>

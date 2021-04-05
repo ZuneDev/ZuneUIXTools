@@ -1,0 +1,586 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:zuneshell="assembly://ZuneShell/Microsoft.Zune.Shell"
+  xmlns:zcfg="assembly://ZuneDBApi/Microsoft.Zune.Configuration"
+  xmlns:svc="assembly://ZuneDBApi/Microsoft.Zune.Service"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:spreadsheet="res://ZuneShellResources!SpreadSheetViewBase.uix"
+  xmlns:mctl="res://ZuneMarketplaceResources!Controls.uix"
+  xmlns:msgdata="res://ZuneShellResources!MessagingData.schema.xml"
+  xmlns:signin="res://ZuneShellResources!SignInDialog.uix"
+  xmlns:buy="res://ZuneMarketplaceResources!PurchaseDialog.uix"
+  xmlns:me="Me">
+
+  
+  
+  
+  <UI Name="InboxPanelUI">
+    <Properties>
+      <zune:InboxMainPanel Name="Model" InboxMainPanel="$Required"/>
+      <zune:InboxPage Name="Page" InboxPage="$Required"/>
+    </Properties>
+
+    <Locals>
+      <zune:Shell Name="Shell" Shell="{(zune:Shell)zune:ZuneShell.DefaultInstance}"/>
+      <msgdata:MessagingInboxDataQuery Name="InboxDataQuery" />
+      <zune:ShellMessagingNotifier Name="MessagingNotifier"/>
+      <ScrollingData Name="ScrollData"/>
+      <zune:SignIn Name="SignIn" SignIn="{zune:SignIn.Instance}" />
+      <SelectionManager Name="BuySelectionManager" SingleSelect="true" />
+      <SelectionManager Name="MessageSelectionManager" SingleSelect="true" />
+      <SelectionManager Name="ActiveSelectionManager" SelectionManager="{null}" />
+      <Boolean Name="InitializeSelection" Boolean="true" />
+      <signin:SignInDialog Name="SignInDlg" SignInDialog="{null}"/>
+      <Timer Name="CheckMessageCountTimer" Enabled="false" Interval="{zcfg:ClientConfiguration.Messaging.ServiceThrottlingInterval}" AutoRepeat="false"/>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        if ([Page.NavigationArguments] != null)
+        {
+          string messageIdToSelect = (string)Page.NavigationArguments.get_Item("MessageId");
+          Model.MessageIdToSelect = messageIdToSelect;
+          
+          Page.NavigationArguments = null;
+
+          
+          if (!(SignIn.SignedIn || SignIn.SigningIn))
+          {
+            if (SignInDlg != null) UI.DisposeOwnedObject(SignInDlg);
+            SignInDlg = new signin:SignInDialog();
+            SignInDlg.Helper.Show(SignInDlg);
+          }
+        }
+      </Script>
+
+      <Script>
+        [DeclareTrigger(MessagingNotifier.NewDeviceMessageCount)]
+        
+        CheckMessageCountTimer.Start();
+      </Script>
+
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(SignIn.SignedIn)]
+        [DeclareTrigger(CheckMessageCountTimer.Tick)]
+
+        CheckMessageCountTimer.Stop();
+        bool signedIn = SignIn.SignedIn;
+        MessagePanel.Visible = signedIn;
+        ListFooter.Visible = signedIn;
+
+        if (signedIn)
+        {
+          
+          if (Page.Details.SelectedItem != null)
+          {
+            Model.MessageIdToSelect = Page.Details.SelectedItem.Id;
+          }
+          
+          InboxDataQuery.ZuneTag = null;
+          MessagePanel.NavigateInto();
+          InboxDataQuery.ZuneTag = SignIn.ZuneTag;
+        }
+        else
+        {
+          Display.RequestSource("res://ZuneShellResources!InboxEmpty.uix#SignedOutOrEmptyInbox");
+          InboxDataQuery.ZuneTag = null;
+          Model.Result = null;
+        }
+      </Script>
+
+      <Script>
+        [InitialEvaluate(false)]
+        
+        if (![SignIn.SignedIn])
+        {
+          Shell.NavigateBack();
+        }
+      </Script>
+
+      <Script>
+        if ([InboxDataQuery.Status] == iris:DataProviderQueryStatus.Complete)
+        {
+          Model.Result = InboxDataQuery.Result;
+        }
+      </Script>
+
+      <Script>
+        bool visible = false;
+        if ([Model.BuyPanel.Content] != null)
+        {
+          if ([SignIn.SignedIn])
+          {
+            visible = Model.BuyPanel.Content.Count > 0;
+          }
+        }
+        BuyPanel.Visible = visible;
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(Model.MessagePanel.Content)]
+        [DeclareTrigger(Model.BuyPanel.Content)]
+        [DeclareTrigger(Model.MessageIdToSelect)]
+
+        
+        if (!SignIn.SignedIn ||
+            ((Model.MessagePanel.Content == null) &amp;&amp; (Model.BuyPanel.Content == null)))
+        {
+          return;
+        }
+
+        BuyPanel.Visible = Model.BuyPanel.Content.Count > 0;
+
+        bool selectMessageById = !String.IsNullOrEmpty(Model.MessageIdToSelect);
+        if (InitializeSelection || selectMessageById)
+        {
+          InitializeSelection = false;
+
+          SelectionManager sm = null;
+          
+          MessageSelectionManager.SourceList = Model.MessagePanel.Content;
+          BuySelectionManager.SourceList = Model.BuyPanel.Content;
+          int index = 0;
+          zune:MessageLocationDetails location = null;
+          if (selectMessageById)
+          {
+            location = Model.FindMessage(Model.MessageIdToSelect);
+          }
+          if (location != null)
+          {
+            index = location.Index;
+            if (location.Panel == Model.MessagePanel)
+            {
+              sm = MessageSelectionManager;
+            }
+            else
+            {
+              sm = BuySelectionManager;
+            }
+          }
+          else
+          {
+            if (!List.IsNullOrEmpty(Model.MessagePanel.Content))
+            {
+              sm = MessageSelectionManager;
+            }
+            else if (!List.IsNullOrEmpty(Model.BuyPanel.Content))
+            {
+              sm = BuySelectionManager;
+            }
+          }
+          if (sm != null)
+          {
+            sm.Select(index, true);
+          }
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(MessageSelectionManager.SelectedItems)]
+        
+        if (ActiveSelectionManager == null)
+        {
+          ActiveSelectionManager = MessageSelectionManager;
+          BuySelectionManager.Clear();
+        }
+      </Script>
+      <Script>
+        [DeclareTrigger(BuySelectionManager.SelectedItems)]
+        
+        if (ActiveSelectionManager == null)
+        {
+          ActiveSelectionManager = BuySelectionManager;
+          MessageSelectionManager.Clear();
+        }
+      </Script>
+      <Script>
+        [DeclareTrigger(ActiveSelectionManager.SelectedItems)]
+        
+        if (ActiveSelectionManager == null)
+        {
+          return;
+        }
+        int count = ActiveSelectionManager.Count;
+        if (count == 1)
+        {
+          
+          Page.Details.SelectedItem = (zune:InboxEntryItem)ActiveSelectionManager.SelectedItem;
+        }
+        else
+        {
+          if (count > 1)
+          {
+            Page.Details.UI = "res://ZuneShellResources!InboxTextDetails.uix#MultiSelection";
+          }
+          else
+          {
+            Page.Details.UI = "res://ZuneShellResources!InboxTextDetails.uix#NoSelection";
+          }
+          Page.Details.SelectedItem = null;
+        }
+        ActiveSelectionManager = null;
+      </Script>
+      <Script>
+        int msgCount = 0;
+        zune:InboxEntryItem singleMessage = null;
+        if (Model.BuyPanel.Content != null)
+        {
+          msgCount = msgCount + [Model.BuyPanel.Content.Count];
+          if (Model.BuyPanel.Content.Count == 1)
+          {
+            singleMessage = (zune:InboxEntryItem)Model.BuyPanel.Content.get_Item(0);
+          }
+        }
+        if (Model.MessagePanel.Content != null)
+        {
+          msgCount = msgCount + [Model.MessagePanel.Content.Count];
+          if (Model.MessagePanel.Content.Count == 1)
+          {
+            singleMessage = (zune:InboxEntryItem)Model.MessagePanel.Content.get_Item(0);
+          }
+        }
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel>
+        <Layout>
+          <DockLayout SizeToChildren="true" DefaultLayoutInput="Top,Near"/>
+        </Layout>
+        <Children>
+
+          <Host Name="Display">
+            <LayoutInput>
+              <AnchorLayoutInput Top="Parent,0" Bottom="Parent,1" Left="Parent,0"/>
+            </LayoutInput>
+          </Host>
+          
+          <me:MessageListFooter Name="ListFooter" Margins="-50,10,0,0">
+            <LayoutInput>
+              <DockLayoutInput Position="Bottom"/>
+            </LayoutInput>
+          </me:MessageListFooter>
+          
+          
+          <core:ScrollBar Name="ScrollBar" ScrollData="{ScrollData}" Margins="0,0,-2,0">
+            <LayoutInput>
+              <DockLayoutInput Position="Right" Alignment="Near"/>
+            </LayoutInput>
+          </core:ScrollBar>
+
+          
+          <Scroller Orientation="Vertical" FadeSize="-1" ScrollingData="{ScrollData}" >
+            <Children>
+
+              <Panel Margins="-50,0,0,0">
+                <Layout>
+                  <DockLayout SizeToChildren="true"  DefaultLayoutInput="Top,Near"/>
+                </Layout>
+                <Children>
+
+                  <me:BuyPanel Name="BuyPanel"
+                    Visible="false"
+                    HeaderText="{zune:Shell.LoadString(zune:StringId.IDS_BUY_LATER_HEADER)}"
+                    Model="{Model.BuyPanel}"
+                    MainPanel="{Model}"
+                    SelectionManager="{BuySelectionManager}" />
+
+                  <me:InboxCategory Name="MessagePanel"
+                    Visible="false"
+                    HeaderText="{zune:Shell.LoadString(zune:StringId.IDS_INBOX_HEADER)}"
+                    Model="{Model.MessagePanel}"
+                    SelectionManager="{MessageSelectionManager}"/>
+
+                </Children>
+              </Panel>
+
+            </Children>
+          </Scroller>
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+
+  
+  
+  
+  <UI Name="MessageListFooter">
+    <Locals>
+      <iris:Command Name="ComposeCommand" Description="{zune:Shell.LoadString(zune:StringId.IDS_COMPOSEMESSAGE)}" />
+      <iris:Command Name="ProfileCommand" Description="{zune:Shell.LoadString(zune:StringId.IDS_GOTOPROFILE)}" />
+    </Locals>
+
+    <Scripts>
+      <Script>
+        [DeclareTrigger(ComposeCommand.Invoked)]
+        String endpoint = svc:Service.GetEndPointUri(svc:EServiceEndpointId.SEID_Lynx);
+        zuneshell:ZuneApplication.Service.LaunchBrowserForExternalUrl(endpoint + "/my/sendmessage.aspx", true);
+      </Script>
+
+      <Script>
+        [DeclareTrigger(ProfileCommand.Invoked)]
+        String endpoint = svc:Service.GetEndPointUri(svc:EServiceEndpointId.SEID_Lynx);
+        zuneshell:ZuneApplication.Service.LaunchBrowserForExternalUrl(endpoint + "/profile/home.aspx", true);
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel Margins="50,0,0,0" Layout="Anchor">
+        <Children>
+          <core:BigActionButton Name="ComposeButton" Model="{ComposeCommand}">
+            <LayoutInput>
+              <AnchorLayoutInput Right="Parent,1" Top="Parent,0"/>
+            </LayoutInput>
+          </core:BigActionButton>
+
+          <core:BigActionButton Name="ProfileButton" Model="{ProfileCommand}">
+            <LayoutInput>
+              <AnchorLayoutInput Right="ComposeButton,0" Top="Parent,0"/>
+            </LayoutInput>
+          </core:BigActionButton>
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="InboxCategory">
+    <Properties>
+      <String Name="HeaderText" String="$Required"/>
+      <zune:InboxPanel Name="Model" InboxPanel="$Required"/>
+      <SelectionManager Name="SelectionManager" SelectionManager="$Required"/>
+      <iris:Command Name="Command" Command="{null}"/>
+    </Properties>
+
+    <Scripts>
+      <Script>BuyButton.Visible = (Command != null);</Script>
+      <Script>Worker.Content = [Model.Content];</Script>
+    </Scripts>
+
+    <Content>
+      <Panel>
+        <Layout>
+          <DockLayout SizeToChildren="true"  DefaultLayoutInput="Top,Near"/>
+        </Layout>
+        <Children>
+
+          <core:Label Content="{HeaderText}" Style="{styles:SharedStyles.InboxHeader}" WordWrap="false" Margins="50,0,0,11"/>
+
+          <Panel Layout="Anchor">
+            <Children>
+              <spreadsheet:SpreadSheet Name="Worker"
+                Content="{Model.Content}"
+                ListItemType="{typeof(me:InboxListItem)}"
+                ColumnData="{me:Columns.DefaultViewColumnData}"
+                SelectionManager="{SelectionManager}"
+                SizeToChildren="true"
+                AllowHorizontalScrolling="true"
+                AllowVerticalScrolling="false"
+                ExecuteCommand="{null}"
+                HeaderSpacing="11"
+                HighlightHeaders="false"
+                ScrollbarMargins="0,0,0,8"
+                ShowColumnDividers="true"/>
+
+              <mctl:MarketplaceActionButton Name="BuyButton" Model="{Command}" Margins="0,0,5,5">
+                <LayoutInput>
+                  <AnchorLayoutInput Right="Worker,1" Top="Worker,1"/>
+                </LayoutInput>
+              </mctl:MarketplaceActionButton>
+            </Children>
+          </Panel>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="BuyPanel" Base="me:InboxCategory">
+    <Properties>
+      <zune:InboxMainPanel Name="MainPanel" InboxMainPanel="$Required"/>
+      <iris:Command Name="Command" Description="{zune:Shell.LoadString(zune:StringId.IDS_BUYALL)}" Available="false" />
+    </Properties>
+
+    <Locals>
+      <buy:PurchaseDialog Name="PurchaseDlg" PurchaseDialog="{null}"/>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        if ([MainPanel.BuyPanel.Content] != null)
+        {
+          bool available = false;
+          foreach (zune:InboxEntryItem item in (List)MainPanel.BuyPanel.Content)
+          {
+            if (!available &amp;&amp;
+                (item.Type == "song" || item.Type == "album") &amp;&amp;
+                !zune:GuidHelper.IsEmpty(item.MediaId))
+            {
+              available = true;
+            }
+          }
+          Command.Available = available;
+        }
+      </Script>
+      <Script>
+        [DeclareTrigger(Command.Invoked)]
+        if (PurchaseDlg != null) UI.DisposeOwnedObject(PurchaseDlg);
+        PurchaseDlg = new buy:PurchaseDialog();
+        PurchaseDlg.Instance = PurchaseDlg;
+
+        foreach (zune:InboxEntryItem item in (List)MainPanel.BuyPanel.Content)
+        {
+          if (item.Type == "song" &amp;&amp; !zune:GuidHelper.IsEmpty(item.MediaId))
+          {
+            PurchaseDlg.TrackIds.Add(item.MediaId);
+          }
+          else if (item.Type == "album" &amp;&amp; !zune:GuidHelper.IsEmpty(item.MediaId))
+          {
+            PurchaseDlg.AlbumIds.Add(item.MediaId);
+          }
+          else
+          {
+            
+          }
+        }
+
+        PurchaseDlg.Helper.Show(PurchaseDlg);
+      </Script>
+    </Scripts>
+  </UI>
+
+  
+  
+  
+  <Class Name="Columns" Shared="True">
+    <Properties>
+
+      <spreadsheet:ColumnData Name="DefaultViewColumnData" SaveKeyPrefix="Inbox">
+        <Columns>
+
+          <spreadsheet:ColumnInfo
+                         Header="{zune:Shell.LoadString(zune:StringId.IDS_FROM_COLUMN_HEADER)}"
+                         CellType="{typeof(me:FromCell)}"
+                         CellPadding="50,0,0,0"
+                         SortBy="{null}">
+            <ColumnSize>
+              <SharedSize Size="138,0" MinimumSize="88,0" MaximumSize="315,0"/>
+            </ColumnSize>
+          </spreadsheet:ColumnInfo>
+
+          <spreadsheet:ColumnInfo
+                         Header="{zune:Shell.LoadString(zune:StringId.IDS_TYPE_COLUMN_HEADER)}"
+                         CellType="{typeof(me:TypeCell)}"
+                         SortBy="{null}">
+            <ColumnSize>
+              <SharedSize Size="60,0" MinimumSize="40,0" MaximumSize="200,0"/>
+            </ColumnSize>
+          </spreadsheet:ColumnInfo>
+
+          <spreadsheet:ColumnInfo
+                         Header="{zune:Shell.LoadString(zune:StringId.IDS_SUBJECT_COLUMN_HEADER)}"
+                         CellType="{typeof(me:SubjectCell)}"
+                         SortBy="{null}">
+            <ColumnSize>
+              <SharedSize Size="162,0" MinimumSize="30,0" MaximumSize="315,0"/>
+            </ColumnSize>
+          </spreadsheet:ColumnInfo>
+
+          <spreadsheet:ColumnInfo
+                         Header="{zune:Shell.LoadString(zune:StringId.IDS_RECEIVED_COLUMN_HEADER)}"
+                         CellType="{typeof(me:ReceivedCell)}"
+                         SortBy="{null}">
+            <ColumnSize>
+              <SharedSize Size="125,0" MinimumSize="25,0" MaximumSize="200,0"/>
+            </ColumnSize>
+          </spreadsheet:ColumnInfo>
+
+        </Columns>
+      </spreadsheet:ColumnData>
+
+    </Properties>
+  </Class>
+
+  
+  
+  
+  <UI Name="FromCell" Base="spreadsheet:LabelCell">
+    <Scripts>
+      <Script>
+        Content = ((zune:InboxEntryItem)Model).From;
+      </Script>
+    </Scripts>
+  </UI>
+
+  
+  
+  
+  <UI Name="TypeCell" Base="spreadsheet:LabelCell">
+    <Scripts>
+      <Script>
+        Content = ((zune:InboxEntryItem)Model).UiType;
+      </Script>
+    </Scripts>
+  </UI>
+
+  
+  
+  
+  <UI Name="SubjectCell" Base="spreadsheet:LabelCell">
+    <Scripts>
+      <Script>
+        Content = ((zune:InboxEntryItem)Model).Subject;
+      </Script>
+    </Scripts>
+  </UI>
+
+  
+  
+  
+  <UI Name="ReceivedCell" Base="spreadsheet:LongDateTimeCell">
+    <Scripts>
+      <Script>
+        Date = ((zune:InboxEntryItem)Model).Received;
+      </Script>
+    </Scripts>
+  </UI>
+
+  
+  
+  
+  <UI Name="InboxListItem" Base="spreadsheet:SpreadSheetListItem">
+    <Properties>
+      <Boolean Name="CanDrag" Boolean="false"/>
+    </Properties>
+
+    <Scripts>
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(((zune:InboxEntryItem)Model).Unread)]
+
+        if (((zune:InboxEntryItem)Model).Unread)
+        {
+          OverrideStyle = styles:SharedStyles.InboxUnreadListItemStyle;
+        }
+        else
+        {
+          OverrideStyle = styles:SharedStyles.InboxReadListItemStyle;
+        }
+      </Script>
+    </Scripts>
+  </UI>
+
+</UIX>

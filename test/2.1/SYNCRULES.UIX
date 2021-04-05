@@ -1,0 +1,238 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:panels="res://ZuneShellResources!LibraryPanels.uix"
+  xmlns:data="res://ZuneShellResources!LibraryData.schema.xml"
+  xmlns:spreadsheet="res://ZuneShellResources!SpreadSheetViewBase.uix"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:lib="res://ZuneShellResources!Library.uix"
+  xmlns:me="Me">
+
+  
+  <Class Name="RuleListModel" Base="lib:LibraryListModel">
+    <Properties>
+      <Int32 Name="Count" Int32="0"/>
+    </Properties>
+  </Class>
+
+  <Class Name="RuleColumns" Shared="true">
+    <Properties>
+      
+      <spreadsheet:ColumnData Name="ColumnData">
+        <Columns>
+          <spreadsheet:ColumnInfo HeaderType="{typeof(me:RuleHeader)}"
+                                  CellType="{typeof(me:RuleCell)}"
+                                  Resizable="false" CellPadding="5,4,5,4"
+                                  HeaderPadding="5,0,5,0">
+            <LayoutInput>
+              <DockLayoutInput Position="Top"/>
+            </LayoutInput>
+          </spreadsheet:ColumnInfo>
+        </Columns>
+      </spreadsheet:ColumnData>
+    </Properties>
+  </Class>
+
+  <UI Name="SyncRulesPanelBase" Base="panels:LibraryPanelBase">
+    <Properties>
+      <List Name="AllItemsText">
+        <Source>
+          <String String="{zune:Shell.LoadString(zune:StringId.IDS_ALL_SYNCED_ITEMS)}"/>
+        </Source>
+      </List>
+      <me:RuleListModel Name="ListModel"/>
+    </Properties>
+    <Locals>
+      <zune:ISyncRulesPanel Name="RulesPanel" ISyncRulesPanel="{null}"/>
+
+      <iris:AggregateList Name="Source" AggregateList="{null}"/>
+
+      <iris:Command Name="RemoveRule" Description="{zune:Shell.LoadString(zune:StringId.IDS_REMOVE_SYNC_RULE)}"/>
+      <List Name="ContextMenuOptions">
+        <Source>
+          <iris:Command Command="{RemoveRule}"/>
+        </Source>
+      </List>
+
+      <spreadsheet:ColumnData Name="ColumnData" ColumnData="{me:RuleColumns.ColumnData}"/>
+
+      <Boolean Name="Initialized" Boolean="false"/>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        DeleteKey.Command = RemoveRule;
+        ContextMenu.Options = ContextMenuOptions;
+      </Script>
+
+      <Script>
+        RulesPanel = (zune:ISyncRulesPanel)[Model];
+      </Script>
+
+      <Script>
+        [DeclareTrigger(SelectionManager.SelectedItems)]
+
+        
+
+        RemoveRule.Available = true;
+
+        if (SelectionManager.Count == 1)
+        {
+          if (SelectionManager.SelectedItem is String)
+          {
+            RulesPanel.AllItemsSelected();
+            RemoveRule.Available = false;
+          }
+          else if (SelectionManager.SelectedItem is data:Media)
+          {
+            data:Media media = (data:Media)SelectionManager.SelectedItem;
+            RulesPanel.RuleSelected(zune:Shell.MapStringToMediaType(media.Type), media.LibraryId);
+          }
+          else
+          {
+            RulesPanel.IndividualItemsQuerySelected();
+            RemoveRule.Available = false;
+          }
+        }
+        else
+        {
+          RulesPanel.NothingSelected();
+        }
+      </Script>
+
+      <Script>
+        if (Source != null)
+        {
+          ListModel.Count = [Source.Count];
+        }
+        else
+        {
+          ListModel.Count = 0;
+        }
+      </Script>
+
+      <Script>
+        [DeclareTrigger(RemoveRule.Invoked)]
+
+        if (RemoveRule.Available)
+        {
+          
+          zune:SyncControls.Instance.RemoveSyncRule(SelectionManager.SelectedItems);
+
+          SelectionManager.Select(0, true);
+        }
+      </Script>
+
+      <Script>
+        Worker.Content = [Source];
+      </Script>
+      <Script>
+        Worker.ContextMenu = [ContextMenu];
+      </Script>
+
+      <Script>
+        if (SelectionManager.SourceList != null &amp;&amp;
+            [SelectionManager.SourceList.Count] > 0 &amp;&amp;
+            !Initialized)
+        {
+          SelectionManager.Select(0, true);
+          Initialized = true;
+        }
+      </Script>
+    </Scripts>
+
+    <Content>
+
+      <spreadsheet:SpreadSheet Name="Worker"
+        ListModel="{ListModel}"
+        Content="{Source}"
+        ColumnData="{ColumnData}"
+        NavigateIntoArgs="{NavigateIntoArgs}"
+        SelectionManager="{SelectionManager}"
+        ContextMenu="{ContextMenu}"
+        AllowHorizontalScrolling="false"
+        Margins="0,0,15,0"
+        HeaderSpacing="26"
+        HighlightHeaders="false"
+        OverrideStyle="{styles:SharedStyles.SyncHeader}"
+        RowSize="0,33"
+        />
+    </Content>
+  </UI>
+
+  
+  <UI Name="RuleHeader" Base="spreadsheet:LabelCell">
+    <Properties>
+      <me:RuleListModel Name="ListModel" RuleListModel="$Required"/>
+    </Properties>
+    <Locals>
+      <String Name="BaseText" String="{zune:Shell.LoadString(zune:StringId.IDS_SYNC_GROUPS_HEADER)}"/>
+    </Locals>
+    <Scripts>
+      <Script>
+        
+        Content = BaseText.Format([ListModel.Count] - 1);
+      </Script>
+    </Scripts>
+  </UI>
+
+  
+  <UI Name="RuleCell" Base="spreadsheet:LabelCell">
+    <Scripts>
+      <Script>
+        if (Model is data:Media)
+        {
+          data:Media media = (data:Media)Model;
+          String baseText = "{0}";
+
+          if (media is data:Artist)
+          {
+            baseText = me:RuleBaseTexts.Artist;
+          }
+          else if (media is data:Album)
+          {
+            baseText = me:RuleBaseTexts.Album;
+          }
+          else if (media is data:MediaFolder)
+          {
+            baseText = me:RuleBaseTexts.Folder;
+          }
+          else if (media is data:PodcastSeries)
+          {
+            baseText = me:RuleBaseTexts.PodcastSeries;
+          }
+
+          Content = baseText.Format(media.Title);
+        }
+        
+        else if (Model is data:LibraryTrackQuery)
+        {
+          Content = zune:Shell.LoadString(zune:StringId.IDS_INDIVIDUAL_TRACKS);
+        }
+        else if (Model is data:LibraryPodcastEpisodeQuery)
+        {
+          Content = zune:Shell.LoadString(zune:StringId.IDS_INDIVIDUAL_EPISODES);
+        }
+        else if (Model is data:LibraryPhotoQuery)
+        {
+          Content = zune:Shell.LoadString(zune:StringId.IDS_INDIVIDUAL_PHOTOS);
+        }
+        else if (Model is String)
+        {
+          Content = (String)Model;
+        }
+      </Script>
+    </Scripts>
+  </UI>
+
+  <Class Name="RuleBaseTexts" Shared="true">
+    <Properties>
+      <String Name="Artist" String="{zune:Shell.LoadString(zune:StringId.IDS_ARTIST_RULE_BASE)}"/>
+      <String Name="Album" String="{zune:Shell.LoadString(zune:StringId.IDS_ALBUM_RULE_BASE)}"/>
+      <String Name="Folder" String="{zune:Shell.LoadString(zune:StringId.IDS_FOLDER_RULE_BASE)}"/>
+      <String Name="PodcastSeries" String="{zune:Shell.LoadString(zune:StringId.IDS_PODCAST_SERIES_RULE_BASE)}"/>
+    </Properties>
+  </Class>
+</UIX>

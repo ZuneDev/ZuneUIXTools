@@ -1,0 +1,1404 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:zune="assembly://ZuneShell/ZuneUI" 
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:sys="assembly://mscorlib/System"
+  xmlns:col="assembly://mscorlib/System.Collections"
+  xmlns:sec="assembly://mscorlib/System.Security"
+  xmlns:data="res://ZuneShellResources!LibraryData.schema.xml"
+  xmlns:podcastdata="res://ZuneMarketplaceResources!PodcastData.schema.xml"
+  xmlns:page="res://ZuneShellResources!PageStack.uix"
+  xmlns:style="res://ZuneShellResources!Style.uix"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:core="res://ZuneShellResources!CoreControls.uix"
+  xmlns:marketplace="res://ZuneMarketplaceResources!MarketplaceData.schema.xml"
+  xmlns:button="res://ZuneShellResources!Button.uix"
+  xmlns:thumbbutton="res://ZuneShellResources!ThumbnailButton.uix"
+  xmlns:animations="res://ZuneShellResources!Animations.uix"
+  xmlns:mctl="res://ZuneMarketplaceResources!Controls.uix"
+  xmlns:me="Me">
+
+  
+  
+  
+
+  <Class Name="PageState" Shared="true">
+    <Properties>
+      <Command Name="QueriesAllocated"/>
+      <me:LibraryQueries Name="LibraryQueries" LibraryQueries="{null}"/>
+      <me:MarketplaceQueries Name="MarketplaceQueries" MarketplaceQueries="{null}"/>
+    </Properties>
+    <Locals>
+      <iris:Command Name="Release"/>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(zune:Search.Instance.Executed.Invoked)]
+        if ((LibraryQueries == null) || (MarketplaceQueries == null))
+        {
+          LibraryQueries = new me:LibraryQueries();
+          MarketplaceQueries = new me:MarketplaceQueries();
+
+          
+          zune:Shell.DefaultInstance.CurrentPage.ReleaseCommand = Release;
+
+          
+          
+          QueriesAllocated.Invoke();
+        }
+
+      </Script>
+      <Script>
+        [DeclareTrigger(Release.Invoked)]
+        
+        
+        Class.DisposeOwnedObject(LibraryQueries);
+        LibraryQueries = null;
+        
+        Class.DisposeOwnedObject(MarketplaceQueries);
+        MarketplaceQueries = null;
+      </Script>
+    </Scripts>
+  </Class>
+
+  <Class Name="Queries">
+    <Properties>
+      <float Name="ScrollPosition"/>
+      <Boolean Name="ResultsFound" Boolean="false"/>
+      <Boolean Name="Completed" Boolean="false"/>
+    </Properties>
+
+    <Scripts>
+
+      <Script>
+        [DeclareTrigger(zune:Search.Instance.Keywords)]
+        
+        ScrollPosition = 0.0;
+        ResultsFound = false;
+        Completed = false;
+      </Script>
+
+    </Scripts>
+  </Class>
+
+  <Class Name="LibraryQueries" Base="me:Queries">
+    <Properties>
+      <data:LibraryArtistQuery          Name="ArtistQuery"          Sort="+Relevance" Keywords="{zune:Search.Instance.Keywords}" AutoRefresh="false"/>
+      <data:LibraryAlbumQuery           Name="AlbumQuery"           Sort="+Relevance" Keywords="{zune:Search.Instance.Keywords}" AutoRefresh="false"/>
+      <data:LibraryTrackQuery           Name="TrackQuery"           Sort="+Relevance" Keywords="{zune:Search.Instance.Keywords}" AutoRefresh="false"/>
+      <data:LibraryVideoQuery           Name="VideoQuery"           Sort="+Relevance" Keywords="{zune:Search.Instance.Keywords}" AutoRefresh="false"/>
+      <data:LibraryPodcastSeriesQuery   Name="PodcastSeriesQuery"   Sort="+Relevance" Keywords="{zune:Search.Instance.Keywords}" AutoRefresh="false"/>
+      <data:LibraryPodcastEpisodeQuery  Name="PodcastEpisodeQuery"  Sort="+Relevance" Keywords="{zune:Search.Instance.Keywords}" UserId="{zune:SignIn.Instance.LastSignedInUserId}" AutoRefresh="false"/>
+
+      <me:QueryState Name="Artist" NoStatusUpdates="true"/>
+      <me:QueryState Name="Album" NoStatusUpdates="true"/>
+      <me:QueryState Name="Track" NoStatusUpdates="true"/>
+      <me:QueryState Name="Video" NoStatusUpdates="true"/>
+      <me:QueryState Name="PodcastSeries" NoStatusUpdates="true"/>
+      <me:QueryState Name="PodcastEpisodes" NoStatusUpdates="true"/>
+    </Properties>
+
+    <Scripts>
+      <Script> Artist.Results = [ArtistQuery.Result].Items; </Script>
+      <Script> Album.Results = [AlbumQuery.Result].Items; </Script>
+      <Script> Track.Results = [TrackQuery.Result].Items; </Script>
+      <Script> Video.Results = [VideoQuery.Result].Items; </Script>
+      <Script> PodcastSeries.Results = [PodcastSeriesQuery.Result].Items; </Script>
+      <Script> PodcastEpisodes.Results = [PodcastEpisodeQuery.Result].Items; </Script>
+
+      <Script> Artist.Status = [ArtistQuery.Status]; </Script>
+      <Script> Album.Status = [AlbumQuery.Status]; </Script>
+      <Script> Track.Status = [TrackQuery.Status]; </Script>
+      <Script> Video.Status = [VideoQuery.Status]; </Script>
+      <Script> PodcastSeries.Status = [PodcastSeriesQuery.Status]; </Script>
+      <Script> PodcastEpisodes.Status = [PodcastEpisodeQuery.Status]; </Script>
+
+      <Script>
+        string keywords = [zune:Search.Instance.Keywords];
+
+        
+        ArtistQuery.Keywords = keywords;
+        AlbumQuery.Keywords = keywords;
+        TrackQuery.Keywords = keywords;
+        VideoQuery.Keywords = keywords;
+        PodcastSeriesQuery.Keywords = keywords;
+        PodcastEpisodeQuery.Keywords = keywords;
+      </Script>
+
+      <Script>
+        <![CDATA[
+          Completed = [Artist.Completed] && [Album.Completed] && [Track.Completed] && [Video.Completed] && [PodcastSeries.Completed] && [PodcastEpisodes.Completed];
+          ResultsFound = [Artist.ResultsFound] || [Album.ResultsFound] || [Track.ResultsFound] || [Video.ResultsFound] || [PodcastSeries.ResultsFound] || [PodcastEpisodes.ResultsFound];
+        ]]>
+      </Script>
+    </Scripts>
+  </Class>
+
+  <Class Name="MarketplaceQueries" Base="me:Queries">
+    <Properties>
+      <marketplace:MarketplaceSearchArtistsQuery            Name="ArtistQuery"     Keywords="{zune:Search.Instance.Keywords}"/>
+      <marketplace:MarketplaceSearchAlbumsQuery             Name="AlbumQuery"      Keywords="{zune:Search.Instance.Keywords}"/>
+      <marketplace:MarketplaceSearchTracksQuery             Name="TrackQuery"      Keywords="{zune:Search.Instance.Keywords}"/>
+      <marketplace:MarketplaceSearchPlaylistsQuery          Name="PlaylistQuery"   Keywords="{zune:Search.Instance.Keywords}"/>
+      <marketplace:MarketplaceSearchMusicVideosQuery        Name="MusicVideoQuery" Keywords="{zune:Search.Instance.Keywords}"/>
+      <podcastdata:NameValueUriResourceFindPodcastsFTSQuery Name="PodcastQuery"    Query="{zune:Search.Instance.Keywords}"/>
+
+      <me:QueryState Name="Artist"/>
+      <me:QueryState Name="Album"/>
+      <me:QueryState Name="Track"/>
+      <me:QueryState Name="Playlist"/>
+      <me:QueryState Name="MusicVideo"/>
+      <me:QueryState Name="Podcast"/>
+
+      <zune:QueryTracker Name="Tracker"/>
+    </Properties>
+
+    <Scripts>
+      <Script> Artist.Results = [ArtistQuery.Result].Artists;   </Script>
+      <Script> Album.Results = [AlbumQuery.Result].Albums;     </Script>
+      <Script> Track.Results = [TrackQuery.Result].Tracks;     </Script>
+      <Script> Podcast.Results = [PodcastQuery.Result].Items;    </Script>
+      <Script> Playlist.Results = [PlaylistQuery.Result].Playlists; </Script>
+      <Script> MusicVideo.Results = [MusicVideoQuery.Result].MusicVideos; </Script>
+
+      <Script> Artist.Status = [ArtistQuery.Status]; </Script>
+      <Script> Album.Status = [AlbumQuery.Status]; </Script>
+      <Script> Track.Status = [TrackQuery.Status]; </Script>
+      <Script> Podcast.Status = [PodcastQuery.Status]; </Script>
+      <Script> Playlist.Status = [PlaylistQuery.Status]; </Script>
+      <Script> MusicVideo.Status = [MusicVideoQuery.Status]; </Script>
+
+      <Script>
+        Tracker.Register("Artist", ArtistQuery);
+        Tracker.Register("Album", AlbumQuery);
+        Tracker.Register("Track", TrackQuery);
+        Tracker.Register("Playlist", PlaylistQuery);
+        Tracker.Register("MusicVideo", MusicVideoQuery);
+        Tracker.Register("Podcast", PodcastQuery);
+      </Script>
+
+      <Script>
+        string keywords = [zune:Search.Instance.Keywords];
+
+        
+        ArtistQuery.Keywords     = keywords;
+        AlbumQuery.Keywords      = keywords;
+        TrackQuery.Keywords      = keywords;
+        PodcastQuery.Query       = keywords;
+        PlaylistQuery.Keywords   = keywords;
+        MusicVideoQuery.Keywords = keywords;
+      </Script>
+
+      <Script>
+        <![CDATA[
+          Completed = [Artist.Completed] && [Album.Completed] && [Track.Completed] && [MusicVideo.Completed] && [Podcast.Completed] && [Playlist.Completed];
+          ResultsFound = [Artist.ResultsFound] || [Album.ResultsFound] || [Track.ResultsFound] || [MusicVideo.ResultsFound] || [Podcast.ResultsFound] || [Playlist.ResultsFound];
+        ]]>
+      </Script>
+    </Scripts>
+  </Class>
+
+  <Class Name="QueryState">
+    <Properties>
+      <iris:DataProviderQueryStatus Name="Status"/>
+      <iris:VirtualList             Name="Results"  VirtualList="{null}"/>
+      <Boolean                      Name="Expanded" Boolean="false"/>
+      <Boolean                      Name="Completed" Boolean="false"/>
+      <Boolean                      Name="ResultsFound" Boolean="false"/>
+      <Boolean                      Name="NoStatusUpdates" Boolean="false"/>
+    </Properties>
+    
+    <Scripts>
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(zune:Search.Instance.Keywords)]
+
+        Expanded = false;
+        Completed = false;
+        ResultsFound = false;
+        Results = null;
+        Status = iris:DataProviderQueryStatus.Idle;
+      </Script>
+    </Scripts>
+  </Class>
+
+  
+  
+  
+  <UI Name="Search" Base="page:PageBase">
+    <Locals>
+      <AnchorLayoutInput Name="CollectionDividerLayout"   Left="Parent,0.6" Top="Parent, 0" Bottom="Parent, 1"/>
+      <AnchorLayoutInput Name="MarketplaceDividerLayout"  Left="Parent,0.4" Top="Parent, 0" Bottom="Parent, 1"/>
+    </Locals>
+    <Scripts>
+      <Script>
+        <![CDATA[
+          sys:String rawKeywords = [zune:Search.Instance.Keywords];
+          string keywords;
+          if (rawKeywords != null)
+            keywords = sec:SecurityElement.Escape(rawKeywords);
+          SearchResultsFor.Content = sys:String.Format("<Header>{0}</Header> <Keyword>{1}</Keyword>", zune:Shell.LoadString(zune:StringId.IDS_SEARCH_HEADER), keywords);
+        ]]>
+      </Script>
+
+      <Script>
+        if ([zune:Search.Instance.CollectionEmphasized])
+        {
+          CenterDivider.LayoutInput = CollectionDividerLayout;
+        }
+        else
+        {
+          CenterDivider.LayoutInput = MarketplaceDividerLayout;
+        }
+      </Script>
+    </Scripts>
+    
+    <Content>
+      <Panel>
+        <Layout>
+          <DockLayout SizeToChildren="true"  DefaultLayoutInput="Top,Near"/>
+        </Layout>
+        <Animations>
+          
+          
+          <Animation Animation="{animations:Animations.HideNow}"/>
+        </Animations>
+        <Children>
+
+          <Text Name="SearchResultsFor" Font="{styles:Styles.ReviewSubHeader}" Margins="5,0,0,0">
+            <NamedStyles>
+              <TextStyle Name="Header"  Color="{styles:Styles.SearchKeywordHeader}" Bold="true"/>
+              <TextStyle Name="Keyword" Color="{styles:Styles.SectionHeadColor}"    Bold="true"/>
+            </NamedStyles>
+          </Text>
+
+          <Panel Layout="Anchor">
+            <Children>
+
+              
+              <me:CollectionResults Name="CollectionResults" Queries="{me:PageState.LibraryQueries}">
+                <LayoutInput>
+                  <AnchorLayoutInput Right="CenterDivider,0"/>
+                </LayoutInput>
+              </me:CollectionResults>
+
+              
+              <Graphic Name="CenterDivider" Content="{styles:Styles.DividerVertical}"/>
+
+              
+              <me:MarketplaceResults Name="MarketplaceResults" Queries="{me:PageState.MarketplaceQueries}" Page="{Page}" Shell="{Shell}">
+                <LayoutInput>
+                  <AnchorLayoutInput Left="CenterDivider,1"/>
+                </LayoutInput>
+              </me:MarketplaceResults>
+            </Children>
+          </Panel>
+
+        </Children>
+      </Panel>
+
+    </Content>
+  </UI>
+  
+  
+  
+  
+  <UI Name="ResultSet">
+    <Properties>
+      <me:QueryState    Name="QueryState"     QueryState="{null}"/>
+      <sys:String       Name="Title"   String="$Required"/>
+      <sys:String       Name="RepeatedUIName" String="RepeatedTextItem"/>
+      <sys:Boolean      Name="TextView"       Boolean="true"/>
+      <sys:Int32        Name="MaxResultSetHeight" Int32="85"/>
+      <Size             Name="ThumbnailSize" Size="86,86"/>
+      <Size             Name="ResultSize"    Size="100,0"/>
+    </Properties>
+
+    <Locals>
+      <iris:Command Name="Show"             Description="{zune:Shell.LoadString(zune:StringId.IDS_SEE_ALL_BUTTON)}"/>
+      <iris:Command Name="Hide"             Description="{zune:Shell.LoadString(zune:StringId.IDS_HIDE_ALL_BUTTON)}"/>
+      <style:Style  Name="ShowHideStyle"    Font="{styles:Styles.ButtonText}"/>
+      <ScrollingData Name="ScrollData"/>
+
+      
+      <Layout Name="TextLayout">
+        <Layout>
+          
+          
+          <GridLayout Orientation="Vertical" Spacing="4,0" Columns="1"/>
+        </Layout>
+      </Layout>
+      <Layout Name="ThumbLayout">
+        <Layout>
+          
+          
+          <GridLayout Orientation="Horizontal" AllowWrap="true"/>
+        </Layout>
+      </Layout>
+
+      <col:Hashtable Name="SearchStyles"/>
+      <TextStyle Name="KeywordStyle" Color="{styles:Styles.SearchKeywordColor}"/>
+      <string Name="KeywordTag" string="Keyword"/>
+      <Single Name="AnimDelay" Single="0.05"/>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        
+        SearchStyles.Add(KeywordTag, KeywordStyle);
+        
+        if (TextView)
+        {
+          ResultRepeater.Layout = TextLayout;
+        }
+        else
+        {
+          ResultRepeater.Layout = ThumbLayout;
+        }        
+      </Script>
+
+      <Script>
+        if (QueryState != null)
+        {
+          ShowButton.Visible = ![QueryState.Expanded];
+          HideButton.Visible = [QueryState.Expanded];
+          
+          if ([QueryState.Expanded])
+          {
+            ResultScroller.MaximumSize = new Size(0,0);
+          }
+          else
+          {
+            ResultScroller.MaximumSize = new Size(0,MaxResultSetHeight);
+          }
+        }
+
+      </Script>
+      
+      <Script>
+        [DeclareTrigger(Show.Invoked)]
+        if (QueryState != null)
+        {
+          QueryState.Expanded = true;
+        }
+      </Script>
+
+      <Script>
+        [DeclareTrigger(Hide.Invoked)]
+       
+        if (QueryState != null)
+        {
+          QueryState.Expanded = false;
+        }
+      </Script>
+      
+      <Script>
+        if (QueryState != null)
+        {
+          
+          ShowHidePanel.Visible = [ScrollData.CanScrollDown] || [ScrollData.CanScrollUp] || [QueryState.Expanded];
+        }
+      </Script>
+
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(QueryState.Status)]
+        [DeclareTrigger(QueryState.Results)]
+
+        if (QueryState != null)
+        {
+          if ((QueryState.Status == iris:DataProviderQueryStatus.Complete) || (QueryState.Status == iris:DataProviderQueryStatus.Idle))
+          {
+            if ((QueryState.Status == iris:DataProviderQueryStatus.Complete) || QueryState.NoStatusUpdates)
+            {
+              QueryState.Completed = true;
+              
+              if (QueryState.Results != null)
+              {
+                if (QueryState.Results.Count > 0)
+                {
+                  ResultHeader.Content  = sys:String.Format(Title, QueryState.Results.Count);
+                  QueryState.ResultsFound = true;
+                  ResultRepeater.Source = QueryState.Results;
+                }
+              }
+            }
+            
+            
+            if (QueryState.Results == null)
+            {
+              ResultRepeater.Source = null;
+              QueryState.Completed = false;
+            }
+          }
+          else if (QueryState.Status == iris:DataProviderQueryStatus.Error)
+          {
+            QueryState.Completed = true;
+          }
+          else if (QueryState.Status == iris:DataProviderQueryStatus.RequestingData)
+          {
+            ResultRepeater.Source = null;
+            QueryState.Completed = false;
+          }
+        }
+      </Script>
+
+      <Script>
+        if (QueryState != null)
+        {
+          Results.Visible = [QueryState.ResultsFound];
+        }
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel Name="Results" Padding="0,0,0,28">
+        <Layout>
+          <DockLayout SizeToChildren="true"  DefaultLayoutInput="Top,Near"/>
+        </Layout>
+
+        <Animations>
+          <Animation Animation="{animations:Animations.BasicFadeIn}"/>
+          <Animation Animation="{animations:Animations.BasicFadeOut}"/>
+        </Animations>
+
+        <Children>
+          <Panel Margins="0,2,0,0">
+            <Layout>
+              <FlowLayout Spacing="5,0" Orientation="Horizontal" ItemAlignment="Near"/>
+            </Layout>
+            <Children>
+
+              <Text Name="ResultHeader" Color="{styles:Styles.SectionHeadColor}" Font="{styles:Styles.SearchHeaderText}" Margins="0,4,0,0" Padding="0,0,0,8"/>
+              <Panel Name="ShowHidePanel" Visible="false">
+                <Animations>
+                  <Animation Animation="{animations:Animations.BasicFadeIn}"/>
+                  <Animation Animation="{animations:Animations.BasicFadeOut}"/>
+                </Animations>
+                <Children>
+                  <core:ActionButton Name="ShowButton" Model="{Show}" OverrideStyle="{ShowHideStyle}"/>
+                  <core:ActionButton Name="HideButton" Model="{Hide}" OverrideStyle="{ShowHideStyle}" Visible="false"/>
+                </Children>
+              </Panel>
+
+            </Children>
+          </Panel>
+
+          <Scroller Name="ResultScroller" Orientation="Vertical" FadeSize="-1" ScrollingData="{ScrollData}">
+            <Children>
+
+              <Repeater Name="ResultRepeater" ContentName="{RepeatedUIName}"/>
+
+            </Children>
+          </Scroller>
+        </Children>
+
+      </Panel>
+    </Content>
+
+    <Content Name="RepeatedTextItem">
+      <me:TextResult Item="{RepeatedItem}" Margins="9,0,0,0" NamedStyles="{SearchStyles}" KeywordTag="{KeywordTag}">
+        <Animations>
+          <TransformByAttributeAnimation Attribute="Index" Delay="{AnimDelay}" Source="{animations:Animations.SearchResultsExpand}" />
+          
+          <AnimationProvider AnimationProvider="{animations:Animations.MoveNow}"/>
+        </Animations>
+      </me:TextResult>
+    </Content>
+
+    <Content Name="RepeatedThumbnailItem">
+      <me:ThumbnailResult Item="{RepeatedItem}" Margins="10,0,0,0" NamedStyles="{SearchStyles}" KeywordTag="{KeywordTag}" ThumbnailSize="{ThumbnailSize}" ResultSize="{ResultSize}">
+        <Animations>
+          <TransformByAttributeAnimation Attribute="Index" Delay="{AnimDelay}" Source="{animations:Animations.GalleryFadeIn}" />
+          
+          <AnimationProvider AnimationProvider="{animations:Animations.MoveNow}"/>
+        </Animations>
+      </me:ThumbnailResult>
+    </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="SearchResults">
+    <Properties>
+      <me:Queries Name="Queries" Queries="$Required"/>
+    </Properties>
+    
+    <Locals>
+      <ScrollingData Name="ScrollData"/>
+      <Boolean Name="SetScrollerPos" Boolean="false"/>
+    </Locals>
+
+    <Input>
+      <ScrollingHandler Name="ScrollHandler" ScrollingData="{ScrollData}"/>
+    </Input>
+    
+    <Scripts>
+      <Script>
+        if ([ScrollData.TotalPages] &lt; 1.0)
+        {
+          
+          
+          SetScrollerPos = true;
+        }
+        else if (SetScrollerPos)
+        {
+          if (Queries != null)
+          {
+            
+            ScrollData.ScrollToPosition(Queries.ScrollPosition);
+            SetScrollerPos = false;
+          }
+        }
+      </Script>
+
+      <Script>
+        if ((Queries != null) &amp;&amp; ([ScrollData.TotalPages] > 1.0))
+        {
+          Queries.ScrollPosition = ([ScrollData.CurrentPage] - 1.0) / ([ScrollData.TotalPages] - 1.0);
+        }
+      </Script>
+    </Scripts>
+  </UI>
+  
+  
+  
+  
+  <UI Name="CollectionResults" Base="me:SearchResults">
+    <Scripts>
+      <Script> ScrollBar.RegionHover = [UI.DeepMouseFocus]; </Script>
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(me:PageState.QueriesAllocated.Invoked)]
+        if (me:PageState.LibraryQueries != null)
+        {
+          ArtistResults.QueryState = me:PageState.LibraryQueries.Artist;
+          AlbumResults.QueryState = me:PageState.LibraryQueries.Album;
+          TrackResults.QueryState = me:PageState.LibraryQueries.Track;
+          VideoResults.QueryState = me:PageState.LibraryQueries.Video;
+          PodcastSeriesResults.QueryState = me:PageState.LibraryQueries.PodcastSeries;
+          PodcastEpisodesResults.QueryState = me:PageState.LibraryQueries.PodcastEpisodes;
+        }
+      </Script>
+
+      <Script>
+        if (me:PageState.LibraryQueries != null)
+        {
+          NoResultsPanel.Visible = [me:PageState.LibraryQueries.Completed] &amp;&amp; ![me:PageState.LibraryQueries.ResultsFound];
+        }
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel Padding="8,8,8,8" Layout="Form">
+        <Children>
+
+          <Text Name="Header" Content="{zune:Shell.LoadString(zune:StringId.IDS_SEARCH_COLLECTION_HEADER)}" Color="{styles:Styles.SectionSubHeadColor}" Font="{styles:Styles.SearchSubHeaderText}" Margins="-1,0,0,0" Padding="0,0,0,15">
+            <LayoutInput>
+              <FormLayoutInput Left="Parent,0" Top="Parent,0"/>
+            </LayoutInput>
+          </Text>
+
+          <Panel Layout="Dock">
+            <LayoutInput>
+              <FormLayoutInput Left="Parent,0" Top="Header,1" Right="Parent,1" Bottom="Parent, 1"/>
+            </LayoutInput>
+
+            <Children>
+              <core:ScrollBar Name="ScrollBar" ScrollData="{ScrollData}">
+                <LayoutInput>
+                  <DockLayoutInput Position="Right" Alignment="Near"/>
+                </LayoutInput>
+              </core:ScrollBar>
+
+              <Scroller Orientation="Vertical" FadeSize="-1" ScrollingData="{ScrollData}">
+                <Children>
+
+                  <Panel>
+                    <Layout>
+                      <DockLayout SizeToChildren="true"  DefaultLayoutInput="Top,Near"/>
+                    </Layout>
+                    <Children>
+
+                      <me:ResultSet Name="ArtistResults" Title="{zune:Shell.LoadString(zune:StringId.IDS_SEARCH_ARTISTS_HEADER)}"/>
+                      <me:ResultSet Name="AlbumResults" Title="{zune:Shell.LoadString(zune:StringId.IDS_SEARCH_ALBUMS_HEADER)}" RepeatedUIName="RepeatedThumbnailItem" TextView="false" MaxResultSetHeight="140"/>
+                      <me:ResultSet Name="TrackResults" Title="{zune:Shell.LoadString(zune:StringId.IDS_SEARCH_SONGS_HEADER)}"/>
+                      <me:ResultSet Name="VideoResults" Title="{zune:Shell.LoadString(zune:StringId.IDS_SEARCH_VIDEOS_HEADER)}"/>
+                      <me:ResultSet Name="PodcastSeriesResults" Title="{zune:Shell.LoadString(zune:StringId.IDS_SEARCH_SERIES_HEADER)}"/>
+                      <me:ResultSet Name="PodcastEpisodesResults" Title="{zune:Shell.LoadString(zune:StringId.IDS_SEARCH_EPISODES_HEADER)}"/>
+
+                    </Children>
+                  </Panel>
+
+                </Children>
+              </Scroller>
+
+            </Children>
+          </Panel>
+
+          <me:MessagePanel Name="NoResultsPanel" Message="{zune:Shell.LoadString(zune:StringId.IDS_SEARCH_COLLECTION_NORESULTS)}">
+            <LayoutInput>
+              <FormLayoutInput Left="Header,0" Top="Header,1"/>
+            </LayoutInput>
+          </me:MessagePanel>
+          
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+  
+  
+  
+  
+  <Class Name="SearchButtonProvider" Base="button:ButtonProvider">
+    <Properties>
+      <iris:Command Name="Model" Command="$Required"/>
+    </Properties>
+
+    <Scripts>
+      <Script>Available = [Model.Available];</Script>
+      <Script>Selected = [Model.Selected];</Script>
+      <Script>ClickCommand = [Model];</Script>
+    </Scripts>
+  </Class>
+  
+  
+  
+  
+  <Class Name="SearchThumbnailProvider" Base="thumbbutton:CommandThumbnailButtonProvider">
+    <Properties>
+      <String Name="SecondaryLabel"/>
+      <String Name="SecondaryToolTip"/>
+      <String Name="ThirdLabel"/>
+      <String Name="ThirdToolTip"/>
+    </Properties>
+  </Class>
+
+  
+  
+  
+  <UI Name="SearchOverlayLabel" Base="core:ThumbnailButtonOverlay">
+    <Properties>
+      <Boolean Name="WordWrap" Boolean="true"/>
+      <Int32 Name="MaximumLines" Int32="3"/>
+    </Properties>
+    
+    <Locals>
+      <style:StatefulCompositeStyle Name="Style" State="{State}" Base="{styles:SharedStyles.ThumbnailOverlayLabelStyle}"/>
+    </Locals>
+    
+    <Scripts>
+      <Script>
+        if (Provider.PrimaryLabel != null)
+          Label.Content = ((sys:String)[Provider.PrimaryLabel]).ToLower();
+        else
+          Label.Content = null;
+
+        Label.Style = Style;
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel Layout="Dock">
+        <Children>
+
+          <core:Label Name="Label" Margins="4,0,4,0">
+            <LayoutInput>
+              <DockLayoutInput Position="Bottom" Alignment="Near"/>
+            </LayoutInput>
+          </core:Label>
+
+        </Children>
+      </Panel>
+    </Content>
+
+  </UI>
+
+  
+  
+  
+  <UI Name="TextResult" Base="core:LabelButtonWithBackground">
+    <Properties>
+      <Object Name="Item" Object="$Required" />
+      <iris:Command Name="Model" />
+      <me:SearchButtonProvider Name="Provider" Model="{Model}"/>
+      <string Name="KeywordTag" string ="$Required"/>
+      <style:Style Name="OverrideStyle" Style="{styles:SharedStyles.SearchResultsStyle}"/>      
+      <col:Hashtable Name="SearchStyles"/>
+      
+    </Properties>
+
+    <Scripts>
+      <Script>
+        <![CDATA[
+    
+        if ([Item] is data:Artist)
+        {
+          data:Artist artist = (data:Artist)Item;
+          Model.Description = artist.Title;
+          Provider.ToolTip = Model.Description;
+          Provider.PrimaryLabel = zune:Search.Instance.HighlightKeywords(artist.Title, KeywordTag);
+        }
+        else if (Item is data:Album)
+        {
+          data:Album album = (data:Album)Item;
+          
+          string year;
+          if (album.ReleaseDate.Year > 1)
+            year = album.ReleaseDate.Year.ToString();
+            
+          Model.Description = zune:Search.Instance.FormatResult(null, album.Title, album.ArtistName, year);          
+          Provider.ToolTip = Model.Description;
+          Provider.PrimaryLabel = zune:Search.Instance.FormatResult(KeywordTag, album.Title, album.ArtistName, year);
+        }
+        else if (Item is data:Track)
+        {
+          data:Track track = (data:Track)Item;
+
+          string year;
+          if (track.ReleaseDate.Year > 1)
+            year = track.ReleaseDate.Year.ToString();
+            
+          Model.Description = zune:Search.Instance.FormatResult(null, track.Title, track.ArtistName, year);
+          Provider.ToolTip = Model.Description;
+          Provider.PrimaryLabel = zune:Search.Instance.FormatResult(KeywordTag, track.Title, track.ArtistName, year);
+        }
+        else if (Item is data:Video)
+        {
+          data:Video video = (data:Video)Item;
+          Model.Description = zune:Search.Instance.FormatResult(null, video.Title, video.ArtistName);
+          Provider.ToolTip = Model.Description;
+          Provider.PrimaryLabel = zune:Search.Instance.FormatResult(KeywordTag, video.Title, video.ArtistName);
+        }
+        else if (Item is data:PodcastSeries)
+        {
+          data:PodcastSeries podcastSeries = (data:PodcastSeries)Item;
+          Model.Description = zune:Search.Instance.FormatResult(null, podcastSeries.Title, podcastSeries.Author);          
+          Provider.ToolTip = Model.Description;
+          Provider.PrimaryLabel = zune:Search.Instance.FormatResult(KeywordTag, podcastSeries.Title, podcastSeries.Author);
+        }
+        else if (Item is data:PodcastEpisode)
+        {
+          data:PodcastEpisode podcastEpisode = (data:PodcastEpisode)Item;
+          Model.Description = zune:Search.Instance.FormatResult(null, podcastEpisode.Title, podcastEpisode.Author);
+          Provider.ToolTip = Model.Description;
+          Provider.PrimaryLabel = zune:Search.Instance.FormatResult(KeywordTag, podcastEpisode.Title, podcastEpisode.Author);
+        }
+        else if (Item is marketplace:Artist)
+        {
+          marketplace:Artist artist = (marketplace:Artist)Item;
+          Model.Description = artist.Title;
+          Provider.ToolTip = Model.Description;
+          Provider.PrimaryLabel = zune:Search.Instance.HighlightKeywords(artist.Title, KeywordTag);
+        }
+        else if (Item is marketplace:Album)
+        {
+          marketplace:Album album = (marketplace:Album)Item;
+          
+          string year;
+          if (album.ReleaseDate.Year > 1)
+            year = album.ReleaseDate.Year.ToString();
+            
+          string artist;
+          if (album.PrimaryArtist != null)
+            artist = album.PrimaryArtist.Title;
+            
+          Model.Description = zune:Search.Instance.FormatResult(null, album.Title, artist, year);
+          Provider.ToolTip = Model.Description;
+          Provider.PrimaryLabel = zune:Search.Instance.FormatResult(KeywordTag, album.Title, artist, year);
+        }
+        else if (Item is marketplace:Track)
+        {
+          marketplace:Track track = (marketplace:Track)Item;
+          
+          string artist;
+          if (track.PrimaryArtist != null)
+            artist = track.PrimaryArtist.Title;
+            
+          Model.Description = zune:Search.Instance.FormatResult(null, track.Title, artist);
+          Provider.ToolTip = Model.Description;
+          Provider.PrimaryLabel = zune:Search.Instance.FormatResult(KeywordTag, track.Title, artist);          
+        }
+        else if (Item is marketplace:Playlist)
+        {
+          marketplace:Playlist playlist = (marketplace:Playlist)Item;
+          Model.Description = zune:Search.Instance.FormatResult(null, playlist.Title, playlist.Author, playlist.CategoryName);
+          Provider.ToolTip = Model.Description;
+          Provider.PrimaryLabel = zune:Search.Instance.FormatResult(KeywordTag, playlist.Title, playlist.Author, playlist.CategoryName);          
+        }
+        else if (Item is marketplace:MusicVideo)
+        {
+          marketplace:MusicVideo video = (marketplace:MusicVideo)Item;
+          
+          string artist;
+          if (video.PrimaryArtist != null)
+            artist = video.PrimaryArtist.Title;
+            
+          Model.Description = zune:Search.Instance.FormatResult(null, video.Title, artist);
+          Provider.ToolTip = Model.Description;
+          Provider.PrimaryLabel = zune:Search.Instance.FormatResult(KeywordTag, video.Title, artist);
+        }
+        else if (Item is podcastdata:PodcastSeries)
+        {
+          podcastdata:PodcastSeries podcast = (podcastdata:PodcastSeries)Item;
+
+          string categoryName = "";
+          if (!List.IsNullOrEmpty(podcast.Categories))
+          {
+            podcastdata:SubCategory categoryModel = (podcastdata:SubCategory)((List)podcast.Categories).GetItem(0);
+            categoryName = categoryModel.Title;
+          }
+
+          Model.Description = zune:Search.Instance.FormatResult(null, podcast.Title, podcast.Author, categoryName);
+          Provider.ToolTip = Model.Description;
+          Provider.PrimaryLabel = zune:Search.Instance.FormatResult(KeywordTag, podcast.Title, podcast.Author, categoryName);
+        }
+      ]]>
+      </Script>
+
+      <Script>
+        [DeclareTrigger(Model.Invoked)]
+        
+        
+        string destination;
+        col:Hashtable args;
+        
+        if (Item is data:Artist)
+        {
+          data:Artist artist = (data:Artist)Item;
+          
+          destination = "Collection\Music";
+          
+          args = new col:Hashtable();
+          args.Add("ArtistLibraryId", artist.LibraryId);
+          args.Add("ViewOverrideId", zune:MusicLibraryView.Browse);
+        }
+        else if (Item is data:Album)
+        {
+          data:Album album = (data:Album)Item;
+          
+          destination = "Collection\Music";
+          
+          args = new col:Hashtable();
+          args.Add("AlbumLibraryId", album.LibraryId);
+          args.Add("ArtistLibraryId", album.ArtistLibraryId);
+          args.Add("ViewOverrideId", zune:MusicLibraryView.Browse);
+        }
+        else if (Item is data:Track)
+        {
+          data:Track track = (data:Track)Item;
+          
+          destination = "Collection\Music";
+          
+          args = new col:Hashtable();
+          args.Add("AlbumLibraryId", track.AlbumLibraryId);
+          args.Add("ArtistLibraryId", track.AlbumArtistLibraryId);
+          args.Add("TrackLibraryId", track.LibraryId);
+          args.Add("ViewOverrideId", zune:MusicLibraryView.Browse);
+        }
+        else if (Item is data:Video)
+        {
+          data:Video video = (data:Video)Item;
+        
+          destination = "Collection\Videos";
+          
+          args = new col:Hashtable();
+          args.Add("VideoLibraryId", video.LibraryId);
+        }
+        else if (Item is data:PodcastSeries)
+        {
+          data:PodcastSeries podcast = (data:PodcastSeries)Item;
+          
+          destination = "Collection\Podcasts";
+          
+          args = new col:Hashtable();
+          args.Add("SeriesLibraryId", podcast.LibraryId);
+        }
+        else if (Item is data:PodcastEpisode)
+        {
+          data:PodcastEpisode podcast = (data:PodcastEpisode)Item;
+          
+          destination = "Collection\Podcasts";
+          
+          args = new col:Hashtable();
+          args.Add("SeriesLibraryId", podcast.SeriesId);
+          args.Add("EpisodeLibraryId", podcast.LibraryId);
+        }
+        else if (Item is marketplace:Artist)
+        {
+          marketplace:Artist artist = (marketplace:Artist)Item;
+          
+          destination = "Marketplace\Music\Artist";
+          
+          args = new col:Hashtable();
+          args.Add("ArtistId", artist.Id.ToString());
+        }
+        else if (Item is marketplace:Album)
+        {
+          marketplace:Album album = (marketplace:Album)Item;
+
+          destination = "Marketplace\Music\Artist";
+          
+          args = new col:Hashtable();
+          args.Add("ArtistId", album.PrimaryArtist.Id.ToString());
+          args.Add("AlbumId", album.Id.ToString());
+          
+          
+        }
+        else if (Item is marketplace:Track)
+        {
+          marketplace:Track track = (marketplace:Track)Item;
+
+          destination = "Marketplace\Music\Artist";
+          
+          args = new col:Hashtable();
+          args.Add("ArtistId", track.PrimaryArtist.Id.ToString());
+          args.Add("AlbumId", track.AlbumId.ToString());
+          args.Add("TrackId", track.Id.ToString());
+        }
+        else if (Item is marketplace:Playlist)
+        {
+          marketplace:Playlist playlist = (marketplace:Playlist)Item;
+
+          destination = "Marketplace\Music\Playlist";
+          
+          args = new col:Hashtable();
+          args.Add("PlaylistId", playlist.Id.ToString());
+        }
+        else if (Item is marketplace:MusicVideo)
+        {
+          marketplace:MusicVideo video = (marketplace:MusicVideo)Item;
+          
+          destination = "Marketplace\Music\Artist";
+          
+          args = new col:Hashtable();
+          args.Add("VideoId", video.Id.ToString());
+        }
+        else if (Item is podcastdata:PodcastSeries)
+        {
+          podcastdata:PodcastSeries podcast = (podcastdata:PodcastSeries)Item;
+
+          destination = "Marketplace\Podcasts\Series";
+          
+          args = new col:Hashtable();
+          args.Add("PodcastId", podcast.Id);
+        }
+        
+        
+        if (!String.IsNullOrEmpty(destination))
+        {
+          zune:Shell.DefaultInstance.Execute(destination, args);
+        }
+      </Script>     
+      
+    </Scripts>
+  </UI>
+
+  
+  
+  
+  <UI Name="ThumbnailResult">
+    <Properties>
+      <Object Name="Item" Object="$Required" />
+      <zune:ThumbnailCommand Name="Model"/>
+      <Size Name="ThumbnailSize" Size="86,86"/>
+      <Size Name="ResultSize" Size="100,0"/>
+      <string Name="KeywordTag" string ="$Required"/>
+      <col:IDictionary Name="NamedStyles" IDictionary="{null}"/>
+    </Properties>
+
+    <Locals>
+      <me:SearchThumbnailProvider Name="Provider" Model="{Model}" Image="{styles:Styles.NoAlbumArt}"/>
+      <style:Style Name="TextStyle" Style="{styles:SharedStyles.SearchResultsSmallStyle}"/>
+    </Locals>
+    
+    <Scripts>
+      <Script>
+        if ([Item] is data:Artist)
+        {
+          data:Artist artist = (data:Artist)Item;
+          Model.Description = artist.Title;
+          
+          
+          
+          Provider.Image = styles:Styles.NoAlbumArt;
+
+          
+          Provider.PrimaryLabel = zune:Search.Instance.HighlightKeywords(artist.Title, KeywordTag);
+          Provider.ToolTip = artist.Title;
+          
+          
+          ThumbButton.OverlayType = typeof(me:SearchOverlayLabel);
+        }
+      </Script>
+      
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(((data:Album)Item).AlbumArtSmall)]
+
+        if (Item is data:Album)
+        {
+          data:Album album = (data:Album)Item;
+          Model.Description = album.Title;
+
+          if (album.AlbumArtSmall != null)
+          {
+            Provider.Image = album.AlbumArtSmall;
+          }
+          else
+          {
+            Provider.Image = styles:Styles.NoAlbumArt;
+          }
+          
+          
+          Provider.PrimaryLabel = zune:Search.Instance.HighlightKeywords(album.Title, KeywordTag);
+          Provider.ToolTip = album.Title;
+          
+          Provider.SecondaryLabel = zune:Search.Instance.HighlightKeywords(album.ArtistName, KeywordTag);
+          Provider.SecondaryToolTip = album.ArtistName;
+
+          if (album.ReleaseDate.Year > 1)
+          {
+            Provider.ThirdLabel = album.ReleaseDate.Year.ToString();
+            Provider.ThirdToolTip = Provider.ThirdLabel;
+          }
+        }
+      </Script>
+      
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(((marketplace:Album)Item).ImageUri)]
+
+        if (Item is marketplace:Album)
+        {
+          marketplace:Album album = (marketplace:Album)Item;
+          Model.Description = album.Title;
+
+          if (!String.IsNullOrEmpty(album.ImageUri))
+          {
+            Provider.Image = new Image(album.ImageUri, new Inset(0,0,0,0), ThumbnailSize);
+          }
+          else
+          {
+            Provider.Image = styles:Styles.NoAlbumArt;
+          }
+
+          
+          Provider.PrimaryLabel = zune:Search.Instance.HighlightKeywords(album.Title, KeywordTag);
+          Provider.ToolTip = album.Title;
+          
+          if (album.PrimaryArtist != null)
+          {
+            Provider.SecondaryLabel = zune:Search.Instance.HighlightKeywords(album.PrimaryArtist.Title, KeywordTag);
+            Provider.SecondaryToolTip = album.PrimaryArtist.Title;
+          }
+
+          if (album.ReleaseDate.Year > 1)
+          {
+            Provider.ThirdLabel = album.ReleaseDate.Year.ToString();
+            Provider.ThirdToolTip = Provider.PrimaryLabel;
+          }
+        }
+      </Script>
+      
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(((marketplace:Artist)Item).ImageUri)]
+
+        if (Item is marketplace:Artist)
+        {
+          marketplace:Artist artist = (marketplace:Artist)Item;
+          Model.Description = artist.Title;
+          
+
+          if (!String.IsNullOrEmpty(artist.ImageUri))
+          {
+            Provider.Image = new Image(artist.ImageUri);
+          }
+          else
+          {
+            Provider.Image = styles:Styles.NoAlbumArt;
+            
+            
+            ThumbButton.OverlayType = typeof(me:SearchOverlayLabel);
+          }
+          
+          
+          Provider.PrimaryLabel = zune:Search.Instance.HighlightKeywords(artist.Title, KeywordTag);
+          Provider.ToolTip = artist.Title;
+        }
+      </Script>
+      
+      <Script>
+        [DeclareTrigger(Model.Invoked)]
+        
+        
+        string destination;
+        col:Hashtable args;
+        
+        if (Item is data:Artist)
+        {
+          data:Artist artist = (data:Artist)Item;
+          
+          destination = "Collection\Music";
+          
+          args = new col:Hashtable();
+          args.Add("ArtistLibraryId", artist.LibraryId);
+          args.Add("ViewOverrideId", zune:MusicLibraryView.Browse);
+        }
+        else if (Item is data:Album)
+        {
+          data:Album album = (data:Album)Item;
+          
+          destination = "Collection\Music";
+          
+          args = new col:Hashtable();
+          args.Add("AlbumLibraryId", album.LibraryId);
+          args.Add("ArtistLibraryId", album.ArtistLibraryId);
+          args.Add("ViewOverrideId", zune:MusicLibraryView.Browse);
+        }
+        else if (Item is marketplace:Artist)
+        {
+          marketplace:Artist artist = (marketplace:Artist)Item;
+          
+          destination = "Marketplace\Music\Artist";
+          
+          args = new col:Hashtable();
+          args.Add("ArtistId", artist.Id.ToString());
+        }
+        else if (Item is marketplace:Album)
+        {
+          marketplace:Album album = (marketplace:Album)Item;
+
+          destination = "Marketplace\Music\Artist";
+          
+          args = new col:Hashtable();
+          args.Add("ArtistId", album.PrimaryArtist.Id.ToString());
+          args.Add("AlbumId", album.Id.ToString());
+          
+          
+        }
+        
+        
+        if (!String.IsNullOrEmpty(destination))
+        {
+          zune:Shell.DefaultInstance.Execute(destination, args);
+        }
+        
+      </Script>
+    </Scripts>
+    <Content>
+      <Panel MaximumSize="{ResultSize}" MinimumSize="{ResultSize}" Margins="0,5,10,0">
+        <Layout>
+          <FlowLayout Orientation="Vertical" ItemAlignment="Near"/>
+        </Layout>
+        <Children>
+          <me:SearchThumbnailButton Name="ThumbButton" Provider="{Provider}" Model="{Model}" TileSize="{ThumbnailSize}" NamedStyles="{NamedStyles}"/>
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="SearchThumbnailButton" Base="thumbbutton:ThumbnailButton">
+    <Properties>
+      <col:IDictionary Name="NamedStyles" IDictionary="{null}"/>
+      <Type Name="ThumbnailCaptionAreaType" Type="{typeof(me:SearchThumbnailCaptionArea)}"/>
+    </Properties>
+
+    <Scripts>
+      <Script>((me:SearchThumbnailCaptionArea)LabelArea).NamedStyles = [NamedStyles];</Script>
+    </Scripts>
+  </UI>
+  
+  
+  
+  
+  <UI Name="SearchThumbnailCaptionArea" Base="thumbbutton:ThumbnailCaptionArea">
+    <Properties>
+      <col:IDictionary Name="NamedStyles" IDictionary="{null}"/>
+      <me:SearchThumbnailProvider Name="Provider" SearchThumbnailProvider="$Required"/>
+    </Properties>
+
+    <Scripts>
+      <Script>
+        Label.NamedStyles = [NamedStyles];
+        SecondaryLabel.NamedStyles = NamedStyles;
+        ThirdLabel.NamedStyles = NamedStyles;
+      </Script>
+
+      <Script> Label.ToolTipContent = [Provider.ToolTip]; </Script>
+      <Script> SecondaryLabel.ToolTipContent = [Provider.SecondaryToolTip]; </Script>
+      <Script> ThirdLabel.Content = [Provider.ThirdLabel]; </Script>
+      <Script> ThirdLabel.ToolTipContent = [Provider.ThirdToolTip]; </Script>
+    </Scripts>
+    <Content>
+      <Panel Layout="VerticalFlow" Margins="{LabelInset}">
+        <Children>
+
+          
+          <thumbbutton:LabelHost Name="Label" Style="{PrimaryLabelStyle}"/>
+
+          
+          <thumbbutton:LabelHost Name="SecondaryLabel" Style="{SecondaryLabelStyle}"/>
+
+          
+          <thumbbutton:LabelHost Name="ThirdLabel" Style="{SecondaryLabelStyle}"/>
+          
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="MarketplaceResults" Base="me:SearchResults">
+    <Properties>
+      <zune:ZuneShell Name="Shell" ZuneShell="$Required"/>
+      <zune:ZunePage Name="Page" ZunePage="$Required"/>
+    </Properties>
+
+    <Locals>
+      <string Name="NotConnectedMessage" string="{zune:Shell.LoadString(zune:StringId.IDS_SEARCH_STATUS_OFFLINE)}"/>
+      <string Name="ServiceErrorMessage" string="{zune:Shell.LoadString(zune:StringId.IDS_SERVICE_OFFLINE)}"/>
+    </Locals>
+    <Scripts>
+      <Script> ScrollBar.RegionHover = [UI.DeepMouseFocus]; </Script>
+      
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(me:PageState.QueriesAllocated.Invoked)]
+        if (me:PageState.MarketplaceQueries != null)
+        {
+          LoadStatus.Tracker = me:PageState.MarketplaceQueries.Tracker;
+
+          ArtistResults.QueryState = me:PageState.MarketplaceQueries.Artist;
+          AlbumResults.QueryState = me:PageState.MarketplaceQueries.Album;
+          TrackResults.QueryState = me:PageState.MarketplaceQueries.Track;
+          MusicVideoResults.QueryState = me:PageState.MarketplaceQueries.MusicVideo;
+          PodcastResults.QueryState = me:PageState.MarketplaceQueries.Podcast;
+          PlaylistResults.QueryState = me:PageState.MarketplaceQueries.Playlist;
+        }
+      </Script>
+      
+      <Script>
+        ErrorPanel.Visible = [LoadStatus.Failure.Value];
+
+        if ([LoadStatus.Failure.Value])
+        {
+          bool haveInternetConnection = zune:InternetConnection.IsConnected;
+          
+          if (!haveInternetConnection)
+            ErrorPanel.Message = NotConnectedMessage;
+          else
+            ErrorPanel.Message = ServiceErrorMessage;
+        }
+      </Script>
+      
+      <Script>
+        if (me:PageState.MarketplaceQueries != null)
+        {
+          NoResultsPanel.Visible = ![ErrorPanel.Visible] &amp;&amp; ([me:PageState.MarketplaceQueries.Completed] &amp;&amp; ![me:PageState.MarketplaceQueries.ResultsFound]);
+        }
+      </Script>
+    </Scripts>
+    
+    <Content>
+      <Panel Padding="8,8,8,8" Layout="Form">
+        <Children>
+
+          <Text Name="Header" Content="{zune:Shell.LoadString(zune:StringId.IDS_SEARCH_MARKETPLACE_HEADER)}" Color="{styles:Styles.SectionSubHeadColor}" Font="{styles:Styles.SearchSubHeaderText}" Padding="0,0,0,15">
+            <LayoutInput>
+              <FormLayoutInput Left="Parent,0" Top="Parent,0"/>
+            </LayoutInput>
+          </Text>
+
+          <Panel Layout="Dock">
+            <LayoutInput>
+              <FormLayoutInput Left="Parent,0" Top="Header,1" Right="Parent,1" Bottom="Parent, 1"/>
+            </LayoutInput>
+
+            <Children>
+
+              <core:ScrollBar Name="ScrollBar" ScrollData="{ScrollData}">
+                <LayoutInput>
+                  <DockLayoutInput Position="Right" Alignment="Near"/>
+                </LayoutInput>
+              </core:ScrollBar>
+
+              <Scroller Orientation="Vertical" FadeSize="-1" ScrollingData="{ScrollData}">
+                <Children>
+
+                  <Panel>
+                    <Layout>
+                      <DockLayout SizeToChildren="true"  DefaultLayoutInput="Top,Near"/>
+                    </Layout>
+                    
+                    <Children>
+                      <me:ResultSet Name="ArtistResults"     Title="{zune:Shell.LoadString(zune:StringId.IDS_SEARCH_ARTISTS_HEADER)}"/>
+                      <me:ResultSet Name="AlbumResults"      Title="{zune:Shell.LoadString(zune:StringId.IDS_SEARCH_ALBUMS_HEADER)}" RepeatedUIName="RepeatedThumbnailItem" TextView="false" MaxResultSetHeight="140"/>
+                      <me:ResultSet Name="TrackResults"      Title="{zune:Shell.LoadString(zune:StringId.IDS_SEARCH_SONGS_HEADER)}" />
+                      <me:ResultSet Name="PlaylistResults"   Title="{zune:Shell.LoadString(zune:StringId.IDS_SEARCH_PLAYLISTS_HEADER)}"/>
+                      <me:ResultSet Name="MusicVideoResults" Title="{zune:Shell.LoadString(zune:StringId.IDS_SEARCH_VIDEOS_HEADER)}"/>
+                      <me:ResultSet Name="PodcastResults"    Title="{zune:Shell.LoadString(zune:StringId.IDS_SEARCH_SERIES_HEADER)}"/>
+                    </Children>
+                  </Panel>
+
+                </Children>
+              </Scroller>
+              
+            </Children>
+          </Panel>
+          
+          <mctl:LoadStatus Name="LoadStatus" Page="{Page}" Shell="{Shell}" NavigateToErrorPageOnFailure="false" DelayAmount="0.0">
+            <LayoutInput>
+              <FormLayoutInput Left="Parent,0" Top="Header,0" Right="Parent,1" Bottom="Parent, 1"/>
+            </LayoutInput>
+          </mctl:LoadStatus>
+
+          <me:MessagePanel Name="ErrorPanel">
+            <LayoutInput>
+              <FormLayoutInput Left="Header,0" Top="Header,1"/>
+            </LayoutInput>
+          </me:MessagePanel>
+
+          <me:MessagePanel Name="NoResultsPanel" Message="{zune:Shell.LoadString(zune:StringId.IDS_SEARCH_MARKETPLACE_NORESULTS)}">
+            <LayoutInput>
+              <FormLayoutInput Left="Header,0" Top="Header,1"/>
+            </LayoutInput>
+          </me:MessagePanel>
+          
+        </Children>
+      </Panel>       
+    </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="MessagePanel">
+    <Properties>
+      <string Name="Message"/>
+    </Properties>
+    <Scripts>
+      <Script>
+        Label.Content = [Message];
+      </Script>
+    </Scripts>
+    <Content>
+      <core:Label Name="Label" Style="{styles:SharedStyles.SearchResultsStyle}" WordWrap="true">
+        <Animations>
+          <Animation Animation="{animations:Animations.BasicFadeIn}"/>
+          <Animation Animation="{animations:Animations.BasicFadeOut}"/>
+        </Animations>
+      </core:Label>
+    </Content>
+  </UI>
+</UIX>

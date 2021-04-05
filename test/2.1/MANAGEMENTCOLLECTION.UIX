@@ -1,0 +1,207 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:style="res://ZuneShellResources!Style.uix"  
+  xmlns:mgmt="res://ZuneShellResources!Management.uix"
+  xmlns:button="res://ZuneShellResources!Button.uix"
+  xmlns:me="Me">
+
+  <UI Name="Default">
+    <Properties>
+      <zune:CategoryPage Name="Page" CategoryPage="$Required" />
+    </Properties>
+    <Locals>
+      <SharedSize Name="ButtonSharedSize"/>
+      <styles:LabelStyle Name="StyleDetail" Color="{styles:Styles.TextActive}" Font="{styles:Styles.SettingsText}"/>
+      <iris:Command Name="RestoreFilesCommand" Description="{zune:Shell.LoadString(zune:StringId.IDS_SCAN_REMOVED_FILES_BUTTON)}"/>      
+</Locals>
+
+    <Scripts>
+      <Script>
+        MetadataOptions.Available = [MediaInfoCheckbox.Model.Value] ;
+      </Script>
+      <Script>
+        [DeclareTrigger(RestoreFilesCommand.Invoked)]
+        
+        
+        zune:Management.Instance.ScanAndClearDeletedMedia();
+      </Script>
+    </Scripts>
+    
+    <Content>
+
+      <Panel Name="NavButtons">
+        <Layout>
+          <FlowLayout Orientation="Vertical" Spacing="4,0" StripAlignment="Near" />
+        </Layout>
+        <Children>
+          <mgmt:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_MONITORED_FOLDERS_LIST)}" WordWrap="false"/>
+          
+          <core:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_MONITOR_DESCRIPTION)}" Style="{styles:SharedStyles.SettingsBodyStyle}" WordWrap="true" Padding="0,0,0,10"/>
+
+          <Panel Layout="Anchor">
+            <Children>
+              <me:MonitoredFolders Margins="0,10,20,0" 
+                Header="{zune:Shell.LoadString(zune:StringId.IDS_COLLECTION_AUDIO)}" 
+                ButtonSharedSize="{ButtonSharedSize}" 
+                List="{zune:Management.Instance.MonitoredAudioFolders}">
+                <LayoutInput>
+                  <AnchorLayoutInput Top="Parent,0" Right="Parent,.5,-10"  />
+                </LayoutInput>
+              </me:MonitoredFolders>
+
+              <me:MonitoredFolders Margins="0,10,20,0" 
+                Header="{zune:Shell.LoadString(zune:StringId.IDS_COLLECTION_VIDEO)}" 
+                ButtonSharedSize="{ButtonSharedSize}" 
+                List="{zune:Management.Instance.MonitoredVideoFolders}">
+                <LayoutInput>
+                  <AnchorLayoutInput Top="Parent,0" Left="Parent,0.5,10" Right="Parent,1" />
+                </LayoutInput>
+              </me:MonitoredFolders>
+                
+            </Children>
+          </Panel>
+
+          <Panel Margins="0,0,0,15" Layout="Anchor">
+            <Children>
+              <me:MonitoredFolders Margins="0,10,20,0" 
+                Header="{zune:Shell.LoadString(zune:StringId.IDS_COLLECTION_PHOTO)}" 
+                ButtonSharedSize="{ButtonSharedSize}" 
+                List="{zune:Management.Instance.MonitoredPhotoFolders}">
+                <LayoutInput>
+                  <AnchorLayoutInput Top="Parent,0" Right="Parent,.5,-10"  />
+                </LayoutInput>
+              </me:MonitoredFolders>                
+
+              <me:MonitoredFolders Margins="0,10,20,0" 
+                Header="{zune:Shell.LoadString(zune:StringId.IDS_COLLECTION_PODCAST)}" 
+                ButtonSharedSize="{ButtonSharedSize}" 
+                List="{zune:Management.Instance.MonitoredPodcastFolders}">
+                <LayoutInput>
+                  <AnchorLayoutInput Top="Parent,0" Left="Parent,0.5,10" Right="Parent,1" />
+                </LayoutInput>
+              </me:MonitoredFolders>
+
+            </Children>
+          </Panel>
+
+          <Panel Margins="0,8,0,15" Layout="HorizontalFlow" Visible="{!Page.InFUE}">
+            <Children>
+              <core:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_SCAN_REMOVED_FILES)}" Style="{styles:SharedStyles.SettingsBodyStyle}" WordWrap="true" Padding="0,0,0,10"/>
+              <core:ActionButton Name="RestoreFilesButton" Model="{RestoreFilesCommand}" TileMinSize="90,0" />
+            </Children>
+          </Panel>
+
+          <mgmt:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_COLLECTION_OPTIONS_HEADER)}" WordWrap="false"/>
+
+          <mgmt:CheckBox Name="MediaInfoCheckbox" Model="{zune:Management.Instance.MediaInfoChoice}"/>
+          <core:RadioGroup Name="MetadataOptions" 
+                           Model="{zune:Management.Instance.MetadataChoice}"
+                           AccessibleDescription="{zune:Shell.LoadString(zune:StringId.IDS_COLLECTION_OPTIONS_HEADER)}" 
+                           Margins="15,0,0,15"/>
+          
+        </Children>
+      </Panel>
+
+    </Content>
+  </UI>
+
+  <UI Name="MonitoredFolders">
+    <Properties>
+      <String Name="Header" String="$Required"/>
+      <iris:ListDataSet Name="List" ListDataSet="$Required"/>
+      <SharedSize Name="ButtonSharedSize" SharedSize="$Required"/>
+    </Properties>
+
+    <Content>
+      
+      <Panel Layout="VerticalFlow">
+        <Children>
+
+          <me:MonitoredFolderItem String="{Header}" List="{List}" Style="{styles:SharedStyles.MonitoredFoldersHeadersStyle}" ButtonSharedSize="{ButtonSharedSize}"/>
+
+          <Repeater Source="{List}">
+            <Layout>
+              <FlowLayout Orientation="Vertical"/>
+            </Layout>
+            <Content>
+              
+              <me:MonitoredFolderItem String="{(String)RepeatedItem}" List="{List}" Index="{RepeatedItemIndex}" ButtonSharedSize="{ButtonSharedSize}"/>
+              
+            </Content>
+          </Repeater>
+          
+        </Children>
+      </Panel>
+      
+    </Content>
+  </UI>
+
+  
+    
+  
+  
+  
+  <UI Name="MonitoredFolderItem">
+    <Properties>
+      <String Name="String" String="$Required"/>
+      <iris:ListDataSet Name="List" ListDataSet="$Required"/>
+      <Index Name="Index" Index="{null}"/>
+      <SharedSize Name="ButtonSharedSize" SharedSize="$Required"/>
+      <style:Style Name="Style" Style="{styles:SharedStyles.MonitoredFoldersLabelStyle}"/>      
+    </Properties>
+
+    <Locals>
+      <iris:Command Name="Command">
+        <Description>
+          <Script>
+            if (Index != null)
+              return zune:Shell.LoadString(zune:StringId.IDS_REMOVE_FOLDER_BUTTON);
+            return zune:Shell.LoadString(zune:StringId.IDS_ADD_FOLDER_BUTTON);
+          </Script>
+        </Description>
+      </iris:Command>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        [DeclareTrigger(Command.Invoked)]
+        if (Index != null)
+          zune:Management.Instance.RemoveMonitoredFolder(List, Index.SourceValue);
+        else
+          zune:Management.Instance.AddMonitoredFolder(List);
+      </Script>   
+      <Script>
+        if (Index != null)
+          ContentLabel.Content = zune:Shell.ReformatFolderPathName(String);
+        else
+          ContentLabel.Content = String;          
+        ContentLabel.ToolTipContent = String;
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel Padding="0,1,0,1">
+        <Layout>
+          <DockLayout SizeToChildren="true" DefaultLayoutInput="Left,Near"/>
+        </Layout>
+        <Children>
+
+          <core:ActionButton Model="{Command}" SharedSize="{ButtonSharedSize}" TileMinSize="90,0">
+            <LayoutInput>
+              <DockLayoutInput Position="Right" Alignment="Near"/>
+            </LayoutInput>
+          </core:ActionButton>
+
+          <button:Label Name="ContentLabel" Style="{Style}"/>
+          
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+</UIX>

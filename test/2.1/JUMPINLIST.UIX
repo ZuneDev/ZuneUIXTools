@@ -1,0 +1,92 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:animations="res://ZuneShellResources!Animations.uix"
+  xmlns:popup="res://ZuneShellResources!Popup.uix"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  >
+
+  <Class Name="JumpInList" Base="popup:Popup">
+    <Properties>
+      
+      
+      <zune:PopupHelper Name="Helper" IsModal="false" DismissOnMouseDown="true"
+                DismissOnWindowDeactivate="true" HandleWindowClose="false"/>
+      <PopupLayoutInput Name="LayoutInput" Placement="Center" />
+      <String Name="PopupUI" String="res://ZuneShellResources!JumpInList.uix#JumpInListUI"/>
+    </Properties>
+  </Class>
+
+  <UI Name="JumpInListUI" Base="popup:PopupUI">
+    <Locals>
+      <Color Name="TextColor" Color="{styles:Styles.JumpInListTextColor}"/>
+      <Color Name="FadeColor" Color="{styles:Styles.JumpInListFadeColor}"/>
+      <Font Name="TextFont" Font="{styles:Styles.JumpInListFont}"/>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        SearchString.Content = [zune:JumpInListManager.Instance.SearchString];
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel Layout="Center" Name="Container" MouseInteractive="true">
+        <Animations>
+          <Animation Animation="{animations:Animations.BasicFadeIn}"/>
+          <Animation Animation="{animations:Animations.BasicFadeOut}"/>
+        </Animations>
+
+        <Children>
+          
+          <ColorFill Content="{FadeColor}" MaximumSize="500,60" Layout="Form">
+            <Children>
+              
+              <Text Name="SearchString" Color="{TextColor}" Font="{TextFont}" Margins="10,0,10,0">
+                <LayoutInput>
+                  <FormLayoutInput Horizontal="Center" Top="Parent,0"/>
+                </LayoutInput>
+              </Text>
+              
+              <Text Name="Caret" Color="{TextColor}" Font="{TextFont}" Content="_">
+                <LayoutInput>
+                  <FormLayoutInput Left="SearchString,1,-10" Bottom="SearchString,1"/>
+                </LayoutInput>
+              </Text>
+              
+              
+              <Graphic Content="{styles:Styles.JumpInBorder}" StretchingPolicy="Fill">
+                <LayoutInput>
+                  <FormLayoutInput Left="Parent,0,-1" Right="Parent,1,1" Top="Parent,0,-1" Bottom="Parent,0"/>
+                </LayoutInput>
+              </Graphic>
+              
+              
+              <Graphic Content="{styles:Styles.JumpInBorder}" StretchingPolicy="Fill">
+                <LayoutInput>
+                  <FormLayoutInput Left="Parent,0,-1" Right="Parent,1,1" Top="Parent,1" Bottom="Parent,1,1"/>
+                </LayoutInput>
+              </Graphic>
+
+              
+              <Graphic Content="{styles:Styles.JumpInBorder}" StretchingPolicy="Fill">
+                <LayoutInput>
+                  <FormLayoutInput Left="Parent,0,-1" Right="Parent,0" Top="Parent,0" Bottom="Parent,1"/>
+                </LayoutInput>
+              </Graphic>
+              
+              
+              <Graphic Content="{styles:Styles.JumpInBorder}" StretchingPolicy="Fill">
+                <LayoutInput>
+                  <FormLayoutInput Left="Parent,1" Right="Parent,1,1" Top="Parent,0" Bottom="Parent,1"/>
+                </LayoutInput>
+              </Graphic>
+              
+            </Children>
+          </ColorFill>
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+</UIX>

@@ -1,0 +1,356 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:sys="assembly://mscorlib/System"
+  xmlns:data="res://ZuneShellResources!LibraryData.schema.xml"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:panels="res://ZuneShellResources!LibraryPanels.uix"
+  xmlns:spreadsheet="res://ZuneShellResources!SpreadSheetViewBase.uix"
+  xmlns:columns="res://ZuneShellResources!PlaylistContentsPanelColumns.uix"
+  xmlns:playlistdialog="res://ZuneShellResources!PlaylistDialog.uix"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:me="Me"
+  >
+  
+  
+  
+  
+  <Class Name="PlaylistsPanelData" Shared="true">
+    <Properties>
+      <iris:ArrayListDataSet Name="SortOptions">
+        <Source>
+          <zune:SortCommand Description="{zune:Shell.LoadString(zune:StringId.IDS_ASCENDING_SORT)}" Sort="+Title"  SupportsJumpInList="true"/>
+          <zune:SortCommand Description="{zune:Shell.LoadString(zune:StringId.IDS_DESCENDING_SORT)}" Sort="-Title" SupportsJumpInList="true"/>
+          
+
+
+
+        </Source>
+      </iris:ArrayListDataSet>
+      <iris:Choice Name="Sorts" Options="{SortOptions}"/>
+    </Properties>
+  </Class>
+
+  
+  
+  
+  <UI Name="PlaylistsPanel" Base="panels:LibraryPanelBase">
+    <Properties>
+      <Int32 Name="MinimumWidth" Int32="115"/>
+      <Single Name="MinimumPercent" Single="0.0"/>      
+      
+      <zune:PlaylistLand Name="Page" PlaylistLand="$Required"/>
+      <zune:PlaylistsPanel Name="Model" PlaylistsPanel="$Required"/>
+
+      <iris:Choice Name="Sorts" Choice="{me:PlaylistsPanelData.Sorts}"/>
+
+      
+      <spreadsheet:ColumnData Name="ColumnData">
+        <Columns>
+          <spreadsheet:ColumnInfo HeaderType="{typeof(columns:PlaylistHeader)}"
+                                  CellType="{typeof(columns:PlaylistCell)}"
+                                  CellEditType="{typeof(me:PlaylistEditCell)}"
+                                  Resizable="false" CellPadding="26,0,5,0">
+            <LayoutInput>
+              <DockLayoutInput Position="Top"/>
+            </LayoutInput>
+          </spreadsheet:ColumnInfo>
+        </Columns>
+      </spreadsheet:ColumnData>
+      
+      <Boolean Name="RequireSelection" Boolean="true"/>
+      <Boolean Name="BlockUpdatesDuringGrovel" Boolean="false"/>
+      
+    </Properties>
+
+    <Locals>
+      <data:LibraryPlaylistQuery Name="PlaylistQuery" Enabled="false"
+        ShowDeviceContents="{Page.ShowDeviceContents}"/>
+
+      <List Name="LibraryContextMenuOptions">
+        <Source>
+          <iris:Command Command="{Play}"/>
+          <iris:Command Command="{AddToNowPlaying}"/>
+          <iris:Command Command="{AddToBurnList}"/>
+          <core:MenuDivider/>
+          <iris:Command Command="{Edit}"/>
+          <iris:Command Command="{Delete}"/>
+          <core:MenuDivider MenuDivider="{SyncDivider}"/>
+          <iris:Command Command="{Sync}"/>
+          <iris:Command Command="{SyncAllUnexclude}"/>
+        </Source>
+      </List>
+
+      <List Name="DeviceContextMenuOptions">
+        <Source>
+          <iris:Command Command="{DeleteFromDevice}"/>
+        </Source>
+      </List>
+      
+      <playlistdialog:CreatePlaylistDialog Name="CreatePlaylistDialog"/>
+      
+      <iris:Command Name="CreatePlaylist" Command="{Page.CreatePlaylistCommand}"/>
+      
+      
+      <Int32 Name="CreatedPlaylistId" Int32="-1"/>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        if (Page.ShowDeviceContents)
+        {
+          PlaylistQuery.DeviceId = [Page.DeviceId];
+        }
+      </Script>
+      
+      <Script>
+        if (Page.ShowDeviceContents)
+        {
+          ContextMenu.Options = DeviceContextMenuOptions;
+          DeleteKey.Command = DeleteFromDevice;
+          CreateButton.Visible = false;
+        }
+        else
+        {
+          ContextMenu.Options = LibraryContextMenuOptions;
+          Worker.ExecuteCommand = Play;
+        }
+      </Script>
+
+      
+      <Script>
+          zune:SortCommand sort = (zune:SortCommand)[Sorts.Chosen];
+
+          PlaylistQuery.Sort = sort.Sort;
+          SupportsJumpInList = sort.SupportsJumpInList;
+      </Script>
+
+      
+      <Script>PlaylistQuery.Enabled = true;</Script>
+
+      
+      <Script>
+        if (Model.Content != PlaylistQuery.Result.Items)
+        {
+          Model.Content = [PlaylistQuery.Result.Items];
+          Worker.Content = Model.Content;
+          SelectionManager.SourceList = Model.Content;
+        }
+      </Script>
+      
+      <Script>
+        Page.IsEmpty = [PlaylistQuery.Result.IsEmpty];
+      </Script>
+
+      
+      <Script>
+        ToggleSelectAllCommand.Description = sys:String.Format(zune:Shell.LoadString(zune:StringId.IDS_PLAYLISTS_HEADER), [PlaylistQuery.Result.Items.Count]);
+      </Script>
+
+      <Script>
+        Worker.SupportsJumpInList = [SupportsJumpInList];
+      </Script>
+      
+      
+      <Script>
+        List libraryIds = [Model.SelectedLibraryIds];
+        
+        
+        
+        
+        
+        if (libraryIds == null &amp;&amp; Model.Content != null &amp;&amp; Model.Content.Count == 1)
+        {
+          libraryIds = new List();
+          data:Playlist playlist = (data:Playlist)Model.Content.get_Item(0);
+          libraryIds.Add(playlist.LibraryId);
+        }
+        
+        Page.ContentsPanel.SelectedPlaylistIds = libraryIds;
+      </Script>
+      
+      
+      <Script>
+        [DeclareTrigger(CreatePlaylist.Invoked)]
+        
+        CreatePlaylistDialog.Helper.Show(CreatePlaylistDialog);
+      </Script>
+
+      
+      <Script>
+        if ([PlaylistQuery.Result.Items.Count] > 0 &amp;&amp; CreatePlaylistDialog.CreatedPlaylistId >= 0)
+        {
+          RestoringSelection = false;
+          
+          
+          NavigateIntoArgs.Select = true;
+          NavigateIntoArgs.LibraryId = CreatePlaylistDialog.CreatedPlaylistId;
+          
+          
+          CreatePlaylistDialog.CreatedPlaylistId = -1;
+        }
+      </Script>
+    </Scripts>
+    <Content>
+
+      <Panel Layout="Dock">
+        <Children>
+
+          <core:BigActionButton Name="CreateButton"  Model="{CreatePlaylist}">
+            <LayoutInput>
+              <DockLayoutInput Position="Bottom" Alignment="Near"/>
+            </LayoutInput>
+          </core:BigActionButton>
+
+          <spreadsheet:SpreadSheet Name="Worker"
+            ListModel="{ListModel}"
+            Content="{Model.Content}"
+            ColumnData="{ColumnData}"
+            NavigateIntoArgs="{NavigateIntoArgs}"
+            SelectionManager="{SelectionManager}"
+            ContextMenu="{ContextMenu}"
+            EditContext="{EditContext}"
+            ListItemType="{typeof(me:PlaylistListItem)}"
+            AllowHorizontalScrolling="false"
+            HeaderSpacing="22"
+            Margins="-24,0,-2,-2"
+            LayoutSpacing="{styles:Styles.LibraryListLayoutSpacing}"
+            RowSize="{styles:Styles.LibraryListItemSize}"
+            RowPadding="{styles:Styles.LibraryListItemMargins}"
+            FocusOrder="0"
+            />
+
+        </Children>
+      </Panel>
+
+    </Content>
+  </UI>
+  
+  
+  
+  
+  <UI Name="PlaylistListItem" Base="spreadsheet:SpreadSheetListItem">
+    <Properties>
+      <data:Playlist Name="Model" Playlist="$Required"/>      
+    </Properties>
+
+    <Locals>
+      
+
+
+      <Boolean Name="LastDragging"/> 
+    </Locals>    
+    
+    <Input>
+      <DropTargetHandler Name="Target" HandlerStage="Bubbled, Direct" AllowedDropActions="Copy"/>
+    </Input>
+
+    <Scripts>
+      
+      <Script>
+        if ([Target.Dragging] == LastDragging)
+        {
+          return;
+        }
+        
+        LastDragging = [Target.Dragging];
+        
+        if (LastDragging)
+        {
+          Target.AllowedDropActions = DropAction.None;
+
+          
+          object value = Target.GetValue();
+
+          if (value is SelectionManager)
+          {
+            SelectionManager selection = (SelectionManager)value;
+            
+            if (selection.Count > 0)
+            {
+              Target.AllowedDropActions = DropAction.Copy;
+              foreach(object item in selection.SelectedItems)
+              {
+                if (!(item is data:PlaylistContentItem))
+                {
+                  Target.AllowedDropActions = DropAction.None;
+                }
+              }
+            }
+          }
+        }
+        else
+        {
+          
+          Target.AllowedDropActions = DropAction.None;
+        }
+      </Script>
+
+      <Script>
+        [DeclareTrigger(Target.Dropped)]
+        object value = Target.GetValue();
+        
+        SelectionManager selection = (SelectionManager)value;
+
+        zune:PlaylistManager.Instance.AddToPlaylist(Model.LibraryId, selection.SelectedItems);        
+      </Script>
+    </Scripts>
+  </UI>
+
+  
+  <UI Name="PlaylistEditCell" Base="spreadsheet:LabelEditCell">
+    <Properties>
+      <data:Playlist Name="Model" Playlist="$Required"/>
+    </Properties>
+    
+    <Locals>
+      <playlistdialog:CreatePlaylistDialog Name="CreatePlaylistDialog"/>
+    </Locals>
+    
+    <Scripts>
+
+      <Script>
+        EditableText.Value = [Model.Title];
+      </Script>
+
+      <Script>
+        [DeclareTrigger(CommitValue.Invoked)]
+        
+        if (EditableText.Value != Model.Title)
+        {
+          
+          
+          CreatePlaylistDialog.RenamePlaylistId = Model.LibraryId;
+          CreatePlaylistDialog.EditData.Value = EditableText.Value;
+          CreatePlaylistDialog.Helper.Show(CreatePlaylistDialog);
+          
+          
+          IsEditing.Value = true;
+        }
+      </Script>
+
+      <Script>
+        [DeclareTrigger(CreatePlaylistDialog.Completed.Invoked)]
+        
+        
+        
+        
+        
+        
+        Model.Title = CreatePlaylistDialog.EditData.Value;
+        IsEditing.Value = false;
+      </Script>
+
+      <Script>
+        [DeclareTrigger(CreatePlaylistDialog.Cancel.Invoked)]
+
+        IsEditing.Value = false;
+      </Script>
+
+    </Scripts>
+  </UI>
+  
+
+</UIX>

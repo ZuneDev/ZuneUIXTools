@@ -1,0 +1,260 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:sys="assembly://mscorlib/System"
+  xmlns:data="res://ZuneShellResources!LibraryData.schema.xml"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:panels="res://ZuneShellResources!LibraryPanels.uix"
+  xmlns:style="res://ZuneShellResources!Style.uix"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:thumbbutton="res://ZuneShellResources!ThumbnailButton.uix"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:lib="res://ZuneShellResources!LibraryPanels.uix"
+  xmlns:library="res://ZuneShellResources!Library.uix"
+  xmlns:me="Me">
+
+  
+  
+  
+  <Class Name="VideoPanelData" Shared="true">
+    <Properties>
+      
+
+      <iris:ArrayListDataSet Name="SortOptions">
+        <Source>
+          <zune:SortCommand Description="{zune:Shell.LoadString(zune:StringId.IDS_NAME_SORT)}"
+              Sort="+Title" SupportsJumpInList="true"/>
+          <zune:SortCommand Description="{zune:Shell.LoadString(zune:StringId.IDS_DATE_ADDED_SORT)}"
+              Sort="+DateAdded"/>
+        </Source>
+      </iris:ArrayListDataSet>
+      <panels:SortData Name="Sorts" Options="{SortOptions}" SaveKey="VideoSort"/>
+    </Properties>
+  </Class>
+
+  
+  
+  
+  <UI Name="VideoPanel" Base="panels:LibraryGalleryPanel">
+    <Properties>
+      <zune:VideoLibraryPage Name="Page" VideoLibraryPage="$Required"/>
+      <zune:VideosPanel Name="Model" VideosPanel="$Required"/>
+
+      <Type Name="GalleryViewType" Type="{typeof(me:GalleryView)}"/>
+
+      <panels:SortData Name="SortData" SortData="{me:VideoPanelData.Sorts}"/>
+
+      <Size Name="LayoutSpacing" Size="28,34"/>
+      
+      <Inset Name="ColumnMargins" Inset="-24,0,0,0"/>
+      <Inset Name="ColumnInset" Inset="24,0,0,0"/>
+      <Inset Name="HeaderMargins" Inset="0,0,0,17"/>
+      <Inset Name="HeaderPadding" Inset="24,0,5,0"/>
+    </Properties>
+
+    <Locals>
+      <data:LibraryVideoQuery Name="VideoQuery"
+        ShowDeviceContents="{Page.ShowDeviceContents}"
+        Enabled="false" AntialiasImageEdges="{iris:Application.RenderingType != iris:RenderingType.GDI}" />
+
+      
+      <List Name="LibraryMenuOptions">
+        <Source>
+          <iris:Command Command="{Play}"/>
+          <iris:Command Command="{AddToBurnList}"/>
+          <core:MenuDivider/>
+          <iris:Command Command="{Edit}"/>
+          <iris:Command Command="{Delete}"/>
+          <core:MenuDivider MenuDivider="{SyncDivider}"/>
+          <iris:Command Command="{Sync}"/>
+          <iris:Command Command="{SyncAllUnexclude}"/>
+          <zune:MenuItemCommand MenuItemCommand="{Exclude}"/>
+          <zune:MenuItemCommand MenuItemCommand="{Unexclude}"/>
+          <core:MenuDivider/>
+          <iris:Command Command="{Properties}"/>
+        </Source>
+      </List>
+
+      <List Name="DeviceMenuOptions">
+        <Source>
+          <iris:Command Command="{ReverseSync}"/>
+          <iris:Command Command="{DeleteFromDevice}"/>
+        </Source>
+      </List>
+    </Locals>
+
+    <Scripts>
+      <Script>Play.Description = zune:Shell.LoadString(zune:StringId.IDS_VIDEO_PLAY_MENUITEM);</Script>
+      <Script>
+        VideoQuery.DeviceId = [Page.DeviceId];
+      </Script>
+
+      
+      <Script>
+        if (Page.ShowDeviceContents)
+        {
+          ContextMenu.Options = DeviceMenuOptions;
+          DeleteKey.Command = DeleteFromDevice;
+        }
+        else
+        {
+          ContextMenu.Options = LibraryMenuOptions;
+        }
+        Worker.MaximumSize = new Size(0,0);
+        Worker.ExecuteCommand = Play;
+        Worker.Margins = new Inset(5,0,0,0);
+      </Script>
+
+      <Script>
+        zune:SortCommand sort = (zune:SortCommand)[SortData.Sorts.Chosen];
+
+        VideoQuery.Sort = sort.Sort;
+        SupportsJumpInList = sort.SupportsJumpInList;
+      </Script>
+
+      
+      <Script>
+        bool canPlay = false;
+        if ([SelectionManager.Count] == 1)
+        {
+          canPlay = true;
+        }
+
+        Play.Available = canPlay;
+        zune:TransportControls.Instance.PagePlaySelection.Available = canPlay;
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(zune:TransportControls.Instance.PagePlaySelection.Invoked)]
+        Play.Invoke();
+      </Script>
+
+      
+      <Script>
+        VideoQuery.Enabled = true;
+      </Script>
+
+      
+      <Script> Model.Content = [VideoQuery.Result.Items]; </Script>
+      
+      <Script> Page.IsEmpty = [VideoQuery.Result.IsEmpty]; </Script>
+
+      <Script>
+        ToggleSelectAllCommand.Description = sys:String.Format(zune:Shell.LoadString(zune:StringId.IDS_VIDEOS_HEADER), [VideoQuery.Result.Items.Count]);
+      </Script>
+    </Scripts>
+  </UI>
+
+  
+  
+  
+  <UI Name="GalleryView" Base="lib:LibraryGalleryView">
+    <Properties>
+      <Type Name="ThumbnailCaptionAreaType" Type="{typeof(me:VideoGalleryCaptionArea)}"/>
+      <Type Name="ListItemType" Type="{typeof(me:VideoListItemBase)}"/>
+      <Type Name="ProviderType" Type="{typeof(me:VideoThumbnailButtonProvider)}"/>
+      <Size Name="LabelSize" Size="119,35"/>
+      <Size Name="LayoutSpacing" Size="27,35"/>
+      <Size Name="TileSize" Size="119,89"/>
+      <Boolean Name="OnlyShowClipsWhenScrollable" Boolean="true"/>
+    </Properties>
+  </UI>
+
+
+  
+  
+  
+  <UI Name="VideoGalleryCaptionArea" Base="lib:ThumbnailCaptionArea">
+    <Properties>
+      <Type Name="PrimaryLabelType" Type="{typeof(thumbbutton:EditableLabelHost)}"/>
+    </Properties>
+  </UI>
+
+  
+  
+  
+  <Class Name="VideoThumbnailButtonProvider" Base="thumbbutton:ThumbnailButtonProvider">
+    <Properties>
+      <data:Video Name="Model" Video="$Required"/>
+      <Index Name="Index" Index="$Required"/>
+      <SelectionManager Name="SelectionManager" SelectionManager="$Required"/>
+    </Properties>
+
+    <Scripts>
+      <Script>DragValue = SelectionManager;</Script>
+
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(Model.Thumbnail)]
+
+        PrimaryLabel = [Model.Title];
+        SecondaryLabel = [Model.DateAdded].ToString("d");
+
+        if (Model.Thumbnail != null)
+        {
+          Image = Model.Thumbnail;
+        }
+        else
+        {
+          Image = styles:Styles.NoArtWide;
+        }
+      </Script>
+
+      
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(SelectionManager.SelectedIndices)]
+        if (SelectionManager != null)
+        {
+          Selected = SelectionManager.IsSelected([Index.Value]);
+        }
+      </Script>
+
+      <Script>
+        [DeclareTrigger(PrimaryLabel)]
+        Model.Title = PrimaryLabel;
+      </Script>
+    </Scripts>
+  </Class>
+
+  
+  
+  
+  
+  <UI Name="VideoListItemBase" Base="core:ThumbnailListItemBase">
+    <Properties>
+      <Type Name="ThumbnailCaptionAreaType" Type="{typeof(lib:ThumbnailCaptionArea)}"/>
+
+      
+      <style:Style Name="PrimaryStyle" Style="{styles:SharedStyles.PhotoVideoLabelStyle}"/>
+      <style:Style Name="SecondaryStyle" Style="{styles:SharedStyles.PhotoVideoLabelStyle}"/>
+      <style:Style Name="OverlayStyle" Style="{styles:SharedStyles.ThumbnailOverlayLabelStyle}"/>
+
+      <Size Name="LabelSize" Size="119,35"/>
+
+      <AnchorLayoutInput Name="LabelAnchor"
+          Left="TileBase,0" Right="TileBase,1" Horizontal="Near"
+          Top="TileBase,1,5" Bottom="TileBase,1,999" Vertical="Near"/>
+      <AnchorLayoutInput Name="BorderAnchor"
+          Left="Image,0,-1" Right="Image,1,1"
+          Top="Image,0,-1" Bottom="Image,1,1" 
+          ContributesToWidth="false" ContributesToHeight="false"/>
+    </Properties>
+
+    <Scripts>
+      <Script>ImageBorder.Content = styles:Styles.VideoBorderColor;</Script>
+    </Scripts>
+  </UI>
+  
+  <UI Name="EmptyPage" Base="library:EmptyLibraryPage">
+    <Properties>
+      <String Name="Title" String="{zune:Shell.LoadString(zune:StringId.IDS_VIDEO_EMPTY)}"/>
+      <iris:Command Name="Link1Command" Description="{zune:Shell.LoadString(zune:StringId.IDS_VIDEO_EMPTY_SETTINGS_LINK)}"/>
+      <iris:Command Name="Link2Command" Description="{zune:Shell.LoadString(zune:StringId.IDS_VIDEO_EMPTY_MARKETPLACE_LINK)}"/>
+      <String Name="MarketplaceDestination" String="Marketplace\Music\Home"/>
+    </Properties>
+  </UI>
+
+</UIX>

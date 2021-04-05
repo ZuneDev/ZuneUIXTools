@@ -1,0 +1,221 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:sys="assembly://mscorlib/System"
+  xmlns:data="res://ZuneShellResources!LibraryData.schema.xml"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:panels="res://ZuneShellResources!LibraryPanels.uix"
+  xmlns:spreadsheet="res://ZuneShellResources!SpreadSheetViewBase.uix"
+  xmlns:lv="res://ZuneShellResources!ListViewPanel.uix"
+  xmlns:lib="res://ZuneShellResources!Library.uix"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:me="Me">
+
+  <Class Name="ArtistPanelData" Shared="true">
+    <Properties>
+      
+      <spreadsheet:ColumnData Name="ColumnData">
+        <Columns>
+          <spreadsheet:ColumnInfo HeaderType="{typeof(me:ArtistHeader)}"
+                                  CellType="{typeof(me:ArtistCell)}"
+                                  CellEditType="{typeof(me:ArtistEditCell)}"
+                                  Resizable="false"
+                                  CellPadding="26,0,5,0">
+            <LayoutInput>
+              <DockLayoutInput Position="Top"/>
+            </LayoutInput>
+          </spreadsheet:ColumnInfo>
+        </Columns>
+      </spreadsheet:ColumnData>
+      
+      
+
+      <iris:ArrayListDataSet Name="SortOptions">
+        <Source>
+          <zune:SortCommand Description="{zune:Shell.LoadString(zune:StringId.IDS_ASCENDING_SORT)}" Sort="+WM/AlbumArtist"  SupportsJumpInList="true"/>
+          <zune:SortCommand Description="{zune:Shell.LoadString(zune:StringId.IDS_DESCENDING_SORT)}" Sort="-WM/AlbumArtist" SupportsJumpInList="true"/>
+        </Source>
+      </iris:ArrayListDataSet>
+      
+      <panels:SortData Name="Sorts" Options="{SortOptions}" SaveKey="ArtistSort"/>
+    </Properties>
+  </Class>
+
+  
+  
+  
+  <UI Name="ArtistsPanel" Base="panels:LibraryPanelBase">
+    <Properties>
+      <zune:MusicLibraryPage Name="Page" MusicLibraryPage="$Required"/>
+      <zune:ArtistsPanel Name="Model" ArtistsPanel="$Required"/>
+      <panels:SortData Name="SortData" SortData="{me:ArtistPanelData.Sorts}"/>
+      
+      <spreadsheet:ColumnData Name="ColumnData" ColumnData="{me:ArtistPanelData.ColumnData}"/>
+      <Inset Name="ColumnMargin" Inset="18,0,0,0"/>
+    </Properties>
+
+    <Locals>
+      <data:LibraryArtistQuery Name="ArtistQuery" Enabled="false"
+        ShowDeviceContents="{Page.ShowDeviceContents}"/>
+
+      <List Name="LibraryContextMenuOptions">
+        <Source>
+          <iris:Command Command="{Play}"/>
+          <iris:Command Command="{AddToNowPlaying}"/>
+          <iris:Command Command="{AddToPlaylist}"/>
+          <iris:Command Command="{AddToBurnList}"/>
+          <core:MenuDivider/>
+          <iris:Command Command="{Edit}"/>
+          <iris:Command Command="{Delete}"/>
+          <core:MenuDivider MenuDivider="{SyncDivider}"/>
+          <iris:Command Command="{Sync}"/>
+          <iris:Command Command="{SyncAllUnexclude}"/>
+        </Source>
+      </List>
+
+      <List Name="DeviceContextMenuOptions">
+        <Source>
+          <iris:Command Command="{ReverseSync}"/>
+          <iris:Command Command="{DeleteFromDevice}"/>
+        </Source>
+      </List>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        if (Page.ShowDeviceContents)
+        {
+          ArtistQuery.DeviceId = [Page.DeviceId];
+        }
+      </Script>
+      
+      <Script>
+        if (Page.ShowDeviceContents)
+        {
+          ContextMenu.Options = DeviceContextMenuOptions;
+          DeleteKey.Command = DeleteFromDevice;
+          MinimumWidth = 65;
+          Worker.Margins = ColumnMargin;
+        }
+        else
+        {
+          ContextMenu.Options = LibraryContextMenuOptions;
+          Worker.ExecuteCommand = Play;
+        }
+      </Script>
+
+      
+      <Script>
+        zune:SortCommand sort = (zune:SortCommand)[SortData.Sorts.Chosen];
+
+        ArtistQuery.Sort = sort.Sort;
+        SupportsJumpInList = sort.SupportsJumpInList;
+      </Script>
+
+      <Script>
+        Worker.SupportsJumpInList = [SupportsJumpInList];
+      </Script>
+
+      
+      <Script>
+        ArtistQuery.Enabled = true;
+      </Script>
+
+      
+      <Script>
+        
+        Model.Content = [ArtistQuery.Result.Items];
+      </Script>
+      
+      <Script>
+        Page.IsEmpty = [ArtistQuery.Result.IsEmpty];
+      </Script>
+
+      <Script>Worker.Content = [Model.Content];</Script>
+
+      
+      <Script>
+        ToggleSelectAllCommand.Description = sys:String.Format(zune:Shell.LoadString(zune:StringId.IDS_ARTISTS_HEADER), [ArtistQuery.Result.Items.Count]);
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(SelectionManager.SelectedItems)]
+
+        if (SelectionManager.Count == 1)
+        {
+          data:Artist artist = (data:Artist)SelectionManager.SelectedItem;
+          Page.SetSelectedArtist(artist.Title, artist.MediaId);
+        }
+        else if (SelectionManager.SourceList != null)
+        {
+          
+          
+          
+          Page.SetSelectedArtist("", "");
+        }
+      </Script>
+      
+      <Script>
+        Page.AllArtistsSelected = [SelectionManager.Count] == [ArtistQuery.Result.Items.Count];
+      </Script>
+    </Scripts>
+
+    <Content>
+      
+      <spreadsheet:SpreadSheet Name="Worker"
+        ListModel="{ListModel}"
+        Content="{Model.Content}"
+        ColumnData="{ColumnData}"
+        NavigateIntoArgs="{NavigateIntoArgs}"
+        SelectionManager="{SelectionManager}"
+        ContextMenu="{ContextMenu}"
+        EditContext="{EditContext}"
+        AllowHorizontalScrolling="false"
+        HeaderSpacing="22"
+        SelectedItemClicked="{Page.ArtistClicked}"
+        Margins="-24,0,-2,0"
+        ScrollbarMargins="0,0,11,0"
+        LayoutSpacing="{styles:Styles.LibraryListLayoutSpacing}"
+        RowSize="{styles:Styles.LibraryListItemSize}"
+        RowPadding="{styles:Styles.LibraryListItemMargins}"
+        />
+    </Content>
+  </UI>
+
+
+  
+  <UI Name="ArtistHeader" Base="spreadsheet:Cell">
+    <Properties>
+      <lib:LibraryListModel Name="ListModel" LibraryListModel="$Required"/>
+    </Properties>
+    <Content>
+      <lv:ColumnPanelHeader ToggleSelectAll="{ListModel.ToggleSelectAllCommand}" Sorts="{ListModel.Sorts}"
+                            SizeToChildren="false"/>
+    </Content>
+  </UI>
+
+  
+  <UI Name="ArtistCell" Base="spreadsheet:LabelCell">
+    <Scripts>
+      <Script>Content = [((data:Artist)Model).Title];</Script>
+    </Scripts>
+  </UI>
+
+
+  
+  <UI Name="ArtistEditCell" Base="spreadsheet:LabelEditCell">
+    <Scripts>
+      <Script>
+        EditableText.Value = ((data:Artist)Model).Title;
+      </Script>
+
+      <Script>
+        [DeclareTrigger(CommitValue.Invoked)]
+        ((data:Artist)Model).Title = EditableText.Value;
+      </Script>
+    </Scripts>
+  </UI>
+</UIX>

@@ -1,0 +1,94 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:signin="res://ZuneShellResources!SignInDialog.uix"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:mgmt="res://ZuneShellResources!Management.uix"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:devicelist="res://ZuneShellResources!ManagementDeviceList.uix">
+
+  
+  
+  
+  <UI Name="Default">
+    <Properties>
+      <zune:CategoryPage Name="Page" CategoryPage="$Required" />
+    </Properties>
+    <Locals>
+      <zune:SignIn Name="SignIn" SignIn="{zune:SignIn.Instance}"/>
+      <iris:Command Name="SignInCommand" Description="{zune:Shell.LoadString(zune:StringId.IDS_LOGON_BUTTON)}"/>
+    </Locals>
+
+    <Scripts>
+      
+      <Script>
+        [DeclareTrigger(SignInCommand.Invoked)]
+        SignIn.CancelSignIn();
+        signin:SignInDialog signInDlg = new signin:SignInDialog();
+        signInDlg.Helper.Show(signInDlg);
+      </Script>
+
+      
+      <Script>
+        bool signedIn = [SignIn.SignedIn];
+        DeviceListsPanel.Visible = signedIn;
+        MustLogOnPanel.Visible = !signedIn;
+      </Script>
+
+      <Script>
+        
+        
+        if ([SignIn.SignedIn])
+        {
+            zune:Management.Instance.RefreshDeviceList();
+        }
+      </Script>
+      
+    </Scripts>
+    
+    <Content>
+      <Panel Layout="VerticalFlow" MaximumSize="580,0">
+        <Children>
+          <mgmt:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_REGDEVICES_HEADER_TEXT)}" WordWrap="true"/>
+
+          <Text Content="{zune:Shell.LoadString(zune:StringId.IDS_REGDEVICES_PAGE_TEXT)}" Color="{styles:Styles.SettingsTextActive}" Font="{styles:Styles.SettingsText}" WordWrap="true" Padding="0,0,0,15"/>
+
+          
+          
+          <Panel Name="MustLogOnPanel" Layout="VerticalFlow">
+            <Children>
+
+              <Text Content="{zune:Shell.LoadString(zune:StringId.IDS_REGDEVICES_MUST_LOGON_TEXT)}" Color="{styles:Styles.SettingsTextActive}" Font="{styles:Styles.SettingsText}" WordWrap="true" Padding="0,0,0,15"/>
+
+              <core:ActionButton Name="SignInButton" Model="{SignInCommand}" KeyInteractiveNStuff="false"/>
+
+            </Children>
+          </Panel>
+
+          
+          <Panel Name="DeviceListsPanel" Layout="VerticalFlow">
+            <Children>
+
+              
+              
+              <devicelist:DeviceListView Name="PCListView" ListTitle="{zune:Shell.LoadString(zune:StringId.IDS_REGDEVICES_COMPUTERS_COLUMN_HEADER)}" Content="{zune:Management.Instance.ComputerList}" Instance="{zune:Management.Instance}"
+                    MaximumSize="440,140" ShowHeaders="true" Margins="-10,0,0,0">
+              </devicelist:DeviceListView>
+
+              
+              
+              <devicelist:DeviceListView Name="DeviceListView" ListTitle="{zune:Shell.LoadString(zune:StringId.IDS_REGDEVICES_DEVICES_COLUMN_HEADER)}" Content="{zune:Management.Instance.DeviceList}" Instance="{zune:Management.Instance}"
+                    MaximumSize="440,140" ShowHeaders="true" Margins="-10,0,0,0">
+              </devicelist:DeviceListView>
+
+            </Children>
+          </Panel>
+    
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+</UIX>

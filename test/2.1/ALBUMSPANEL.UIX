@@ -1,0 +1,534 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:sys="assembly://mscorlib/System"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:data="res://ZuneShellResources!LibraryData.schema.xml"
+  xmlns:gp="res://ZuneShellResources!GalleryPanel.uix"
+  xmlns:panels="res://ZuneShellResources!LibraryPanels.uix"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:thumbbutton="res://ZuneShellResources!ThumbnailButton.uix"
+  xmlns:list="res://ZuneShellResources!ContentList.uix"
+  xmlns:me="Me">
+
+
+  
+  
+  
+  <Class Name="AlbumsPanelData" Shared="true">
+    <Properties>
+      
+
+      <iris:ArrayListDataSet Name="SortOptions">
+        <Source>
+          <zune:SortCommand Description="{zune:Shell.LoadString(zune:StringId.IDS_DATE_ADDED_SORT)}" Sort="-DateAdded"/>
+          <zune:SortCommand Description="{zune:Shell.LoadString(zune:StringId.IDS_ASCENDING_SORT)}" Sort="+WM/AlbumTitle"  SupportsJumpInList="true"/>
+          <zune:SortCommand Description="{zune:Shell.LoadString(zune:StringId.IDS_DESCENDING_SORT)}" Sort="-WM/AlbumTitle" SupportsJumpInList="true"/>
+          <zune:SortCommand Description="{zune:Shell.LoadString(zune:StringId.IDS_RELEASE_YEAR_SORT)}" Sort="-WM/Year"/>
+        </Source>
+      </iris:ArrayListDataSet>
+      
+      
+      <panels:SortData Name="MultipleArtistsSorts" Options="{SortOptions}" 
+                       SaveKey="AlbumMultiArtistSort" DefaultIndex="0" /> 
+      
+      
+      <panels:SortData Name="SingleArtistSorts" Options="{SortOptions}" 
+                       SaveKey="AlbumSingleArtistSort" DefaultIndex="3" /> 
+    </Properties>
+  </Class>
+
+  
+  
+  
+  <UI Name="AlbumsPanel" Base="panels:LibraryGalleryPanel">
+    <Properties>
+      <zune:MusicLibraryPage Name="Page" MusicLibraryPage="$Required"/>
+      <zune:AlbumsPanel Name="Model" AlbumsPanel="$Required"/>
+
+      <Int32 Name="MinimumWidth" Int32="232"/>
+      <Single Name="MinimumPercent" Single="0.0"/>
+      <Inset Name="ColumnInset" Inset="20,0,0,0"/>
+      <Inset Name="HeaderMargins" Inset="7,0,12,22"/>
+      <Inset Name="HeaderPadding" Inset="{styles:Styles.CellPadding}"/>
+      
+      <panels:SortData Name="SortData" SortData="{me:AlbumsPanelData.MultipleArtistsSorts}"/>
+    </Properties>
+
+    <Locals>
+      <data:LibraryAlbumQuery Name="AlbumQuery" Enabled="false" 
+        AntialiasImageEdges="{iris:Application.RenderingType != iris:RenderingType.GDI}" 
+        ShowDeviceContents="{Page.ShowDeviceContents}"
+        ThumbnailFallbackImageUrl="res://ZuneShellResources!NoArt.png"
+        />
+
+      <zune:MenuItemCommand Name="ChooseArt"/>
+
+      <List Name="LibraryContextMenuOptions">
+        <Source>
+          <iris:Command Command="{Play}"/>
+          <iris:Command Command="{AddToNowPlaying}"/>
+          <iris:Command Command="{AddToPlaylist}"/>
+          <iris:Command Command="{AddToBurnList}"/>
+          <core:MenuDivider/>
+          <iris:Command Command="{Edit}"/>
+          <iris:Command Command="{ChooseArt}"/>
+          <iris:Command Command="{Delete}"/>
+          <core:MenuDivider MenuDivider="{SyncDivider}"/>
+          <iris:Command Command="{Sync}"/>
+          <iris:Command Command="{SyncAllUnexclude}"/>
+        </Source>
+      </List>
+
+      <List Name="DeviceContextMenuOptions">
+        <Source>
+          <iris:Command Command="{ReverseSync}"/>
+          <iris:Command Command="{DeleteFromDevice}"/>
+        </Source>
+      </List>
+
+      <zune:ShellCommand Name="BuyMoreCommand" Command="Marketplace\Music\Artist"/>
+
+      <Boolean Name="SortChanged"/>
+      
+      <zune:AlbumArtUpdateHandler Name="Updater" AlbumArtUpdateHandler="{null}"/>
+
+      <Timer Name="UpdateTimer" Interval="0" AutoRepeat="false" Enabled="false"/>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        if (Page.ShowDeviceContents)
+        {
+          AlbumQuery.DeviceId = [Page.DeviceId];
+        }
+      </Script>
+
+      <Script>
+        if (Page.ShowDeviceContents)
+        {
+          ContextMenu.Options = DeviceContextMenuOptions;
+          DeleteKey.Command = DeleteFromDevice;
+        }
+        else
+        {
+          ContextMenu.Options = LibraryContextMenuOptions;
+          Worker.ExecuteCommand = Play;
+        }
+      </Script>
+
+      
+
+      <Script>
+        [DeclareTrigger(Page.AllArtistsSelected)]
+        [DeclareTrigger(Page.SelectedArtistIds)]
+
+        if (Page.AllArtistsSelected || Page.SelectedArtistIds == null)
+        {
+          
+
+          AlbumQuery.ArtistIds = null;
+          AlbumQuery.ArtistId = -1;
+          AlbumQuery.MultiSelect = false;
+          SortData = me:AlbumsPanelData.MultipleArtistsSorts;
+        }
+        else
+        {
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+
+          Int32 interval;
+
+          if (Page.SelectedArtistIds.Count == 1)
+          {
+            interval = 100;
+          }
+          else
+          {
+            interval = 250;
+          }
+
+          UpdateTimer.Stop();
+          UpdateTimer.Interval = interval;
+          UpdateTimer.Start();
+        }
+      </Script>
+
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(UpdateTimer.Tick)]
+        
+        List  artistIds   = null;
+        Int32 artistId    = -1;
+        bool  multiSelect = false;
+        
+        if (Page.SelectedArtistIds != null &amp;&amp; !Page.AllArtistsSelected)
+        {
+          if(Page.SelectedArtistIds.Count > 1)
+          {
+            artistIds   = Page.SelectedArtistIds;
+            multiSelect = true;
+          }
+          else
+          {
+            artistId = (int)Page.SelectedArtistIds.get_Item(0);
+          }
+        }
+        
+        
+        if (artistId != -1)
+        {
+          SortData = me:AlbumsPanelData.SingleArtistSorts;
+        }
+        else
+        {
+          SortData = me:AlbumsPanelData.MultipleArtistsSorts;
+        }
+
+        AlbumQuery.ArtistIds   = artistIds;
+        AlbumQuery.ArtistId    = artistId;
+        AlbumQuery.MultiSelect = multiSelect;
+      </Script>
+
+      
+      <Script>
+        zune:SortCommand sort = ((zune:SortCommand)[SortData.Sorts.Chosen]);
+        
+        SortChanged = AlbumQuery.Enabled;
+        AlbumQuery.Sort = sort.Sort;
+        SupportsJumpInList = sort.SupportsJumpInList;
+      </Script>
+
+      <Script>
+        
+        if (!String.IsNullOrEmpty([Page.SelectedArtistMediaId]))
+        {
+          BuyMoreButton.Visible = true;
+          BuyMoreCommand.Description = sys:String.Format(zune:Shell.LoadString(zune:StringId.IDS_BUY_MORE_ARTIST), Page.SelectedArtistName);
+          BuyMoreCommand.CommandArguments.set_Item("ArtistId", Page.SelectedArtistMediaId);
+        }
+        else
+        {
+          BuyMoreButton.Visible = false;
+        }
+      </Script>
+
+      <Script>
+        [DeclareTrigger(Page.ArtistClicked.Invoked)]
+        [DeclareTrigger(Page.SelectedArtistIds)]
+
+        
+        SelectionManager.Clear();
+      </Script>
+      
+      
+      <Script>
+        AlbumQuery.Enabled = true;
+      </Script>
+
+      
+      <Script>
+        
+        Model.Content = [AlbumQuery.Result.Items];
+
+        
+        if (!SortChanged)
+        {
+          
+          
+          
+          
+          Page.AlbumsChanged.Invoke();
+        }
+        SortChanged = false;
+      </Script>
+
+      
+      <Script>
+        int count = [AlbumQuery.Result.Items.Count];
+        ToggleSelectAllCommand.Description = sys:String.Format(zune:Shell.LoadString(zune:StringId.IDS_ALBUMS_HEADER), count);
+        Page.AlbumsCount = count;
+      </Script>
+
+      <Script>
+        Page.AllAlbumsSelected = [SelectionManager.Count] == [AlbumQuery.Result.Items.Count];
+      </Script>
+      
+      <Script>
+        [DeclareTrigger(SelectionManager.SelectedItems)]
+        [DeclareTrigger(AlbumQuery.Result.Items.Count)]
+        
+        data:Album selectedAlbum = null;
+        
+        
+        if (AlbumQuery.Result.Items.Count == 1)
+          selectedAlbum = (data:Album)AlbumQuery.Result.Items.get_Item(0);
+        else if (SelectionManager.Count == 1)
+          selectedAlbum = (data:Album)SelectionManager.SelectedItem;
+          
+        if (selectedAlbum != null)
+          Page.AlbumArtistCount = selectedAlbum.DisplayArtistCount;
+        else
+          Page.AlbumArtistCount = 0;
+      </Script>
+
+      
+      <Script>
+        if ([ContextMenu.Helper.IsOpening])
+        {
+          
+          ChooseArt.Hidden = ([SelectionManager.Count] != 1);
+
+          
+          if (SelectionManager.SelectedItem is data:Album)
+          {
+            data:Album album = (data:Album)SelectionManager.SelectedItem;
+            if (album.HasAlbumArt)
+              ChooseArt.Description = zune:Shell.LoadString(zune:StringId.IDS_UPDATE_ALBUM_ART);
+            else
+              ChooseArt.Description = zune:Shell.LoadString(zune:StringId.IDS_ADD_ALBUM_ART);
+          }
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(ChooseArt.Invoked)]
+
+        if (SelectionManager.SelectedItem != null)
+        {
+          Updater = new zune:AlbumArtUpdateHandler(SelectionManager.SelectedItem);
+          Updater.Start();
+        }
+      </Script>
+      <Script>
+        if (Updater != null &amp;&amp;
+            [Updater.Done])
+        {
+          if (!sys:String.IsNullOrEmpty(Updater.Path))
+          {
+            data:Album album = (data:Album)Updater.Album;
+
+            album.ThumbnailPath = Updater.Path;
+          }
+
+          UI.DisposeOwnedObject(Updater);
+          Updater = null;
+        }
+      </Script>
+    </Scripts>
+
+    <Content>
+      
+      <Panel Layout="Dock" Margins="0,0,-2,0">
+        <Children>
+
+          <core:ButtonWithIcon Name="BuyMoreButton" Model="{BuyMoreCommand}" Margins="10,0,0,0">
+            <Icon>
+             <core:Icon Name="Icon" Image="res://ZuneShellResources!Arrow.More.png" Margins="7,0,0,0"/>
+            </Icon>
+            <LayoutInput>
+              <DockLayoutInput Position="Bottom" Alignment="Near"/>
+            </LayoutInput>
+          </core:ButtonWithIcon>
+
+          <me:AlbumsGalleryPanelWorker Name="Worker" Model="{Model}" Page="{Page}"
+            ColumnInset="{ColumnInset}"
+            HeaderMargins="{HeaderMargins}"
+            HeaderPadding="{HeaderPadding}"
+            SelectionManager="{SelectionManager}"
+            NavigateIntoArgs="{NavigateIntoArgs}"
+            ContextMenu="{ContextMenu}"
+            EditContext="{EditContext}"
+            ToggleSelectAllCommand="{ToggleSelectAllCommand}"/>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="AlbumsGalleryPanelWorker" Base="gp:GalleryPanelWorker">
+    <Properties>
+      <zune:MusicLibraryPage Name="Page" MusicLibraryPage="$Required"/>
+      <Type Name="GalleryViewType" Type="{typeof(me:GalleryView)}"/>
+      <zune:AlbumsPanel Name="Model" AlbumsPanel="$Required"/>
+      <Size Name="LayoutSpacing" Size="20,6"/>
+      <Boolean Name="HighlightHeader" Boolean="true"/>
+    </Properties>
+
+    <Scripts>
+      <Script> Gallery.SelectedItemClicked = Page.AlbumClicked; </Script>
+
+      
+      <Script>
+        
+        [DeclareTrigger(((iris:VirtualList)Model.Content).Count)]
+
+        int count = 0;
+        if (Model.Content != null)
+          count = Model.Content.Count;
+
+        Size newTileSize;
+        bool largeTiles = (count &lt; 2);
+        if (largeTiles)
+          newTileSize = new Size(159,159);  
+        else
+          newTileSize = new Size(86,86);    
+
+        
+        if (Gallery.TileSize != newTileSize)
+        {
+          Gallery.TileSize = newTileSize;
+          Gallery.ForceRefresh();
+        }
+      </Script>
+    </Scripts>
+  </UI>
+
+  
+  
+  
+  <UI Name="GalleryView" Base="gp:GalleryView">
+    <Properties>
+      <Type Name="ThumbnailCaptionAreaType" Type="{typeof(me:AlbumGalleryCaptionArea)}"/>
+
+      <Type Name="LargeProviderType" Type="{typeof(me:LargeAlbumListItemProvider)}"/>
+      <Type Name="SmallProviderType" Type="{typeof(me:SmallAlbumListItemProvider)}"/>
+
+      <Type Name="NormalListItemType" Type="{typeof(me:AlbumThumbnailListItem)}"/>
+      <Type Name="SelectedListItemType" Type="{typeof(me:SelectedAlbumThumbnailListItem)}"/>
+
+      <Size Name="SizeThreshold" Size="86,86"/>
+      <StretchingPolicy Name="StretchingPolicy" StretchingPolicy="Uniform"/>
+      
+      <Size Name="LabelSize" Size="0,40"/>
+    </Properties>
+
+    <Scripts>
+      <Script>
+        if ([TileSize.Width] > SizeThreshold.Width ||
+            [TileSize.Height] > SizeThreshold.Height)
+        {
+          ListItemType = SelectedListItemType;
+          ProviderType = LargeProviderType;
+        }
+        else
+        {
+          ListItemType = NormalListItemType;
+          ProviderType = SmallProviderType;
+        }
+      </Script>
+      
+      <Script> Scroller.ShowNear = [ScrollData.CanScrollUp]; </Script>
+      <Script> Scroller.ShowFar = [ScrollData.CanScrollDown]; </Script>
+    </Scripts>
+  </UI>
+  
+  
+  
+  
+  <UI Name="AlbumThumbnailListItem" Base="list:ThumbnailListItemBase">
+  </UI>
+
+  
+  
+  
+  <UI Name="SelectedAlbumThumbnailListItem" Base="me:AlbumThumbnailListItem">
+    <Properties>
+      <Boolean Name="AlwaysDisplayAsSelected" Boolean="true"/>
+      <Int32 Name="BorderWidth" Int32="5"/>
+      <AnchorLayoutInput Name="LabelAnchor"
+          Left="TileBase,0" Right="TileBase,1" Horizontal="Near"
+          Top="TileBase,1,7" Bottom="TileBase,1,999" Vertical="Near"/>
+    </Properties>
+    <Scripts>
+      <Script>
+        Root.Padding = new Inset(0,10,0,0);
+      </Script>
+    </Scripts>
+  </UI>
+
+  
+  
+  
+  <UI Name="AlbumGalleryCaptionArea" Base="thumbbutton:ThumbnailCaptionArea">
+    <Properties>
+      <Type Name="PrimaryLabelType" Type="{typeof(thumbbutton:EditableLabelHost)}"/>
+    </Properties>
+  </UI>
+  
+  
+  
+  
+  
+  <Class Name="AlbumListItemProvider" Base="panels:ListItemProvider">
+    <Properties>
+      <data:Album Name="Model" Album="$Required"/>
+    </Properties>
+  
+    <Scripts>
+      <Script>
+        
+        
+        
+        List selectedArtists = ((zune:MusicLibraryPage)ListModel.LibraryPage).SelectedArtistIds;
+                 
+        if (!List.IsNullOrEmpty(selectedArtists) &amp;&amp; 
+             selectedArtists.Count == 1)
+        {
+          
+          int year = [Model.ReleaseDate].Year;
+        
+          
+          if (year == 1)
+            SecondaryLabel = zune:Shell.LoadString(zune:StringId.IDS_TYPE_UNKNOWN);
+          else
+            SecondaryLabel = year.ToString();
+        }
+        else
+        {
+          
+          
+          SecondaryLabel = [Model.ArtistName];
+        }
+      </Script>
+    </Scripts>
+  </Class>
+  
+  
+  
+  
+  
+  <Class Name="SmallAlbumListItemProvider" Base="me:AlbumListItemProvider">
+    <Scripts>
+      <Script>
+        Image = [Model.AlbumArtSmall];
+      </Script>
+    </Scripts>
+  </Class>
+
+  
+  
+  
+  <Class Name="LargeAlbumListItemProvider" Base="me:AlbumListItemProvider">
+    <Scripts>
+      <Script>
+        Image = [Model.AlbumArtLarge];
+      </Script>
+    </Scripts>
+  </Class>
+
+</UIX>

@@ -1,0 +1,437 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:sys="assembly://mscorlib/System"
+  xmlns:data="res://ZuneShellResources!LibraryData.schema.xml"
+  xmlns:columns="res://ZuneShellResources!TracksPanelColumns.uix"
+  xmlns:spreadsheet="res://ZuneShellResources!SpreadSheetViewBase.uix"
+  xmlns:panels="res://ZuneShellResources!LibraryPanels.uix"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:contextmenu="res://ZuneShellResources!LibraryContextMenu.uix"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:me="Me">
+
+  
+  
+  
+  
+  <UI Name="TracksPanelBase" Base="panels:LibraryPanelBase">
+    <Properties>
+      <zune:MusicLibraryPage Name="Page" MusicLibraryPage="$Required"/>
+      <zune:TracksPanel Name="Model" TracksPanel="$Required" />
+      <Boolean Name="DetailedQuery" Boolean="false"/>
+      <Int32 Name="SelectionThreshold" Int32="1000"/>
+    </Properties>
+
+    <Locals>
+      <data:LibraryTrackQuery Name="TrackQuery" Enabled="false"
+        RulesOnly="false"
+        Detailed="{DetailedQuery}"
+        ShowDeviceContents="{Page.ShowDeviceContents}"
+        />
+
+      <List Name="LibraryContextMenuOptions">
+        <Source>
+          <iris:Command Command="{PlayAll}"/>
+          <iris:Command Command="{Play}"/>
+          <iris:Command Command="{AddToNowPlaying}"/>
+          <iris:Command Command="{AddToPlaylist}"/>
+          <iris:Command Command="{AddToBurnList}"/>
+          <core:MenuDivider/>
+          <iris:Command Command="{Edit}"/>
+          <contextmenu:RateCommand RateCommand="{Rate}"/>
+          <iris:Command Command="{Delete}"/>
+          <core:MenuDivider MenuDivider="{SyncDivider}"/>
+          <iris:Command Command="{Sync}"/>
+          <iris:Command Command="{SyncAllUnexclude}"/>
+          <zune:MenuItemCommand MenuItemCommand="{Exclude}"/>
+          <zune:MenuItemCommand MenuItemCommand="{Unexclude}"/>
+          <core:MenuDivider/>
+          <iris:Command Command="{Properties}"/>
+        </Source>
+      </List>
+
+      <List Name="DeviceContextMenuOptions">
+        <Source>
+          <iris:Command Command="{ReverseSync}"/>
+          <iris:Command Command="{DeleteFromDevice}"/>
+        </Source>
+      </List>
+    </Locals>
+
+    <Scripts>
+      <Script>TrackQuery.DeviceId = [Page.DeviceId];</Script>
+      <Script>TrackQuery.UserId = [zune:SignIn.Instance.LastSignedInUserId];</Script>
+
+      <Script>
+        if (Page.ShowDeviceContents)
+        {
+          ContextMenu.Options = DeviceContextMenuOptions;
+          DeleteKey.Command = DeleteFromDevice;
+          columns:BrowseViewData.SyncColumn.Visible = false;
+          columns:BrowseViewData.SizeOnDeviceColumn.Visible = true;
+          Page.AlbumsChanged.Invoke();
+
+          MinimumWidth = 100;
+        }
+        else
+        {
+          ContextMenu.Options = LibraryContextMenuOptions;
+          columns:BrowseViewData.SyncColumn.Visible = true;
+          columns:BrowseViewData.SizeOnDeviceColumn.Visible = false;
+        }
+      </Script>
+
+      <Script>
+        if (Page.UseRulesQuery)
+        {
+          TrackQuery.RulesOnly = true;
+          TrackQuery.Detailed = false;
+        }
+      </Script>
+
+      
+      <Script>
+        if (TrackQuery.Result != null)
+        {
+          
+          Model.Content = [TrackQuery.Result.Items];
+        }
+      </Script>
+
+      <Script>
+        Worker.Content = [Model.Content];
+      </Script>
+
+      <Script>
+        Worker.SupportsJumpInList = [SupportsJumpInList];
+      </Script>
+
+      
+      <Script>
+        zune:TransportControls.Instance.PagePlaySelection.Available = TrackQuery.Result != null &amp;&amp;
+                                                                    ([TrackQuery.Result.Items.Count] > 0);
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(zune:TransportControls.Instance.PagePlaySelection.Invoked)]
+        Execute.Invoke();
+      </Script>
+    </Scripts>
+
+    <Content>
+      <spreadsheet:SpreadSheet Name="Worker" ColumnData="{null}"/>
+    </Content>
+  </UI>
+
+  
+  
+  
+  <Class Name="TracksPanelData" Shared="true">
+    <Properties>
+
+      
+
+      <iris:ArrayListDataSet Name="SortOptions">
+        <Source>
+          <zune:SortCommand Description="{zune:Shell.LoadString(zune:StringId.IDS_ASCENDING_SORT)}"
+              Sort="+Title"  SupportsJumpInList="true"/>
+          <zune:SortCommand Description="{zune:Shell.LoadString(zune:StringId.IDS_DESCENDING_SORT)}"
+              Sort="-Title" SupportsJumpInList="true"/>
+          <zune:SortCommand Description="{zune:Shell.LoadString(zune:StringId.IDS_ASCENDING_TRACK_SORT)}"
+              Sort="+DiscIndex,+WM/TrackNumber"/> 
+          <zune:SortCommand Description="{zune:Shell.LoadString(zune:StringId.IDS_DESCENDING_RATING_SORT)}"
+              Sort="-UserRating,+Title"/>
+        </Source>
+      </iris:ArrayListDataSet>
+
+      
+      <panels:SortData Name="MultipleAlbumsSorts" Options="{SortOptions}"
+                       SaveKey="TrackMultiAlbumSort" DefaultIndex="0"/> 
+
+      
+      <panels:SortData Name="SingleAlbumSorts" Options="{SortOptions}"
+                       SaveKey="TrackSingleAlbumSort" DefaultIndex="2"/> 
+    </Properties>
+  </Class>
+
+  
+  
+  
+  <UI Name="TracksPanel" Base="me:TracksPanelBase">
+    <Properties>
+      <spreadsheet:ColumnData Name="ColumnData" ColumnData="{columns:BrowseViewData.ColumnData}"/>
+      <panels:SortData Name="SortData" SortData="{me:TracksPanelData.MultipleAlbumsSorts}"/>
+
+      <columns:TracksPanelListModel Name="ListModel" ShowTrackNumber="false"/>
+    </Properties>
+
+    <Locals>
+      <Boolean Name="QueryReady" Boolean="false"/>
+      <Timer Name="UpdateTimer" Interval="0" AutoRepeat="false" Enabled="false"/>
+    </Locals>
+
+    <Scripts>
+      
+      <Script>
+        int count = 0;
+        if (TrackQuery.Result != null)
+          count = [TrackQuery.Result.Items.Count];
+        ToggleSelectAllCommand.Description = sys:String.Format(zune:Shell.LoadString(zune:StringId.IDS_TRACKS_HEADER), count);
+      </Script>
+
+      
+
+      
+
+
+      <Script>
+        [DeclareTrigger(Page.SelectedAlbumIds)]
+
+        
+        
+        
+        
+        
+
+        Int32 interval;
+
+        if (Page.SelectedAlbumIds == null || Page.SelectedAlbumIds.Count == 1)
+        {
+          interval = 100;
+        }
+        else
+        {
+          interval = 250;
+        }
+
+        UpdateTimer.Stop();
+        UpdateTimer.Interval = interval;
+        UpdateTimer.Start();
+      </Script>
+
+      <Script>
+        [DeclareTrigger(Page.AlbumsChanged.Invoked)]
+        [DeclareTrigger(Page.AlbumsCount)]
+        [DeclareTrigger(UpdateTimer.Tick)]
+
+        UpdateTimer.Stop();
+
+        
+        if (Page.AlbumsCount != 0)
+        {
+          List  artistIds   = null;
+          Int32 artistId    = -1;
+          List  albumIds    = null;
+          Int32 albumId     = -1;
+          bool  multiSelect = false;
+
+          bool singleAlbumSelected = Page.AlbumsCount == 1;
+
+          if (Page.SelectedAlbumIds != null &amp;&amp; !Page.AllAlbumsSelected)
+          {
+            if(Page.SelectedAlbumIds.Count > 1)
+            {
+              albumIds    = Page.SelectedAlbumIds;
+              multiSelect = true;
+            }
+            else
+            {
+              albumId = (int)Page.SelectedAlbumIds.get_Item(0);
+              singleAlbumSelected = true;
+            }
+          }
+          else if (Page.SelectedArtistIds != null &amp;&amp; !Page.AllArtistsSelected)
+          {
+            if(Page.SelectedArtistIds.Count > 1)
+            {
+              artistIds = Page.SelectedArtistIds;
+              multiSelect = true;
+            }
+            else
+            {
+              artistId = (int)Page.SelectedArtistIds.get_Item(0);
+            }
+          }
+
+          panels:SortData newSorts;
+          
+          if (singleAlbumSelected)
+          {
+            
+            newSorts = me:TracksPanelData.SingleAlbumSorts;
+          }
+          else
+          {
+            
+            newSorts = me:TracksPanelData.MultipleAlbumsSorts;
+          }
+
+          TrackQuery.ArtistIds   = artistIds;
+          TrackQuery.ArtistId    = artistId;
+          TrackQuery.AlbumIds    = albumIds;
+          TrackQuery.AlbumId     = albumId;
+          TrackQuery.MultiSelect = multiSelect;
+
+          
+          
+          QueryReady = (SortData == newSorts);
+          SortData = newSorts;
+        }
+      </Script>
+
+      
+      <Script>
+        zune:SortCommand sort = (zune:SortCommand)[SortData.Sorts.Chosen];
+
+        TrackQuery.Sort = sort.Sort;
+        SupportsJumpInList = sort.SupportsJumpInList;
+
+        
+        
+        
+        zune:SortCommand singleSort = (zune:SortCommand)me:TracksPanelData.SingleAlbumSorts.Sorts.Chosen;
+        Page.TrackListSortSingleAlbum = singleSort.Sort;
+        zune:SortCommand multipleSort = (zune:SortCommand)me:TracksPanelData.MultipleAlbumsSorts.Sorts.Chosen;
+        Page.TrackListSortMultipleAlbums = multipleSort.Sort;
+
+        
+        if (SortData.Sorts.ChosenIndex != 3)
+          ColumnData.SortedColumn = null;
+      </Script>
+
+      <Script>
+        
+        if ([ColumnData.SortedColumn] == columns:SortInfo.UserRating)
+          SortData.Sorts.ChosenIndex = 3;
+      </Script>
+
+      <Script>
+        [DeclareTrigger(SortData.Sorts.Chosen)]
+        QueryReady = true;
+      </Script>
+
+      <Script>
+        [DeclareTrigger(Page.AlbumsChanged.Invoked)]
+        [DeclareTrigger(Page.SelectedAlbumIds)]
+        [DeclareTrigger(QueryReady)]
+        TrackQuery.Enabled = QueryReady;
+      </Script>
+
+      <Script>
+        [DeclareTrigger(Page.ArtistClicked.Invoked)]
+        [DeclareTrigger(Page.SelectedArtistIds)]
+        [DeclareTrigger(Page.AlbumClicked.Invoked)]
+        [DeclareTrigger(Page.SelectedAlbumIds)]
+
+        
+        SelectionManager.Clear();
+      </Script>
+
+      
+      
+      <Script>
+        [DeclareTrigger(Worker.Content)]
+
+        
+        ListModel.ShowTrackNumber = SortData.Sorts.ChosenIndex == 2; 
+
+        spreadsheet:ColumnInfo artistColumn = columns:BrowseViewData.ArtistColumn;
+
+        artistColumn.Visible = Page.AlbumArtistCount > 1;
+      </Script>
+    </Scripts>
+
+    <Content>
+      
+      <spreadsheet:SpreadSheet Name="Worker"
+        ListModel="{ListModel}"
+        Content="{Model.Content}"
+        ColumnData="{ColumnData}"
+        NavigateIntoArgs="{NavigateIntoArgs}"
+        SelectionManager="{SelectionManager}"
+        ContextMenu="{ContextMenu}"
+        EditContext="{EditContext}"
+        ExecuteCommand="{Execute}"
+        HeaderSpacing="22"
+        LayoutSpacing="{styles:Styles.LibraryListLayoutSpacing}"
+        RowSize="{styles:Styles.LibraryListItemSize}"
+        RowPadding="{styles:Styles.LibraryListItemMargins}"
+        Margins="0,0,0,-11"
+        />
+    </Content>
+
+  </UI>
+
+  
+  
+  
+  
+  
+  <UI Name="DetailedTracksPanel" Base="me:TracksPanelBase">
+    <Properties>
+      <spreadsheet:ColumnData Name="ColumnData" ColumnData="{columns:DetailedViewData.ColumnData}"/>
+
+      <Boolean Name="DetailedQuery" Boolean="true"/>
+    </Properties>
+
+    <Locals>
+      <iris:Command Name="ChooseColumns" Description="{zune:Shell.LoadString(zune:StringId.IDS_CHOOSE_COLUMN_MENU_ITEM)}"/>
+
+      <core:ContextMenu Name="HeaderContextMenu">
+        <Options>
+          <iris:Command Command="{ChooseColumns}"/>
+        </Options>
+      </core:ContextMenu>
+
+      <columns:ColumnChooserDialog Name="ColumnChooser"/>
+    </Locals>
+
+    <Scripts>
+      <Script>Worker.HeaderContextMenu = HeaderContextMenu;</Script>
+
+      <Script>Worker.ShowColumnDividers = true;</Script>
+
+      
+      
+      <Script>
+        
+        spreadsheet:SortDescription sort = (spreadsheet:SortDescription)[ColumnData.SortedColumn];
+
+        string sortBy = (string)panels:Globals.SortAscendingMap.GetItem([ColumnData.SortAscending]) +
+                        sort.Attribute;
+
+        TrackQuery.Sort = sortBy;
+        Page.TrackListSort = sortBy;
+        SupportsJumpInList = sort.SupportsJumpInList;
+      </Script>
+
+      
+      <Script>TrackQuery.Enabled = true;</Script>
+
+      <Script>
+        [DeclareTrigger(ChooseColumns.Invoked)]
+        ColumnChooser.Helper.Show(ColumnChooser);
+      </Script>
+    </Scripts>
+
+    <Content>
+      <spreadsheet:SpreadSheet Name="Worker"
+        AccessibleDescription="{zune:Shell.LoadString(zune:StringId.IDS_INDIVIDUAL_TRACKS)}"
+        Content="{Model.Content}"
+        ColumnData="{ColumnData}"
+        NavigateIntoArgs="{NavigateIntoArgs}"
+        SelectionManager="{SelectionManager}"
+        ContextMenu="{ContextMenu}"
+        EditContext="{EditContext}"
+        ExecuteCommand="{Execute}"
+        LayoutSpacing="{styles:Styles.LibraryListLayoutSpacing}"
+        RowSize="{styles:Styles.LibraryListItemSize}"
+        RowPadding="{styles:Styles.LibraryListItemMargins}"
+        Margins="-24,0,0,0"/>
+    </Content>
+  </UI>
+</UIX>

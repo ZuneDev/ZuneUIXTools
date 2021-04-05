@@ -1,0 +1,66 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:mgmt="res://ZuneShellResources!Management.uix"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:me="Me">
+
+  <UI Name="Default">
+    <Properties>
+      <zune:CategoryPage Name="Page" CategoryPage="{null}"/>
+    </Properties>
+
+    <Scripts>
+      <Script>
+        String feed = ((iris:Command) [zune:Management.Instance.PodcastDefaultKeepEpisodesChoice.Chosen]).Description;
+        FeedValue.Content = me:Strings.KeepDescription.Format(feed);
+      </Script>
+    </Scripts>
+    
+    <Content>
+      <Panel>
+        <Children>
+
+          <Panel>
+            <Layout>
+              <FlowLayout Orientation="Vertical" Spacing="10,0" StripAlignment="Near" ItemAlignment="Near"/>
+            </Layout>
+            <Children>
+
+              <mgmt:Label Content="{me:Strings.KeepCount}" WordWrap="false"/>
+
+              <core:LabeledChoiceSlider
+                  AccessibleDescription="{me:Strings.KeepCount}"
+                  Model="{zune:Management.Instance.PodcastDefaultKeepEpisodesChoice}"
+                  MinValueString="{me:Strings.Few}"
+                  MaxValueString="{me:Strings.Many}" TextStyle="{styles:SharedStyles.SettingsBodyStyle}" />
+              
+              <Text Name="FeedValue" Color="{styles:Styles.SettingsTextActive}" Font="{styles:Styles.SettingsText}" WordWrap="false"/>
+              
+              <Text Color="{styles:Styles.SettingsTextActive}" Font="{styles:Styles.SettingsTextMini}" WordWrap="true" Content="{zune:Shell.LoadString(zune:StringId.IDS_KEEP_COUNT_NOTE)}" Padding="0,0,0,15"/>
+
+              <mgmt:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_PLAYBACK_ORDER_HEADER)}" WordWrap="false"/>
+              <core:RadioGroup Padding="0,0,0,15" Model="{zune:Management.Instance.PodcastPlaybackChoice}" AccessibleDescription="{zune:Shell.LoadString(zune:StringId.IDS_PLAYBACK_ORDER_HEADER)}"/>
+
+            </Children>
+          </Panel>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  <Class Name="Strings" Shared="true">
+    <Properties>
+      <string Name="KeepCount" string="{zune:Shell.LoadString(zune:StringId.IDS_KEEP_COUNT_HEADER)}" />
+      <string Name="KeepDescription" string="{zune:Shell.LoadString(zune:StringId.IDS_PODCAST_KEEP_EPISODES)}" />
+      <string Name="KeepSeriesDescription" string="{zune:Shell.LoadString(zune:StringId.IDS_PODCAST_KEEP_SERIES_EPISODES)}" />
+      <string Name="Few" string="{zune:Shell.LoadString(zune:StringId.IDS_PODCAST_SLIDER_FEW)}" />
+      <string Name="Many" string="{zune:Shell.LoadString(zune:StringId.IDS_PODCAST_SLIDER_MANY)}" />      
+    </Properties>
+  </Class>
+
+</UIX>

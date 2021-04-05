@@ -1,0 +1,38 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX 
+    xmlns="http://schemas.microsoft.com/2007/uix"
+    xmlns:styles="res://ZuneShellResources!Styles.uix"
+    xmlns:style="res://ZuneShellResources!Style.uix"
+    xmlns:core="res://ZuneShellResources!Controls.uix">
+
+  
+  <UI Name="LabelWithArrow" Base="core:Label">
+     <Properties>
+       <Boolean Name="ShowArrow" Boolean="false"/>      
+       
+       <style:Style Name="OverrideStyle" Style="{null}"/>
+       <style:Style Name="BaseStyle" Style="{styles:SharedStyles.MgmtMenuItemStyle}"/>
+
+     </Properties>
+    
+    <Scripts>
+      <Script>SelectionArrow.Alpha = (float)[ShowArrow];</Script>
+    </Scripts>
+
+    <Content>
+      
+      <Panel Layout="HorizontalFlow">
+        <Children>
+          
+          
+          
+          <Graphic Name="SelectionArrow" Content="{styles:Styles.LeftMenuSelectArrow}" Margins="-6,3,4,0"/>
+          
+          
+         <Text Name="Label" NamedStyles="{NamedStyles}" MouseInteractive="{ShowToolTipWhenClipped}"/>    
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+  
+</UIX>

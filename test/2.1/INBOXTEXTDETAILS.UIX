@@ -1,0 +1,101 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:inboxdetails="res://ZuneShellResources!InboxBaseDetails.uix"
+  xmlns:me="Me">
+
+  
+  
+  
+  <UI Name="UnknownDetails" Base="inboxdetails:MessageDetailsProvider">
+    <Scripts>
+      <Script>
+        MessageDetailsCompleted = true;
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel Layout="Dock">
+        <Children>
+          
+          <inboxdetails:MessageDetailsHeader Name="Header" Model="{Model}" TextContent="{zune:Shell.LoadString(zune:StringId.IDS_INBOX_UNKNOWN_MESSAGE)}" MessageDetailsQuery="{MessageDetailsQuery}" Margins="5,0,0,0">
+            <LayoutInput>
+              <DockLayoutInput Position="Top"/>
+            </LayoutInput>
+          </inboxdetails:MessageDetailsHeader>
+
+          
+          <inboxdetails:MessageDetailsFooter Name="Footer" Model="{Model}" MessageDetailsQuery="{MessageDetailsQuery}" Margins="10,0,0,0">
+            <LayoutInput>
+              <DockLayoutInput Position="Bottom"/>
+            </LayoutInput>
+          </inboxdetails:MessageDetailsFooter>
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="NoSelection">
+    <Properties>
+      
+      <zune:SelectionDetailsPanel Name="Model" SelectionDetailsPanel="$Required"/>
+      <zune:InboxPage Name="Page" InboxPage="$Required"/>
+    </Properties>
+
+    <Content>
+      <Panel Layout="VerticalFlow" Margins="15,0,0,0">
+        <Children>
+          <core:Label Name="Details" Content="{zune:Shell.LoadString(zune:StringId.IDS_DETAILS_NOANDMULTISELECT_HEADER)}" Style="{styles:SharedStyles.InboxDetailStyle}" />
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="MultiSelection" Base="me:NoSelection">
+  </UI>
+
+  
+  
+  
+  <UI Name="TextDetailsUI" Base="inboxdetails:MessageDetailsProvider">
+    <Scripts>
+      <Script>
+        if ([MessageDetailsQuery.Status] == iris:DataProviderQueryStatus.Complete)
+        {
+          MessageDetailsCompleted = true;
+        }
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel Layout="Dock">
+        <Children>
+          
+          <inboxdetails:MessageDetailsHeader Name="Header" Model="{Model}" MessageDetailsQuery="{MessageDetailsQuery}" Margins="10,5,0,0">
+            <LayoutInput>
+              <DockLayoutInput Position="Top"/>
+            </LayoutInput>
+          </inboxdetails:MessageDetailsHeader>
+
+          
+          <inboxdetails:MessageDetailsFooter Name="Footer" Model="{Model}" MessageDetailsQuery="{MessageDetailsQuery}" Margins="10,19,0,0">
+            <LayoutInput>
+              <DockLayoutInput Position="Bottom"/>
+            </LayoutInput>
+          </inboxdetails:MessageDetailsFooter>
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+</UIX>

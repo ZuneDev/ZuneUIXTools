@@ -1,0 +1,46 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX xmlns="http://schemas.microsoft.com/2007/uix"
+     xmlns:styles="res://ZuneShellResources!Styles.uix"
+     xmlns:zune="assembly://ZuneShell/ZuneUI"
+     xmlns:gasgauge="res://ZuneShellResources!GasGauge.uix">
+
+  <UI Name="RuleAddedNotification">
+    <Properties>
+      <zune:SyncNewRuleAddedNotification Name="Model" SyncNewRuleAddedNotification="$Required"/>
+    </Properties>
+    <Locals>
+      <Timer Name="HideTimer" Interval="10000" Enabled="true" AutoRepeat="false"/>
+    </Locals>
+    <Scripts>
+      <Script>
+        GasGauge.NewSize = [Model.NewSize];
+        HideTimer.Stop();
+        HideTimer.Start();
+      </Script>
+      <Script>
+        [DeclareTrigger(HideTimer.Tick)]
+        zune:NotificationArea.Instance.EndOverride(Model);
+      </Script>
+    </Scripts>
+    <Content>
+
+      <Panel MaximumSize="400,0">
+        <Layout>
+          <FlowLayout Orientation="Vertical" StripAlignment="Center" ItemAlignment="Center" Spacing="8,0"/>
+        </Layout>
+        <Children>
+          
+          <Text Name="Message" MaximumSize="295,0" Color="{styles:Styles.SyncHeaderColor}" Font="{styles:Styles.SyncHeaderFont}" Content="{Model.Message}"/>
+
+          <gasgauge:MiniGasGauge Name="GasGauge"
+                                 OldSize="{Model.OldSize}"
+                                 NewSize="{Model.OldSize}"
+                                 TotalSize="{Model.TotalSize}"/>
+          
+        </Children>
+      </Panel>
+      
+    </Content>
+  </UI>
+
+</UIX>

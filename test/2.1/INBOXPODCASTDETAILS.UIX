@@ -1,0 +1,169 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:zunedbapi="assembly://ZuneDBApi"
+  xmlns:subscription="assembly://ZuneDBApi/Microsoft.Zune.Subscription"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:button="res://ZuneShellResources!Button.uix"
+  xmlns:pcastdlg="res://ZuneShellResources!PodcastDialogs.uix"
+  xmlns:libdata="res://ZuneShellResources!LibraryData.schema.xml"
+  xmlns:pcastdata="res://ZuneMarketplaceResources!PodcastData.schema.xml"
+  xmlns:pcastview="res://ZuneMarketplaceResources!PodcastView.uix"
+  xmlns:inboxdetails="res://ZuneShellResources!InboxBaseDetails.uix">
+
+  
+  
+  
+  <UI Name="PodcastDetailsUI" Base="inboxdetails:MessageDetailsProvider">
+    <Locals>
+      <iris:Command Name="MarketplaceCommand" Description="{zune:Shell.LoadString(zune:StringId.IDS_MARKETPLACE_SITE_BUTTON)}" Available="false" />
+      <iris:Command Name="ToggleSubscriptionCommand" />
+      <String Name="PodcastUrl" />
+      <String Name="WebSiteUrl" />
+      <zune:SubscriptionState Name="SubscriptionState" />
+      <pcastdata:PodcastSeries Name="Podcast" />
+      <libdata:DynamicRssViewPodcastEpisodeQuery Name="DynamicRssEpisodesQuery" Sort="-ReleaseDate" />
+      <pcastdlg:UnsubscribeDialog Name="UnsubscribeDialog" />
+      <pcastdlg:SettingsDialog Name="SettingsDialog" Page="{null}"/>
+      <button:Icon Name="Icon" Image="res://ZuneShellResources!Icon.ExternalLink.png" Margins="7,1,0,0"/>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        if ([MessageDetailsQuery.Status] == iris:DataProviderQueryStatus.Complete)
+        {
+          PodcastUrl = MessageDetailsQuery.Result.PodcastUrl;
+        }
+      </Script>
+      
+      <Script>
+        if (!String.IsNullOrEmpty( [PodcastUrl] ))
+        {
+          SubscriptionState = zune:Management.Instance.GetSubscriptionState(PodcastUrl);
+          DynamicRssEpisodesQuery.FeedUrl = PodcastUrl;
+        }
+      </Script>
+      <Script>
+        [DeclareTrigger(SubscriptionState.IsSubscribed)]
+        if (SubscriptionState.IsSubscribed)
+        {
+          ToggleSubscriptionCommand.Description = zune:Shell.LoadString(zune:StringId.IDS_UNSUBSCRIBE_BUTTON);
+        }
+        else
+        {
+          ToggleSubscriptionCommand.Description = zune:Shell.LoadString(zune:StringId.IDS_SUBSCRIBE_BUTTON);
+        }
+        ToggleSubscriptionCommand.Available = true;
+      </Script>
+      <Script>
+        [DeclareTrigger(DynamicRssEpisodesQuery.Status)]
+        if (DynamicRssEpisodesQuery.Status == iris:DataProviderQueryStatus.Complete)
+        {
+          SeriesTitle.Content = DynamicRssEpisodesQuery.Result.PodcastSeriesInfo.Title;
+          AuthorName.Content = DynamicRssEpisodesQuery.Result.PodcastSeriesInfo.Author;
+          if (!String.IsNullOrEmpty(DynamicRssEpisodesQuery.Result.PodcastSeriesInfo.ArtUrl))
+          {
+            SeriesImage.Content = new iris:Image(DynamicRssEpisodesQuery.Result.PodcastSeriesInfo.ArtUrl, 0, 0, false, true);
+          }
+          if (!List.IsNullOrEmpty(DynamicRssEpisodesQuery.Result.Items))
+          {
+            EpisodesListView.Episodes = DynamicRssEpisodesQuery.Result.Items;
+          }
+          WebSiteUrl = DynamicRssEpisodesQuery.Result.PodcastSeriesInfo.HomeUrl;
+
+          EpisodesPanel.Visible = true;
+
+          MessageDetailsCompleted = true;
+        }
+      </Script>
+      
+      
+      <Script>
+        [DeclareTrigger(ToggleSubscriptionCommand.Invoked)]
+        if (SubscriptionState.IsSubscribed)
+        {
+            UnsubscribeDialog.SeriesId = SubscriptionState.SeriesId;
+            UnsubscribeDialog.Helper.Show(UnsubscribeDialog);
+        }
+        else if (SubscriptionState.SeriesFound)
+        {
+          
+          subscription:SubscriptionManager.Instance.Subscribe(SubscriptionState.SeriesId);
+          SubscriptionState.IsSubscribed = true;
+        }
+        else
+        {
+          
+          SubscriptionState = zune:Management.Instance.SubscribeToPodcastFeed(PodcastUrl, DynamicRssEpisodesQuery.Result.PodcastSeriesInfo.Title, zunedbapi:ESubscriptionSource.eSubscriptionSourceInbox);
+        }
+      </Script>
+      
+      <Script>
+        [DeclareTrigger(UnsubscribeDialog.Unsubscribe.Invoked)]
+        ToggleSubscriptionCommand.Available = false;
+        SubscriptionState.IsSubscribed = false;
+      </Script>
+
+    </Scripts>
+
+    <Content>
+      <Panel Layout="Dock" Margins="10,5,0,0">
+        <Children>
+
+          
+          <inboxdetails:MessageDetailsHeader Name="Header" Model="{Model}" MessageDetailsQuery="{MessageDetailsQuery}">
+            <LayoutInput>
+              <DockLayoutInput Position="Top"/>
+            </LayoutInput>
+          </inboxdetails:MessageDetailsHeader>
+
+          <Panel Layout="HorizontalFlow" Margins="13,0,0,0">
+            <LayoutInput>
+              <DockLayoutInput Position="Top"/>
+            </LayoutInput>
+            <Children>
+
+              
+              <Graphic Name="SeriesImage" MaximumSize="75,75" MinimumSize="75,75" Content="{styles:Styles.NoAlbumArt}"/>
+
+              
+              <Panel Layout="VerticalFlow" Margins="10,0,0,0">
+                <Children>
+
+                  <core:Label Name="SeriesTitle" Style="{styles:SharedStyles.InboxAlbumTitle}" />
+
+                  <core:Label Name="AuthorName" Style="{styles:SharedStyles.InboxAlbumArtist}"/>
+                  <core:ActionButton Name="SeriesStateButton" Model="{ToggleSubscriptionCommand}" Margins="-2,0,0,0" />
+                </Children>
+              </Panel>
+
+            </Children>
+          </Panel>
+
+          <Panel Name="EpisodesPanel" Visible="false" Margins="0,0,0,0">
+            <LayoutInput>
+              <DockLayoutInput Position="Client"/>
+            </LayoutInput>
+
+            <Children>
+              
+              <pcastview:PodcastEpisodesView Name="EpisodesListView" Page="{Page}" Shell="{(zune:Shell)zune:ZuneShell.DefaultInstance}"/>
+            </Children>
+          </Panel>
+
+          
+          <inboxdetails:MessageDetailsFooter Name="Footer" Model="{Model}" MessageDetailsQuery="{MessageDetailsQuery}" Margins="10,10,0,0">
+            <LayoutInput>
+              <DockLayoutInput Position="Bottom"/>
+            </LayoutInput>
+          </inboxdetails:MessageDetailsFooter>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+</UIX>

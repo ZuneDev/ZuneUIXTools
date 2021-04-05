@@ -1,0 +1,317 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX xmlns="http://schemas.microsoft.com/2007/uix"
+     xmlns:iris="assembly://UIX/Microsoft.Iris"
+     xmlns:core="res://ZuneShellResources!Controls.uix"
+     xmlns:zune="assembly://ZuneShell/ZuneUI"
+     xmlns:sys="assembly://mscorlib/System" 
+     xmlns:data="res://ZuneShellResources!LibraryData.schema.xml"
+     xmlns:mpdata="res://ZuneMarketplaceResources!MarketplaceData.schema.xml"
+     xmlns:dialog="res://ZuneShellResources!PlaylistDialog.uix"
+     xmlns:popup="res://ZuneShellResources!PlaylistPopup.uix"
+     xmlns:addto="res://ZuneShellResources!AddToPlaylist.uix"   
+     xmlns:animations="res://ZuneShellResources!Animations.uix" 
+     xmlns:zuneutil="assembly://ZuneShell/Microsoft.Zune.Util"
+     xmlns:zuneutilapi="assembly://ZuneDBApi/Microsoft.Zune.Util"
+     xmlns:me="Me"
+     >
+
+
+  <UI Name="PlaylistIcon" Base="core:ToolbarIconBase">
+    <Locals>
+      <iris:Command Name="Model"/>
+
+      <zune:PlaylistManager Name="PlaylistManager" PlaylistManager="{zune:PlaylistManager.Instance}"/>
+
+      <Timer Name="PopupShowTimer" AutoRepeat="false" Enabled="false"/>
+      
+      <dialog:AddToPlaylistDialog Name="AddToPlaylistDialog"/>
+      <popup:PlaylistPopup Name="PlaylistPopup" AddToPlaylistDialog="{AddToPlaylistDialog}"/>
+      <addto:AddToPlaylist Name="AddToPlaylist" AddToPlaylist="{null}"/>
+    </Locals>
+    
+    <Scripts>
+      <Script>
+        ToolbarActiveText = sys:String.Format(zune:Shell.LoadString(zune:StringId.IDS_BOTTOM_TOOLBAR_PLAYLIST),[PlaylistManager.DefaultPlaylistName]);        
+      </Script>
+
+      <Script>
+        ToolbarInactiveText = zune:Shell.LoadString(zune:StringId.IDS_BOTTOM_TOOLBAR_NO_DEFAULT);
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(Model.Invoked)]
+        
+        zune:PlaylistLand.NavigateToLand();
+
+        zuneutil:SQMLog.Log(zuneutilapi:SQMDataId.PlaylistLogoClicks, 1);
+      </Script>
+      
+      
+      <Script>
+        [DeclareTrigger(Target.DragEnter)]
+        
+        object value = Target.GetValue();
+        
+        List items = null;
+        if (value is List)
+        {
+           items = (List)value;
+        } 
+        else if (value is mpdata:PlaylistData)
+        {
+           items = ((mpdata:PlaylistData)value).Tracks;
+        } 
+        else if (value is SelectionManager)
+        { 
+           items = ((SelectionManager)value).SelectedItems;
+        }
+
+        if (items != null &amp;&amp; items.Count > 0)
+        {
+          foreach(object item in items)
+          {
+            
+            
+            
+            
+            if (item is data:Track || item is data:Artist || item is data:Album || 
+                item is mpdata:Track || item is mpdata:PlaylistTrack )
+            {
+              Target.AllowedDropActions = DropAction.Copy;
+              
+            }
+          }
+        }
+        
+        
+        
+        
+        if (Target.AllowedDropActions == DropAction.Copy)
+        {
+          PlaylistPopup.InDrag = true;
+          PlaylistPopup.DraggingOverIcon = true;
+          
+          
+          if (PlaylistManager.DefaultPlaylistId == PlaylistManager.InvalidPlaylistId)
+          {
+            PopupShowTimer.Interval = 0;
+          }
+          else
+          {
+            PopupShowTimer.Interval = 1000;
+          }
+          PopupShowTimer.Enabled = true;
+        }
+      </Script>
+
+      
+      <Script>
+        [InitialEvaluate(false)]
+        
+        if ([UI.DeepMouseFocus])
+        {
+          
+          
+          
+          
+          
+          
+          
+          if (PlaylistPopup.Helper.IsVisible &amp;&amp; PlaylistPopup.InDrag)
+          {
+            PlaylistPopup.Helper.Hide();
+          }
+          
+          PlaylistPopup.MousingOverIcon = true;
+          PopupShowTimer.Interval = 1000;
+          PopupShowTimer.Enabled = true;
+        }
+        else
+        {
+          PlaylistPopup.MousingOverIcon = false;
+          PopupShowTimer.Enabled = false;
+        }
+      </Script>
+
+      <Script>
+        if (![Target.Dragging])
+        {
+          Target.AllowedDropActions = DropAction.None;
+          PlaylistPopup.DraggingOverIcon = false;
+          PopupShowTimer.Enabled = false;
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(zune:Shell.DefaultInstance.CurrentPage)]
+        [DeclareTrigger(Model.Invoked)]
+        
+        PopupShowTimer.Enabled = false;
+        PlaylistPopup.Helper.Hide();
+      </Script>
+      
+      
+      <Script>
+        [DeclareTrigger(Target.Dropped)]
+        object value = Target.GetValue();
+        
+        List items = null;
+        if (value is List)
+        {
+           items = (List)value;
+        } 
+        else if (value is mpdata:PlaylistData)
+        {
+           items = ((mpdata:PlaylistData)value).Tracks;
+        } 
+        else if (value is SelectionManager)
+        { 
+           items = ((SelectionManager)value).SelectedItems;
+        }
+
+        
+        PopupShowTimer.Enabled = false;
+        PlaylistPopup.Helper.Hide();
+        
+        
+        
+        
+        if (items != null &amp;&amp; items.Count > 0)
+        {
+          int defaultPlaylistId = PlaylistManager.DefaultPlaylistId;
+          
+          if (defaultPlaylistId >= -1) 
+          {
+            if ( AddToPlaylist == null ) AddToPlaylist = new addto:AddToPlaylist();
+            AddToPlaylist.PlaylistId = defaultPlaylistId;
+            AddToPlaylist.Items = items;
+            AddToPlaylist.Start.Invoke();
+          }
+          else
+          {
+            
+            
+            
+            AddToPlaylistDialog.DragItems = items;
+            AddToPlaylistDialog.Helper.Show(AddToPlaylistDialog);
+          }
+        }
+
+        zuneutil:SQMLog.Log(zuneutilapi:SQMDataId.PlaylistLogoDrops, 1);
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(PopupShowTimer.Tick)]
+        
+        
+        
+        
+        if (Target.Dragging || PlaylistPopup.MousingOverIcon)
+        {
+          PlaylistPopup.LayoutInput.PlacementTarget = Icon;
+          
+          
+          
+          
+          if (!PlaylistPopup.Helper.IsVisible)
+          {
+            if (Target.Dragging) 
+            {
+              object value = Target.GetValue();
+
+              List items = null;
+              if (value is List)
+              {
+                 items = (List)value;
+              } 
+              else if (value is mpdata:PlaylistData)
+              {
+                 items = ((mpdata:PlaylistData)value).Tracks;
+              } 
+              else if (value is SelectionManager)
+              { 
+                 items = ((SelectionManager)value).SelectedItems;
+              }
+
+              if (items != null &amp;&amp; items.Count > 0)
+              {
+                PlaylistPopup.DragItems = items;
+              }
+            }
+            
+            PlaylistPopup.Helper.Show(PlaylistPopup);
+          }
+        }
+      </Script>
+
+      
+      <Script>
+        bool dragging = [Target.Dragging] &amp;&amp; [Target.AllowedDropActions] != DropAction.None;
+
+        if ([PlaylistManager.DefaultPlaylistId] >= -1)
+        {
+          if (dragging)
+            Icon.Image = me:Images.PlaylistDrag;
+          else
+            Icon.Image = me:Images.Playlist;
+
+          Icon.HoverImage = me:Images.PlaylistHover;
+          Icon.PressedImage = me:Images.PlaylistPressed;
+          Icon.Active = true;
+        }
+        else
+        {
+          if (dragging)
+            Icon.Image = me:Images.PlaylistEmptyDrag;
+          else
+            Icon.Image = me:Images.PlaylistEmpty;
+            
+          Icon.HoverImage = me:Images.PlaylistEmptyHover;
+          Icon.PressedImage = me:Images.PlaylistEmptyPressed;
+          Icon.Active = false;
+        }
+        IsActive = Icon.Active;
+      </Script>
+
+      <Script>
+        if ([Icon.Active])
+        {
+          Icon.AccessibleDescription = [ToolbarActiveText];
+        }
+        else
+        {
+          Icon.AccessibleDescription = [ToolbarInactiveText];
+        }
+      </Script>
+    </Scripts>
+    
+    <Content>
+      <Panel Layout="Anchor">
+        <Children>
+
+          <core:AnimatedIconButton Name="Icon" 
+              Model="{Model}"
+              IconActiveAnimation="{animations:Animations.IconContentChange}"
+              />
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  <Class Name="Images" Shared="true">
+    <Properties>
+      <Image Name="Playlist" Source="res://ZuneShellResources!Icon.Playlist.png"/>
+      <Image Name="PlaylistHover" Source="res://ZuneShellResources!Icon.Playlist.Hover.png"/>
+      <Image Name="PlaylistPressed" Source="res://ZuneShellResources!Icon.Playlist.Pressed.png"/>
+      <Image Name="PlaylistDrag" Source="res://ZuneShellResources!Icon.Playlist.Drag.png"/>
+      <Image Name="PlaylistEmpty" Source="res://ZuneShellResources!Icon.Playlist.Empty.png"/>
+      <Image Name="PlaylistEmptyHover" Source="res://ZuneShellResources!Icon.Playlist.Empty.Hover.png"/>
+      <Image Name="PlaylistEmptyPressed" Source="res://ZuneShellResources!Icon.Playlist.Empty.Pressed.png"/>
+      <Image Name="PlaylistEmptyDrag" Source="res://ZuneShellResources!Icon.Playlist.Empty.Drag.png"/>
+    </Properties>
+  </Class>
+  
+</UIX>

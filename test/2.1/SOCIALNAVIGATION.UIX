@@ -1,0 +1,19 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:zune="assembly://ZuneShell/ZuneUI">
+
+  <Class Name="Navigation" Shared="true">
+    <Properties>
+      <zune:DictionaryCommandHandler Name="Root">
+        <Handlers>
+
+          
+          <zune:InboxNavigationCommandHandler Name="Inbox"/>
+
+        </Handlers>
+      </zune:DictionaryCommandHandler>
+    </Properties>
+  </Class>
+
+</UIX>

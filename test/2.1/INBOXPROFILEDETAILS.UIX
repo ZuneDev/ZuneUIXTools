@@ -1,0 +1,126 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:sys="assembly://mscorlib/System"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:zuneshell="assembly://ZuneShell/Microsoft.Zune.Shell"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:mctl="res://ZuneMarketplaceResources!Controls.uix"
+  xmlns:inboxdetails="res://ZuneShellResources!InboxBaseDetails.uix"
+  xmlns:me="Me">
+
+  
+  
+  
+  <UI Name="HeaderMessageAndLink" Base="inboxdetails:MessageDetailsProvider">
+    <Properties>
+      <iris:Command Name="LinkCommand" />
+      <String Name="TextContent" />
+      <String Name="ZuneTag" />
+    </Properties>
+
+    <Scripts>
+      <Script>
+        Header.TextContent = [TextContent];
+      </Script>
+      <Script>
+        ZuneTagLabel.Content = [ZuneTag];
+      </Script>
+      <Script>
+        if ([MessageDetailsQuery.Status] == iris:DataProviderQueryStatus.Complete)
+        {
+          if (!String.IsNullOrEmpty(MessageDetailsQuery.Result.AltLink))
+          {
+            LinkButton.Visible = true;
+          }
+          if (!String.IsNullOrEmpty(MessageDetailsQuery.Result.UserTile))
+          {
+            UserTile.Content = new iris:Image(MessageDetailsQuery.Result.UserTile, 0, 0, false, true);
+          }
+          MessageDetailsCompleted = true;
+        }
+      </Script>
+      <Script>
+        [DeclareTrigger(LinkCommand.Invoked)]
+        zuneshell:ZuneApplication.Service.LaunchBrowserForExternalUrl(MessageDetailsQuery.Result.AltLink, true);
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel Layout="Dock" Margins="10,5,0,0">
+        <Children>
+
+          
+          <inboxdetails:MessageDetailsHeader Name="Header" Model="{Model}" MessageDetailsQuery="{MessageDetailsQuery}" UseMessageTextContent="false">
+            <LayoutInput>
+              <DockLayoutInput Position="Top"/>
+            </LayoutInput>
+          </inboxdetails:MessageDetailsHeader>
+
+          <Panel Layout="HorizontalFlow" Margins="13,0,0,0">
+            <LayoutInput>
+              <DockLayoutInput Position="Top"/>
+            </LayoutInput>
+
+            <Children>
+              
+              <Graphic Name="UserTile" MaximumSize="64,64" MinimumSize="64,64"/>
+              
+              <core:Label Name="ZuneTagLabel" Style="{styles:SharedStyles.InboxAlbumTitle}" Margins="10,5,0,0"/>
+            </Children>
+          </Panel>
+
+          <mctl:ExternalLink Name="LinkButton" Model="{LinkCommand}" Visible="false" Margins="15,10,0,0" KeyInteractiveNStuff="false" OverrideStyle="{styles:SharedStyles.ZuneNetLinkStyle}" IconMargin="7,1,0,0">
+            <LayoutInput>
+              <DockLayoutInput Position="Top" Alignment="Near"/>
+            </LayoutInput>
+          </mctl:ExternalLink>
+
+          
+          <inboxdetails:MessageDetailsFooter Name="Footer" Model="{Model}" MessageDetailsQuery="{MessageDetailsQuery}" Margins="10,19,0,0">
+            <LayoutInput>
+              <DockLayoutInput Position="Bottom"/>
+            </LayoutInput>
+          </inboxdetails:MessageDetailsFooter>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="CardDetailsUI" Base="me:HeaderMessageAndLink">
+    <Scripts>
+      <Script>
+        TextContent = sys:String.Format(zune:Shell.LoadString(zune:StringId.IDS_INBOX_USERCARD_MESSAGE), Model.SelectedItem.From);
+        LinkCommand.Description = zune:Shell.LoadString(zune:StringId.IDS_INBOX_USERCARD_LINK);
+      </Script>
+      
+      <Script>
+        if ([MessageDetailsQuery.Status] == iris:DataProviderQueryStatus.Complete)
+        {
+          ZuneTag = MessageDetailsQuery.Result.ZuneTag;
+        }
+      </Script>
+    </Scripts>
+  </UI>
+
+  
+  
+  
+  <UI Name="FriendRequestUI" Base="me:HeaderMessageAndLink">
+    <Scripts>
+      <Script>
+        TextContent = sys:String.Format(zune:Shell.LoadString(zune:StringId.IDS_INBOX_FRIENDREQUEST_MESSAGE), Model.SelectedItem.From);
+        LinkCommand.Description = zune:Shell.LoadString(zune:StringId.IDS_INBOX_FRIENDREQUEST_LINK);
+        
+        ZuneTag = Model.SelectedItem.From;
+      </Script>
+    </Scripts>
+  </UI>
+
+</UIX>

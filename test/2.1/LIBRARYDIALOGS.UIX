@@ -1,0 +1,1003 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX 
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:iris="assembly://UIX/Microsoft.Iris" 
+  xmlns:zune="assembly://ZuneShell/ZuneUI" 
+  xmlns:zuneshell="assembly://ZuneShell/Microsoft.Zune.Shell"
+  xmlns:svc="assembly://ZuneDBApi/Microsoft.Zune.Service"
+  xmlns:data="res://ZuneShellResources!LibraryData.schema.xml"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:style="res://ZuneShellResources!Style.uix"
+  xmlns:dialog="res://ZuneShellResources!Dialog.uix"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:spreadsheet="res://ZuneShellResources!SpreadSheetViewBase.uix"
+  xmlns:tpc="res://ZuneShellResources!TracksPanelColumns.uix"
+  xmlns:epc="res://ZuneShellResources!PodcastEpisodesColumns.uix"
+  xmlns:me="Me"
+  >
+
+  
+  
+  
+  
+  
+
+  
+  
+  
+  <Class Name="DeleteDialog" Base="dialog:Dialog">
+    <Properties>
+      
+      <List Name="ItemsToDelete" List="{null}"/>
+      
+      <String Name="ContentUI" String="res://ZuneShellResources!LibraryDialogs.uix#DeleteDialogContentUI"/>
+      <iris:BooleanChoice Name="DeleteFromComputer"/>
+      <iris:BooleanChoice Name="Remember" Description="{zune:Shell.LoadString(zune:StringId.IDS_DONT_SHOW_THIS_MESSAGE_AGAIN)}"/>
+      <iris:Command Name="Delete" Description="{zune:Shell.LoadString(zune:StringId.IDS_DIALOG_OK)}"/>
+      <String Name="AccessibleDescription" String="{zune:Shell.LoadString(zune:StringId.IDS_LIBRARY_DELETE_MENU_ITEM)}"/>
+    </Properties>
+
+    <Scripts>
+      
+      
+      <Script>
+        [DeclareTrigger(Helper.IsVisible)]
+        if (Helper.IsVisible)
+        {
+          if (!List.IsNullOrEmpty(ItemsToDelete) &amp;&amp; ItemsToDelete.GetItem(0) is data:Playlist)
+          {
+            DeleteFromComputer.Options = me:Strings.PlaylistDeleteOptions;
+          }
+          else
+          {
+            DeleteFromComputer.Options = me:Strings.LibraryDeleteOptions;
+          }
+          
+          int deleteChoice = zune:Management.Instance.LibraryDefaultDeleteChoice; 
+          if (deleteChoice != 0)
+          {
+            DeleteFromComputer.Value = (deleteChoice == 2);
+            
+            
+            Delete.Invoke();
+          }
+        }
+        else
+        {
+          
+          DeleteFromComputer.ChosenIndex = 0;
+          Remember.Value = false;
+          ItemsToDelete = null;
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(Delete.Invoked)]
+
+        zune:Shell.DeleteMedia(ItemsToDelete, DeleteFromComputer.Value);
+        
+        if (Remember.Value)
+        {
+          
+          
+          zune:Management.Instance.LibraryDefaultDeleteChoice = DeleteFromComputer.ChosenIndex + 1;
+        }
+
+        
+        Helper.Hide();
+      </Script>
+    </Scripts>
+  </Class>
+
+  <Class Name="Strings" Shared="true">
+    <Properties>
+      <List Name="LibraryDeleteOptions">
+        <Source>
+          <String String="{zune:Shell.LoadString(zune:StringId.IDS_LIBRARY_DELETE_FROMLIBRARY)}"/>
+          <String String="{zune:Shell.LoadString(zune:StringId.IDS_LIBRARY_DELETE_FROMLIBRARYANDPC)}"/>
+        </Source>
+      </List>
+
+      <List Name="PlaylistDeleteOptions">
+        <Source>
+          <String String="{zune:Shell.LoadString(zune:StringId.IDS_PLAYLIST_DELETE_FROMLIBRARY)}"/>
+          <String String="{zune:Shell.LoadString(zune:StringId.IDS_PLAYLIST_DELETE_FROMLIBRARYANDPC)}"/>
+        </Source>
+      </List>
+    </Properties>
+  </Class>
+  
+
+  
+  
+  
+  <UI Name="DeleteDialogContentUI" Base="dialog:DialogContentUI">
+    <Properties>
+      <me:DeleteDialog Name="Dialog" DeleteDialog="$Required"/>      
+    </Properties>
+
+    <Scripts>
+      <Script>
+        if (Dialog.ItemsToDelete.Count == 1)
+        {
+          object selectedItem = Dialog.ItemsToDelete.GetItem(0);
+          string title = ((data:Media)selectedItem).Title;
+          
+          QuestionText.Content = ((String)zune:Shell.LoadString(zune:StringId.IDS_LIBRARY_QUESTION_1_ITEM)).Format(title);
+        }
+        else
+        {
+          QuestionText.Content = ((String)zune:Shell.LoadString(zune:StringId.IDS_LIBRARY_QUESTION_N_ITEMS)).Format(Dialog.ItemsToDelete.Count);
+        }
+      </Script>
+    </Scripts>
+    
+    <Content>
+      <Panel Navigation="ContainAll,WrapAll" MaximumSize="400,0" Margins="10">
+        <Layout>
+          <FlowLayout ItemAlignment="Near" Orientation="Vertical"/>
+        </Layout>
+        <Children>
+
+          <core:Label Name="TitleText" Style="{styles:SharedStyles.DialogLargeHeaderStyle}" Content="{zune:Shell.LoadString(zune:StringId.IDS_COLLECTION_DELETE_TITLE)}"/>
+          
+          <core:Label Name="QuestionText" WordWrap="true" Style="{styles:SharedStyles.DialogTextStyle}"/>
+          
+          <core:RadioGroup Model="{Dialog.DeleteFromComputer}" Margins="0,10,0,0"/>
+
+          <core:CheckBox Model="{Dialog.Remember}" Margins="0,20,0,0" LabelFont="{styles:Styles.DialogText}"/>
+          
+          <Panel Margins="0,10,0,0">
+            <Layout>
+              <DockLayout SizeToChildren="true" DefaultLayoutInput="Right,Near"/>
+            </Layout>
+            <Children>
+              
+              <core:BigActionButton Model="{Dialog.Cancel}" FocusOrder="0"/>
+              <core:BigActionButton Model="{Dialog.Delete}" Margins="0,0,10,0" />
+
+            </Children>
+          </Panel>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+
+  
+  
+  
+  <Class Name="PropertiesDialog" Base="dialog:Dialog">
+    <Properties>
+      
+      <Int32 Name="LibraryId" Int32="-1"/>
+      <zune:MediaType Name="ItemType"/>
+      
+      <String Name="ContentUI" String="res://ZuneShellResources!LibraryDialogs.uix#PropertiesDialogContentUI"/>
+      <iris:Command Name="Cancel" Description="{zune:Shell.LoadString(zune:StringId.IDS_DIALOG_OK)}"/> 
+
+      <String Name="AccessibleDescription" String="{zune:Shell.LoadString(zune:StringId.IDS_LIBRARY_PROPERTIES_MENU_ITEM)}"/>
+    </Properties>
+
+    <Scripts>
+      
+      <Script>
+        [DeclareTrigger(Helper.IsVisible)]
+        if (Helper.IsVisible)
+        {
+          
+          
+          
+          if (LibraryId &lt; 0)
+          {
+            Helper.Hide();
+          }
+        }
+        else
+        {
+          LibraryId = -1;
+          ItemType = zune:MediaType.Undefined;
+        }
+      </Script>
+    </Scripts>
+  </Class>
+  
+
+  
+  
+  
+  <UI Name="PropertiesDialogContentUI" Base="dialog:DialogContentUI">
+    <Properties>
+      <me:PropertiesDialog Name="Dialog" PropertiesDialog="$Required"/> 
+    </Properties>
+
+    <Locals>
+      <Object Name="Item" Object="{null}"/>
+      <String Name="ItemTitle"/>
+      <SharedSize Name="LabelSharedSize"/>
+    </Locals>
+
+    <Scripts>
+      
+      <Script>
+        if (Dialog.LibraryId != -1)
+        {
+          if (Dialog.ItemType == zune:MediaType.Track)
+          {
+            data:Track track = new data:Track();
+
+            zune:TrackDetails.Populate(track, Dialog.LibraryId);
+            
+            Item = track;
+            ItemTitle = track.Title;
+            
+            Repeater.Source = me:MediaProperties.Audio;
+          }
+          else if (Dialog.ItemType == zune:MediaType.Photo)
+          {
+            data:Photo photo = new data:Photo();
+
+            zune:PhotoDetails.Populate(photo, Dialog.LibraryId);
+            
+            Item = photo;
+            ItemTitle = photo.Title;
+            
+            Repeater.Source = me:MediaProperties.Photo;
+          }
+          else if (Dialog.ItemType == zune:MediaType.Video)
+          {
+            data:Video video = new data:Video();
+
+            zune:VideoDetails.Populate(video, Dialog.LibraryId);
+            
+            Item = video;
+            ItemTitle = video.Title;
+
+            Repeater.Source = me:MediaProperties.Video;
+          }
+          else if (Dialog.ItemType == zune:MediaType.PodcastEpisode)
+          {
+            data:PodcastEpisode episode = new data:PodcastEpisode();
+            
+            zune:PodcastEpisodeDetails.Populate(episode, Dialog.LibraryId);
+            
+            Item = episode;
+            ItemTitle = episode.Title;
+            
+            Repeater.Source = me:MediaProperties.PodcastEpisode;
+          }
+        }
+        
+        DialogTitleLabel.Content = ItemTitle;
+      </Script>
+    </Scripts>
+    
+    <Content>
+      <Panel Navigation="ContainAll,WrapAll" MaximumSize="500,0" Margins="10" Layout="Anchor">
+        <Children>
+          <Panel Name="Body">
+            <LayoutInput>
+              <AnchorLayoutInput Top="Parent,0" Left="Parent,0"/>
+            </LayoutInput>
+            <Layout>
+              <FlowLayout ItemAlignment="Near" Orientation="Vertical"/>
+            </Layout>
+            <Children>
+
+              <core:Label Name="DialogTitleLabel"
+                          Style="{styles:SharedStyles.DialogLargeHeaderStyle}"
+                          WordWrap="true" Alignment="Center"/>
+
+              <Repeater Name="Repeater" Layout="VerticalFlow" MinimumSize="200,0">
+                <Content>
+
+                  <Panel Layout="HorizontalFlow" Margins="0,5,0,0">
+                    <Children>
+
+                      <core:Label Style="{styles:SharedStyles.DialogTextStyle}"
+                                  Content="{((me:MediaProperty)RepeatedItem).Property}"
+                                  MinimumSize="100,0" SharedSize="{LabelSharedSize}"/>
+
+                      <spreadsheet:Cell Cell="{((me:MediaProperty)RepeatedItem).UI}"
+                        Style="{styles:SharedStyles.DialogTextStyle}" ListModel="{null}" Model="{Item}"/>
+
+                    </Children>
+                  </Panel>
+
+                </Content>
+              </Repeater>
+
+
+            </Children>
+          </Panel>
+
+          <core:BigActionButton Model="{Dialog.Cancel}" Margins="0,10,10,0" FocusOrder="0">
+            <LayoutInput>
+              <AnchorLayoutInput Top="Body,1" Right="Parent,1"/>
+            </LayoutInput>
+          </core:BigActionButton>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  <Class Name="MediaProperty">
+    <Properties>
+      <String Name="Property" String="{null}"/>
+      <Type Name="UI" Type="{null}"/>
+    </Properties>
+  </Class>
+
+  <Class Name="MediaProperties" Shared="True">
+    <Properties>
+      <List Name="Audio">
+        <Source>
+          <me:MediaProperty Property="{zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_LENGTH)}" UI="{typeof(tpc:LengthCell)}"/>
+          <me:MediaProperty Property="{zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_BITRATE)}" UI="{typeof(me:TrackBitrateCell)}"/>
+          <me:MediaProperty Property="{zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_MEDIATYPE)}" UI="{typeof(me:TrackMediaTypeCell)}"/>
+          <me:MediaProperty Property="{zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_LOCATION)}" UI="{typeof(me:TrackLocationCell)}"/>
+          <me:MediaProperty Property="{zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_ARTIST)}" UI="{typeof(tpc:ArtistCell)}"/>
+          <me:MediaProperty Property="{zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_ALBUM)}" UI="{typeof(tpc:AlbumCell)}"/>
+          <me:MediaProperty Property="{zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_COMPOSER)}" UI="{typeof(tpc:ComposerCell)}"/>
+          <me:MediaProperty Property="{zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_GENRE)}" UI="{typeof(tpc:GenreCell)}"/>
+          <me:MediaProperty Property="{zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_FILENAME)}" UI="{typeof(me:TrackFileNameCell)}"/>
+          <me:MediaProperty Property="{zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_MEDIARIGHTS)}" UI="{typeof(me:TrackDRMInfoCell)}"/>
+        </Source>
+      </List>
+
+      <List Name="Photo">
+        <Source>
+          <me:MediaProperty Property="{zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_MEDIATYPE)}" UI="{typeof(me:PhotoMediaTypeCell)}"/>
+          <me:MediaProperty Property="{zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_LOCATION)}" UI="{typeof(me:PhotoLocationCell)}"/>
+          <me:MediaProperty Property="{zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_FILENAME)}" UI="{typeof(me:PhotoFileNameCell)}"/>
+          <me:MediaProperty Property="{zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_DIMENSIONS)}" UI="{typeof(me:PhotoDimensionsCell)}"/>
+        </Source>
+      </List>
+
+      <List Name="Video">
+        <Source>
+          <me:MediaProperty Property="{zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_LENGTH)}" UI="{typeof(me:VideoLengthCell)}"/>
+          <me:MediaProperty Property="{zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_BITRATE)}" UI="{typeof(me:VideoBitrateCell)}"/>
+          <me:MediaProperty Property="{zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_MEDIATYPE)}" UI="{typeof(me:VideoMediaTypeCell)}"/>
+          <me:MediaProperty Property="{zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_LOCATION)}" UI="{typeof(me:VideoLocationCell)}"/>
+          <me:MediaProperty Property="{zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_ARTIST)}" UI="{typeof(me:VideoArtistCell)}"/>
+          <me:MediaProperty Property="{zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_RESOLUTION)}" UI="{typeof(me:VideoResolutionCell)}"/>
+          <me:MediaProperty Property="{zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_FILENAME)}" UI="{typeof(me:VideoFileNameCell)}"/>
+          <me:MediaProperty Property="{zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_FILESIZE)}" UI="{typeof(me:VideoFileSizeCell)}"/>
+        </Source>
+      </List>
+
+      <List Name="PodcastEpisode">
+        <Source>
+          <me:MediaProperty Property="{zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_SERIES_TITLE)}" UI="{typeof(me:EpisodeSeriesTitleCell)}"/>
+          <me:MediaProperty Property="{zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_SERIES_URL)}" UI="{typeof(me:EpisodeSeriesUrlCell)}"/>
+          <me:MediaProperty Property="{zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_ARTIST)}" UI="{typeof(me:EpisodeAuthorCell)}"/>
+          <me:MediaProperty Property="{zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_PUBLISHED_DATE)}" UI="{typeof(me:EpisodeDateCell)}"/>
+          <me:MediaProperty Property="{zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_LENGTH)}" UI="{typeof(epc:LengthCell)}"/>
+          <me:MediaProperty Property="{zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_MEDIATYPE)}" UI="{typeof(me:EpisodeMediaTypeCell)}"/>
+          <me:MediaProperty Property="{zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_BITRATE)}" UI="{typeof(me:EpisodeBitrateCell)}"/>
+          <me:MediaProperty Property="{zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_EPISODE_URL)}" UI="{typeof(me:EpisodeUrlCell)}"/>
+          <me:MediaProperty Property="{zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_LOCATION)}" UI="{typeof(me:EpisodeLocationCell)}"/>
+          <me:MediaProperty Property="{zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_FILENAME)}" UI="{typeof(me:EpisodeFileNameCell)}"/>
+          <me:MediaProperty Property="{zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_FILESIZE)}" UI="{typeof(me:EpisodeFileSizeCell)}"/>
+        </Source>
+      </List>
+    </Properties>
+  </Class>
+  
+  <UI Name="TrackLocationCell" Base="me:FileLinkCell">
+    <Properties>
+      <data:Track Name="Model" Track="$Required"/>
+      <Boolean Name="WordWrap" Boolean="true"/>
+    </Properties>
+    <Scripts>
+      <Script>Content = Model.FolderName;</Script>
+      <Script>FilePath = Model.FilePath;</Script>
+    </Scripts>
+  </UI>  
+
+  <UI Name="TrackBitrateCell" Base="spreadsheet:LabelCell">
+    <Scripts>
+      <Script>
+        string format = zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_BITRATE_FORMAT);
+        Content = format.Format(((data:Track)Model).Bitrate / 1000);
+      </Script>
+    </Scripts>
+  </UI>  
+
+  <UI Name="TrackFileNameCell" Base="spreadsheet:LabelCell">
+    <Scripts>
+      <Script>Content = ((data:Track)Model).FileName;</Script>
+    </Scripts>
+  </UI>
+
+  <UI Name="TrackDRMInfoCell" Base="spreadsheet:LabelCell">
+    <Scripts>
+      <Script>
+        string fileName = ((data:Track)Model).FilePath;
+        if (!String.IsNullOrEmpty(fileName))
+        {
+          svc:DRMInfo drmInfo = zuneshell:ZuneApplication.Service.GetFileDRMInfo(fileName);
+          if (drmInfo != null)
+          {
+            if (drmInfo.ValidLicense)
+            {
+              string syncRights;
+              if (drmInfo.CanSync)
+              {
+                syncRights = zune:Shell.LoadString(zune:StringId.IDS_DRM_HAS_SYNC_RIGHTS);
+              } 
+              else
+              {
+                syncRights = zune:Shell.LoadString(zune:StringId.IDS_DRM_NO_SYNC_RIGHTS);
+              }
+
+              string burnRights;
+              if (drmInfo.CanBurn)
+              {
+                burnRights = zune:Shell.LoadString(zune:StringId.IDS_DRM_HAS_BURN_RIGHTS);
+              }
+              else
+              {
+                burnRights = zune:Shell.LoadString(zune:StringId.IDS_DRM_NO_BURN_RIGHTS);
+              }
+
+              if (drmInfo.HasExpiryDate)
+              {
+                string format = zune:Shell.LoadString(zune:StringId.IDS_DRM_SUBSCRIPTION_LICENSE_DESC);
+                Content = format.Format(drmInfo.ExpiryDate.ToShortDateString(), syncRights, burnRights);
+              }
+              else
+              {
+                string format = zune:Shell.LoadString(zune:StringId.IDS_DRM_PERMANENT_LICENSE_DESC);
+                Content = format.Format(syncRights, burnRights);
+              }   
+            }
+            else if (drmInfo.NoLicense) 
+            {
+              Content = zune:Shell.LoadString(zune:StringId.IDS_DRM_NO_LICENSE_DESC);        
+            }
+            else if (drmInfo.LicenseExpired)
+            { 
+              Content = zune:Shell.LoadString(zune:StringId.IDS_DRM_LICENSE_EXPIRED_DESC);         
+            }
+          }
+          else
+          {         
+            Content = zune:Shell.LoadString(zune:StringId.IDS_PROTECTED_NO);        
+          }
+        }
+        else
+        {
+          Content = zune:Shell.LoadString(zune:StringId.IDS_DRM_UNKNOWN);        
+        } 
+      </Script>
+    </Scripts>
+  </UI>
+
+  <UI Name="TrackMediaTypeCell" Base="spreadsheet:LabelCell">
+    <Scripts>
+      <Script>Content = ((data:Track)Model).MediaType;</Script>
+    </Scripts>
+  </UI>
+
+  <UI Name="PhotoLocationCell" Base="me:FileLinkCell">
+    <Properties>
+      <data:Photo Name="Model" Photo="$Required"/>
+      <Boolean Name="WordWrap" Boolean="true"/>
+    </Properties>
+    <Scripts>
+      <Script>Content = Model.FolderName;</Script>
+      <Script>FilePath = Model.ImagePath;</Script>
+    </Scripts>
+  </UI>  
+
+  <UI Name="PhotoFileNameCell" Base="spreadsheet:LabelCell">
+    <Scripts>
+      <Script>Content = ((data:Photo)Model).FileName;</Script>
+    </Scripts>
+  </UI>
+
+  <UI Name="PhotoDimensionsCell" Base="spreadsheet:LabelCell">
+    <Scripts>
+      <Script>
+        string format = zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_DIMENSIONS_FORMAT);
+        Content = format.Format(((data:Photo)Model).Width, ((data:Photo)Model).Height);
+      </Script>
+    </Scripts>
+  </UI>
+
+  <UI Name="PhotoMediaTypeCell" Base="spreadsheet:LabelCell">
+    <Scripts>
+      <Script>Content = ((data:Photo)Model).MediaType;</Script>
+    </Scripts>
+  </UI>
+
+  <UI Name="VideoLocationCell" Base="me:FileLinkCell">
+    <Properties>
+      <data:Video Name="Model" Video="$Required"/>
+      <Boolean Name="WordWrap" Boolean="true"/>
+    </Properties>
+    <Scripts>
+      <Script>Content = Model.FolderName;</Script>
+      <Script>FilePath = Model.FilePath;</Script>
+    </Scripts>
+  </UI>
+  
+  <UI Name="VideoBitrateCell" Base="spreadsheet:LabelCell">
+    <Scripts>
+      <Script>
+        string format = zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_BITRATE_FORMAT);
+        Content = format.Format(((data:Video)Model).Bitrate / 1000);
+      </Script>
+    </Scripts>
+  </UI>
+  
+  <UI Name="VideoLengthCell" Base="spreadsheet:LengthCell">
+    <Scripts>
+      <Script>Length = ((data:Video)Model).Duration;</Script>
+    </Scripts>
+  </UI>
+  
+  <UI Name="VideoArtistCell" Base="spreadsheet:LabelCell">
+    <Scripts>
+      <Script>Content = ((data:Video)Model).ArtistName;</Script>
+    </Scripts>
+  </UI>
+  
+  <UI Name="VideoMediaTypeCell" Base="spreadsheet:LabelCell">
+    <Scripts>
+      <Script>Content = ((data:Video)Model).MediaType;</Script>
+    </Scripts>
+  </UI>
+  
+  <UI Name="VideoResolutionCell" Base="spreadsheet:LabelCell">
+    <Scripts>
+      <Script>
+        string format = zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_DIMENSIONS_FORMAT);
+        Content = format.Format(((data:Video)Model).Width, ((data:Video)Model).Height);
+      </Script>
+    </Scripts>
+  </UI>
+  
+  <UI Name="VideoFileNameCell" Base="spreadsheet:LabelCell">
+    <Scripts>
+      <Script>Content = ((data:Video)Model).FileName;</Script>
+    </Scripts>
+  </UI>
+
+  <UI Name="VideoFileSizeCell" Base="tpc:SizeCell">
+    <Properties>
+      <data:Video Name="Model" Video="$Required"/>
+      <Int64 Name="SizeData" Int64="{Model.FileSize}"/>
+    </Properties>
+  </UI>
+
+  <UI Name="FileLinkCell" Base="spreadsheet:LabelCell">
+    <Properties>
+      <String Name="FilePath"/>
+    </Properties>
+
+    <Locals>
+      <style:StatefulCompositeStyle Name="StyleState" Base="{styles:SharedStyles.ExternalLinkStyle}"/>
+    </Locals>
+    
+    <Input>
+      <ClickHandler Name="Clicker"/>
+    </Input>
+
+    <Scripts>
+      <Script>
+        Style = StyleState;
+      </Script>
+
+      
+      <Script>StyleState.State.Focused = [UI.DeepKeyFocus];</Script>
+      <Script>StyleState.State.Hovered = [UI.DeepMouseFocus];</Script>
+
+      <Script>
+        [DeclareTrigger(Clicker.Invoked)]
+        
+        zune:Shell.OpenFolderAndSelectItems(FilePath);
+      </Script>
+    </Scripts>
+  </UI>
+  
+  
+  <UI Name="EpisodeSeriesTitleCell" Base="spreadsheet:LabelCell">
+    <Properties>
+      <data:PodcastEpisode Name="Model" PodcastEpisode="$Required"/>
+    </Properties>
+    <Scripts>
+      <Script>Content = Model.SeriesTitle;</Script>
+    </Scripts>
+  </UI>
+
+  <UI Name="EpisodeSeriesUrlCell" Base="spreadsheet:LabelCell">
+    <Properties>
+      <data:PodcastEpisode Name="Model" PodcastEpisode="$Required"/>
+    </Properties>
+    <Scripts>
+      <Script>Content = Model.SeriesFeedUrl;</Script>
+    </Scripts>
+  </UI>
+
+  <UI Name="EpisodeAuthorCell" Base="spreadsheet:LabelCell">
+    <Properties>
+      <data:PodcastEpisode Name="Model" PodcastEpisode="$Required"/>
+    </Properties>
+    <Scripts>
+      <Script>Content = Model.Author;</Script>
+    </Scripts>
+  </UI>
+
+  <UI Name="EpisodeDateCell" Base="spreadsheet:DateCell">
+    <Properties>
+      <data:PodcastEpisode Name="Model" PodcastEpisode="$Required"/>
+    </Properties>
+    <Scripts>
+      <Script>Date = Model.ReleaseDate;</Script>
+    </Scripts>
+  </UI>
+
+  <UI Name="EpisodeMediaTypeCell" Base="spreadsheet:LabelCell">
+    <Properties>
+      <data:PodcastEpisode Name="Model" PodcastEpisode="$Required"/>
+    </Properties>
+    <Scripts>
+      <Script>Content = Model.MediaType;</Script>
+    </Scripts>
+  </UI>
+
+  <UI Name="EpisodeLocationCell" Base="me:FileLinkCell">
+    <Properties>
+      <data:PodcastEpisode Name="Model" PodcastEpisode="$Required"/>
+      <Boolean Name="WordWrap" Boolean="true"/>
+    </Properties>
+    <Scripts>
+      <Script>Content = Model.FolderName;</Script>
+      <Script>FilePath = Model.SourceUrl;</Script>
+    </Scripts>
+  </UI>
+
+  <UI Name="EpisodeFileNameCell" Base="spreadsheet:LabelCell">
+    <Properties>
+      <data:PodcastEpisode Name="Model" PodcastEpisode="$Required"/>
+      <Boolean Name="WordWrap" Boolean="true"/>
+    </Properties>
+    <Scripts>
+      <Script>Content = Model.FileName;</Script>
+    </Scripts>
+  </UI>
+
+  <UI Name="EpisodeFileSizeCell" Base="tpc:SizeCell">
+    <Properties>
+      <data:PodcastEpisode Name="Model" PodcastEpisode="$Required"/>
+      <Int64 Name="SizeData" Int64="{Model.FileSize}"/>
+    </Properties>
+  </UI>
+
+  <UI Name="EpisodeUrlCell" Base="spreadsheet:LabelCell">
+    <Properties>
+      <data:PodcastEpisode Name="Model" PodcastEpisode="$Required"/>
+    </Properties>
+    <Scripts>
+      <Script>Content = Model.EnclosureUrl;</Script>
+    </Scripts>
+  </UI>
+
+  <UI Name="EpisodeBitrateCell" Base="spreadsheet:LabelCell">
+    <Properties>
+      <data:PodcastEpisode Name="Model" PodcastEpisode="$Required"/>
+    </Properties>
+    <Scripts>
+      <Script>
+        if ( Model.Bitrate > 0)
+        {
+          string format = zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_BITRATE_FORMAT);
+          Content = format.Format(Model.Bitrate / 1000);
+        }
+      </Script>
+    </Scripts>
+  </UI>
+
+  
+  
+  
+  
+  <Class Name="EditAlbumInfoDialog" Base="dialog:Dialog">
+    <Properties>
+      
+      <data:Album Name="Album" Album="{null}"/>
+      <List Name="Tracks" List="{null}"/>
+      
+      <String Name="ContentUI" String="res://ZuneShellResources!LibraryDialogs.uix#EditAlbumInfoContentUI"/>
+      <iris:Command Name="OK" Description="{zune:Shell.LoadString(zune:StringId.IDS_DIALOG_OK)}"/>
+
+      <String Name="AccessibleDescription" String="{zune:Shell.LoadString(zune:StringId.IDS_CD_EDIT_ALBUM_INFO_DIALOG_TITLE)}"/>
+
+      <me:AlbumInfo Name="AlbumInfo"/>
+    </Properties>
+
+    <Locals>
+      <String Name="UnknownString" String="{zune:Shell.LoadString(zune:StringId.IDS_TYPE_UNKNOWN)}"/>
+    </Locals>
+
+    <Scripts>
+      
+      <Script>
+        if ([Helper.IsVisible])
+        {
+          if (Album == null)
+          {
+            Helper.Hide();
+          }
+          else
+          {
+            AlbumInfo.Artist = Album.ArtistName;
+            AlbumInfo.Title  = Album.Title;
+            
+            if (List.IsNullOrEmpty(Tracks))
+            {
+              AlbumInfo.Genre  = UnknownString;
+            }
+            else
+            {
+              AlbumInfo.Genre = zune:TrackDetails.GetGenreHelper((data:Track)Tracks.GetItem(0));
+            }
+            
+            /*
+            int year = Album.ReleaseDate.Year;
+            if (year > 1)
+            {
+              AlbumInfo.ReleaseYear = Album.ReleaseDate.Year.ToString();
+            }
+            else
+            {
+              AlbumInfo.ReleaseYear = UnknownString;
+            }
+            */            
+          }
+        }
+        else
+        {
+          Album = null;
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(OK.Invoked)]
+        
+        Album.ArtistName = AlbumInfo.Artist;
+        Album.Title = AlbumInfo.Title;
+        
+        if (!String.IsNullOrEmpty(AlbumInfo.Genre) &amp;&amp; AlbumInfo.Genre != UnknownString)
+        {
+          if (Tracks != null)
+          {
+            foreach (data:Track track in Tracks)
+            {
+              zune:TrackDetails.SetGenreHelper(track, AlbumInfo.Genre);
+            }
+          }
+        }
+        
+        /*
+        sys:DateTime date = zune:TrackDetails.ParseYear(AlbumInfo.ReleaseYear);
+        if (date.Year > 1)
+        {
+          Album.ReleaseDate = date;
+        }
+        */
+        
+        Helper.Hide();
+      </Script>
+    </Scripts>
+  </Class>
+  
+
+  
+  
+  
+  <UI Name="EditAlbumInfoContentUI" Base="dialog:DialogContentUI">
+    <Properties>
+      <me:EditAlbumInfoDialog Name="Dialog" EditAlbumInfoDialog="$Required"/> 
+    </Properties>
+
+    <Locals>
+      <SharedSize Name="LabelSharedSize"/>
+    </Locals>
+
+    <Content>
+      <Panel Navigation="ContainAll,WrapAll" Margins="10" Layout="Anchor">
+        <Children>
+          
+          <Panel Name="Body">
+            <LayoutInput>
+              <AnchorLayoutInput Top="Parent,0" Left="Parent,0"/>
+            </LayoutInput>
+            <Layout>
+              <FlowLayout ItemAlignment="Near" Orientation="Vertical"/>
+            </Layout>
+            <Children>
+
+              <core:Label Name="DialogTitleLabel"
+                          Style="{styles:SharedStyles.DialogLargeHeaderStyle}"
+                          Content="{zune:Shell.LoadString(zune:StringId.IDS_CD_EDIT_ALBUM_INFO_DIALOG_TITLE)}" 
+                          WordWrap="true"/>
+
+              <Repeater Name="Repeater" Layout="VerticalFlow" MinimumSize="200,0" Source="{me:AlbumInfoEditProperties.Properties}">
+                <Content>
+
+                  <Panel Layout="HorizontalFlow" Margins="0,5,0,0">
+                    <Children>
+
+                      <core:Label Style="{styles:SharedStyles.DialogTextStyle}"
+                                  Content="{((me:AlbumInfoEditProperty)RepeatedItem).Property}"
+                                  MinimumSize="60,0" SharedSize="{LabelSharedSize}"
+                                  Margins="0,0,10,0"
+                                  />
+
+                      <me:AlbumInfoEditBox AlbumInfoEditBox="{((me:AlbumInfoEditProperty)RepeatedItem).UI}"
+                        Album="{Dialog.AlbumInfo}" Submitted="{Dialog.OK}"/>
+
+                    </Children>
+                  </Panel>
+
+                </Content>
+              </Repeater>
+
+
+            </Children>
+          </Panel>
+
+          <core:BigActionButton Name="Cancel" Model="{Dialog.Cancel}" Margins="0,10,10,0">
+            <LayoutInput>
+              <AnchorLayoutInput Top="Body,1" Right="Body,1"/>
+            </LayoutInput>
+          </core:BigActionButton>
+
+          <core:BigActionButton Model="{Dialog.OK}" Margins="0,10,10,0">
+            <LayoutInput>
+              <AnchorLayoutInput Top="Body,1" Right="Cancel,0"/>
+            </LayoutInput>
+          </core:BigActionButton>
+          
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  <Class Name="AlbumInfo">
+    <Properties>
+      <String Name="Artist"/>
+      <String Name="Title"/>
+      <String Name="Genre"/>
+      <String Name="ReleaseYear"/>
+    </Properties>
+  </Class>
+
+  <Class Name="AlbumInfoEditProperty">
+    <Properties>
+      <String Name="Property" String="{null}"/>
+      <Type Name="UI" Type="{null}"/>
+    </Properties>
+  </Class>
+
+  <Class Name="AlbumInfoEditProperties" Shared="True">
+    <Properties>
+      <List Name="Properties">
+        <Source>
+          <me:AlbumInfoEditProperty Property="{zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_ARTIST)}" UI="{typeof(me:AlbumInfoEditBoxArtist)}"/>
+          <me:AlbumInfoEditProperty Property="{zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_ALBUM)}" UI="{typeof(me:AlbumInfoEditBoxAlbum)}"/>
+          <me:AlbumInfoEditProperty Property="{zune:Shell.LoadString(zune:StringId.IDS_PROPERTIES_GENRE)}" UI="{typeof(me:AlbumInfoEditBoxGenre)}"/>
+          
+          
+        </Source>
+      </List>
+    </Properties>
+  </Class>
+
+  <UI Name="Editbox" Base="core:Editbox">
+    <Properties>
+      <Size Name="TileMinSize" Size="300,0"/>
+      <Size Name="TileMaxSize" Size="{TileMinSize}"/>
+    </Properties>
+
+    <Scripts>
+      <Script>
+        if ([UI.DeepKeyFocus])
+        {
+          Label.HighlightColor = TextHighlightColor;
+          Label.TextHighlightColor = TextFocusedColor;
+        }
+        else
+        {
+          Label.HighlightColor = Color.Transparent;
+          Label.TextHighlightColor = Style.Color;
+        }
+      </Script>
+    </Scripts>
+  </UI>
+
+  <UI Name="AlbumInfoEditBox">
+    <Properties>
+      <Command Name="Submitted" Command="$Required"/>
+      <me:AlbumInfo Name="Album" AlbumInfo="$Required"/>
+      <EditableTextData Name="Model"/>
+    </Properties>
+
+    <Scripts>
+      <Script>
+        if ([UI.DeepKeyFocus])
+        {
+          SearchBoxBackground.Content = styles:Styles.SearchBoxBackgroundImageActive;
+        }
+        else
+        {
+          SearchBoxBackground.Content = styles:Styles.SearchBoxBackgroundImage;
+        }
+      </Script>
+
+      <Script>
+        [DeclareTrigger(Model.Submitted)]
+        Submitted.Invoke();
+      </Script>
+    </Scripts>
+
+    <Content>
+
+      <Panel Layout="Anchor">
+        <Children>
+
+          <me:Editbox Name="Editbox" Model="{Model}">
+            <LayoutInput>
+              <AnchorLayoutInput Left="Parent,0" Top="Parent,0"/>
+            </LayoutInput>            
+          </me:Editbox>
+
+          <Graphic Name="SearchBoxBackground" SizingPolicy="SizeToConstraint" StretchingPolicy="Fill">
+            <LayoutInput>
+              <AnchorLayoutInput Top="Editbox,0,-4" Bottom="Editbox,1,4" Left="Editbox,0,-4" Right="Editbox,1,4" ContributesToHeight="false" ContributesToWidth="false"/>
+            </LayoutInput>
+          </Graphic>
+
+        </Children>
+      </Panel>
+
+    </Content>
+  </UI>
+  
+
+  <UI Name="AlbumInfoEditBoxArtist" Base="me:AlbumInfoEditBox">
+    <Scripts>
+      <Script>Model.Value = Album.Artist;</Script>
+      <Script>Album.Artist = [Model.Value];</Script>
+    </Scripts>
+  </UI>
+
+  <UI Name="AlbumInfoEditBoxAlbum" Base="me:AlbumInfoEditBox">
+    <Scripts>
+      <Script>Model.Value = Album.Title;</Script>
+      <Script>Album.Title = [Model.Value];</Script>
+    </Scripts>
+  </UI>
+
+  <UI Name="AlbumInfoEditBoxGenre" Base="me:AlbumInfoEditBox">
+    <Scripts>
+      <Script>Model.Value = Album.Genre;</Script>
+      <Script>Album.Genre = [Model.Value];</Script>
+    </Scripts>
+  </UI>
+
+  <UI Name="AlbumInfoEditBoxYear" Base="me:AlbumInfoEditBox">
+    <Scripts>
+      <Script>Model.Value = Album.ReleaseYear;</Script>
+      <Script>Album.ReleaseYear = [Model.Value];</Script>
+    </Scripts>
+  </UI>  
+</UIX> 

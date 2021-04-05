@@ -1,0 +1,161 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX xmlns="http://schemas.microsoft.com/2007/uix"
+     xmlns:button="res://ZuneShellResources!Button.uix"
+     xmlns:core="res://ZuneShellResources!Controls.uix"
+     xmlns:iris="assembly://UIX/Microsoft.Iris"
+     xmlns:menu="res://ZuneShellResources!ContextMenu.uix"
+     xmlns:styles="res://ZuneShellResources!Styles.uix"   
+     xmlns:tpc="res://ZuneShellResources!TracksPanelColumns.uix" 
+     xmlns:zune="assembly://ZuneShell/ZuneUI"   
+     xmlns:me="Me">
+
+
+  
+
+
+  <Class Name="LibraryContextMenu" Base="core:ContextMenu">
+    <Properties>
+      <String Name="PopupUI" String="res://ZuneShellResources!LibraryContextMenu.uix#LibraryContextMenuUI"/>
+    </Properties>
+  </Class>
+
+  
+
+
+  <UI Name="LibraryContextMenuUI" Base="menu:ContextMenuUI">
+    <Locals>
+      <TypeSelector Name="RateSelector" ContentName="RateItemContent" Type="{typeof(me:RateCommand)}"/>
+    </Locals>
+
+    <Scripts>
+      
+      <Script>
+        Repeater.ContentSelectors.Add(RateSelector);
+      </Script>
+    </Scripts>
+
+    <Content Name="RateItemContent">
+      <me:RateMenuItemUI
+        Model="{(me:RateCommand)RepeatedItem}"
+        ContextMenu="{Popup}"
+        SharedSize="{SharedSize}"
+        SharedSizePolicy="SharesWidth,ContributesToWidth"
+        MinimumSize="30,20"
+        Visible="{!((me:RateCommand)RepeatedItem).Command.Hidden}">
+      </me:RateMenuItemUI>
+    </Content>
+  </UI>
+
+
+  
+
+  
+  <UI Name="RateMenuItemUI" Base="menu:ContextMenuItemBase">
+    <Properties>
+      <me:RateCommand Name="Model" RateCommand="$Required"/>
+      <button:CommandButtonProvider Name="Provider" />
+    </Properties>
+
+    <Locals>
+      <iris:Command Name="Unrated" Available="{Model.Command.Available}"/>
+      <iris:Command Name="LoveIt"  Available="{Model.Command.Available}"/>
+      <iris:Command Name="HateIt"  Available="{Model.Command.Available}"/>
+
+      <iris:Command Name="GoByeBye" />
+    </Locals>
+
+    <Scripts>
+
+      
+      
+      <Script>        
+        UI.KeyFocusOnMouseEnter = false;
+        Provider.Model = Model.Command;
+      </Script>
+
+      
+      
+      <Script>
+        [DeclareTrigger(GoByeBye.Invoked)]
+        Model.Command.Invoke();
+        ContextMenu.Helper.Hide();        
+      </Script>
+
+      
+      
+      <Script>
+        [DeclareTrigger(Unrated.Invoked)]
+        Model.Rating = tpc:RatingConstants.Unrated;
+        GoByeBye.Invoke();
+      </Script>
+
+      <Script>
+        [DeclareTrigger(LoveIt.Invoked)]
+        Model.Rating = tpc:RatingConstants.LoveIt;
+        GoByeBye.Invoke();
+      </Script>
+
+      <Script>
+        [DeclareTrigger(HateIt.Invoked)]
+        Model.Rating = tpc:RatingConstants.HateIt;
+        GoByeBye.Invoke();
+      </Script>
+             
+    </Scripts>
+    
+    <Content>
+      
+      <ColorFill Name="Background"
+        MinimumSize="{TileMinSize}" 
+        MaximumSize="{TileMaxSize}"
+        Navigation="Row,PreferFocusOrder"
+        Padding="10,2,10,2">
+      <Layout>
+        <DockLayout SizeToChildren="true" DefaultLayoutInput="Left,Near"/>
+      </Layout>
+        <Children>
+          
+          
+          <button:Label Name="Label" 
+            Style="{Style}" 
+            NamedStyles="{NamedStyles}" 
+            ShowToolTipWhenClipped="{ShowToolTipWhenClipped}">
+          </button:Label>
+  
+          <core:IconButton Model="{Unrated}"
+            Margins="10,2,0,0" 
+            Image="{styles:Styles.RatingNotRated}"
+            HoverImage="{styles:Styles.RatingNotRatedHover}"
+            PressedImage="{styles:Styles.RatingNotRatedPressed}"
+            KeyInteractiveNStuff="true"
+            FocusOrder="0"/>
+          
+          <core:IconButton Model="{LoveIt}"
+            Margins="0,2,0,0" 
+            Image="{styles:Styles.RatingLikeIt}"
+            HoverImage="{styles:Styles.RatingLikeItHover}"
+            PressedImage="{styles:Styles.RatingLikeItPressed}"          
+            KeyInteractiveNStuff="true"/>
+          
+          <core:IconButton Model="{HateIt}"
+            Margins="0,2,0,0" 
+            Image="{styles:Styles.RatingHateIt}"
+            HoverImage="{styles:Styles.RatingHateItHover}"
+            PressedImage="{styles:Styles.RatingHateItPressed}"               
+            KeyInteractiveNStuff="true"/>
+
+        </Children>
+      </ColorFill>
+    </Content>
+  </UI>
+
+  
+
+  
+  <Class Name="RateCommand">
+    <Properties>
+      <zune:MenuItemCommand Name="Command" Description="{zune:Shell.LoadString(zune:StringId.IDS_LIBRARY_RATE_MENU_ITEM)}"/>
+      <int Name="Rating"/>
+    </Properties>
+  </Class>
+</UIX>

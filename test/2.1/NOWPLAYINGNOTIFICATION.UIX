@@ -1,0 +1,333 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX 
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:images="res://ZuneShellResources!ImageStyle.uix"
+  xmlns:nowplaying="res://ZuneShellResources!NowPlayingLand.uix"
+  xmlns:animations="res://ZuneShellResources!Animations.uix"
+  xmlns:me="Me"
+  >
+
+  <UI Name="NowPlayingNotification">
+    <Properties>
+      <zune:NowPlayingNotification Name="Model" NowPlayingNotification="$Required"/>
+    </Properties>
+
+    <Input>
+      <ClickHandler Name="Clicker" ClickType="LeftMouse" HandlerStage="Bubbled,Direct"/>
+    </Input>
+
+    <Locals>
+      <zune:TransportControls Name="Controls" TransportControls="{zune:TransportControls.Instance}"/>
+      <iris:RangedValue Name="ProgressModel"/>
+      <Command Name="SliderValueUpdatedCommand"/>
+      <iris:Command Name="DurationCommand"/>
+
+      
+      
+      
+      
+      <Timer Name="RotateInfo" Interval="4000" AutoRepeat="true" Enabled="false"/>   
+      <nowplaying:NowPlayingInfo Name="NowPlayingInfo"/>
+      <int Name="RotationCode"  int="0" />
+      <List Name="RotateInfoList" List="{null}"/>
+
+      <Timer Name="OpeningTimer" Interval="750" Enabled="false" AutoRepeat="false"/>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        [DeclareTrigger(Clicker.Invoked)]
+        if (!UI.DeepKeyFocus)
+          ProgressBar.NavigateInto();
+      </Script>
+
+      <Script>
+        OpeningTimer.Enabled = [Controls.Opening];
+      </Script>
+
+      <Script>
+        [DeclareTrigger(OpeningTimer.Tick)]
+        PositionText.Content = zune:Shell.LoadString(zune:StringId.IDS_PLAYBACK_OPENING);
+      </Script>
+
+      <Script>
+        [DeclareTrigger(DurationCommand.Invoked)]
+        
+        
+        
+        
+        Controls.ShowTotalTime.Value = !Controls.ShowTotalTime.Value;
+      </Script>
+
+      <Script>
+        zune:PlaybackTrack track = [Controls.CurrentTrack];
+
+        NowPlayingInfo.CurrentTrack = track;
+      </Script>
+
+      <Script>
+        [DeclareTrigger(NowPlayingInfo.TrackTitle)]
+        [DeclareTrigger(NowPlayingInfo.ArtistName)]
+        [DeclareTrigger(NowPlayingInfo.AlbumTitle)]
+        
+        RotateInfoList = new List();
+        
+        if (!String.IsNullOrEmpty(NowPlayingInfo.TrackTitle))
+        {
+          RotateInfoList.Add(NowPlayingInfo.TrackTitle);
+        }
+        if (!String.IsNullOrEmpty(NowPlayingInfo.ArtistName))
+        {
+          RotateInfoList.Add(NowPlayingInfo.ArtistName);
+        }
+        if (!String.IsNullOrEmpty(NowPlayingInfo.AlbumTitle))
+        {
+          RotateInfoList.Add(NowPlayingInfo.AlbumTitle);
+        }
+        
+        
+        
+        
+        if (RotateInfoList.Count == 0)
+        {
+          
+          RotateInfoList.Add(" ");
+        }
+        
+        
+        
+        
+        RotationCode = 0;
+        
+        
+        
+        
+        if (RotateInfoList.Count > 1)
+        {
+          RotateInfo.Start();
+        }
+        else
+        {
+          RotateInfo.Stop();
+        }
+      </Script>
+
+      <Script>
+        [DeclareTrigger(RotationCode)]
+        [DeclareTrigger(RotateInfoList)]
+        
+        string content = null;
+        
+        if (!List.IsNullOrEmpty(RotateInfoList))
+        {
+          RotationCode = RotationCode % RotateInfoList.Count;
+          
+          content = (string)RotateInfoList.GetItem(RotationCode);
+        }
+
+        TrackInfo.Content = content;
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(RotateInfo.Tick)]
+        
+        RotationCode = RotationCode + 1; 
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(TrackInfo.Clicked.Invoked)]
+        
+        RotationCode = RotationCode + 1;
+        
+        
+        
+        if (RotateInfo.Enabled)
+        {
+          RotateInfo.Stop();
+          RotateInfo.Start();
+        }
+      </Script>
+
+      <Script>
+        [DeclareTrigger(SliderValueUpdatedCommand.Invoked)]
+        zune:TransportControls.Instance.SeekToPosition(ProgressBar.UpdateValue);
+      </Script>
+
+
+      <Script>
+        [DeclareTrigger(SliderValueUpdatedCommand.Invoked)]
+        zune:TransportControls.Instance.SeekToPosition(ProgressBar.UpdateValue);
+      </Script>
+
+      <Script>
+        ProgressModel.MinValue = 0.0;
+        ProgressModel.MaxValue = [Controls.CurrentTrackDuration];
+        ProgressModel.Value    = [Controls.CurrentTrackPosition];
+      </Script>
+
+      <Script>
+        PositionText.Content = zune:TransportControls.FormatDuration([Controls.CurrentTrackPosition]);
+      </Script>
+
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(Controls.ShowTotalTime.Value)]
+        [DeclareTrigger(Controls.CurrentTrackDuration)]
+        [DeclareTrigger(ProgressBar.Dragging)]
+        
+        
+        
+        
+        if (Controls.ShowTotalTime.Value || ProgressBar.Dragging)
+        {
+            DurationCommand.Description = zune:TransportControls.FormatDuration(Controls.CurrentTrackDuration);
+        }
+      </Script>
+
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(Controls.ShowTotalTime.Value)]
+        [DeclareTrigger(Controls.CurrentTrackDuration)]
+        [DeclareTrigger(Controls.CurrentTrackPosition)]
+        [DeclareTrigger(ProgressBar.Dragging)]
+        
+        
+        
+        
+        if (!Controls.ShowTotalTime.Value &amp;&amp; !ProgressBar.Dragging)
+        {
+            float remaining = Controls.CurrentTrackDuration - Controls.CurrentTrackPosition;
+
+            DurationCommand.Description = zune:TransportControls.FormatDuration(remaining, true);
+        }
+      </Script>
+
+      <Script>
+        TrackingText.Visible = [ProgressBar.Dragging];
+      </Script>
+
+      <Script>
+        if (ProgressBar.Dragging)
+        {
+           TrackingText.Content = zune:TransportControls.FormatDuration([ProgressBar.UpdateValue]);
+        }
+      </Script>
+
+      
+      
+      
+      
+      
+      <Script>
+        if ([images:Images.InNowPlaying.Value])
+        {
+          ProgressBar.BackgroundImage         = styles:Styles.SlideshowSliderBackground;
+          ProgressBar.ThumbImage              = styles:Styles.SlideshowSliderThumb;
+          ProgressBar.ThumbImageFocus         = styles:Styles.SlideshowSliderHoverThumb;
+          ProgressBar.FilledBackgroundImage   = styles:Styles.SlideshowSliderFill;
+
+          TrackInfo.Style                     = styles:SharedStyles.SlideshowNowPlayingNotificationTitle;
+          PositionText.Style                  = styles:SharedStyles.SlideshowNowPlayingNotificationElapsedTime;
+          DurationText.OverrideStyle          = styles:SharedStyles.SlideshowNowPlayingNotificationTotalTime;
+          TrackingText.Style                  = styles:SharedStyles.SlideshowNowPlayingNotificationElapsedTime;
+        }
+        else
+        {
+          ProgressBar.BackgroundImage         = styles:Styles.SliderBackground;
+          ProgressBar.ThumbImage              = styles:Styles.SliderThumb;
+          ProgressBar.ThumbImageFocus         = styles:Styles.SliderHoverThumb;
+          ProgressBar.FilledBackgroundImage   = styles:Styles.SliderFill;
+
+          TrackInfo.Style                     = styles:SharedStyles.NowPlayingNotificationTitle;
+          PositionText.Style                  = styles:SharedStyles.NowPlayingNotificationElapsedTime;
+          DurationText.OverrideStyle          = styles:SharedStyles.NowPlayingNotificationTotalTime;
+          TrackingText.Style                  = styles:SharedStyles.NowPlayingNotificationElapsedTime;
+        }
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel Padding="5,0,5,0">
+        <Layout>
+          <DockLayout DefaultLayoutInput="Top,Near" SizeToChildren="true"/>
+        </Layout>
+        <Children>
+
+          <me:AnimatingLabel Name="TrackInfo" Margins="3,0,0,0"/>
+
+          <core:Slider Name="ProgressBar"
+              Model="{ProgressModel}"
+              ValueChanged="{SliderValueUpdatedCommand}"
+              MinimumSize="16,16" 
+              FillAdjustment="4"
+              KeyDelta="-0.05"
+              KeyDeltaShift="1.0"
+              KeyDeltaCtrl="-0.20"
+              AutoUpdateDuringDrag="false"/>
+
+          <Panel Margins="3,0,3,0">
+            <Layout>
+              <DockLayout SizeToChildren="true"/>
+            </Layout>
+            <Children>
+
+              <core:Label Name="PositionText">
+                <LayoutInput>
+                  <DockLayoutInput Position="Left" Alignment="Near"/>
+                </LayoutInput>
+              </core:Label>
+
+              <core:Button Name="DurationText"
+                Model="{DurationCommand}"
+                KeyInteractiveNStuff="false"
+                KeyFocusOnMouseDown="false">
+                <LayoutInput>
+                  <DockLayoutInput Position="Right" Alignment="Near"/>
+                </LayoutInput>
+              </core:Button>
+
+              <core:Label Name="TrackingText" Alignment="Center">
+                <LayoutInput>
+                  <DockLayoutInput Position="Top" Alignment="Center"/>
+                </LayoutInput>
+                <Animations>
+                  <Animation Animation="{animations:Animations.NowPlayingNotificationTrackTimeShow}"/>
+                  <Animation Animation="{animations:Animations.NowPlayingNotificationTrackTimeHide}"/>
+                </Animations>
+              </core:Label>
+
+            </Children>
+          </Panel>
+        
+        </Children>
+      </Panel>
+
+    </Content>
+  </UI>
+
+  <UI Name="AnimatingLabel" Base="core:Label">
+    <Properties>
+      <Command Name="Clicked"/>
+    </Properties>
+    
+    <Input>
+      <ClickHandler Name="Clicker" ClickType="Mouse" Command="{Clicked}"/>
+    </Input>
+    
+    <Content>
+      <Text Name="Label" NamedStyles="{NamedStyles}" MouseInteractive="{ShowToolTipWhenClipped}">
+        <Animations>
+          <Animation Animation="{animations:Animations.NowPlayingNotificationShow}"/>
+          <Animation Animation="{animations:Animations.NowPlayingNotificationHide}"/>
+        </Animations>
+      </Text>
+    </Content>
+  </UI>
+
+</UIX>

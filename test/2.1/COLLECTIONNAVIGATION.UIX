@@ -1,0 +1,60 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:zune="assembly://ZuneShell/ZuneUI">
+
+  <Class Name="Navigation" Shared="true">
+    <Properties>
+      <zune:DictionaryCommandHandler Name="Root">
+        <Handlers>
+
+          
+          <zune:MusicNavigationCommandHandler Name="Music"/>
+
+          
+          <zune:VideoNavigationCommandHandler Name="Videos"/>
+
+          
+          <zune:PodcastNavigationCommandHandler Name="Podcasts"/>
+
+          
+          <zune:PlaylistNavigationCommandHandler Name="Playlists"/>
+
+          
+          <zune:PhotoNavigationCommandHandler Name="Photos"/>
+          
+        </Handlers>
+      </zune:DictionaryCommandHandler>
+    </Properties>
+  </Class>
+
+  <Class Name="DeviceNavigation" Shared="true">
+    <Properties>
+      <zune:DictionaryCommandHandler Name="Root">
+        <Handlers>
+
+          
+          <zune:StatusNavigationCommandHandler Name="Status" />
+
+          
+          <zune:MusicNavigationCommandHandler Name="Music" ShowDeviceContents="true" />
+
+          
+          <zune:VideoNavigationCommandHandler Name="Videos" ShowDeviceContents="true" />
+
+          
+          <zune:PodcastNavigationCommandHandler Name="Podcasts" ShowDeviceContents="true" />
+
+          
+          <zune:PlaylistNavigationCommandHandler Name="Playlists" ShowDeviceContents="true" />
+
+          
+          <zune:PhotoNavigationCommandHandler Name="Photos" ShowDeviceContents="true" />
+          
+        </Handlers>
+      </zune:DictionaryCommandHandler>
+    </Properties>
+  </Class>
+
+
+</UIX>

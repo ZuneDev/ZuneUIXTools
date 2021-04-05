@@ -1,0 +1,1549 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:sys="assembly://mscorlib/System"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:core="res://ZuneShellResources!CoreControls.uix"
+  xmlns:btn="res://ZuneShellResources!Button.uix"
+  xmlns:bar="res://ZuneShellResources!ScrollBar.uix"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:anim="res://ZuneShellResources!Animations.uix"
+  xmlns:drag="res://ZuneShellResources!DragFeedback.uix"
+  xmlns:me="Me">
+
+  
+  
+  
+  <UI Name="Default">
+    <Locals>
+      <iris:ArrayListDataSet Name="Content">
+        <Source>
+          <String String="One"/>
+          <String String="Two"/>
+          <String String="Three"/>
+          <String String="Four"/>
+          <String String="Five"/>
+          <String String="Six"/>
+          <String String="Seven"/>
+          <String String="Eight"/>
+          <String String="Nine"/>
+          <String String="Ten"/>
+        </Source>
+      </iris:ArrayListDataSet>
+    </Locals>
+
+    <Content>
+      <Panel>
+        <Layout>
+          <GridLayout ReferenceSize="150,150" Spacing="50,0"/>
+        </Layout>
+        <Children>
+
+          <me:ScrollingContentListBase ScrollOrientation="Vertical" Content="{Content}"/>
+
+          <me:ScrollingContentListBase ScrollOrientation="Horizontal" ListLayout="HorizontalFlow" Content="{Content}"/>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  <Class Name="CommandContainer">
+    <Properties>
+      <Command Name="Model" Command="{null}"/>
+    </Properties>
+  </Class>
+
+  
+  
+  
+  <Class Name="ListItemContext">
+    <Properties>
+      <Index Name="Index" Index="$Required"/>
+
+      
+      <Boolean Name="SelectOnMouseDown" Boolean="true"/>
+
+      
+
+
+      <Boolean Name="MainContext" Boolean="true"/>
+      <Command Name="Edit" Command="{null}"/>
+    </Properties>
+  </Class>
+
+
+  
+  
+  
+  <Class Name="NavigateIntoIndexRequest">
+    <Properties>
+      <Int32 Name="Index" Int32="-1"/>
+
+      
+      <Boolean Name="Select" Boolean="true"/>
+
+      
+      <Boolean Name="Focus"/>
+    </Properties>
+  </Class>
+
+
+  
+  
+  
+  
+  <UI Name="ContentListBase">
+    <Properties>
+      
+      <List Name="Content" List="{null}"/>
+
+      <String Name="AccessibleDescription" String="{null}"/>
+
+      
+      <Layout Name="ListLayout">
+        <Layout>
+          <FlowLayout Orientation="Vertical"/>
+        </Layout>
+      </Layout>
+
+      
+      <me:NavigateIntoIndexRequest Name="NavigateIntoArgs" NavigateIntoIndexRequest="{null}"/>
+
+      
+      <Boolean Name="SupportsJumpInList" Boolean="false"/>
+
+      
+      <SelectionManager Name="SelectionManager" SelectionManager="{null}"/>
+      <Boolean Name="RequireSelection"/>
+
+      
+      <core:ContextMenu Name="ContextMenu" ContextMenu="{null}"/>
+
+      
+      <Command Name="ExecuteCommand" Command="{null}"/>
+
+      
+      <ScrollingData Name="protected_VerticalScrollData" ScrollingData="{null}"/>
+      <ScrollingData Name="protected_HorizontalScrollData" ScrollingData="{null}"/>
+
+      <Inset Name="Padding" Inset="0,0,0,0"/>
+
+      <me:CommandContainer Name="EditContext" CommandContainer="{null}"/>
+
+      <Command Name="SelectedItemClicked" Command="{null}"/>
+
+      <Boolean Name="DeepMouseFocus"/>
+      <iris:BooleanChoice Name="EditingList"/>
+    </Properties>
+
+    <Locals>
+      <PopupLayoutInput Name="PopupRelativeToList" Placement="Origin"/>
+
+      
+      <AnchorLayoutInput Name="DragRectInput" Left="Background,0" Right="Background,0" Top="Background,0" Bottom="Background,0"
+                         ContributesToWidth="false" ContributesToHeight="false"/>
+
+      <EditableTextData Name="JumpInListString"/>
+      <Timer Name="JILTimeout" Interval="2000" />
+
+      
+      <Timer Name="JILDisableBackTimer" Interval="2000" AutoRepeat="false" Enabled="false"/>
+
+      <Command Name="JumpInListInvoked"/>
+      <iris:IntRangedValue Name="JumpInListIndex" IntRangedValue="{null}"/>
+
+      <Accessible Name="Accessible"/>
+
+      <Timer Name="ScrollTimer" Interval="100"/>
+
+      <Int32 Name="LastFocusedIndex" Int32="-1"/>
+
+    </Locals>
+
+    <Input>
+      
+      <FocusHandler Name="SingleSelect" HandlerStage="Bubbled"/>
+
+      
+
+      <DragHandler Name="Dragger" CancelOnEscape="true" BeginDragPolicy="Move" HandlerStage="Direct,Bubbled"/>
+      <ClickHandler Name="UnhandledClick" ClickType="LeftMouse" Repeat="false"/>
+
+      
+
+      
+      <ClickHandler Name="SingleSelectDown" ClickType="LeftMouse"
+          DisallowedModifiers="Shift,Ctrl, Alt" HandlerStage="Routed"
+          HandlerTransition="Down" Handle="false" Repeat="false"/>
+      
+      <ClickHandler Name="RangeSelectSetDown" ClickType="LeftMouse"
+          RequiredModifiers="Shift" DisallowedModifiers="Ctrl,Alt"
+          HandlerTransition="Down" Handle="false" HandlerStage="Routed" Repeat="false"/>
+      <ClickHandler Name="RangeSelectAddDown" ClickType="LeftMouse"
+          RequiredModifiers="Shift,Ctrl" DisallowedModifiers="Alt"
+          HandlerTransition="Down" Handle="false" HandlerStage="Routed" Repeat="false"/>
+
+      <ClickHandler Name="SingleSelectUp" ClickType="LeftMouse"
+          DisallowedModifiers="Ctrl,Shift,Alt"
+          HandlerStage="Bubbled"/>
+      <ClickHandler Name="ToggleSelectUp" ClickType="LeftMouse"
+          RequiredModifiers="Ctrl" DisallowedModifiers="Shift,Alt"
+          HandlerStage="Bubbled"/>
+      <ClickHandler Name="RangeSelectSetUp" ClickType="LeftMouse"
+          RequiredModifiers="Shift" DisallowedModifiers="Ctrl,Alt"
+          HandlerStage="Bubbled"/>
+      <ClickHandler Name="RangeSelectAddUp" ClickType="LeftMouse"
+          RequiredModifiers="Shift,Ctrl" DisallowedModifiers="Alt"
+          HandlerStage="Bubbled"/>
+
+      
+      <ClickHandler Name="AddToSelectionKey" ClickType="SpaceKey"
+          DisallowedModifiers="Ctrl,Shift" HandlerStage="Bubbled"/>
+      <ClickHandler Name="SelectRangeKey" ClickType="SpaceKey"
+          RequiredModifiers="Shift" HandlerStage="Bubbled"/>
+      <ClickHandler Name="ToggleSelectKey" ClickType="SpaceKey"
+          RequiredModifiers="Ctrl" DisallowedModifiers="Shift" HandlerStage="Bubbled"/>
+      <FocusHandler Name="Focus" Reason="Directional"
+          DisallowedModifiers="Shift, Ctrl" HandlerStage="Bubbled"/>
+      <FocusHandler Name="ShiftFocus" Reason="Directional"
+          RequiredModifiers="Shift" HandlerStage="Bubbled"/>
+
+      <FocusHandler Name="TrackLastFocusedIndex" Reason="Any" HandlerStage="Bubbled"/>
+
+      <FocusHandler Name="JILFocus" Reason="Any" HandlerStage="Bubbled,Direct"/>
+
+      
+      <KeyHandler Name="SelectAll" Key="A" RequiredModifiers="Ctrl" HandlerStage="Bubbled,Direct"/>
+
+
+      <ClickHandler Name="RightClickDown" ClickType="RightMouse" HandlerStage="Bubbled"
+          HandlerTransition="Down" Handle="false" Repeat="false"/>
+      <ClickHandler Name="RightClick" ClickType="RightMouse" HandlerStage="Bubbled"/>
+
+      <KeyHandler Name="RightClickKeyboard1" Key="F10" RequiredModifiers="Shift" DisallowedModifiers="Alt" HandlerStage="Bubbled"/>
+      <KeyHandler Name="RightClickKeyboard2" Key="Apps" DisallowedModifiers="Alt" HandlerStage="Bubbled"/>
+
+      <ClickHandler Name="DoubleClick" ClickType="LeftMouse" ClickCount="Double" HandlerStage="Bubbled"/>
+
+      <KeyHandler Name="Enter" Key="Enter" HandlerStage="Bubbled, Direct"/>
+
+
+      
+      
+      
+
+      <KeyHandler    Name="JILBackInterceptor"  HandlerStage="Routed" Key="Backspace" Repeat="false" Enabled="false" />
+
+      
+      
+      
+
+      <TypingHandler Name="JumpInListTyping" HandlerStage="Bubbled"
+        SubmitOnEnter="false" TreatEscapeAsBackspace="false" EditableTextData="{JumpInListString}"/>
+
+      
+      
+      
+      <KeyHandler    Name="JILEscape" Key="Escape" HandlerTransition="Up" HandlerStage="Routed"/>
+      <KeyHandler    Name="JILEnter"  Key="Enter"  HandlerTransition="Up" HandlerStage="Routed"/>
+
+      
+      <KeyHandler    Name="JILEnterInterceptor"    Key="Enter" HandlerTransition="Down" HandlerStage="Routed"/>
+      <ClickHandler  Name="JILClickInterceptor"    ClickType="SpaceKey"                 HandlerStage="Routed" Repeat="false"/>
+
+    </Input>
+
+    <Scripts>
+      <Script>Dragger.RelativeTo = Background;</Script>
+      <Script>Repeater.Source = [Content];</Script>
+      <Script>UI.CreateInterestOnFocus = false;</Script>
+      <Script>DeepMouseFocus = [UI.DeepMouseFocus];</Script>
+
+      
+      <Script>
+        
+        
+        
+        
+        
+        
+        if ([SelectionManager] != null &amp;&amp; SelectionManager.SourceList != Content)
+            SelectionManager.SourceList = [Content];
+
+        if (RequireSelection &amp;&amp; !List.IsNullOrEmpty(Content))
+          SelectionManager.Select(0, true);
+      </Script>
+
+      
+      <Script>
+        <![CDATA[
+        if (NavigateIntoArgs != null)
+        {
+          int index = [NavigateIntoArgs.Index];
+
+          if (index >= 0 && [Repeater.Source] != null)
+          {
+            int listCount = Repeater.Source.Count;
+            
+            if (index < listCount)
+            {
+              
+              if (UI.DeepKeyFocus || NavigateIntoArgs.Focus)
+              {
+                Repeater.NavigateIntoIndex(index);
+                
+              }
+              else
+              {
+                Repeater.ScrollIndexIntoView(index);
+                Repeater.DefaultFocusIndex = index;
+                
+              }
+
+              
+              
+              
+              if (NavigateIntoArgs.Select && SelectionManager != null)
+              {
+                SelectionManager.SelectedIndex = index;
+                
+              }
+            }
+
+            
+            NavigateIntoArgs.Index = -1;
+            NavigateIntoArgs.Select = false;
+          }
+        }
+        ]]>
+      </Script>
+
+      
+      <Script>
+        if (ExecuteCommand == null || ![ExecuteCommand.Available])
+        {
+          DoubleClick.Command = null;
+          Enter.Command = null;
+        }
+        else
+        {
+          DoubleClick.Command = [ExecuteCommand];
+          Enter.Command = ExecuteCommand;
+        }
+      </Script>
+
+
+      
+      <Script><![CDATA[
+        bool singleSelectEnabled = ([SelectionManager] != null && [SelectionManager.SingleSelect]);
+        bool multiSelectEnabled = (SelectionManager != null && !SelectionManager.SingleSelect);
+
+        SingleSelect.Enabled = singleSelectEnabled;
+
+        Dragger.Enabled            = multiSelectEnabled;
+        UnhandledClick.Enabled     = multiSelectEnabled;
+
+        SingleSelectDown.Enabled   = multiSelectEnabled;
+        RangeSelectSetDown.Enabled = multiSelectEnabled;
+        RangeSelectAddDown.Enabled = multiSelectEnabled;
+
+        SingleSelectUp.Enabled     = multiSelectEnabled;
+        ToggleSelectUp.Enabled     = multiSelectEnabled;
+        RangeSelectSetUp.Enabled   = multiSelectEnabled;
+        RangeSelectAddUp.Enabled   = multiSelectEnabled;
+
+        RightClickDown.Enabled     = multiSelectEnabled;
+
+
+        
+
+      ]]></Script>
+
+      
+      <Script><![CDATA[
+        bool jilActive = [zune:JumpInListManager.Instance.IsActive];
+        bool multiSelectEnabled = (SelectionManager != null && !SelectionManager.SingleSelect);
+        bool keyboardSelectionEnabled = ([SelectionManager] != null) && (!jilActive) && multiSelectEnabled;
+
+        AddToSelectionKey.Enabled = keyboardSelectionEnabled;
+        SelectRangeKey.Enabled    = keyboardSelectionEnabled;
+        ToggleSelectKey.Enabled   = keyboardSelectionEnabled;
+
+        Focus.Enabled             = keyboardSelectionEnabled;
+        ShiftFocus.Enabled        = keyboardSelectionEnabled;
+        SelectAll.Enabled         = keyboardSelectionEnabled;
+
+        Enter.Enabled = !jilActive;
+
+        JILFocus.Enabled            = jilActive;
+        JILEscape.Enabled           = jilActive;
+        JILEnter.Enabled            = jilActive;
+        JILClickInterceptor.Enabled = jilActive;
+        JILEnterInterceptor.Enabled = jilActive;
+
+        
+        
+        if (jilActive)
+        {
+          JumpInListTyping.HandlerStage = InputHandlerStage.Routed;
+
+          
+          
+          
+          
+          
+          
+          
+
+          JILBackInterceptor.Handle = false;
+          JILBackInterceptor.Enabled = true;
+
+        }
+        else
+        {
+          JumpInListTyping.HandlerStage = InputHandlerStage.Bubbled;
+          JILTimeout.Enabled = false;
+
+          
+          
+          
+          
+          
+          
+
+          JILBackInterceptor.Handle = true;
+          JILBackInterceptor.Enabled = JILDisableBackTimer.Enabled;
+        }
+
+      ]]></Script>
+
+      <Script>
+        [DeclareTrigger(JILBackInterceptor.Invoked)]
+
+        
+        
+        
+        
+        
+        
+        
+
+        if (zune:JumpInListManager.Instance.IsActive)
+        {
+          JILDisableBackTimer.Start();
+        }
+      </Script>
+
+      <Script>
+        [DeclareTrigger(JILDisableBackTimer.Tick)]
+
+        
+        
+        
+
+        JILBackInterceptor.Enabled = false;
+      </Script>
+
+      <Script>
+        [DeclareTrigger(SingleSelect.GainedFocus)]
+        if (SingleSelect.GainedEventContext is me:ListItemContext)
+        {
+          me:ListItemContext context = (me:ListItemContext)SingleSelect.GainedEventContext;
+          SelectionManager.Select(context.Index.Value, true);
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(SingleSelectDown.Invoked)]
+        if (SingleSelectDown.EventContext is me:ListItemContext)
+        {
+          me:ListItemContext context = (me:ListItemContext)SingleSelectDown.EventContext;
+
+          
+          
+          
+          if (context.SelectOnMouseDown &amp;&amp; !SelectionManager.IsSelected(context.Index.Value))
+            SelectionManager.SelectedIndex = context.Index.Value;
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(RangeSelectSetDown.Invoked)]
+        if (RangeSelectSetDown.EventContext is me:ListItemContext)
+        {
+          me:ListItemContext context = (me:ListItemContext)RangeSelectSetDown.EventContext;
+
+          if (context.SelectOnMouseDown)
+          {
+            
+            
+            
+            SelectionManager.Clear();
+            SelectionManager.SelectRangeFromAnchor(context.Index.Value);
+          }
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(RangeSelectAddDown.Invoked)]
+        if (RangeSelectAddDown.EventContext is me:ListItemContext)
+        {
+          me:ListItemContext context = (me:ListItemContext)RangeSelectAddDown.EventContext;
+
+          if (context.SelectOnMouseDown)
+            SelectionManager.SelectRangeFromAnchor(context.Index.Value);
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(SingleSelectUp.Invoked)]
+        if (SingleSelectUp.EventContext is me:ListItemContext)
+        {
+          me:ListItemContext context = (me:ListItemContext)SingleSelectUp.EventContext;
+
+          
+          
+          if (SelectionManager.Count != 1 || SelectionManager.SelectedIndex != context.Index.Value)
+            SelectionManager.SelectedIndex = context.Index.Value;
+          else if (SelectedItemClicked != null)
+            SelectedItemClicked.Invoke();
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(ToggleSelectUp.Invoked)]
+        if (ToggleSelectUp.EventContext is me:ListItemContext)
+        {
+          me:ListItemContext context = (me:ListItemContext)ToggleSelectUp.EventContext;
+
+          SelectionManager.ToggleSelect(context.Index.Value);
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(RangeSelectSetUp.Invoked)]
+        if (RangeSelectSetUp.EventContext is me:ListItemContext)
+        {
+          me:ListItemContext context = (me:ListItemContext)RangeSelectSetUp.EventContext;
+
+          if (!context.SelectOnMouseDown)
+          {
+            
+            
+            
+            SelectionManager.Clear();
+            SelectionManager.SelectRangeFromAnchor(context.Index.Value);
+          }
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(RangeSelectAddUp.Invoked)]
+        if (RangeSelectAddUp.EventContext is me:ListItemContext)
+        {
+          me:ListItemContext context = (me:ListItemContext)RangeSelectAddUp.EventContext;
+
+          if (!context.SelectOnMouseDown)
+            SelectionManager.SelectRangeFromAnchor(context.Index.Value);
+        }
+      </Script>
+
+
+      
+      <Script>
+        [DeclareTrigger(UnhandledClick.Invoked)]
+        SelectionManager.Clear();
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(SelectAll.Invoked)]
+        if (Content != null)
+          SelectionManager.SelectRange(0, Content.Count - 1);
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(RightClickDown.Invoked)]
+
+        if (RightClickDown.EventContext is me:ListItemContext)
+        {
+          me:ListItemContext context = (me:ListItemContext)RightClickDown.EventContext;
+
+          
+          
+          
+          if (!SelectionManager.IsSelected(context.Index.Value))
+            SelectionManager.SelectedIndex = context.Index.Value;
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(RightClick.Invoked)]
+
+        if (ContextMenu != null)
+        {
+
+           if (EditContext != null &amp;&amp; RightClick.EventContext is  me:ListItemContext)
+           {
+             me:ListItemContext context = (me:ListItemContext)RightClick.EventContext;
+             EditContext.Model = context.Edit;
+           }
+
+          
+          
+          
+          ContextMenu.LayoutInput = new PopupLayoutInput();
+          ContextMenu.LayoutInput.Placement = PlacementMode.MouseOrigin;
+
+          ContextMenu.Helper.Show(ContextMenu);
+        }
+      </Script>
+
+      
+      
+      <Script>PopupRelativeToList.PlacementTarget = Repeater;</Script>
+
+      
+      <Script>
+        [DeclareTrigger(RightClickKeyboard1.Invoked)]
+
+        if (ContextMenu != null)
+        {
+           if (EditContext != null &amp;&amp; RightClickKeyboard1.EventContext is  me:ListItemContext)
+           {
+             me:ListItemContext context = (me:ListItemContext)RightClickKeyboard1.EventContext;
+             EditContext.Model = context.Edit;
+           }
+
+          
+          
+          
+          ContextMenu.LayoutInput = PopupRelativeToList;
+
+          ContextMenu.Helper.Show(ContextMenu);
+        }
+      </Script>
+
+
+      
+      <Script>
+        [DeclareTrigger(RightClickKeyboard2.Invoked)]
+
+        if (ContextMenu != null)
+        {
+           if (EditContext != null &amp;&amp; RightClickKeyboard2.EventContext is  me:ListItemContext)
+           {
+             me:ListItemContext context = (me:ListItemContext)RightClickKeyboard2.EventContext;
+             EditContext.Model = context.Edit;
+           }
+
+          
+          
+          
+          ContextMenu.LayoutInput = PopupRelativeToList;
+
+          ContextMenu.Helper.Show(ContextMenu);
+        }
+      </Script>
+
+
+      
+      <Script>
+        [DeclareTrigger(SelectRangeKey.Invoked)]
+        if (SelectRangeKey.EventContext is me:ListItemContext)
+        {
+          me:ListItemContext context = (me:ListItemContext)SelectRangeKey.EventContext;
+          SelectionManager.SelectRangeFromAnchor(context.Index.Value);
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(AddToSelectionKey.Invoked)]
+        if (AddToSelectionKey.EventContext is me:ListItemContext)
+        {
+          me:ListItemContext context = (me:ListItemContext)AddToSelectionKey.EventContext;
+          SelectionManager.Select(context.Index.Value, true);
+        }
+      </Script>
+
+       
+      <Script>
+        [DeclareTrigger(ToggleSelectKey.Invoked)]
+        if (ToggleSelectKey.EventContext is me:ListItemContext)
+        {
+          me:ListItemContext context = (me:ListItemContext)ToggleSelectKey.EventContext;
+          SelectionManager.ToggleSelect(context.Index.Value);
+        }
+      </Script>
+
+      <Script>
+        [DeclareTrigger(Focus.GainedFocus)]
+
+        if (Focus.GainedEventContext is me:ListItemContext)
+        {
+          me:ListItemContext context = (me:ListItemContext)Focus.GainedEventContext;
+          SelectionManager.SelectedIndex = context.Index.Value;
+        }
+      </Script>
+
+      <Script>
+        [DeclareTrigger(ShiftFocus.GainedFocus)]
+        if (ShiftFocus.GainedEventContext is me:ListItemContext)
+        {
+          me:ListItemContext context = (me:ListItemContext)ShiftFocus.GainedEventContext;
+          SelectionManager.Clear();
+          SelectionManager.SelectRangeFromAnchor(context.Index.Value);
+        }
+      </Script>
+
+      <Script>SelectionRect.Visible = [Dragger.Dragging];</Script>
+
+      <Script>
+        [DeclareTrigger(Dragger.Cancelled)]
+        SelectionManager.Clear();
+      </Script>
+
+      <Script><![CDATA[
+        
+        
+        if ([Dragger.Dragging] && Dragger.ActiveModifiers == InputHandlerModifiers.None)
+          SelectionManager.Clear();
+
+        Repeater.DiscardOffscreenVisuals = !Dragger.Dragging;
+   ]]></Script>
+
+      <Script>
+        [DeclareTrigger(Dragger.EndPosition)]
+
+        DragRectInput.Left.Percent   = sys:Math.Max(0.0, sys:Math.Min(Dragger.BeginPosition.X, Dragger.EndPosition.X));
+        DragRectInput.Right.Percent  = sys:Math.Min(1.0, sys:Math.Max(Dragger.BeginPosition.X, Dragger.EndPosition.X));
+        DragRectInput.Top.Percent    = sys:Math.Max(0.0, sys:Math.Min(Dragger.BeginPosition.Y, Dragger.EndPosition.Y));
+        DragRectInput.Bottom.Percent = sys:Math.Min(1.0, sys:Math.Max(Dragger.BeginPosition.Y, Dragger.EndPosition.Y));
+
+        SelectionRect.LayoutInput = new AnchorLayoutInput();
+        SelectionRect.LayoutInput = DragRectInput;
+
+        List added = Dragger.GetAddedEventContexts();
+
+        foreach(object o in added)
+        {
+          if (o is me:ListItemContext)
+          {
+            me:ListItemContext context = (me:ListItemContext)o;
+
+            if (context.MainContext)
+            {
+              if (SelectionManager.SourceList == null ||
+                  (context.Index.Value >= 0 &amp;&amp;
+                   context.Index.Value &lt; SelectionManager.SourceList.Count))
+              {
+                
+                if (Dragger.ActiveModifiers == InputHandlerModifiers.Ctrl)
+                  SelectionManager.ToggleSelect(context.Index.Value);
+                else
+                  SelectionManager.Select(context.Index.Value, true);
+              }
+              else
+              {
+                
+              }
+            }
+          }
+        }
+
+        List removed = Dragger.GetRemovedEventContexts();
+
+        foreach(object o in removed)
+        {
+          if (o is me:ListItemContext)
+          {
+            me:ListItemContext context = (me:ListItemContext)o;
+
+            if (context.MainContext)
+            {
+              if (SelectionManager.SourceList == null ||
+                  (context.Index.Value >= 0 &amp;&amp;
+                   context.Index.Value &lt; SelectionManager.SourceList.Count))
+              {
+                
+                if (Dragger.ActiveModifiers == InputHandlerModifiers.Ctrl)
+                  SelectionManager.ToggleSelect(context.Index.Value);
+                else
+                  SelectionManager.Select(context.Index.Value, false);
+              }
+              else
+              {
+                
+              }
+            }
+          }
+        }
+      </Script>
+
+      
+
+      <Script> <![CDATA[
+        [DeclareTrigger(Dragger.AbsoluteDragSize)]
+        [DeclareTrigger(ScrollTimer.Tick)]
+
+        bool scrollTimerEnabled = false;
+
+        if (Dragger.Dragging)
+        {
+
+          if (protected_VerticalScrollData != null)
+          {
+            float currentPosition = protected_VerticalScrollData.CurrentPage - 1.0;
+            float maxPosition     = protected_VerticalScrollData.TotalPages  - 1.0;
+
+            float pageStep = protected_VerticalScrollData.PageStep;
+
+            float viewTop    = (pageStep * currentPosition      ) / (pageStep * maxPosition + 1.0);
+            float viewBottom = (pageStep * currentPosition + 1.0) / (pageStep * maxPosition + 1.0);
+
+            if (Dragger.EndPosition.Y < viewTop)
+            {
+              protected_VerticalScrollData.ScrollUp();
+              scrollTimerEnabled = true;
+            }
+            else if (Dragger.EndPosition.Y > viewBottom)
+            {
+              protected_VerticalScrollData.ScrollDown();
+              scrollTimerEnabled = true;
+            }
+          }
+          if (protected_HorizontalScrollData != null)
+          {
+            float currentPosition = protected_HorizontalScrollData.CurrentPage - 1.0;
+            float maxPosition     = protected_HorizontalScrollData.TotalPages  - 1.0;
+
+            float pageStep = protected_HorizontalScrollData.PageStep;
+
+            float viewLeft  = (pageStep * currentPosition      ) / (pageStep * maxPosition + 1.0);
+            float viewRight = (pageStep * currentPosition + 1.0) / (pageStep * maxPosition + 1.0);
+
+            if (Dragger.EndPosition.X < viewLeft)
+            {
+              protected_HorizontalScrollData.ScrollUp();
+              scrollTimerEnabled = true;
+            }
+            else if (Dragger.EndPosition.X > viewRight)
+            {
+              protected_HorizontalScrollData.ScrollDown();
+              scrollTimerEnabled = true;
+            }
+          }
+        }
+
+        ScrollTimer.Enabled = scrollTimerEnabled;
+      ]]></Script>
+
+      
+      <Script>
+        [DeclareTrigger(Dragger.Dragging)]
+        [DeclareTrigger(Content)]
+        zune:LibraryPage.BlockUpdatesFromDBList(
+            Content,
+            zune:BlockListUpdatesReason.DragSelect,
+            Dragger.Dragging);
+      </Script>
+
+
+      
+      <Script>
+        [DeclareTrigger(EditingList.Value)]
+        [DeclareTrigger(Content)]
+        zune:LibraryPage.BlockUpdatesFromDBList(
+            Content,
+            zune:BlockListUpdatesReason.Edit,
+            EditingList.Value);
+      </Script>
+
+      <Script>
+        [DeclareTrigger(JILFocus.GainedFocus)]
+        [DeclareTrigger(UI.DeepKeyFocus)]
+        int index = -1;
+
+        if (JILFocus.GainedEventContext is me:ListItemContext)
+        {
+          index = ((me:ListItemContext)JILFocus.GainedEventContext).Index.Value;
+        }
+
+        
+        
+        if (!UI.DeepKeyFocus || JumpInListIndex == null || index != JumpInListIndex.Value)
+        {
+          zune:JumpInListManager.Instance.Clear();
+        }
+      </Script>
+      
+      <Script>
+        
+        [DeclareTrigger(TrackLastFocusedIndex.GainedFocus)]
+        if (TrackLastFocusedIndex.GainedEventContext is me:ListItemContext)
+        {
+          LastFocusedIndex = ((me:ListItemContext)TrackLastFocusedIndex.GainedEventContext).Index.Value;
+        }
+      </Script>
+
+      <Script>
+        
+        
+        if (![zune:JumpInListManager.Instance.IsActive])
+        {
+          JumpInListString.Value = null;
+        }
+      </Script>
+
+
+      <Script>
+        
+        JumpInListTyping.Enabled = [SupportsJumpInList];
+
+        
+        
+        
+        if (!SupportsJumpInList &amp;&amp; JumpInListIndex != null)
+        {
+          zune:JumpInListManager.Instance.Clear();
+        }
+
+      </Script>
+
+
+      <Script>
+          [DeclareTrigger(JumpInListString.Value)]
+
+          
+          
+          
+
+          if (zune:JumpInListManager.Instance.IsActive || !String.IsNullOrEmpty(JumpInListString.Value) )
+          {
+            zune:JumpInListManager.Instance.SearchForString(Content, JumpInListString.Value);
+            JILTimeout.Start();
+            JumpInListInvoked.Invoke();
+          }
+      </Script>
+
+      <Script>
+          
+          if ([UI.DeepKeyFocus] &amp;&amp; [SupportsJumpInList])
+          {
+            JumpInListIndex = zune:JumpInListManager.Instance.ResultIndex;
+          }
+          else
+          {
+            JumpInListIndex = null;
+          }
+      </Script>
+
+      <Script>
+
+          
+          if (JumpInListIndex != null)
+          {
+            int index = [JumpInListIndex.Value];
+            if (index >= 0)
+            {
+              NavigateIntoArgs.Index = index;
+              NavigateIntoArgs.Select = true;
+            }
+          }
+      </Script>
+
+
+      <Script>
+        [DeclareTrigger(JILEscape.Invoked)]
+        [DeclareTrigger(JILEnter.Invoked)]
+        [DeclareTrigger(JILTimeout.Tick)]
+
+        zune:JumpInListManager.Instance.Clear();
+      </Script>
+
+      <Script><![CDATA[
+        [DeclareTrigger(Repeater.FocusedItemDiscarded)]
+
+        
+        
+        
+        
+        
+
+        int index = -1;
+        if (LastFocusedIndex >= 0 && Content != null && Content.Count > 0)
+        {
+           if (LastFocusedIndex < Content.Count)
+           {
+             index = LastFocusedIndex;
+           }
+           else
+           {
+             index = Content.Count - 1;
+           }
+        }
+
+
+        
+        
+        
+        
+        
+        if (index >= 0)
+        {
+          Repeater.NavigateIntoIndex(index);
+        }
+        else
+        {
+          Repeater.NavigateInto();
+        }
+
+      ]]></Script>
+
+      <Script>
+        if ([Accessible.Enabled])
+        {
+          Accessible.Name = [AccessibleDescription];
+          Accessible.Role = AccessibleRole.List;
+        }
+      </Script>
+    </Scripts>
+
+    <Content>
+      
+      <Panel Layout="Anchor">
+        <Children>
+
+          
+          <Graphic Name="SelectionRect" Content="{styles:Styles.DragSelectRect}"/>
+
+          <Repeater Name="Repeater" ContentName="Item" Layout="{ListLayout}" DiscardOffscreenVisuals="true" Padding="{Padding}"/>
+
+          
+          <Panel Name="Background"/>
+
+        </Children>
+      </Panel>
+    </Content>
+
+    
+    
+    
+    <Content Name="Item">
+      <core:Label/>
+    </Content>
+  </UI>
+
+  
+  
+  
+  
+  
+  
+  
+  <UI Name="ScrollingContentListBase" Base="me:ContentListBase">
+    <Properties>
+      
+      <Orientation Name="ScrollOrientation" Orientation="Vertical"/>
+      <Boolean Name="AllowScrolling" Boolean="true"/>
+      <Boolean Name="AllowScrollingInput" Boolean="true"/>
+
+      <Inset Name="HorizontalScrollMargins" Inset="0,0,0,20"/>
+      <Inset Name="VerticalScrollMargins" Inset="0,0,20,0"/>
+
+      
+      <Single Name="FadeSize" Single="-0.1"/>
+      <Single Name="FadeAmount" Single="1.0"/>
+      <Inset Name="ScrollerPadding" Inset="0,0,0,0"/>
+
+      <Type Name="ScrollControlType" Type="{typeof(core:ScrollBar)}"/>
+      <AnchorLayoutInput Name="ScrollControlVertical"
+        Right="Parent,1" Horizontal="Far"
+        Top="Scroller,0" Bottom="Scroller,1" Vertical="Center"
+        ContributesToWidth="false" ContributesToHeight="false"/>
+      <AnchorLayoutInput Name="ScrollControlHorizontal"
+        Bottom="Parent,1" Vertical="Far"
+        Left="Scroller,0" Right="Scroller,1" Horizontal="Center"
+        ContributesToWidth="false" ContributesToHeight="false"/>
+
+      
+      <Animation Name="ListShow" Animation="{anim:Animations.ListFadeIn}"/>
+      <Animation Name="ScrollMove" Animation="{null}"/>
+
+      <Boolean Name="OnlyShowClipsWhenScrollable" Boolean="false"/>
+    </Properties>
+
+    <Locals>
+      <ScrollingData Name="ScrollData"/>
+    </Locals>
+
+    <Input>
+      
+      <ScrollingHandler Name="ScrollHandler" ScrollingData="{ScrollData}" Enabled="{AllowScrollingInput}"/>
+    </Input>
+
+    <Scripts>
+      <Script> Background.FillView = [Dragger.Enabled]; </Script>
+      
+      
+      <Script><![CDATA[
+        Inset margins;
+        if (AllowScrolling)
+        {
+          ScrollControl.Visible = true;
+          if ([ScrollOrientation] == Orientation.Vertical)
+          {
+            ScrollControl.LayoutInput = ScrollControlVertical;
+            margins = VerticalScrollMargins;
+            ScrollControl.Horizontal = false;
+            protected_VerticalScrollData = ScrollData;
+            protected_HorizontalScrollData = null;
+          }
+          else
+          {
+            ScrollControl.LayoutInput = ScrollControlHorizontal;
+            margins = HorizontalScrollMargins;
+            ScrollControl.Horizontal = true;
+            protected_VerticalScrollData = null;
+            protected_HorizontalScrollData = ScrollData;
+          }
+
+          Scroller.FadeSize = FadeSize;
+        }
+        else
+        {
+          ScrollControl.Visible = false;
+          Scroller.FadeSize = 0.0;
+        }
+
+        Scroller.Margins = margins;]]>
+      </Script>
+
+      <Script>ScrollData.Enabled = [AllowScrolling];</Script>
+
+      <Script>
+        [DeclareTrigger(NavigateIntoArgs.Index)]
+        [DeclareTrigger(JumpInListInvoked.Invoked)]
+
+        
+        
+        ScrollData.ScrollFocusIntoView();
+      </Script>
+
+      <Script> ScrollControl.RegionHover = [UI.DeepMouseFocus]; </Script>
+
+      
+      <Script>PopupRelativeToList.PlacementTarget = Scroller;</Script>
+
+      <Script>
+        if (OnlyShowClipsWhenScrollable)
+        {
+          Scroller.ShowNear = [ScrollData.CanScrollUp];
+          Scroller.ShowFar = [ScrollData.CanScrollDown];
+        }
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel Layout="Anchor" Navigation="TabGroup">
+        <Children>
+
+          
+          <bar:ScrollControl Name="ScrollControl" ScrollControl="{ScrollControlType}" ScrollData="{ScrollData}"/>
+
+          
+          <Scroller Name="Scroller" Orientation="{ScrollOrientation}"
+              ScrollingData="{ScrollData}" Prefetch="0.5" FadeSize="{FadeSize}" FadeAmount="{FadeAmount}" Padding="{ScrollerPadding}">
+            <LayoutInput>
+              <AnchorLayoutInput Left="Parent,0" Top="Parent,0"/>
+            </LayoutInput>
+            <Animations>
+              <Animation Animation="{ListShow}"/>
+              <Animation Animation="{anim:Animations.MoveNow}"/>
+            </Animations>
+            <Children>
+
+              <Panel Layout="Anchor">
+                <Animations>
+                  <Animation Animation="{ScrollMove}"/>
+                </Animations>
+                <Children>
+
+                  
+                  <Graphic Name="SelectionRect" Content="{styles:Styles.DragSelectRect}"/>
+
+                  <Panel Name="Background">
+                    <LayoutInput>
+                      <AnchorLayoutInput Left="Parent,0" Top="Parent,0" />
+                    </LayoutInput>
+                    <Children>
+
+                      
+                      <Repeater Name="Repeater" ContentName="Item" Layout="{ListLayout}" DiscardOffscreenVisuals="true" Padding="{Padding}"/>
+
+                    </Children>
+                  </Panel>
+
+                </Children>
+              </Panel>
+
+            </Children>
+
+          </Scroller>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  
+  <UI Name="ReorderableListBase" Base="me:ContentListBase">
+    <Properties>
+      <Boolean Name="CanReorder" Boolean="false"/>
+    </Properties>
+
+    <Locals>
+      <iris:BooleanChoice Name="IsDragging"/>
+      <iris:IntRangedValue Name="DraggingIndex" Value="-1"/>
+
+      <iris:IntRangedValue Name="InsertIndex" Value="-1"/>
+
+      <Command Name="ClearIndex"/>
+    </Locals>
+
+    <Input>
+      <DropTargetHandler Name="Target" HandlerStage="Bubbled, Direct" AllowedDropActions="Move"/>
+
+      
+      <EventContext Value="{-2}"/>
+    </Input>
+
+    <Scripts>
+      <Script> Target.Enabled = [IsDragging.Value]; </Script>
+
+      <Script>
+        
+        
+        
+        if (![Target.Dragging])
+          ClearIndex.Invoke();
+      </Script>
+
+      <Script>
+        [DeclareTrigger(ClearIndex.Invoked)]
+        InsertIndex.Value = -1;
+        DraggingIndex.Value = -1;
+      </Script>
+
+      <Script>
+        [DeclareTrigger(Target.EventContext)]
+        
+        object context = Target.EventContext;
+
+        
+
+        if (context is int)
+        {
+          InsertIndex.Value = (int)context;
+
+          if (InsertIndex.Value == -2)
+          {
+            
+            
+            InsertIndex.Value = Content.Count;
+          }
+        }
+      </Script>
+      
+      <Script>
+        [DeclareTrigger(Target.Dropped)]
+
+        
+        
+        
+        
+        
+        if (InsertIndex.Value >= 0)
+        {
+          if (InsertIndex.Value > DraggingIndex.Value)
+            LastFocusedIndex = InsertIndex.Value - 1;
+          else
+            LastFocusedIndex = InsertIndex.Value;
+        }
+      </Script>
+    </Scripts>
+  </UI>
+
+  
+  
+  
+  
+  <UI Name="DropZone">
+    <Properties>
+      
+      <iris:BooleanChoice Name="IsVisible" BooleanChoice="$Required"/>
+
+      
+      <Object Name="Context" Object="{null}"/>
+    </Properties>
+
+    <Input>
+      <EventContext Name="EventContext" Value="{Context}"/>
+    </Input>
+
+    <Scripts>
+      <Script> EventContext.Value = [Context]; </Script>
+
+      
+      <Script> Zone.Visible = [IsVisible.Value]; </Script>
+    </Scripts>
+
+    <Content>
+      <Panel Name="Zone" MouseInteractive="true"/>
+    </Content>
+  </UI>
+
+  
+  
+  
+  
+  <UI Name="ItemDropZone" Base="me:DropZone">
+    <Properties>
+      
+      <Index Name="Index" Index="$Required"/>
+      
+      <Int32 Name="IndexModifier" Int32="0"/>
+
+      <Boolean Name="ValidTarget" Boolean="true"/>
+    </Properties>
+
+    <Scripts>
+      
+      <Script>
+        if (ValidTarget)
+          Context = [Index.Value] + [IndexModifier];
+        else
+          Context = -1; 
+      </Script>
+    </Scripts>
+  </UI>
+
+  
+  
+  
+  
+  <UI Name="Indicator">
+    <Properties>
+      <Object Name="Index" Object="{0}"/>
+      <iris:IntRangedValue Name="InsertAtIndex" IntRangedValue="$Required"/>
+      <iris:BooleanChoice Name="Visible" BooleanChoice="{null}"/>
+      <Boolean Name="ForceHidden" Boolean="false"/>
+      <Color Name="Color" Color="Transparent"/>
+      <Color Name="InsertColor" Color="{styles:Styles.ZuneMagenta}"/>
+      <Boolean Name="HideFirstIndicator" Boolean="false"/>
+    </Properties>
+
+    <Locals>
+      
+      <Int32 Name="IndexInt"/>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        if (Index is Index)
+          IndexInt = [((Index)Index).Value];
+        else
+          IndexInt = [(Int32)Index];
+      </Script>
+
+      <Script>
+        Indicator.Visible = !ForceHidden &amp;&amp;
+                            (Visible == null || [Visible.Value]) &amp;&amp;
+                            (!HideFirstIndicator || [IndexInt] != 0);
+      </Script>
+      <Script>
+        if ([InsertAtIndex.Value] == [IndexInt])
+          Indicator.Content = InsertColor;
+        else
+          Indicator.Content = Color;
+      </Script>
+    </Scripts>
+
+    <Content>
+      <ColorFill Name="Indicator"/>
+    </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="ListItemBase" Base="core:ButtonBase">
+    <Properties>
+      <Index Name="Index" Index="$Required"/>
+    </Properties>
+
+    <Input>
+      
+      <EventContext Name="Context" >
+        <Value>
+          <me:ListItemContext Index="{Index}"/>
+        </Value>
+      </EventContext>
+    </Input>
+  </UI>
+
+  
+  
+  
+  <UI Name="LabelListItemBase" Base="core:LabelButtonWithBackground">
+    <Properties>
+      <Index Name="Index" Index="$Required"/>
+      <drag:DragFeedback Name="DragFeedback" DragFeedback="{null}"/>
+      <btn:ModelButtonProvider Name="Provider" ModelButtonProvider="{null}"/>
+    </Properties>
+
+    <Input>
+      
+      <EventContext Name="Context">
+        <Value>
+          <me:ListItemContext Index="{Index}"/>
+        </Value>
+      </EventContext>
+      
+      
+      <DragSourceHandler Name="DragSource" AllowedDropActions="Copy" HandlerStage="Direct,Bubbled"
+                         CancelCursor="Arrow" CopyCursor="Arrow"/>
+    </Input>
+    
+    <Scripts>
+      <Script>
+        if (Provider != null)
+          DragSource.Value = [Provider.DragValue];
+      </Script>
+      
+      
+      <Script>DragSource.Enabled = [DragSource.Value] != null;</Script>
+      
+      <Script>
+        
+        
+        if ([DragSource.Dragging])
+        {
+          if (DragFeedback == null)
+            DragFeedback = new drag:DragFeedback();
+
+          if (Provider != null &amp;&amp; Provider.SelectionManager != null)
+          {
+            if (!Provider.SelectionManager.IsSelected(Index.Value))
+              Provider.SelectionManager.Select(Index.Value, true);
+
+            DragFeedback.Count = Provider.SelectionManager.Count;
+          }
+
+          DragFeedback.Helper.Show(DragFeedback);
+        }
+        else if (DragFeedback != null)
+        {
+          DragFeedback.Helper.Hide();
+          UI.DisposeOwnedObject(DragFeedback);
+          DragFeedback = null;
+        }
+
+        drag:DragInfo.IsDraggingInternally = DragSource.Dragging;
+      </Script>
+
+      <Script>
+        if (DragFeedback != null)
+          DragFeedback.DropAction = [DragSource.CurrentDropAction];
+      </Script>
+    </Scripts>
+  </UI>
+
+  
+  
+  
+  <UI Name="ThumbnailListItemBase" Base="core:ThumbnailButtonBase">
+    <Properties>
+      <Index Name="Index" Index="$Required"/>
+      <drag:DragFeedback Name="DragFeedback" DragFeedback="{null}"/>
+    </Properties>
+
+    <Input>
+      
+      <EventContext Name="Context">
+        <Value>
+          <me:ListItemContext Index="{Index}" Edit="{Provider.EditPrimaryLabel}"/>
+        </Value>
+      </EventContext>
+
+      
+      <DragSourceHandler Name="DragSource" AllowedDropActions="Copy" HandlerStage="Direct,Bubbled"
+                         CancelCursor="Arrow" CopyCursor="Arrow"/>
+    </Input>
+
+    <Scripts>
+      <Script>
+        if (Provider != null)
+          DragSource.Value = [Provider.DragValue];
+      </Script>
+
+      
+      <Script>DragSource.Enabled = [DragSource.Value] != null;</Script>
+
+      <Script>
+        
+        
+        if ([DragSource.Dragging])
+        {
+          if (DragFeedback == null)
+            DragFeedback = new drag:DragFeedback();
+
+          if (Provider != null &amp;&amp; Provider.SelectionManager != null)
+          {
+            if (!Provider.SelectionManager.IsSelected(Index.Value))
+              Provider.SelectionManager.Select(Index.Value, true);
+
+            DragFeedback.Count = Provider.SelectionManager.Count;
+          }
+
+          if (Provider != null)
+            DragFeedback.Thumbnail = Provider.Image;
+            
+          DragFeedback.Helper.Show(DragFeedback);
+        }
+        else if (DragFeedback != null)
+        {
+          DragFeedback.Helper.Hide();
+          UI.DisposeOwnedObject(DragFeedback);
+          DragFeedback = null;
+        }
+
+        drag:DragInfo.IsDraggingInternally = DragSource.Dragging;
+      </Script>
+
+      <Script>
+        if (DragFeedback != null)
+          DragFeedback.DropAction = [DragSource.CurrentDropAction];
+      </Script>
+    </Scripts>
+  </UI>
+
+</UIX>

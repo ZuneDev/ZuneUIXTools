@@ -1,0 +1,489 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:sys="assembly://mscorlib/System"
+  xmlns:col="assembly://mscorlib/System.Collections"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:sm="assembly://ZuneDBApi/Microsoft.Zune.Subscription"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:gp="res://ZuneShellResources!GalleryPanel.uix"
+  xmlns:data="res://ZuneShellResources!LibraryData.schema.xml"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:thumbbutton="res://ZuneShellResources!ThumbnailButton.uix"
+  xmlns:dialogs="res://ZuneShellResources!PodcastDialogs.uix"
+  xmlns:panels="res://ZuneShellResources!LibraryPanels.uix"
+  xmlns:list="res://ZuneShellResources!ContentList.uix" 
+  xmlns:animations="res://ZuneShellResources!Animations.uix" 
+  xmlns:me="Me">
+
+
+  
+  
+  
+  <UI Name="SeriesPanel" Base="panels:LibraryGalleryPanel">
+    <Properties>
+      <zune:PodcastLibraryPage Name="Page" PodcastLibraryPage="$Required"/>
+      <Type Name="GalleryViewType" Type="{typeof(me:SeriesGalleryView)}"/>
+      <Inset Name="ColumnInset" Inset="0,0,0,-5"/>
+      <Inset Name="ScrollInset" Inset="0,0,10,0"/>
+      
+      <Int32 Name="MinimumWidth" Int32="115"/>
+      <Single Name="MinimumPercent" Single="0.00"/>
+      <iris:Command Name="SelectedItemClicked" Command="{Page.SeriesClicked}"/>
+    </Properties>
+
+    <Locals>
+      <data:LibraryPodcastSeriesQuery Name="PodcastSeriesQuery" Sort="+Title"
+                                      DeviceId="{Page.DeviceId}"
+                                      ShowDeviceContents="{Page.ShowDeviceContents}"/>
+
+      <iris:Command Name="AddPodcast" Description="{zune:Shell.LoadString(zune:StringId.IDS_PODCAST_ADD_URL_SERIES_BUTTON)}"/>
+      <iris:Command Name="SeriesSettings" Description="{zune:Shell.LoadString(zune:StringId.IDS_PODCAST_SERIES_SETTINGS_MENUITEM)}"/>
+      <iris:Command Name="DeleteSeriesConfirmed" Description="{zune:Shell.LoadString(zune:StringId.IDS_DIALOG_OK)}"/>
+      <zune:MenuItemCommand Name="ShowErrorInfo" Description="{zune:Shell.LoadString(zune:StringId.IDS_PODCAST_SERIES_ERROR_MENU_ITEM)}"/>
+      <zune:MenuItemCommand Name="Unsubscribe" Description="{zune:Shell.LoadString(zune:StringId.IDS_PODCAST_SERIES_UNSUBSCRIBE_MENU_ITEM)}"/>
+      <zune:MenuItemCommand Name="Resubscribe" Description="{zune:Shell.LoadString(zune:StringId.IDS_PODCAST_SERIES_RESUBSCRIBE_MENU_ITEM)}"/>
+      <zune:MenuItemCommand Name="CheckForUpdates" Description="{zune:Shell.LoadString(zune:StringId.IDS_PODCAST_CHECK_FOR_UPDATES_MENUITEM)}"/>
+      <zune:MenuItemCommand Name="DeleteSeries" Description="{zune:Shell.LoadString(zune:StringId.IDS_PODCAST_DELETE_SERIES_MENUITEM)}"/>
+
+      <List Name="LibraryMenuOptions">
+        <Source>
+          
+          <iris:Command Command="{Page.MarkAllAsPlayed}"/>
+          <iris:Command Command="{Page.MarkAllAsUnplayed}"/>
+          
+          
+          <core:MenuDivider/>
+          <iris:Command Command="{SeriesSettings}"/>
+          <iris:Command Command="{Unsubscribe}"/>
+          <iris:Command Command="{Resubscribe}"/>
+          <iris:Command Command="{ShowErrorInfo}"/>
+
+          <core:MenuDivider MenuDivider="{SyncDivider}"/>
+          <iris:Command Command="{Sync}"/>
+          <iris:Command Command="{SyncAllUnexclude}"/>
+          
+          
+          <core:MenuDivider/>
+          <iris:Command Command="{CheckForUpdates}"/>
+          <iris:Command Command="{DeleteSeries}"/>
+        </Source>
+      </List>
+
+      <List Name="DeviceMenuOptions">
+        <Source>
+          <iris:Command Command="{ReverseSync}"/>
+          <iris:Command Command="{DeleteFromDevice}"/>
+        </Source>
+      </List>
+
+      <dialogs:SubscribeDialog Name="SubscribeDialog" SubscribeDialog="{null}"/>
+      <dialogs:UnsubscribeDialog Name="UnsubscribeDialog" Page="{Page}"/>
+      <dialogs:SettingsDialog Name="SettingsDialog" Page="{Page}"/>      
+    </Locals>
+
+    <Scripts>
+      <Script>
+        if (Page.ShowDeviceContents)
+        {
+          PodcastSeriesQuery.DeviceId = [Page.DeviceId];
+        }
+      </Script>
+      
+      
+      <Script>Model.Content = [PodcastSeriesQuery.Result.Items];</Script>
+
+      
+      <Script>
+        int count = [PodcastSeriesQuery.Result.Items.Count];
+        Page.IsEmpty = [PodcastSeriesQuery.Result.IsEmpty];
+        ToggleSelectAllCommand.Description = sys:String.Format(zune:Shell.LoadString(zune:StringId.IDS_PODCASTS_HEADER), count);
+      </Script>
+      
+      
+      <Script>
+        if (Page.ShowDeviceContents)
+        {
+          Worker.Padding = new Inset(23,0,0,0);
+        }
+        else
+        {
+          Worker.Padding = new Inset(5,0,0,0);
+        }
+        Worker.LayoutSpacing = new Size(17,1);
+      </Script>
+
+      <Script>
+        if (Page.ShowDeviceContents)
+        {
+          DeleteKey.Command = DeleteFromDevice;
+          ContextMenu.Options = DeviceMenuOptions;
+          AddPodcastButton.Visible = false;
+        }
+        else
+        {
+          DeleteKey.Command = Unsubscribe;
+          ContextMenu.Options = LibraryMenuOptions;
+        }
+      </Script>
+
+      
+      <Script>
+        if ([ContextMenu.Helper.IsOpening])
+        {
+          data:PodcastSeries selectedItem = ((data:PodcastSeries)SelectionManager.SelectedItem);
+          
+          
+          if (selectedItem != null)
+            ShowErrorInfo.Hidden = selectedItem.ErrorCode >= 0;
+          else
+            ShowErrorInfo.Hidden = true;
+            
+          bool oneSelected = (SelectionManager.Count == 1);
+          bool isValidUrl = !sys:String.IsNullOrEmpty(selectedItem.FeedUrl);
+          bool isSubscribed = Page.IsSubscribed();
+          
+          Page.MarkAllAsPlayed.Available = oneSelected;
+          Page.MarkAllAsUnplayed.Available = oneSelected;
+          
+
+          Unsubscribe.Available = oneSelected;
+          Resubscribe.Available = oneSelected;
+          SeriesSettings.Available = oneSelected;
+          Unsubscribe.Hidden = !isSubscribed;
+          Resubscribe.Hidden = isSubscribed || !isValidUrl;
+          CheckForUpdates.Hidden = !isSubscribed;
+        }
+      </Script>
+      
+      
+      <Script>
+        [DeclareTrigger(AddPodcast.Invoked)]
+        
+        if (SubscribeDialog == null)
+        {
+          SubscribeDialog = new dialogs:SubscribeDialog();
+        }
+        SubscribeDialog.Helper.Show(SubscribeDialog);
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(SeriesSettings.Invoked)]
+        if (Page.SelectedSeriesId != -1)
+        {
+          SettingsDialog.SeriesId = Page.SelectedSeriesId;
+          SettingsDialog.Helper.Show(SettingsDialog);
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(ShowErrorInfo.Invoked)]
+        if (SelectionManager.Count > 0)
+        {
+          zune:Shell.ShowErrorDialog( 
+            ((data:PodcastSeries)SelectionManager.SelectedItem).ErrorCode, 
+            zune:Shell.LoadString(zune:StringId.IDS_PODCAST_SERIES_ERROR_DIALOG_TITLE));
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(CheckForUpdates.Invoked)]
+        if (SelectionManager.Count > 0)
+        {
+          foreach (data:PodcastSeries series in SelectionManager.SelectedItems)
+          {
+            sm:SubscriptionManager.Instance.Refresh(series.LibraryId);
+          }
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(DeleteSeries.Invoked)]
+        int selectedCount = SelectionManager.Count;
+        
+        if ( selectedCount > 0 )
+        {
+          string title = zune:Shell.LoadString(zune:StringId.IDS_PODCAST_DELETE_SERIES_DIALOG_TITLE);
+          
+          string message = null;
+        
+          if (selectedCount == 1)
+          {
+            message = sys:String.Format(
+              zune:Shell.LoadString(zune:StringId.IDS_PODCAST_DELETE_QUESTION_1_ITEM), 
+              ((data:PodcastSeries)SelectionManager.SelectedItem).Title );
+          }
+          else
+          {
+            message = sys:String.Format(
+              zune:Shell.LoadString(zune:StringId.IDS_PODCAST_DELETE_QUESTION_N_ITEM), 
+              selectedCount );
+          }
+          
+          zune:MessageBox.Show(title, message, DeleteSeriesConfirmed, null, null);
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(DeleteSeriesConfirmed.Invoked)]
+        if (SelectionManager.Count > 0)
+        {
+          foreach (data:PodcastSeries series in SelectionManager.SelectedItems)
+          {
+            sm:SubscriptionManager.Instance.Unsubscribe(series.LibraryId, true);
+          }
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(Unsubscribe.Invoked)]
+
+        if (Page.SelectedSeriesId != -1)
+        {
+          UnsubscribeDialog.SeriesId = Page.SelectedSeriesId;
+          UnsubscribeDialog.Helper.Show(UnsubscribeDialog);
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(Resubscribe.Invoked)]
+
+        if (SelectionManager.Count > 0)
+          foreach (data:PodcastSeries series in SelectionManager.SelectedItems)
+          {
+            Page.Resubscribe(series.LibraryId);
+          }
+      </Script>
+      
+      
+
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(SelectionManager.SelectedIndices)]
+        [DeclareTrigger(SelectionManager.SelectedItems)]
+        [DeclareTrigger(SelectionManager.SourceList.Count)]
+
+        int contentCount = 0;
+        if (SelectionManager.SourceList != null)
+          contentCount = SelectionManager.SourceList.Count;
+
+        
+        if (SelectionManager.Count == 1)
+        {
+          
+          Page.LastSelectedSeriesIndex = SelectionManager.SelectedIndex;
+
+          
+          Model.SelectedItem = SelectionManager.SelectedItem;
+          data:PodcastSeries selectedSeries = (data:PodcastSeries)SelectionManager.SelectedItem;
+          Page.SelectedSeriesId = selectedSeries.LibraryId;
+          Page.SeriesState = selectedSeries.SeriesState;
+        }
+        else
+        {
+          if (contentCount > 0)
+          {
+            SelectionManager.Select( sys:Math.Min( Page.LastSelectedSeriesIndex, contentCount - 1 ), true );
+          }
+          else
+          {
+            
+            Model.SelectedItem = null;
+            
+            if (SelectionManager.SourceList != null)
+            {
+              
+              
+              
+              Page.SelectedSeriesId = -1;
+            }
+          }
+        }
+      </Script>
+      
+      <Script>
+        <![CDATA[
+        if ([Page.SelectedSeriesId] != -1)
+        {
+          NavigateIntoArgs.Select = true;
+          NavigateIntoArgs.LibraryId = Page.SelectedSeriesId;
+        }
+        ]]>
+      </Script>      
+    </Scripts>
+    
+    <Content>
+      <Panel Layout="Dock">
+        <Children>
+          
+          
+          <gp:GalleryPanelWorker Name="Worker"
+            Margins="0,0,-2,18"
+            Model="{Model}"
+            SelectionManager="{SelectionManager}"
+            ContextMenu="{ContextMenu}"
+            EditContext="{EditContext}"
+            NavigateIntoArgs="{NavigateIntoArgs}"
+            ScrollMargins="{ScrollInset}" 
+            GalleryViewType="{GalleryViewType}"
+            ToggleSelectAllCommand="{ToggleSelectAllCommand}"
+            LayoutSpacing="17,0" 
+            Padding="{ColumnInset}"
+            HeaderMargins="{HeaderMargins}"/>
+
+          <core:BigActionButton Name="AddPodcastButton" Model="{AddPodcast}">
+            <LayoutInput>
+              <DockLayoutInput Position="Bottom" Alignment="Near"/>
+            </LayoutInput>
+          </core:BigActionButton>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="SeriesGalleryView" Base="gp:GalleryView">
+    <Properties>
+      <Type Name="ListItemType" Type="{typeof(me:SeriesThumbnailButton)}"/>
+      <Type Name="ProviderType" Type="{typeof(me:SeriesThumbnailButtonProvider)}"/>
+    </Properties>
+  </UI>
+
+
+  
+  
+  
+  <Class Name="SeriesThumbnailButtonProvider" Base="thumbbutton:ThumbnailButtonProvider">
+    <Properties>
+      <zune:ListPanel Name="ListModel" ListPanel="$Required"/>
+      <data:PodcastSeries Name="Model" PodcastSeries="$Required"/>
+      <SelectionManager Name="SelectionManager" SelectionManager="$Required"/>
+    </Properties>
+
+    <Scripts>
+      <Script>DragValue = SelectionManager;</Script>
+
+      
+      <Script>
+        
+        col:IList selectedItems = SelectionManager.SelectedItems;
+
+        if (!List.IsNullOrEmpty(selectedItems))
+        {
+          Selected = selectedItems.IndexOf((sys:Object)Model) >= 0;
+        }
+        else
+        {
+          Selected = false;
+        }
+      </Script>
+
+      
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(Model.ArtUrl)]
+        [DeclareTrigger(Model.Title)]
+
+        PrimaryLabel = Model.Title;
+        
+        if (!String.IsNullOrEmpty(Model.ArtUrl))
+        {
+          
+          Image = new Image(Model.ArtUrl, new Inset(0,0,0,0), new Size(86,86));
+        }
+        else
+        {
+          Image = styles:Styles.NoAlbumArt;
+        }
+      </Script>
+      
+      
+      <Script>
+        if (SelectionManager.SourceList != null)
+        {
+          
+          col:IList selectedItems = [SelectionManager.SelectedItems];
+          
+          if (!List.IsNullOrEmpty(selectedItems))
+          {
+            Selected = selectedItems.IndexOf((sys:Object)Model) >= 0;
+          }
+          else
+          {
+            Selected = false;
+          }
+        }
+        else
+        {
+          Selected = false;
+        }
+      </Script>
+    </Scripts>
+  </Class>
+
+  
+  
+  
+  
+  <UI Name="SeriesThumbnailButton" Base="list:ThumbnailListItemBase">
+    <Scripts>
+      
+      
+      <Script>Root.Padding = new Inset(0,10,0,0);</Script>
+      
+      
+      <Script>
+        if ( [((data:PodcastSeries)Provider.Model).ErrorCode] &lt; 0 &amp;&amp;
+          
+          
+             !( zune:Shell.DefaultInstance.CurrentPage is zune:LibraryPage &amp;&amp;
+                ((zune:LibraryPage)zune:Shell.DefaultInstance.CurrentPage).ShowDeviceContents )
+           )
+        {
+          OverlayType = typeof(me:ErrorNotificationOverlay);
+        }
+        else
+        {
+          OverlayType = null;
+        }
+      </Script>
+    </Scripts>
+  </UI>
+  
+  
+  
+  
+  
+  <UI Name="ErrorNotificationOverlay" Base="thumbbutton:ThumbnailButtonOverlay">
+
+    <Properties>
+      <Image Name="ErrorOverlayImage" Image="{styles:Styles.AttentionImage}"/>
+    </Properties>
+    
+    <Content>
+        <Graphic Name="ErrorOverlay" 
+                 Content="{ErrorOverlayImage}" 
+                 Layout="Fill" 
+                 HorizontalAlignment="Near" 
+                 VerticalAlignment="Far" 
+                 StretchingPolicy="None">
+          <Animations>
+            <Animation Animation="{animations:Animations.ErrorOverlayPulse}"/>
+          </Animations>
+        </Graphic>
+    </Content>
+  </UI>
+  
+</UIX>
+

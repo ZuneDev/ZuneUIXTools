@@ -1,0 +1,688 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:page="res://ZuneShellResources!PageStack.uix"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:data="res://ZuneShellResources!LibraryData.schema.xml"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:dbapi="assembly://ZuneDBApi/"
+  xmlns:icons="res://ZuneShellResources!DeviceIcons.uix"
+  xmlns:sys="assembly://mscorlib/System"
+  xmlns:animations="res://ZuneShellResources!Animations.uix"
+  xmlns:notification="res://ZuneShellResources!NotificationArea.uix"
+  xmlns:gasgauge="res://ZuneShellResources!GasGauge.uix"
+  xmlns:panels="res://ZuneShellResources!LibraryPanels.uix"
+  xmlns:mctl="res://ZuneMarketplaceResources!Controls.uix"
+  xmlns:me="Me">
+
+  <UI Name="DeviceStatus" Base="page:PageBase">
+    <Locals>
+      <me:SyncStatusPage Name="InnerPage" ParentPage="{Page}"/>
+      <ScrollingData Name="ScrollData"/>
+    </Locals>
+
+     <Input>
+      <ScrollingHandler Name="ScrollHandler" ScrollingData="{ScrollData}"/>
+    </Input>
+
+    <Scripts>
+      <Script>
+        InnerPage.ParentPage = [Page];
+      </Script>
+      <Script>
+        if ([zune:SyncControls.Instance.CurrentDeviceConnected])
+        {
+          Body.RequestSource([InnerPage.ChildPage], "Page", InnerPage);
+          Body.MaximumSize = new Size(0,0);
+        }
+        else
+        {
+          Body.RequestSource(typeof(me:PleaseConnect));
+          Body.MaximumSize = new Size(0, 350);
+        }
+      </Script>
+      <Script> Content.ShowNear = [ScrollData.CanScrollUp]; </Script>
+      <Script> Content.ShowFar = [ScrollData.CanScrollDown]; </Script>
+    </Scripts>
+    <Content>
+      <Panel Layout="Anchor">
+        <Children>
+          <core:ScrollBar Name="ScrollBar" ScrollData="{ScrollData}">
+            <LayoutInput>
+              <AnchorLayoutInput Right="Parent,1"/>
+            </LayoutInput>
+          </core:ScrollBar>
+
+          <Panel>
+            <LayoutInput>
+              <AnchorLayoutInput Left="Parent,0" Top="Parent,0"/>
+            </LayoutInput>
+            <Layout>
+              <DockLayout SizeToChildren="true"/>
+            </Layout>
+            <Children>
+              <me:HeroDevice Margins="0,39,47,0" MaximumSize="335,0">
+                <LayoutInput>
+                  <DockLayoutInput Position="Left" Alignment="Near"/>
+                </LayoutInput>
+              </me:HeroDevice>
+
+              <Scroller Name="Content" FadeSize="5" Orientation="Vertical" ScrollingData="{ScrollData}" Margins="0,47,20,20">
+                <LayoutInput>
+                  <DockLayoutInput Position="Top" Alignment="Near"/>
+                </LayoutInput>
+                <Children>
+                  <Host Name="Body"/>
+                </Children>
+              </Scroller>
+            </Children>
+          </Panel>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  <UI Name="DeviceStatusInnerPageBase">
+    <Properties>
+      <me:SyncStatusPage Name="Page" SyncStatusPage="$Required"/>
+      <Boolean Name="HandleBack" Boolean="true"/>
+    </Properties>
+    <Scripts>
+      <Script>
+        Page.ParentPage.ShouldHandleBack = [HandleBack];
+      </Script>
+      <Script>
+        [DeclareTrigger(Page.ParentPage.BackHandled)]
+        Page.ChildPage = "res://ZuneShellResources!DeviceStatus.uix#MainSyncStatus";
+      </Script>
+    </Scripts>
+  </UI>
+
+  <UI Name="MainSyncStatus" Base="me:DeviceStatusInnerPageBase">
+    <Properties>
+      <Boolean Name="HandleBack" Boolean="false"/>
+    </Properties>
+    <Content>
+      <Panel>
+        <Layout>
+          <DockLayout SizeToChildren="true"/>
+        </Layout>
+        <Children>
+
+          <me:SyncBucket Name="SyncedBucket"
+                         Title="{zune:Shell.LoadString(zune:StringId.IDS_ITEMS_SYNCED_TITLE)}"
+                         Status="{zune:Shell.LoadString(zune:StringId.IDS_ITEMS_SYNCED_STATUS)}"
+                         BucketShowDelay="0.2"
+                         Page="{Page}" Complete="true">
+            <LayoutInput>
+              <DockLayoutInput Position="Top"/>
+            </LayoutInput>
+          </me:SyncBucket>
+
+          <me:SyncBucket Name="RemainingBucket"
+                         Title="{zune:Shell.LoadString(zune:StringId.IDS_ITEMS_REMAINING_TITLE)}"
+                         Status="{zune:Shell.LoadString(zune:StringId.IDS_ITEMS_REMAINING_STATUS)}"
+                         BucketShowDelay="0.3"
+                         Page="{Page}" Remaining="true">
+            <LayoutInput>
+              <DockLayoutInput Position="Top"/>
+            </LayoutInput>
+          </me:SyncBucket>
+
+          <me:SyncBucket Name="RemovedBucket"
+                         Title="{zune:Shell.LoadString(zune:StringId.IDS_ITEMS_REMOVED_TITLE)}"
+                         Status="{zune:Shell.LoadString(zune:StringId.IDS_ITEMS_REMOVED_STATUS)}"
+                         BucketShowDelay="0.4"
+                         Page="{Page}" Complete="true" Operation="{zune:SyncControls.ConvertSyncOperationToInt(dbapi:ESyncOperation.eSyncOperationDeleteFromDevice)}">
+            <LayoutInput>
+              <DockLayoutInput Position="Top"/>
+            </LayoutInput>
+          </me:SyncBucket>
+
+          <me:SyncBucket Name="FailedBucket"
+                         Title="{zune:Shell.LoadString(zune:StringId.IDS_ITEMS_FAILED_TITLE)}"
+                         Status="{zune:Shell.LoadString(zune:StringId.IDS_ITEMS_FAILED_STATUS)}"
+                         BucketShowDelay="0.5"
+                         Page="{Page}" Failed="true"
+                         Destination="res://ZuneShellResources!DeviceStatusStandardDrilldown.uix#ErrorDrilldownPage">
+            <LayoutInput>
+              <DockLayoutInput Position="Top"/>
+            </LayoutInput>
+          </me:SyncBucket>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  <UI Name="SyncBucket">
+    <Properties>
+      <String Name="Title" String="{null}"/>
+      <String Name="Status" String="{null}"/>
+
+      <Boolean Name="Remaining" Boolean="false"/>
+      <Boolean Name="Complete" Boolean="false"/>
+      <Boolean Name="Failed" Boolean="false"/>
+      <Int32 Name="Operation" Int32="{zune:SyncControls.ConvertSyncOperationToInt(dbapi:ESyncOperation.eSyncOperationSendToDevice)}"/>
+
+      <me:SyncStatusPage Name="Page" SyncStatusPage="$Required"/>
+
+      <Inset Name="Margins" Inset="20,20,20,0"/>
+
+      <String Name="Destination" String="res://ZuneShellResources!DeviceStatusStandardDrilldown.uix#StandardDrilldownPage"/>
+
+      
+      <Single Name="BucketShowDelay" Single="0.0"/>
+      <TransformAnimation Name="SlideXForm" Delay="{BucketShowDelay + me:AnimationHelper.FlipLength}" Source="{animations:Animations.DeviceLandUIElementSlide}"/>
+    </Properties>
+    <Locals>
+      <iris:Command Name="NavigateCommand"/>
+
+      <data:LibrarySyncItemQuery Name="SyncItemQuery"
+                                 DeviceId="{zune:SyncControls.Instance.CurrentDeviceID}"
+                                 InitTime="{zune:SyncControls.Instance.StartupTime}"
+                                 Remaining="{Remaining}"
+                                 Complete="{Complete}"
+                                 Failed="{Failed}"
+                                 Operation="{Operation}"
+                                 MediaType="{zune:SyncControls.ConvertSyncTypeToInt(zune:MediaType.Undefined)}"/>
+    </Locals>
+    <Scripts>
+      <Script>
+        TitleText.Content = [Title];
+      </Script>
+      <Script>
+        Int32 count = [SyncItemQuery.Result.Items.Count];
+
+        MainContainer.Visible = (count > 0);
+        NavigateCommand.Description = [Status].Format(count);
+      </Script>
+      <Script>
+        [DeclareTrigger(NavigateCommand.Invoked)]
+        Page.Title = Title;
+        Page.Remaining = Remaining;
+        Page.Complete = Complete;
+        Page.Failed = Failed;
+        Page.Operation = Operation;
+        Page.ChildPage = Destination;
+      </Script>
+    </Scripts>
+    <Content>
+      <Panel Name="MainContainer" Layout="Anchor">
+
+        <Animations>
+          <Animation Animation="{animations:Animations.MoveNow}"/>
+          <SwitchAnimation SwitchAnimation="{me:AnimationHelper.DeviceLandUIElementSwitch}"/>
+        </Animations>
+
+        <Children>
+          <core:Label Name="TitleText" Style="{styles:SharedStyles.SyncTitle}" ShowToolTipWhenClipped="false">
+            <LayoutInput>
+              <AnchorLayoutInput Top="Parent,0" Left="Parent,0"/>
+            </LayoutInput>
+          </core:Label>
+
+          <mctl:MoreLink Name="StatusText" OverrideStyle="{styles:SharedStyles.SyncLink}"
+                         Model="{NavigateCommand}" IconMargin="6,4,0,0"
+                         Margins="0,2,0,33" KeyInteractiveNStuff="false">
+            <LayoutInput>
+              <AnchorLayoutInput Top="TitleText,1,-10" Left="Parent,0"/>
+            </LayoutInput>
+          </mctl:MoreLink>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  <Class Name="SyncStatusPage">
+    <Properties>
+      <String Name="ChildPage" String="res://ZuneShellResources!DeviceStatus.uix#MainSyncStatus"/>
+
+      <zune:ZunePage Name="ParentPage" ZunePage="$Required"/>
+
+      <Boolean Name="Remaining"/>
+      <Boolean Name="Complete"/>
+      <Boolean Name="Failed"/>
+      <Int32 Name="Operation"/>
+      <String Name="Title"/>
+    </Properties>
+  </Class>
+
+  <Class Name="QueryGroup">
+    <Properties>
+      
+      <Boolean Name="Remaining" Boolean="$Required"/>
+      <Boolean Name="Complete" Boolean="$Required"/>
+      <Boolean Name="Failed" Boolean="$Required"/>
+      <Int32 Name="Operation" Int32="$Required"/>
+
+      
+      <data:LibrarySyncItemQuery Name="MusicQuery"
+                                 DeviceId="{zune:SyncControls.Instance.CurrentDeviceID}"
+                                 InitTime="{zune:SyncControls.Instance.StartupTime}"
+                                 Remaining="{Remaining}"
+                                 Complete="{Complete}"
+                                 Failed="{Failed}"
+                                 Operation="{Operation}"
+                                 MediaType="{zune:SyncControls.ConvertSyncTypeToInt(zune:MediaType.Track)}"/>
+      <data:LibrarySyncItemQuery Name="VideoQuery"
+                                 DeviceId="{zune:SyncControls.Instance.CurrentDeviceID}"
+                                 InitTime="{zune:SyncControls.Instance.StartupTime}"
+                                 Remaining="{Remaining}"
+                                 Complete="{Complete}"
+                                 Failed="{Failed}"
+                                 Operation="{Operation}"
+                                 MediaType="{zune:SyncControls.ConvertSyncTypeToInt(zune:MediaType.Video)}"/>
+      <data:LibrarySyncItemQuery Name="PhotoQuery"
+                                 DeviceId="{zune:SyncControls.Instance.CurrentDeviceID}"
+                                 InitTime="{zune:SyncControls.Instance.StartupTime}"
+                                 Remaining="{Remaining}"
+                                 Complete="{Complete}"
+                                 Failed="{Failed}"
+                                 Operation="{Operation}"
+                                 MediaType="{zune:SyncControls.ConvertSyncTypeToInt(zune:MediaType.Photo)}"/>
+      <data:LibrarySyncItemQuery Name="PodcastQuery"
+                                 DeviceId="{zune:SyncControls.Instance.CurrentDeviceID}"
+                                 InitTime="{zune:SyncControls.Instance.StartupTime}"
+                                 Remaining="{Remaining}"
+                                 Complete="{Complete}"
+                                 Failed="{Failed}"
+                                 Operation="{Operation}"
+                                 MediaType="{zune:SyncControls.ConvertSyncTypeToInt(zune:MediaType.PodcastEpisode)}"/>
+      <Int32 Name="Count" Int32="0"/>
+    </Properties>
+    <Scripts>
+      <Script>
+        MusicQuery.Complete = [Complete];
+        VideoQuery.Complete = Complete;
+        PhotoQuery.Complete = Complete;
+        PodcastQuery.Complete = Complete;
+      </Script>
+      <Script>
+        MusicQuery.Remaining = [Remaining];
+        VideoQuery.Remaining = Remaining;
+        PhotoQuery.Remaining = Remaining;
+        PodcastQuery.Remaining = Remaining;
+      </Script>
+      <Script>
+        MusicQuery.Failed = [Failed];
+        VideoQuery.Failed = Failed;
+        PhotoQuery.Failed = Failed;
+        PodcastQuery.Failed = Failed;
+      </Script>
+      <Script>
+        MusicQuery.Operation = [Operation];
+        VideoQuery.Operation = Operation;
+        PhotoQuery.Operation = Operation;
+        PodcastQuery.Operation = Operation;
+      </Script>
+      <Script>
+        [DeclareTrigger(zune:SyncControls.Instance.CurrentDeviceID)]
+
+        MusicQuery.DeviceId = zune:SyncControls.Instance.CurrentDeviceID;
+        VideoQuery.DeviceId = zune:SyncControls.Instance.CurrentDeviceID;
+        PhotoQuery.DeviceId = zune:SyncControls.Instance.CurrentDeviceID;
+        PodcastQuery.DeviceId = zune:SyncControls.Instance.CurrentDeviceID;
+      </Script>
+
+      <Script>
+        Count = [MusicQuery.Result.Items.Count] +
+        [VideoQuery.Result.Items.Count] +
+        [PhotoQuery.Result.Items.Count] +
+        [PodcastQuery.Result.Items.Count];
+      </Script>
+    </Scripts>
+  </Class>
+
+  <UI Name="HeroDevice">
+    <Locals>
+      <icons:DeviceIcons Name="DeviceIcons" DeviceIcons="{icons:DeviceIconWrapper.DeviceIcons}"/>
+      <zune:DeviceChoice Name="Devices"/>
+
+      <iris:Command Name="PreviousDeviceCommand" Description="{zune:Shell.LoadString(zune:StringId.IDS_CHANGE_TO_PREVIOUS_DEVICE)}"/>
+      <iris:Command Name="NextDeviceCommand" Description="{zune:Shell.LoadString(zune:StringId.IDS_CHANGE_TO_NEXT_DEVICE)}"/>
+
+      <Single Name="ShineLength" Single="0.3"/>
+      
+      <Single Name="Overlap"     Single="0.05"/>
+
+      
+      
+      <Animation Name="DeviceSlide" CenterPointPercent="0.5,0.5,1.0">
+        <Keyframes>
+          <AlphaKeyframe Time="0.0"     Value="0.0"/>
+          <AlphaKeyframe Time="0.1"     Value="1.0"/>
+          <ScaleKeyframe Time="0.0"     Value="0.95,0.95,1.0"/>
+          <ScaleKeyframe Time="{me:AnimationHelper.SlideLength}" RelativeTo="Final"/>
+          <PositionKeyframe Time="0.0"  Value="-10,0,0" Interpolation="EaseIn,1.5,0.8"/>
+          <PositionKeyframe Time="{me:AnimationHelper.SlideLength}" RelativeTo="Final"/>
+        </Keyframes>
+      </Animation>
+
+       <Animation Name="ShineSlide" CenterPointPercent="0.5,0.5,1.0">
+        <Keyframes>
+          <AlphaKeyframe    Time="0.0"            Value="0.7"/>
+          <AlphaKeyframe    Time="{ShineLength * 0.5}" Value="0.6"/>
+          <AlphaKeyframe    Time="{ShineLength}"  Value="0.0"/>
+          <PositionKeyframe Time="0.0"            Value="-200,-150,0"/>
+          <PositionKeyframe Time="{ShineLength}"  Value="50,25,0"/>
+          <ScaleKeyframe    Time="0.0"            Value="0.8,0.8,1.0"/>
+          <ScaleKeyframe    Time="{ShineLength}"  Value="1,1,1" RelativeTo="Final"/>
+        </Keyframes>
+      </Animation>
+    </Locals>
+
+    <Scripts>
+      <Script>
+          ProgressNotification.Model = [zune:SyncControls.Instance.Notification];
+      </Script>
+      <Script>
+        <![CDATA[
+        if ([zune:SyncControls.Instance.CurrentDeviceConnected])
+        {
+          DeviceName.Content = sys:String.Format(zune:Shell.LoadString(zune:StringId.IDS_DEVICE_NAME_STRING),
+          [zune:SyncControls.Instance.CurrentDeviceName],
+          [zune:SyncControls.Instance.CurrentDeviceCapacity]);
+        }
+        else
+        {
+          DeviceName.Content = sys:String.Format("<b>{0}</b>", zune:SyncControls.Instance.CurrentDeviceName);
+        }
+        ]]>
+      </Script>
+      <Script>
+        
+        if ([zune:SyncControls.Instance.CurrentDeviceConnected])
+        {
+          
+        }
+        else
+        {
+          
+        }
+      </Script>
+      <Script>
+        Image.Content = [DeviceIcons.Current.LargeImage];
+      </Script>
+
+      <Script>
+        <![CDATA[
+        StartButton.Visible = ![zune:SyncControls.Instance.CurrentDeviceSyncing] && [zune:SyncControls.Instance.CurrentDeviceConnected];
+        StopButton.Visible = zune:SyncControls.Instance.CurrentDeviceSyncing && zune:SyncControls.Instance.CurrentDeviceConnected;
+        ]]>
+      </Script>
+
+      <Script>
+        Boolean deviceChooserVisible = [((iris:ArrayListDataSet)Devices.Options).Count] > 1;
+
+        PreviousDeviceButton.Visible = deviceChooserVisible;
+        NextDeviceButton.Visible = deviceChooserVisible;
+      </Script>
+
+      <Script>
+        [DeclareTrigger(PreviousDeviceCommand.Invoked)]
+        Devices.PreviousValue(true);
+      </Script>
+      <Script>
+        [DeclareTrigger(NextDeviceCommand.Invoked)]
+        Devices.NextValue(true);
+      </Script>
+
+      <Script>
+        SmallDeviceImage.Visible = me:AnimationHelper.PlayFlipAnimation;
+      </Script>
+
+    </Scripts>
+    <Content>
+      <Panel Layout="Anchor">
+        <Children>
+
+          <Panel Name="DeviceImagePanel" Layout="Anchor" Margins="0,0,0,120">
+            <LayoutInput>
+              <AnchorLayoutInput Top="Parent,0" Left="Parent,0" Horizontal="Fill"/>
+            </LayoutInput>
+            <Children>
+
+              <Graphic Name="Image" Content="{DeviceIcons.Current.LargeImage}"
+                       StretchingPolicy="Uniform"
+                       HorizontalAlignment="Center"
+                       MaximumSize="350,300"
+                       Layout="Form"
+                       Margins="0,0,25,0">
+                <LayoutInput>
+                  <AnchorLayoutInput Top="Parent,0" Horizontal="Fill"/>
+                </LayoutInput>
+
+                <Animations>
+                  <Animation Animation="{animations:Animations.MoveNow}"/>
+                  <SwitchAnimation Type="Show" Expression="{me:AnimationHelper.ShowAnim}">
+                    <Options>
+                      <TransformAnimation Name="Flip" Delay="{me:AnimationHelper.FlipLength - Overlap}" Source="{DeviceSlide}"/>
+                      <Animation Name="Slide" Animation="{DeviceSlide}"/>
+                    </Options>
+                  </SwitchAnimation>
+                  
+                  <Animation Animation="{animations:Animations.QuickContentChangeShow}"/>
+                  <Animation Animation="{animations:Animations.QuickContentChangeHide}"/>
+                </Animations>
+
+                 <Children>
+                  
+                  <Graphic Name="Shine" Content="{styles:Styles.CDShine}" SizingPolicy="SizeToConstraint" Scale="0.5,0.5,0">
+                    <LayoutInput>
+                      <FormLayoutInput ContributesToHeight="false" Left="Parent,0" Top="Parent,0"/>
+                    </LayoutInput>
+
+                    <Animations>
+                      <Animation Animation="{animations:Animations.MoveNow}"/>
+                      <SwitchAnimation Type="Show" Expression="{me:AnimationHelper.ShowAnim}">
+                        <Options>
+                          <TransformAnimation Name="Flip" Delay="{me:AnimationHelper.FlipLength}" Source="{ShineSlide}"/>
+                          <Animation Name="Slide" Animation="{ShineSlide}"/>
+                        </Options>
+                      </SwitchAnimation>
+                    </Animations>
+                  </Graphic>
+                </Children>
+              </Graphic>
+
+              
+              
+              
+              
+              <Panel>
+                <LayoutInput>
+                  <AnchorLayoutInput Left="Parent,0" Top="Parent,0"/>
+                </LayoutInput>
+                <Animations>
+                  <Animation Animation="{animations:Animations.MoveNow}"/>
+                  <SwitchAnimation Type="Show" Expression="{me:AnimationHelper.ShowAnim}">
+                    <Options>
+                      <Animation Name="Flip">
+                        <Keyframes>
+                          <PositionKeyframe Time="0.0" Value="-80,0,0" Interpolation="EaseOut,1.1,0.7"/>
+                          <PositionKeyframe Time="{me:AnimationHelper.FlipLength}" Value="38,0,0"/>
+                          
+                          <AlphaKeyframe    Time="0.0"                                       Value="0.0"/>
+                          <AlphaKeyframe    Time="0.1"                                       Value="1.0"/>
+                          <AlphaKeyframe    Time="{me:AnimationHelper.FlipLength}"           Value="1.0"/>
+                          <AlphaKeyframe    Time="{me:AnimationHelper.FlipLength + Overlap}" Value="0.0"/>
+                        </Keyframes>
+                      </Animation>
+                    </Options>
+                  </SwitchAnimation>
+                </Animations>
+
+                <Children>
+                  
+                  <Graphic Name="SmallDeviceImage" Content="{DeviceIcons.Current.LargeImage}" StretchingPolicy="Uniform" MaximumSize="0,300" >
+                    <Animations>
+                      <Animation Animation="{animations:Animations.MoveNow}"/>
+                      <SwitchAnimation Type="Show" Expression="{me:AnimationHelper.ShowAnim}">
+                        <Options>
+                          <Animation Name="Flip" CenterPointPercent="0.5,0.5,1.0">
+                            <Keyframes>
+                              <PositionKeyframe Time="0.0"                                   Value="0,200,0" Interpolation="EaseIn,2.0,0.7"/>
+                              <PositionKeyframe Time="{me:AnimationHelper.FlipLength}"       Value="0,0,0"/>
+                              <ScaleKeyframe    Time="0.00"                                  Value="0.1,0.1,1" Interpolation="EaseIn,2.0,0.99"/>
+                              <ScaleKeyframe    Time="{me:AnimationHelper.FlipLength * 0.8}" Value="0.75,0.75,1" Interpolation="EaseIn,2.0,0.99"/>
+                              <ScaleKeyframe    Time="{me:AnimationHelper.FlipLength}"       Value="0.95,0.95,1"/>
+                            </Keyframes>
+                          </Animation>
+                        </Options>
+                      </SwitchAnimation>
+                    </Animations>
+                  </Graphic>
+                </Children>
+              </Panel>
+
+              <Panel Layout="Dock">
+                <LayoutInput>
+                  <AnchorLayoutInput Left="Image,0,55" Right="Image,1,-50" Top="Image,0.75" Bottom="Image,1"/>
+                </LayoutInput>
+
+                <Animations>
+                  <Animation Animation="{animations:Animations.MoveNow}"/>
+                  <SwitchAnimation Type="Show" Expression="{me:AnimationHelper.ShowAnim}">
+                    <Options>
+                      <TransformAnimation Name="Flip" Delay="{me:AnimationHelper.FlipLength}" Source="{animations:Animations.BasicFadeIn}"/>
+                      <Animation Name="Slide" Animation="{animations:Animations.BasicFadeIn}"/>
+                    </Options>
+                  </SwitchAnimation>
+                </Animations>
+
+                <Children>
+                  <core:IconButton Name="PreviousDeviceButton"
+                                   Model="{PreviousDeviceCommand}"
+                                   Image="res://ZuneShellResources!PreviousDevice.png"
+                                   HoverImage="res://ZuneShellResources!PreviousDevice.Hover.png"
+                                   PressedImage="res://ZuneShellResources!PreviousDevice.Pressed.png">
+                    <LayoutInput>
+                      <DockLayoutInput Position="Left"/>
+                    </LayoutInput>
+                  </core:IconButton>
+
+                  <core:IconButton Name="NextDeviceButton"
+                                   Model="{NextDeviceCommand}"
+                                   Image="res://ZuneShellResources!NextDevice.png"
+                                   HoverImage="res://ZuneShellResources!NextDevice.Hover.png"
+                                   PressedImage="res://ZuneShellResources!NextDevice.Pressed.png">
+                    <LayoutInput>
+                      <DockLayoutInput Position="Right" />
+                    </LayoutInput>
+                  </core:IconButton>
+                </Children>
+              </Panel>
+            </Children>
+          </Panel>
+
+          
+          <Panel>
+            <LayoutInput>
+              <AnchorLayoutInput Top="DeviceImagePanel,1,-120" Left="Parent,0" Horizontal="Fill"/>
+            </LayoutInput>
+
+            <Layout>
+              <DockLayout DefaultLayoutInput="Top,Center" SizeToChildren="true"/>
+            </Layout>
+
+            <Animations>
+              <Animation Animation="{animations:Animations.MoveNow}"/>
+              <SwitchAnimation SwitchAnimation="{me:AnimationHelper.DeviceLandUIElementSwitch}"/>
+            </Animations>
+
+            <Children>
+              <core:Label Name="DeviceName" Margins="0,2,0,0" ShowToolTipWhenClipped="false">
+                <NamedStyles>
+                  <TextStyle Name="b" TextStyle="{styles:SharedStyles.DeviceNameStyle}"/>
+                  <TextStyle Name="l" TextStyle="{styles:SharedStyles.DeviceSizeStyle}"/>
+                </NamedStyles>
+              </core:Label>
+
+              <notification:StandaloneProgressArea Name="ProgressNotification" Model="{null}" MinimumSize="295,0" />
+
+              <core:BigActionButton Name="StartButton" Model="{zune:SyncControls.Instance.StartSyncCommand}"/>
+              <core:BigActionButton Name="StopButton" Model="{zune:SyncControls.Instance.StopSyncCommand}"/>
+            </Children>
+          </Panel>
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  <UI Name="DeviceBackground" Base="page:PageBase">
+    <Locals>
+      <icons:DeviceIcons Name="DeviceIcons" DeviceIcons="{icons:DeviceIconWrapper.DeviceIcons}"/>
+    </Locals>
+    <Scripts>
+      <Script>
+        BackgroundOverlayGraphic.Content = [DeviceIcons.Current.Background];
+      </Script>
+    </Scripts>
+    <Content>
+      <Panel Margins="1,1,1,7" Layout="Dock">
+        <Children>
+          
+          <Graphic Name="BackgroundOverlayGraphic" SizingPolicy="SizeToContent">
+            <LayoutInput>
+              <DockLayoutInput Position="Bottom" Alignment="Fill"/>
+            </LayoutInput>
+            <Animations>
+              <Animation Animation="{animations:Animations.BasicContentChangeShow}"/>
+              <Animation Animation="{animations:Animations.BasicContentChangeHide}"/>
+            </Animations>
+          </Graphic>
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  <UI Name="GasGauge" Base="page:PageBase">
+    <Scripts>
+      <Script>
+        GasGauge.Visible = [zune:SyncControls.Instance.CurrentDeviceConnected];
+      </Script>
+    </Scripts>
+    <Content>
+
+      <gasgauge:GasGauge Name="GasGauge"/>
+
+    </Content>
+  </UI>
+
+  
+  <UI Name="PleaseConnect">
+    <Content>
+      <Panel Layout="Center">
+        <Children>
+
+          <core:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_PLEASE_CONNECT_TO_SEE_STATUS)}"
+                      Style="{styles:SharedStyles.PleaseConnectStyle}" WordWrap="true">
+            <Animations>
+              <Animation Animation="{animations:Animations.DeviceLandUIElementSlide}"/>
+            </Animations>
+          </core:Label>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  <UI Name="PleaseConnectPanel" Base="panels:LibraryPanelBase">
+    <Properties>
+      <Single Name="MinimumPercent" Single="0.50"/>
+    </Properties>
+    <Content>
+
+      <me:PleaseConnect/>
+
+    </Content>
+  </UI>
+
+  <Class Name="AnimationHelper" Base="animations:FlipAnimationHelper"/>
+
+</UIX>

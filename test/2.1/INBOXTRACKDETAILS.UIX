@@ -1,0 +1,379 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:sys="assembly://mscorlib/System"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:track="res://ZuneMarketplaceResources!Track.uix"
+  xmlns:mctl="res://ZuneMarketplaceResources!Controls.uix"
+  xmlns:msgdata="res://ZuneShellResources!MessagingData.schema.xml"
+  xmlns:zmpdata="res://ZuneMarketplaceResources!MarketplaceData.schema.xml"
+  xmlns:actions="res://ZuneMarketplaceResources!TrackCollectionActions.uix"
+  xmlns:inboxdetails="res://ZuneShellResources!InboxBaseDetails.uix"
+  xmlns:me="Me">
+
+  
+  
+  
+  <UI Name="TrackCollection" Base="inboxdetails:MessageDetailsProvider">
+    <Properties>
+      <zmpdata:MarketplaceAlbumDataQuery Name="ZmpAlbumQuery" Id="" />
+    </Properties>
+
+    <Locals>
+      <actions:TrackCollectionActions Name="TrackCollectionActions"/>
+    </Locals>
+
+    <Scripts>
+
+      
+      <Script>
+        if ([ZmpAlbumQuery.Status] == iris:DataProviderQueryStatus.Complete)
+        {
+          AlbumArt.Content = new iris:Image(ZmpAlbumQuery.Result.ImageUri, 0, 0, false, true);
+          TracksListView.Visible = true;
+          
+          if (TracksListView.Content == null)
+          {
+            TracksListView.Content = ZmpAlbumQuery.Result.Tracks;
+          }
+          AlbumTitle.Content = ZmpAlbumQuery.Result.Title;
+          
+          if (ZmpAlbumQuery.Result.Artists.Count > 0)
+          {
+            ArtistName.Content = ((zmpdata:Media)ZmpAlbumQuery.Result.Artists.get_Item(0)).Title;
+          }
+          
+          if (ZmpAlbumQuery.Result.Genres.Count > 0)
+          {
+            GenreName.Content = ((zmpdata:Genre)ZmpAlbumQuery.Result.Genres.get_Item(0)).Title;
+          }
+          if ((Object)ZmpAlbumQuery.Result.ReleaseDate != null)
+          {
+            ReleaseYear.Content = ZmpAlbumQuery.Result.ReleaseDate.Year.ToString();
+          }
+          
+          TrackCollectionActions.Tracks = ZmpAlbumQuery.Result.Tracks;
+          TrackCollectionActions.CollectionType = "type:album";
+          TrackCollectionActions.CollectionName = ZmpAlbumQuery.Result.Title;
+          TrackCollectionActions.CollectionId = zune:GuidHelper.CreateFromString(ZmpAlbumQuery.Id);
+          TrackCollectionActions.CollectionPointsPrice = ZmpAlbumQuery.Result.PointsPrice;
+          
+          MessageDetailsCompleted = true;
+        }
+      </Script>
+      
+      <Script>
+        [DeclareTrigger(TrackCollectionActions.ButtonCommand)]
+        AlbumButton.Visible = (TrackCollectionActions.ButtonCommand != null &amp;&amp; TrackCollectionActions.ButtonCommand.Available);
+        AlbumButton.Model = TrackCollectionActions.ButtonCommand;
+      </Script>
+
+    </Scripts>
+    <Content>
+      <Panel Layout="Dock" Margins="10,5,0,0">
+        <Children>
+
+          
+          <inboxdetails:MessageDetailsHeader Name="Header" Model="{Model}" MessageDetailsQuery="{MessageDetailsQuery}" >
+            <LayoutInput>
+              <DockLayoutInput Position="Top"/>
+            </LayoutInput>
+          </inboxdetails:MessageDetailsHeader>
+
+          <Panel Layout="HorizontalFlow" Margins="13,0,0,0">
+            <LayoutInput>
+              <DockLayoutInput Position="Top"/>
+            </LayoutInput>
+            <Children>
+              
+              <Graphic Name="AlbumArt" MaximumSize="75,75" MinimumSize="75,75" Content="{styles:Styles.NoAlbumArt}"/>
+
+              
+              <Panel Layout="VerticalFlow" Margins="10,0,0,0">
+                <Children>
+
+                  <core:Label Name="AlbumTitle" Style="{styles:SharedStyles.InboxAlbumTitle}"/>
+
+                  <core:Label Name="ArtistName" Style="{styles:SharedStyles.InboxAlbumArtist}"/>
+
+                  <core:Label Name="GenreName" Style="{styles:SharedStyles.InboxAlbumGenre}"/>
+
+                  <core:Label Name="ReleaseYear" Style="{styles:SharedStyles.InboxAlbumRelease}"/>
+
+                  <mctl:MarketplaceActionButton Name="AlbumButton" Model="{TrackCollectionActions.ButtonCommand}" Visible="false" Margins="-3,3,0,0"/>
+                </Children>
+              </Panel>              
+
+            </Children>
+          </Panel>
+
+          
+          <track:TrackListView Name="TracksListView" Margins="0,20,0,0" Content="{null}" ColumnData="{track:Columns.Album}" Visible="false" OverrideStyle="{styles:SharedStyles.TrackListItemStyle}" ShowHeaders="false">
+            <LayoutInput>
+              <DockLayoutInput Position="Client"/>
+            </LayoutInput>
+          </track:TrackListView>
+
+          
+          <inboxdetails:MessageDetailsFooter Name="Footer" Model="{Model}" MessageDetailsQuery="{MessageDetailsQuery}" Margins="10,19,0,0">
+            <LayoutInput>
+              <DockLayoutInput Position="Bottom"/>
+            </LayoutInput>
+          </inboxdetails:MessageDetailsFooter>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="AlbumDetailsUI" Base="me:TrackCollection">
+
+    <Locals>
+      <msgdata:UriResourceZplQuery Name="ZplQuery" />
+      <zmpdata:MarketplaceSingleTrackDataQuery Name="ZmpTrackQuery" Id="" />
+      <Int32 Name="TrackIndex" Int32="-1" />
+    </Locals>
+
+    <Scripts>
+
+      
+      <Script>
+        if (!zune:GuidHelper.IsEmpty(Model.SelectedItem.MediaId))
+        {
+          ZmpAlbumQuery.Id = Model.SelectedItem.MediaId.ToString();
+        }
+      </Script>
+      
+      <Script>
+        if ([MessageDetailsQuery.Status] == iris:DataProviderQueryStatus.Complete)
+        {
+          if (zune:GuidHelper.IsEmpty(Model.SelectedItem.MediaId))
+          {
+            
+            AlbumTitle.Content = MessageDetailsQuery.Result.AlbumTitle;
+            ArtistName.Content = MessageDetailsQuery.Result.ArtistName;
+            
+            if (!String.IsNullOrEmpty(MessageDetailsQuery.Result.AltLink))
+            {
+              ZplQuery.URI = MessageDetailsQuery.Result.AltLink;
+            }
+          }
+        }
+      </Script>
+
+      
+      <Script>
+        if ([ZplQuery.Status] == iris:DataProviderQueryStatus.Complete)
+        {
+          if (!String.IsNullOrEmpty(ZplQuery.Result.Title))
+          {
+            AlbumTitle.Content = ZplQuery.Result.Title;
+          }
+          if (ZplQuery.Result.ZplTracks.Count > 0)
+          {
+            
+            TrackIndex = 0;
+          }
+        }
+      </Script>
+      
+      <Script>
+        if ([TrackIndex] >= 0)
+        {
+          if (TrackIndex == ZplQuery.Result.ZplTracks.Count)
+          {
+            
+            TrackIndex = -1;
+            
+            TracksListView.Visible = true;
+            TracksListView.Content = ZplQuery.Result.ZplTracks;
+            MessageDetailsCompleted = true;
+          }
+          else
+          {
+            zmpdata:Track track = (zmpdata:Track)ZplQuery.Result.ZplTracks.get_Item(TrackIndex);
+            if (!zune:GuidHelper.IsEmpty(track.Id))
+            {
+              
+              ZmpTrackQuery.Id = track.Id.ToString();
+            }
+            else
+            {
+              
+              TrackIndex = TrackIndex + 1;
+            }
+          }
+        }
+      </Script>
+      
+      <Script>
+        if ([ZmpTrackQuery.Status] == iris:DataProviderQueryStatus.Complete)
+        {
+          if(!zune:GuidHelper.IsEmpty(ZmpTrackQuery.Result.AlbumId))
+          {
+            ZmpAlbumQuery.Id = ZmpTrackQuery.Result.AlbumId.ToString();
+          }
+        }
+      </Script>
+
+    </Scripts>
+  </UI>
+
+  
+  
+  
+  <UI Name="PlaylistDetailsUI" Base="me:TrackCollection">
+    <Locals>
+      <zmpdata:MarketplacePlaylistDataQuery Name="PlaylistQuery" Id="" />
+      <msgdata:UriResourceZplQuery Name="ZplQuery" />
+    </Locals>
+
+    <Scripts>
+
+      
+      <Script>
+        if (!zune:GuidHelper.IsEmpty(Model.SelectedItem.MediaId))
+        {
+          PlaylistQuery.Id = Model.SelectedItem.MediaId.ToString();
+        }
+      </Script>
+
+      
+      <Script>
+        if ([PlaylistQuery.Status] == iris:DataProviderQueryStatus.Complete)
+        {
+          AlbumArt.Content = new iris:Image(PlaylistQuery.Result.ImageUri, 0, 0, false, true);
+          TracksListView.Visible = true;
+          
+          if (TracksListView.Content == null)
+          {
+            TracksListView.Content = PlaylistQuery.Result.Tracks;
+          }
+          AlbumTitle.Content = PlaylistQuery.Result.Title;
+          ArtistName.Content = PlaylistQuery.Result.Author;
+          
+          if (PlaylistQuery.Result.Genres.Count > 0)
+          {
+            GenreName.Content = ((zmpdata:Genre)PlaylistQuery.Result.Genres.get_Item(0)).Title;
+          }
+          
+          TrackCollectionActions.Tracks = PlaylistQuery.Result.Tracks;
+          TrackCollectionActions.CollectionType = "type:playlist";
+          TrackCollectionActions.CollectionName = PlaylistQuery.Result.Title;
+          TrackCollectionActions.CollectionId = zune:GuidHelper.CreateFromString(PlaylistQuery.Id);
+
+          MessageDetailsCompleted = true;
+        }
+      </Script>
+      
+      <Script>
+        [DeclareTrigger(TrackCollectionActions.ButtonCommand)]
+        AlbumButton.Visible = (TrackCollectionActions.ButtonCommand != null &amp;&amp;
+                               TrackCollectionActions.ButtonCommand.Available &amp;&amp;
+                               !zune:GuidHelper.IsEmpty(TrackCollectionActions.CollectionId));
+        AlbumButton.Model = TrackCollectionActions.ButtonCommand;
+      </Script>
+
+      
+      <Script>
+        if ([MessageDetailsQuery.Status] == iris:DataProviderQueryStatus.Complete)
+        {
+          if (zune:GuidHelper.IsEmpty(Model.SelectedItem.MediaId))
+          {
+            
+            AlbumTitle.Content = MessageDetailsQuery.Result.PlaylistName;
+            
+            ZplQuery.URI = MessageDetailsQuery.Result.AltLink;
+          }
+        }
+      </Script>
+
+      
+      <Script>
+        if ([ZplQuery.Status] == iris:DataProviderQueryStatus.Complete)
+        {
+          if (!String.IsNullOrEmpty(ZplQuery.Result.Title))
+          {
+            AlbumTitle.Content = ZplQuery.Result.Title;
+          }
+          if (!String.IsNullOrEmpty(ZplQuery.Result.Author))
+          {
+            ArtistName.Content = ZplQuery.Result.Author;
+          }
+          TracksListView.Visible = true;
+          TracksListView.Content = ZplQuery.Result.ZplTracks;
+
+          
+          TrackCollectionActions.Tracks = ZplQuery.Result.ZplTracks;
+          TrackCollectionActions.CollectionType = "type:playlist";
+          TrackCollectionActions.CollectionName = ZplQuery.Result.Title;
+
+          MessageDetailsCompleted = true;
+        }
+      </Script>
+
+    </Scripts>
+
+  </UI>
+
+  
+  
+  
+  <UI Name="TrackDetailsUI" Base="me:TrackCollection">
+    <Locals>
+      <zmpdata:MarketplaceSingleTrackDataQuery Name="ZmpTrackQuery" Id="" />
+    </Locals>
+
+    <Scripts>
+      
+      <Script>
+        if (!zune:GuidHelper.IsEmpty(Model.SelectedItem.MediaId))
+        {
+          ZmpTrackQuery.Id = Model.SelectedItem.MediaId.ToString();
+        }
+      </Script>
+      
+      <Script>
+        if ([ZmpTrackQuery.Status] == iris:DataProviderQueryStatus.Complete)
+        {
+          ZmpAlbumQuery.Id = ZmpTrackQuery.Result.AlbumId.ToString();
+          TracksListView.Visible = true;
+          TracksListView.Content = ZmpTrackQuery.Result.Tracks;
+
+          MessageDetailsCompleted = true;
+        }
+      </Script>
+      
+      <Script>
+        if ([MessageDetailsQuery.Status] == iris:DataProviderQueryStatus.Complete)
+        {
+          AlbumTitle.Content = MessageDetailsQuery.Result.AlbumTitle;
+          ArtistName.Content = MessageDetailsQuery.Result.ArtistName;
+
+          
+          zmpdata:Track track = new zmpdata:Track();
+          track.Id = new sys:Guid();
+          track.LibraryId = -1;
+          track.Title = MessageDetailsQuery.Result.SongTitle;
+          track.AlbumTitle = MessageDetailsQuery.Result.AlbumTitle;
+          track.ArtistName = MessageDetailsQuery.Result.ArtistName;
+
+          iris:ArrayListDataSet tracks = new iris:ArrayListDataSet();
+          tracks.Add(track);
+
+          TracksListView.Visible = true;
+          TracksListView.Content = tracks;
+
+          MessageDetailsCompleted = true;
+        }
+      </Script>
+    </Scripts>
+  </UI>
+
+</UIX>

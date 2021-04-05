@@ -1,0 +1,78 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:mgmt="res://ZuneShellResources!Management.uix"
+  xmlns:styles="res://ZuneShellResources!Styles.uix">
+
+  <UI Name="Default">
+    <Properties>
+      <zune:CategoryPage Name="Page" CategoryPage="$Required" />
+    </Properties>
+    <Locals>
+      <zune:Management Name="Management" Management="{zune:Management.Instance}"/>
+      <iris:Choice Name="RecordRate" Choice="{null}"/>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        RecordRate = [Management.RecordRate];        
+        Slider.Model = RecordRate;
+        if (RecordRate == null)
+        {
+          MemoryUsage.Content = zune:Shell.LoadString(zune:StringId.IDS_RIP_WMA_LOSSLESS);
+        }
+      </Script>
+      <Script>
+        if (RecordRate != null)
+        {
+          MemoryUsage.Content = ((iris:Command) [RecordRate.Chosen]).Description;
+        }
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel>
+        <Children>
+
+          <Panel>
+            <Layout>
+              <FlowLayout Orientation="Vertical" Spacing="4,0" StripAlignment="Near" ItemAlignment="Near"/>
+            </Layout>
+            <Children>
+
+              <mgmt:CheckBox Model="{Management.AutoCopyCD}"/>
+              <mgmt:CheckBox Model="{Management.AutoEjectCD}" Padding="0,0,0,15"/>
+
+              <mgmt:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_RIP_FORMAT_HEADER)}"/>
+
+              <core:RadioGroup Padding="0,0,0,15" AccessibleDescription="{zune:Shell.LoadString(zune:StringId.IDS_RIP_FORMAT_HEADER)}"
+                Model = "{Management.RecordMode}" />
+
+              <mgmt:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_AUDIO_QUALITY_HEADER)}"/>
+              <Panel Name="SliderPanel">
+                <Layout>
+                  <FlowLayout Orientation="Horizontal" ItemAlignment="Center" Spacing="10,0"/>
+                </Layout>
+
+                <Children>
+                  <core:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_SMALLEST_BIT_RATE)}" Style="{styles:SharedStyles.SettingsBodyStyle}"  WordWrap="false"/>
+                  <core:ChoiceSlider 
+                    Name="Slider"
+                    MaximumSize="75,0"/>
+                  <core:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_LARGEST_BIT_RATE)}" Style="{styles:SharedStyles.SettingsBodyStyle}" WordWrap="false"/>
+                </Children>
+              </Panel>
+              <core:Label Name="MemoryUsage" Style="{styles:SharedStyles.SettingsBodyStyle}" WordWrap="false"/>
+
+            </Children>
+          </Panel>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+</UIX>

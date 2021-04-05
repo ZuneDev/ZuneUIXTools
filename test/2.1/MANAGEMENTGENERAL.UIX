@@ -1,0 +1,102 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:zune="assembly://ZuneShell/ZuneUI" 
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:mgmt="res://ZuneShellResources!Management.uix"
+  xmlns:about="res://ZuneShellResources!AboutDialog.uix">
+
+  <UI Name="Default">
+    <Properties>
+      <zune:CategoryPage Name="Page" CategoryPage="$Required" />
+    </Properties>
+    <Locals>
+      <iris:Command Name="ChangeButtonModel" Description="{zune:Shell.LoadString(zune:StringId.IDS_MEDIA_FOLDER_BUTTON)}"/>
+      <iris:Command Name="CheckNowButtonModel" Description="{zune:Shell.LoadString(zune:StringId.IDS_CHECK_FOR_UPDATE_BUTTON)}"/>
+      <iris:Command Name="ResetWarningMessageButtonModel" Description="{zune:Shell.LoadString(zune:StringId.IDS_RESET_WARNINGS_BUTTON)}"/>      
+      <iris:Command Name="AboutZuneModel" Description="{zune:Shell.LoadString(zune:StringId.IDS_ABOUT)}"/>
+      <about:AboutDialog Name="AboutDialog"/>
+      <styles:LabelStyle Name="StyleWarn" Color="{styles:Styles.TextActive}" Font="{styles:Styles.SettingsText}"/>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        [DeclareTrigger(ChangeButtonModel.Invoked)]
+        zune:Management.Instance.ChooseMediaFolder();
+      </Script>
+      
+      <Script>MediaFolderPath.Content=[zune:Management.Instance.MediaFolder];</Script>
+      <Script>
+        [DeclareTrigger(ResetWarningMessageButtonModel.Invoked)]
+        zune:Management.Instance.ResetWarningMessages();
+      </Script>
+      
+      
+      <Script>
+        [DeclareTrigger(CheckNowButtonModel.Invoked)]
+        zune:SoftwareUpdates.Instance.CheckForUpdates(true);
+      </Script>
+
+      
+      <Script>
+        bool checking = [zune:SoftwareUpdates.Instance.CheckingForUpdates];
+        CheckNowButtonModel.Available = !checking;
+        Checking.Visible = checking;
+      </Script>
+
+      <Script>
+        [DeclareTrigger(AboutZuneModel.Invoked)]
+        AboutDialog.Helper.Show(AboutDialog);
+      </Script>
+      
+    </Scripts>
+    
+    <Content>
+      <Panel>
+        <Children>
+
+          <Panel>
+            <Layout>
+              <FlowLayout Orientation="Vertical" Spacing="4,0" StripAlignment="Near" ItemAlignment="Near"/>
+            </Layout>
+            <Children>
+              
+              <mgmt:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_MEDIA_FOLDER_HEADER)}" Margins="0,0,0,3"/>
+              <core:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_MEDIA_FOLDER_TEXT)}" Style="{styles:SharedStyles.SettingsBodyStyle}" WordWrap="true"/>
+              <core:Label Name="MediaFolderPath" Style="{styles:SharedStyles.SettingsBodyStyle}" WordWrap="false"/>
+
+              <core:ActionButton Name="ChangeButton" Model="{ChangeButtonModel}" TileMinSize="90,0" Margins="0,4,0,0"/>
+              
+              <mgmt:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_VIEW_WARNINGS_TITLE)}" Margins="0,15,0,0"/>
+
+              <core:Label Style="{styles:SharedStyles.SettingsBodyStyle}"  WordWrap="true"
+                    Content="{zune:Shell.LoadString(zune:StringId.IDS_VIEW_WARNINGS_HEADER)}" Padding="0,3,0,4"/>
+              
+              <core:ActionButton Name="ResetWarningMessageButton" Model="{ResetWarningMessageButtonModel}" TileMinSize="125,0" Padding="-2,0,0,0"/>
+
+              <mgmt:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_CHECK_FOR_UPDATES_TITLE)}" Margins="0,15,0,3"/>
+
+              <Panel Layout="HorizontalFlow" >
+                <Children>
+                  <core:ActionButton Name="CheckNowButton" Model="{CheckNowButtonModel}" TileMinSize="105,0" Padding="-2,0,0,0"/>
+                  <core:Label 
+                        Name="Checking" 
+                        Style="{styles:SharedStyles.SettingsBodyStyle}"  
+                        Content="{zune:Shell.LoadString(zune:StringId.IDS_CHECKING_FOR_UPDATES)}" 
+                        Margins="15,1,0,0" />
+                </Children>
+              </Panel>
+
+              <mgmt:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_GENERAL_INFORMATION_HEADER)}" Margins="0,15,0,3"/>
+
+              <core:ActionButton Name="AboutZuneButton" Model="{AboutZuneModel}" Padding="-2,0,0,0"/>
+            </Children>
+          </Panel>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+</UIX>

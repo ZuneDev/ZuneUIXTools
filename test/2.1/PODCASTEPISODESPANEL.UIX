@@ -1,0 +1,593 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:sm="assembly://ZuneDBApi/Microsoft.Zune.Subscription"
+  xmlns:util="assembly://ZuneDBApi/Microsoft.Zune.Util"
+  xmlns:col="assembly://mscorlib/System.Collections"
+  xmlns:panels="res://ZuneShellResources!LibraryPanels.uix"
+  xmlns:data="res://ZuneShellResources!LibraryData.schema.xml"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:columns="res://ZuneShellResources!PodcastEpisodesColumns.uix"
+  xmlns:spreadsheet="res://ZuneShellResources!SpreadSheetViewBase.uix"
+  xmlns:style="res://ZuneShellResources!Style.uix"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:dialogs="res://ZuneShellResources!PodcastDialogs.uix"
+  xmlns:mctl="res://ZuneMarketplaceResources!Controls.uix"
+  xmlns:me="Me">
+
+  
+  
+  
+  <UI Name="PodcastEpisodesPanel" Base="panels:LibraryPanelBase">
+    <Properties>
+      <zune:PodcastEpisodePanel Name="Model" PodcastEpisodePanel="$Required"/>
+      <zune:PodcastLibraryPage Name="Page" PodcastLibraryPage="$Required"/>
+      <spreadsheet:ColumnData Name="ColumnData" ColumnData="{columns:Columns.DefaultViewColumnData}"/>
+      <Command Name="ExecuteCommand"/>
+    </Properties>
+
+    <Locals>
+      <data:LibraryPodcastEpisodeQuery Name="PodcastEpisodeQuery" Sort="-ReleaseDate" SeriesId="-1" Enabled="false"
+                                       DeviceId="{Page.DeviceId}"
+                                       ShowDeviceContents="{Page.ShowDeviceContents}"/>
+
+      <zune:MenuItemCommand Name="Download" Description="{zune:Shell.LoadString(zune:StringId.IDS_DOWNLOAD_MENUITEM)}"/>
+      <zune:MenuItemCommand Name="MarkAsPlayed" Description="{zune:Shell.LoadString(zune:StringId.IDS_PODCAST_MARK_AS_PLAYED_MENUITEM)}"/>
+      <zune:MenuItemCommand Name="MarkAsUnplayed" Description="{zune:Shell.LoadString(zune:StringId.IDS_PODCAST_MARK_AS_UNPLAYED_MENUITEM)}"/>
+      <zune:MenuItemCommand Name="KeepUntilIDelete" Description="{zune:Shell.LoadString(zune:StringId.IDS_PODCAST_KEEP_UNTIL_I_DELETE_MENUITEM)}"/>
+      <zune:MenuItemCommand Name="DeleteEpisode" Description="{zune:Shell.LoadString(zune:StringId.IDS_LIBRARY_DELETE_MENU_ITEM)}"/>
+      <zune:MenuItemCommand Name="CancelDownload" Description="{zune:Shell.LoadString(zune:StringId.IDS_PODCAST_CANCEL_DOWNLOAD_MENUITEM)}"/>
+      <iris:Command Name="SeriesSettings" Description="{zune:Shell.LoadString(zune:StringId.IDS_PODCAST_SERIES_SETTINGS_MENUITEM)}"/>
+
+      <List Name="LibraryContextMenuOptions">
+        <Source>
+          
+          <iris:Command Command="{Play}"/>
+          <iris:Command Command="{AddToNowPlaying}"/>
+          <iris:Command Command="{MarkAsPlayed}"/>
+          <iris:Command Command="{MarkAsUnplayed}"/>
+          <iris:Command Command="{AddToBurnList}"/>
+
+          
+          <core:MenuDivider/>
+          <iris:Command Command="{Download}"/>
+          <iris:Command Command="{CancelDownload}"/>
+          <iris:Command Command="{KeepUntilIDelete}"/>
+          <iris:Command Command="{DeleteEpisode}"/>
+          <iris:Command Command="{Properties}"/>
+          
+          <core:MenuDivider MenuDivider="{SyncDivider}"/>
+          <iris:Command Command="{Sync}"/>
+          <iris:Command Command="{SyncAllUnexclude}"/>
+          <zune:MenuItemCommand MenuItemCommand="{Exclude}"/>
+          <zune:MenuItemCommand MenuItemCommand="{Unexclude}"/>
+          
+          
+          <core:MenuDivider/>
+          <iris:Command Command="{SeriesSettings}"/>
+        </Source>
+      </List>
+
+      <List Name="DeviceContextMenuOptions">
+        <Source>
+          <iris:Command Command="{ReverseSync}"/>
+          <iris:Command Command="{DeleteFromDevice}"/>
+        </Source>
+      </List>
+
+      <dialogs:SettingsDialog Name="SettingsDialog" Page="{Page}"/>
+    </Locals>
+
+    <Input>
+      <KeyHandler Key="Escape" HandlerStage="Bubbled" Command="{CancelDownload}"/>
+    </Input>
+
+    <Scripts>
+      <Script>
+        if (Page.ShowDeviceContents)
+        {
+          DeleteKey.Command = DeleteFromDevice;
+          Worker.ExecuteCommand = null;
+          ContextMenu.Options = DeviceContextMenuOptions;
+          columns:Columns.DownloadStatusButton.Visible = false;
+          columns:Columns.SyncStatusColumn.Visible = false;
+          columns:Columns.ErrorColumn.Visible = false;
+          columns:Columns.SizeOnDeviceColumn.Visible = true;
+        }
+        else
+        {
+          DeleteKey.Command = DeleteEpisode;
+          ContextMenu.Options = LibraryContextMenuOptions;
+          columns:Columns.DownloadStatusButton.Visible = true;
+          columns:Columns.SyncStatusColumn.Visible = true;
+          columns:Columns.ErrorColumn.Visible = true;
+          columns:Columns.SizeOnDeviceColumn.Visible = false;
+        }
+      </Script>
+
+      
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(Page.SelectedSeriesId)]
+        [DeclareTrigger(Page.DeviceId)]
+        [DeclareTrigger(zune:SignIn.Instance.LastSignedInUserId)]
+        [DeclareTrigger(Page.UseRulesQuery)]
+
+        if (!Page.UseRulesQuery)
+        {
+          PodcastEpisodeQuery.SeriesId = Page.SelectedSeriesId;
+          PodcastEpisodeQuery.RulesOnly = false;
+        }
+        else
+        {
+          PodcastEpisodeQuery.SeriesId = -1;
+          PodcastEpisodeQuery.RulesOnly = true;
+        }
+        
+        PodcastEpisodeQuery.DeviceId = Page.DeviceId;
+        PodcastEpisodeQuery.UserId = zune:SignIn.Instance.LastSignedInUserId;
+
+        PodcastEpisodeQuery.Enabled = Page.SelectedSeriesId >= 0 || Page.DeviceId > 0;
+      </Script>
+
+      
+      <Script>
+        if (PodcastEpisodeQuery.Result != null)
+        {
+          Model.Content = [PodcastEpisodeQuery.Result.Items];
+        }
+      </Script>
+
+      
+      <Script>
+        spreadsheet:SortDescription sort = (spreadsheet:SortDescription)[ColumnData.SortedColumn];
+
+        string sortBy = (string)panels:Globals.SortAscendingMap.GetItem([ColumnData.SortAscending]) + 
+                        sort.Attribute;
+
+        PodcastEpisodeQuery.Sort = sortBy;
+
+        SupportsJumpInList = sort.SupportsJumpInList;
+      </Script>
+
+      <Script>Worker.Content = [Model.Content];</Script>
+      <Script>Worker.SupportsJumpInList = [SupportsJumpInList];</Script>
+
+      
+      <Script>
+        [DeclareTrigger(SelectionManager.SelectedItems)]
+
+        if (SelectionManager.Count != 0)
+        {
+          Model.SelectedItem = SelectionManager.SelectedItem;
+
+          Model.SelectedLibraryIds.Clear();
+          foreach (data:PodcastEpisode episode in SelectionManager.SelectedItems)
+          {
+            Model.SelectedLibraryIds.Add(episode.LibraryId);
+          }
+
+          Page.SelectedEpisodeId = ((data:PodcastEpisode)Model.SelectedItem).LibraryId;
+        }
+        else
+        {
+          Model.SelectedItem = null;
+          Page.SelectedEpisodeId = -1;
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(ContextMenu.Helper.IsOpening)]
+        if (ContextMenu.Helper.IsOpening)
+        {
+          
+          Play.Available = false;
+          AddToNowPlaying.Available = false;
+
+          
+          MarkAsPlayed.Hidden = true;
+          MarkAsUnplayed.Hidden = true;
+          Download.Hidden = true;
+          CancelDownload.Hidden = true;
+          KeepUntilIDelete.Hidden = true;
+
+          
+          DeleteEpisode.Available = false;
+
+          Int32 numAudio = 0;
+          Int32 numVideo = 0;
+
+          if (SelectionManager.Count > 0)
+          {
+            foreach (data:PodcastEpisode episode in SelectionManager.SelectedItems)
+            {
+              
+              if (episode.PlayedStatus == 0)
+                MarkAsPlayed.Hidden = false;
+              else
+                MarkAsUnplayed.Hidden = false;
+
+              
+              if (String.IsNullOrEmpty(episode.SourceUrl))
+              {
+                if (episode.DownloadState == 2 /* eDownloadStateDownloading */)
+                  CancelDownload.Hidden = false;
+                else
+                  Download.Hidden = false;
+              }
+              else
+              {
+                
+                
+
+                if (episode.EpisodeMediaType == 4) 
+                {
+                  numVideo = numVideo + 1;
+                }
+                else
+                {
+                  numAudio = numAudio + 1;
+                }
+
+                if( episode.DownloadType == 1 /* eDownloadTypeAutomatic */ )
+                  KeepUntilIDelete.Hidden = false;
+                else
+                  DeleteEpisode.Available = true;
+              }
+            }
+
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+
+            if (numAudio &gt; 0 &amp;&amp; numVideo == 0)
+            {
+              Play.Available = true;
+              
+              if (!zune:TransportControls.Instance.PlayingVideo)
+                AddToNowPlaying.Available = true;
+            }
+            else if (numAudio == 0 &amp;&amp; numVideo == 1)
+            {
+              Play.Available = true;
+            }
+            
+            
+            
+            
+            AddToBurnList.Hidden = !Download.Hidden;
+          }
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(MarkAsPlayed.Invoked)]
+
+        if (SelectionManager.Count > 0)
+          foreach (data:PodcastEpisode episode in SelectionManager.SelectedItems)
+            episode.PlayedStatus = 1;
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(Page.MarkAllAsPlayed.Invoked)]
+
+        foreach (data:PodcastEpisode episode in (List)Model.Content)
+          episode.PlayedStatus = 1;
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(MarkAsUnplayed.Invoked)]
+
+        if (SelectionManager.Count > 0)
+          foreach (data:PodcastEpisode episode in SelectionManager.SelectedItems)
+          {
+            episode.PlayedStatus = 0;
+            episode.Bookmark = 0L;
+          }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(Page.MarkAllAsUnplayed.Invoked)]
+
+        foreach (data:PodcastEpisode episode in (List)Model.Content)
+        {
+          episode.PlayedStatus = 0;
+          episode.Bookmark = 0L;
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(KeepUntilIDelete.Invoked)]
+
+        if (SelectionManager.Count > 0)
+          foreach (data:PodcastEpisode episode in SelectionManager.SelectedItems)
+          {
+            sm:SubscriptionManager.Instance.SaveEpisodeToCollection(episode.SeriesId, episode.LibraryId);
+          }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(DeleteEpisode.Invoked)]
+
+        if (SelectionManager.Count > 0)
+          foreach (data:PodcastEpisode episode in SelectionManager.SelectedItems)
+          {
+            if ( episode.DownloadType != 1 /* eDownloadTypeAutomatic */ )
+            {
+              sm:SubscriptionManager.Instance.DeleteEpisode(episode.SeriesId, episode.LibraryId);
+            }
+          }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(CancelDownload.Invoked)]
+
+        if (SelectionManager.Count > 0)
+        {
+          foreach (data:PodcastEpisode episode in SelectionManager.SelectedItems)
+          {
+            util:DownloadTask downloadTask = util:DownloadManager.Instance.GetTask( episode.EnclosureUrl );
+
+            if ( downloadTask != null )
+            {
+              downloadTask.Cancel();
+            }
+          }
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(SeriesSettings.Invoked)]
+        if (Page.SelectedSeriesId != -1)
+        {
+          SettingsDialog.SeriesId = Page.SelectedSeriesId;
+          SettingsDialog.Helper.Show(SettingsDialog);
+        }
+      </Script>
+
+      
+      <Script>
+        [InitialEvaluate(true)]
+        
+        
+        
+        [DeclareTrigger(Model.Content.Count)]
+
+        NavigateIntoArgs.Select = true;
+        NavigateIntoArgs.LibraryId = Page.SelectedEpisodeId;
+      </Script>
+    </Scripts>
+
+    <Content>
+      
+      <me:PodcastSpreadSheet Name="Worker"
+        Margins="0,0,-2,0"
+        ScrollbarMargins="0,0,11,0"
+        Content="{Model.Content}"
+        ColumnData="{ColumnData}"
+        NavigateIntoArgs="{NavigateIntoArgs}"
+        SelectionManager="{SelectionManager}"
+        ContextMenu="{ContextMenu}"
+        ExecuteCommand="{ExecuteCommand}"
+        Play="{Play}"
+        Download="{Download}"
+        HeaderSpacing="22"
+        SelectedItemClicked="{Page.EpisodeClicked}"/>
+      </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="PodcastSpreadSheet" Base="mctl:SpreadSheet">
+    <Properties>
+      <SelectionManager Name="SelectionManager"/>
+      <Type Name="ListItemType" Type="{typeof(me:PodcastListItem)}"/>
+      <Boolean Name="ShowColumnDividers" Boolean="false"/>
+
+      
+      <Command Name="Play"/>
+      <Command Name="Download"/>
+      <Command Name="ExecuteCommand"/>
+    </Properties>
+
+    <Scripts>
+
+      
+      <Script>
+        [DeclareTrigger(SelectionManager.SelectedItems)]
+        [DeclareTrigger(((data:PodcastEpisode)SelectionManager.SelectedItem).SourceUrl)]   
+
+        Boolean canPlay = false;
+
+        if (SelectionManager.SourceList != null)
+        {
+          
+          
+          
+          
+          
+          
+
+          
+          
+          
+
+          Int32 numAudio   = 0;
+          Int32 numVideo   = 0;
+
+          foreach (data:PodcastEpisode episode in SelectionManager.SelectedItems)
+          {
+            if (!String.IsNullOrEmpty(episode.SourceUrl))
+            {
+              if (episode.EpisodeMediaType == 4) 
+              {
+                numVideo = numVideo + 1;
+              }
+              else
+              {
+                numAudio = numAudio + 1;
+              }
+            }
+          }
+
+          
+          
+
+          if (numAudio &gt; 0 &amp;&amp; numVideo == 0)
+          {
+            
+            canPlay = true;
+          }
+          else if (numAudio == 0 &amp;&amp; numVideo == 1)
+          {
+            
+            canPlay = true;
+          }
+        }
+        
+        zune:TransportControls.Instance.PagePlaySelection.Available = canPlay;
+      </Script>
+
+      
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(Content.Count)]
+
+        
+        spreadsheet:ColumnInfo videoColumn = columns:Columns.VideoIconColumn;
+        if (((col:IList)ColumnData.Columns).Contains(videoColumn))
+        {
+          
+          bool haveVideoPodcasts = false;
+
+          if (Content != null)
+          {
+            foreach (data:PodcastEpisode episode in Content)
+            {
+              if (episode.EpisodeMediaType == 4) 
+              {
+                haveVideoPodcasts = true;
+                
+              }
+            }
+            
+          }
+          videoColumn.Visible = haveVideoPodcasts;            
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(ExecuteCommand.Invoked)]
+
+        if ( SelectionManager.SourceList != null )
+        {
+          bool hasPlayableEpisodes = false;
+          foreach( data:PodcastEpisode episode in SelectionManager.SelectedItems )
+          {
+            hasPlayableEpisodes = hasPlayableEpisodes || !String.IsNullOrEmpty(episode.SourceUrl);
+          }
+
+          
+          
+          
+          
+
+          if (zune:TransportControls.Instance.PagePlaySelection.Available)
+          {
+            Play.Invoke(); 
+          }
+
+          Download.Invoke(); 
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(zune:TransportControls.Instance.PagePlaySelection.Invoked)]
+
+        
+        Play.Invoke();
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(Download.Invoked)]
+
+        if (SelectionManager.Count > 0)
+        {
+          foreach (data:PodcastEpisode episode in SelectionManager.SelectedItems)
+          {
+            if (String.IsNullOrEmpty(episode.SourceUrl))
+            {
+              zune:EpisodeDownloadCommand.DownloadEpisode( episode );
+            }
+          }
+        }
+      </Script>
+    </Scripts>
+  </UI>
+
+  
+
+
+
+
+
+  <UI Name="StandalonePodcastSpreadSheet" Base="me:PodcastSpreadSheet">
+    <Scripts>
+      <Script>
+        [DeclareTrigger(Play.Invoked)]
+
+        zune:TransportControls.Instance.PlayItems(SelectionManager.SelectedItems);
+      </Script>
+    </Scripts>
+  </UI>
+
+  
+  
+  
+  <UI Name="PodcastListItem" Base="spreadsheet:SpreadSheetListItem">
+    <Locals>
+      <style:Style Name="EpisodeStyle" Font="{styles:Styles.EpisodeListItem}"/>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        StatefulStyle.Override = EpisodeStyle;
+      </Script>
+
+      <Script>
+        
+        if ( [((data:PodcastEpisode)Model).PlayedStatus] == 0 )
+        {
+          EpisodeStyle.Color = styles:Styles.ListItemText;
+        }
+        else
+        {
+          EpisodeStyle.Color = styles:Styles.EpisodePlayedColor;
+        }
+      </Script>
+    </Scripts>
+  </UI>
+
+</UIX>

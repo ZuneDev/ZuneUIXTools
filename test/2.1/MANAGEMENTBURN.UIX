@@ -1,0 +1,49 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:mgmt="res://ZuneShellResources!Management.uix">
+
+  <UI Name="Default">
+    <Properties>
+      <zune:CategoryPage Name="Page" CategoryPage="$Required" />
+    </Properties>
+    <Locals>
+      <zune:Management Name="Management" Management="{zune:Management.Instance}"/>
+    </Locals>
+
+    <Content>
+      <Panel>
+        <Children>
+
+          <Panel>
+            <Layout>
+              <FlowLayout Orientation="Vertical" Spacing="4,0" StripAlignment="Near" ItemAlignment="Near"/>
+            </Layout>
+            <Children>
+
+              <mgmt:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_BURN_FORMAT_HEADER)}" WordWrap="false"/>
+              <core:RadioGroup 
+                AccessibleDescription="{zune:Shell.LoadString(zune:StringId.IDS_BURN_FORMAT_HEADER)}"
+                Model="{Management.BurnFormat}"
+                />
+              <mgmt:CheckBox Model="{Management.AutoEjectCDAfterBurn}" Margins="0,15,0,0"/>
+
+              <mgmt:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_BURN_SPEED_HEADER)}" WordWrap="false" Margins="0,15,0,0"/>
+
+              <core:RadioGroup 
+                Padding="0,0,0,15" 
+                AccessibleDescription="{zune:Shell.LoadString(zune:StringId.IDS_BURN_SPEED_HEADER)}"
+                Model="{Management.BurnSpeed}"
+                />
+
+            </Children>
+          </Panel>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+</UIX>

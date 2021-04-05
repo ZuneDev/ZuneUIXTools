@@ -1,0 +1,367 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX 
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:iris="assembly://UIX/Microsoft.Iris" 
+  xmlns:zune="assembly://ZuneShell/ZuneUI" 
+  xmlns:style="res://ZuneShellResources!Style.uix"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:anim="res://ZuneShellResources!Animations.uix"
+  xmlns:popup="res://ZuneShellResources!Popup.uix"
+  xmlns:button="res://ZuneShellResources!Button.uix"
+  xmlns:me="Me"
+  >
+
+  
+  
+  
+  
+
+  
+  
+  
+  <Class Name="ContextMenu" Base="popup:Popup">
+    <Properties>
+      <PopupLayoutInput Name="LayoutInput" Placement="MouseOrigin" />
+      <String Name="PopupUI" String="res://ZuneShellResources!ContextMenu.uix#ContextMenuUI"/>
+      <String Name="Title"/>
+      <List Name="Options"/>
+      <Object Name="SelectedItem" Object="{null}"/>
+      <Boolean Name="HideIfAllDisabled" Boolean="true"/>
+    </Properties>
+
+    <Scripts>
+      
+      
+      <Script> 
+        Helper.IsModal = true; 
+        Helper.DismissOnWindowDeactivate = true;
+      </Script>
+
+      
+      <Script>
+        if ([Helper.IsVisible] &amp;&amp; HideIfAllDisabled)
+        {
+          bool anyEnabled = false;
+          if (Options != null)
+          {
+            foreach (object item in Options)
+            {
+              if (item is Command)
+              {
+                Command command = (Command)item;
+                if (command.Available)
+                {
+                  if (!(command is zune:MenuItemCommand) || !((zune:MenuItemCommand)command).Hidden)
+                  {
+                    anyEnabled = true;
+                    
+                  }
+                }
+              }
+            }
+          }
+          
+          
+          if (!anyEnabled)
+          {
+            Helper.Hide();
+          }
+        }
+      </Script>
+    </Scripts>
+  </Class>
+
+  
+  
+  
+  <Class Name="MenuDivider" Shared="True">
+    <Properties>
+      <Boolean Name="Visible" Boolean="true"/>
+    </Properties>
+  </Class>
+
+  
+  
+  
+  <Class Name="MenuIcon">
+    <Properties>
+      <Image Name="Icon" Image="$Required"/>
+    </Properties>
+  </Class>
+    
+  
+  
+  
+  <UI Name="ContextMenuUI" Base="popup:PopupUI">
+    <Properties>
+      
+      
+      
+      <me:ContextMenu Name="Popup" ContextMenu="{null}" />
+
+      <Size Name="MinimumItemSize" Size="150,0"/>
+
+      <Boolean Name="StealFocusOnOpen" Boolean="true"/>
+    </Properties>
+
+    <Locals>
+      <SharedSize Name="SharedSize" MinimumSize="150,0" MaximumSize="250,0"/>
+    </Locals>
+
+    <Input>
+      
+      <ClickHandler Name="Clicker" ClickType="LeftMouse,RightMouse"/>
+      
+      <KeyHandler Name="Escape" Key="Escape" HandlerStage="Bubbled"/>
+    </Input>
+
+    <Scripts>      
+      
+      <Script>
+        if (StealFocusOnOpen)
+        {
+          
+          Root.NavigateInto();
+        }
+      </Script>
+      
+      
+      
+      <Script>
+        [DeclareTrigger(UI.DeepKeyFocus)]
+        if (!UI.DeepKeyFocus)
+        {
+          
+          Popup.Helper.Hide();
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(Escape.Invoked)]
+        
+        Popup.Helper.Hide();
+      </Script>
+
+      <Script>
+        string title = [Popup.Title];
+        Header.Content = title;
+        
+        bool showHeader = !String.IsNullOrEmpty(title);
+        HeaderDivider.Visible = showHeader;
+        Header.Visible = showHeader;
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Graphic Name="Root" Content="{styles:Styles.ContextMenuDropShadow}" Margins="-8,-8,-12,-12" Padding="8,8,12,12" SizingPolicy="SizeToChildren">
+        <Animations>
+          <Animation Animation="{anim:Animations.MenuFadeIn}"/>
+          <Animation Animation="{anim:Animations.MenuFadeOut}"/>
+        </Animations>
+        <Children>
+          
+          <Panel MouseInteractive="true" Padding="0,6,0,10" MinimumSize="150,0" MaximumSize="250,0">
+            <Layout>
+              <DockLayout SizeToChildren="true" DefaultLayoutInput="Top,Near"/>
+            </Layout>
+            <Children>
+              
+              <me:DefaultFocus/>
+
+              <button:Label Name="Header" SharedSize="{SharedSize}" SharedSizePolicy="SharesWidth,ContributesToWidth" Style="{styles:SharedStyles.MenuItemHeaderStyle}" Padding="10,0,10,0"/>
+
+              <me:DividerUI Name="HeaderDivider" SharedSize="{SharedSize}" SharedSizePolicy="SharesWidth,ContributesToWidth" Padding="6,6,6,6"/>
+
+              <Repeater Name="Repeater" Source="{Popup.Options}" Navigation="ContainAll,WrapVertical,WrapTabOrder">
+                <Layout>
+                  <DockLayout SizeToChildren="true" DefaultLayoutInput="Top,Near"/>
+                </Layout>
+                <ContentSelectors>
+                  <TypeSelector Type="{typeof(iris:Command)}" ContentName="CommandItem"/>
+                  <TypeSelector Type="{typeof(me:MenuDivider)}" ContentName="DividerItem"/>
+                  <TypeSelector Type="{typeof(me:MenuIcon)}" ContentName="IconItem"/>
+                </ContentSelectors>
+              </Repeater>
+            
+            </Children>
+          </Panel>
+
+        </Children>
+      </Graphic>
+    </Content>
+
+    <Content Name="CommandItem">
+      <me:ContextMenuItem SharedSize="{SharedSize}" SharedSizePolicy="SharesWidth,ContributesToWidth" Model="{(iris:Command)RepeatedItem}" ContextMenu="{Popup}" MinimumSize="{MinimumItemSize}">
+        <Visible>
+          <Script>
+            if (RepeatedItem is zune:MenuItemCommand)
+              return !((zune:MenuItemCommand)RepeatedItem).Hidden;
+            return true;
+          </Script>
+        </Visible>
+      </me:ContextMenuItem>
+    </Content>
+
+    <Content Name="DividerItem">
+      <me:DividerUI 
+        SharedSize="{SharedSize}" 
+        SharedSizePolicy="SharesWidth,ContributesToWidth" 
+        Padding="6,6,6,6"
+        Visible="{((me:MenuDivider)RepeatedItem).Visible}"
+        />
+    </Content>
+    
+    <Content Name="IconItem">
+      <me:IconUI SharedSize="{SharedSize}" Icon="{((me:MenuIcon)RepeatedItem).Icon}" SharedSizePolicy="SharesWidth,ContributesToWidth"/>
+    </Content>
+  </UI>
+
+  <UI Name="DividerUI">
+    <Content>
+      <ColorFill MinimumSize="50,1" Content="{styles:Styles.ColumnDivider}">
+      </ColorFill>
+    </Content>
+  </UI>
+  
+  <UI Name="IconUI">
+    <Properties>
+      <Image Name="Icon" Image="$Required"/>
+    </Properties>
+    <Content>
+      <Graphic Content="{Icon}" StretchingPolicy="None"/>
+    </Content>
+  </UI>
+
+  
+  
+  
+  
+  <UI Name="DefaultFocus">
+    <Scripts>
+      <Script>
+        UI.KeyInteractive = true;
+        UI.CreateInterestOnFocus = false;
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel MinimumSize="1,1"/> 
+    </Content>
+  </UI>
+
+  
+  
+  
+  
+  <UI Name="ContextMenuItem" Base="me:ContextMenuItemBase">
+    <Properties>
+      <iris:Command Name="Model" Command="$Required"/>
+      <button:CommandButtonProvider Name="Provider"/>
+    </Properties>
+
+    <Scripts>
+      <Script>Provider.Model = [Model];</Script>
+    </Scripts>    
+  </UI>
+  
+  
+  
+  
+  
+  <UI Name="ContextMenuItemBase" Base="button:LabelButtonWithBackground">
+    <Properties>
+      <Object Name="Model" Object="$Required"/>
+      <me:ContextMenu Name="ContextMenu" ContextMenu="$Required"/>
+      
+      <Color Name="BackgroundSelectedColor" Color="{styles:Styles.LightGray}"/>
+      <style:Style Name="BaseStyle" Style="{styles:SharedStyles.MenuItemStyle}"/>
+      <Inset Name="LabelMargins" Inset="10,1,10,1"/>
+      
+      <Boolean Name="ShowToolTipWhenClipped" Boolean="true"/>
+    </Properties>
+
+    <Scripts>
+      
+      <Script> Clicker.ClickType = (ClickType)"LeftMouse,RightMouse,Key"; </Script>
+      
+      
+      <Script> 
+        UI.KeyFocusOnMouseEnter = true; 
+        UI.CreateInterestOnFocus = false;
+      </Script>
+
+      
+      
+
+
+
+
+
+
+
+
+
+      
+      
+      
+      <Script>
+        if ([UI.DeepMouseFocus])
+        {
+          ContextMenu.SelectedItem = Model;
+        }
+        else
+        {
+          ContextMenu.SelectedItem = null;
+        }
+      </Script>
+
+      <Script>
+        if ([UI.DeepKeyFocus])
+        {
+          ContextMenu.SelectedItem = Model;
+        }
+      </Script>
+
+      
+      <Script>
+        Style.State.Disabled = ![Provider.Available];
+      </Script>
+      
+      
+      <Script>
+        bool selected = ([ContextMenu.SelectedItem] == Model);
+        Provider.Selected = selected;
+        
+        
+        
+        
+        if (selected)
+        {
+          Background.Content = BackgroundSelectedColor;
+        }
+        else
+        {
+          Background.Content = BackgroundColor;
+        }
+
+        
+        
+        
+        
+        Clicker.Enabled = selected;
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(Clicker.Invoked)]
+
+        
+
+        
+        ContextMenu.Helper.Hide();
+      </Script>
+    </Scripts>
+  </UI>
+
+</UIX>

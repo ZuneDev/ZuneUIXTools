@@ -1,0 +1,353 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:dialog="res://ZuneShellResources!Dialog.uix"
+  xmlns:spreadsheet="res://ZuneShellResources!SpreadSheetViewBase.uix"
+  xmlns:columns="res://ZuneShellResources!PlaylistContentsPanelColumns.uix"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:data="res://ZuneShellResources!LibraryData.schema.xml"
+  xmlns:addto="res://ZuneShellResources!AddToPlaylist.uix"
+  xmlns:me="Me"
+  >
+
+  
+  
+  
+  <Class Name="AddToPlaylistDialog" Base="dialog:Dialog">
+    <Properties>
+      <String Name="ContentUI" String="res://ZuneShellResources!PlaylistDialog.uix#AddToPlaylistDialogContentUI"/>
+      <iris:Command Name="CreatePlaylist" Description="{zune:Shell.LoadString(zune:StringId.IDS_PLAYLIST_DIALOG_CREATEPLAYLIST)}"/>
+      <List Name="DragItems" List="{null}"/>
+      <addto:AddToPlaylist Name="AddToPlaylist"/>
+    </Properties>
+
+    <Locals>
+      <me:CreatePlaylistDialog Name="CreatePlaylistDialog"/>
+    </Locals>
+
+    <Scripts>
+      
+      <Script>
+        [DeclareTrigger(CreatePlaylist.Invoked)]
+        
+        CreatePlaylistDialog.DragItems = DragItems;
+        CreatePlaylistDialog.Helper.Show(CreatePlaylistDialog);
+      </Script>
+      
+      
+      <Script>
+        [DeclareTrigger(CreatePlaylistDialog.Completed.Invoked)]
+        
+        Helper.Hide();
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(Helper.IsVisible)]
+        if (!Helper.IsVisible)
+        {
+          DragItems = null;
+        }
+      </Script>
+    </Scripts>
+  </Class>
+
+
+  
+  
+  
+  <UI Name="AddToPlaylistDialogContentUI" Base="dialog:DialogContentUI">
+    <Properties>
+      <me:AddToPlaylistDialog Name="Dialog" AddToPlaylistDialog="$Required"/>
+    </Properties>
+
+    <Locals>
+      <iris:Command Name="OK" Description="{zune:Shell.LoadString(zune:StringId.IDS_DIALOG_OK)}"/>
+      
+      <data:LibraryPlaylistQuery Name="PlaylistQuery" Sort="+Title" DeviceId="0" AutoRefresh="false"/>
+
+      <SelectionManager Name="SelectionManager" SingleSelect="true"/>
+
+      <spreadsheet:ColumnData Name="ColumnData">
+        <Columns>
+          <spreadsheet:ColumnInfo CellType="{typeof(columns:PlaylistCell)}" Resizable="false">
+            <LayoutInput>
+              <DockLayoutInput Position="Top"/>
+            </LayoutInput>
+          </spreadsheet:ColumnInfo>
+        </Columns>
+      </spreadsheet:ColumnData>
+
+      <Command Name="ExecuteCommand"/>      
+    </Locals>
+
+    <Scripts>
+      
+      <Script>OK.Available = ([SelectionManager.Count] == 1);</Script>
+
+      
+      <Script>
+        if (PlaylistQuery.Result.Items.Count == 0)
+        {
+          Dialog.CreatePlaylist.Invoke();
+          Dialog.Helper.Hide();
+        }
+      </Script>
+      
+      
+      <Script>
+        [DeclareTrigger(OK.Invoked)]
+        [DeclareTrigger(ExecuteCommand.Invoked)]
+
+        if (OK.Available)
+        {
+          data:Playlist playlist = (data:Playlist)SelectionManager.SelectedItem;
+          if (playlist != null)
+          {
+            Dialog.AddToPlaylist.PlaylistId = playlist.LibraryId;
+            Dialog.AddToPlaylist.Items = Dialog.DragItems;
+            Dialog.AddToPlaylist.Start.Invoke();
+          }
+          
+          OK.Available = false;
+          Dialog.Helper.Hide();
+        }
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel Navigation="ContainAll,WrapAll" Margins="10">
+        <Layout>
+          <DockLayout SizeToChildren="true" DefaultLayoutInput="Top,Near"/>
+        </Layout>
+        <Children>
+
+          <core:Label 
+                Content="{zune:Shell.LoadString(zune:StringId.IDS_PLAYLIST_DIALOG_TITLE)}"
+                Style="{styles:SharedStyles.DialogHeaderStyle}"
+                WordWrap="true"/>
+
+          <spreadsheet:SpreadSheet Name="PlaylistsList" 
+            Content="{PlaylistQuery.Result.Items}"
+            ColumnData="{ColumnData}"
+            SelectionManager="{SelectionManager}"
+            ExecuteCommand="{ExecuteCommand}" 
+            AllowHorizontalScrolling="false"
+            Margins="5,10,0,0"
+            Padding="0"
+            MaximumSize="250,300"
+            SupportsJumpInList="true"
+            HighlightHeaders="false"
+            />
+
+          <Panel>
+            <Layout>
+              <DockLayout SizeToChildren="true" DefaultLayoutInput="Left,Near"/>
+            </Layout>
+            <Children>
+
+              <core:BigActionButton Model="{OK}" Margins="10,0,0,0"/>
+              <core:BigActionButton Model="{Dialog.Cancel}" Margins="10,0,0,0" FocusOrder="1"/>
+              <core:BigActionButton Name="CreatePlaylistButton" Model="{Dialog.CreatePlaylist}" Margins="10,0,0,0"/>
+
+            </Children>
+          </Panel>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  
+  <Class Name="CreatePlaylistDialog" Base="dialog:Dialog">
+    <Properties>
+      <String Name="ContentUI" String="res://ZuneShellResources!PlaylistDialog.uix#CreatePlaylistDialogContentUI"/>
+      <List Name="DragItems" List="{null}"/>
+      <Int32 Name="RenamePlaylistId" Int32="-1"/> 
+
+      <iris:Command Name="OK" Description="{zune:Shell.LoadString(zune:StringId.IDS_DIALOG_OK)}"/>
+      
+      <EditableTextData Name="EditData" Value="{null}"/>
+      
+      <Command Name="Completed"/>
+      <Int32 Name="CreatedPlaylistId" Int32="-1"/>
+      <addto:AddToPlaylist Name="AddToPlaylist"/>
+
+      <String Name="ErrorMessage"/>
+    </Properties>
+
+    <Scripts>
+      
+      <Script>
+        [DeclareTrigger(Helper.IsVisible)]
+        if (Helper.IsVisible)
+        {
+          CreatedPlaylistId = -1;
+          if (EditData.Value == null)
+          {
+            EditData.Value = zune:Shell.LoadString(zune:StringId.IDS_NEW_PLAYLIST_NAME);
+          }
+          OK.Available = true;
+          
+          
+          
+          
+          
+          
+          if (RenamePlaylistId >= 0)
+          {
+            OK.Invoke();
+          }
+        }
+        else
+        {
+          DragItems = null;
+          RenamePlaylistId = -1;
+          EditData.Value = null;
+          ErrorMessage = null;
+        }
+      </Script>
+      
+      
+      <Script>
+        [DeclareTrigger(OK.Invoked)]
+        [DeclareTrigger(EditData.Submitted)]
+
+        if (OK.Available)
+        {
+          zune:PlaylistResult result;
+          if (RenamePlaylistId >= 0)
+          {
+            result = zune:PlaylistManager.Instance.RenamePlaylist(RenamePlaylistId, EditData.Value);
+          }
+          else
+          {
+            result = zune:PlaylistManager.Instance.CreatePlaylist(EditData.Value);
+          
+            if (result.Error == zune:PlaylistError.Success)
+            {
+              
+              AddToPlaylist.PlaylistId = result.PlaylistId;
+              AddToPlaylist.Items = DragItems;
+              AddToPlaylist.Start.Invoke();
+              
+              CreatedPlaylistId = result.PlaylistId;
+            }
+          }
+          
+          ErrorMessage = null;
+          if (result.Error == zune:PlaylistError.Success)
+          {
+            
+            Completed.Invoke();
+            Helper.Hide();
+          }
+          else if (result.Error == zune:PlaylistError.NameExists)
+          {
+            
+            ErrorMessage = ((String)zune:Shell.LoadString(zune:StringId.IDS_PLAYLIST_DUPLICATE_NAME)).Format(EditData.Value);
+          }
+          else if (result.Error == zune:PlaylistError.InvalidName)
+          {
+            
+            ErrorMessage = ((String)zune:Shell.LoadString(zune:StringId.IDS_PLAYLIST_INVALID_NAME)).Format(EditData.Value);
+          }
+
+          OK.Available = false;
+        }
+      </Script>
+      
+      
+      <Script>
+        [DeclareTrigger(EditData.Value)]
+        ErrorMessage = null;
+        
+        
+        OK.Available = !String.IsNullOrEmpty(EditData.Value);
+      </Script>      
+    </Scripts>
+  </Class>
+
+
+  
+  
+  
+  <UI Name="CreatePlaylistDialogContentUI" Base="dialog:DialogContentUI">
+    <Properties>
+      <me:CreatePlaylistDialog Name="Dialog" CreatePlaylistDialog="$Required"/>
+    </Properties>
+
+    <Scripts>
+      <Script>
+        [DeclareTrigger(Dialog.ErrorMessage)]
+        
+        ErrorLabel.Content = Dialog.ErrorMessage;
+        ErrorLabel.Visible = (Dialog.ErrorMessage != null);
+      </Script>
+
+      <Script>
+        if (Dialog.RenamePlaylistId >= 0)
+        {
+          Title.Content = zune:Shell.LoadString(zune:StringId.IDS_PLAYLIST_RENAMEPLAYLIST_DIALOG_TITLE);
+        }
+        else
+        {
+          Title.Content = zune:Shell.LoadString(zune:StringId.IDS_PLAYLIST_CREATEPLAYLIST_DIALOG_TITLE);
+        }
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel Navigation="ContainAll,WrapAll" Margins="10" MaximumSize="320,0">
+        <Layout>
+          <DockLayout SizeToChildren="true" DefaultLayoutInput="Top,Near"/>
+        </Layout>
+        <Children>
+
+          <core:Label Name="Title" 
+                Style="{styles:SharedStyles.DialogHeaderStyle}"
+                WordWrap="true"/>
+
+          <core:Editbox 
+            Model="{Dialog.EditData}" 
+            TileMinSize="300,18" TileMaxSize="300,18" 
+            TilePadding="4,0,4,0" 
+            BackgroundColor="White" 
+            Margins="5,10,5,10" 
+            FocusOrder="0"
+            />
+
+          <core:Label Name="ErrorLabel" 
+            Style="{styles:SharedStyles.DialogTextStyle}" 
+            WordWrap="true"
+            Visible="false" 
+            Margins="0,0,0,10"
+            />
+
+          <Panel>
+            <LayoutInput>
+              <DockLayoutInput Alignment="Near" Position="Right"/>
+            </LayoutInput>
+            <Layout>
+              <DockLayout SizeToChildren="true" DefaultLayoutInput="Left,Near"/>
+            </Layout>
+            <Children>
+
+              <core:BigActionButton Model="{Dialog.OK}"/>
+              <core:BigActionButton Model="{Dialog.Cancel}" Margins="10,0,0,0"/>
+
+            </Children>
+          </Panel>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+  
+</UIX>

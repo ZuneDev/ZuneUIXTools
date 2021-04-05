@@ -1,0 +1,108 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:list="res://ZuneShellResources!ContentList.uix"
+  xmlns:lv="res://ZuneShellResources!ListViewPanel.uix"
+  xmlns:me="Me">
+
+  
+  
+  
+  <UI Name="GalleryPanelWorker">
+    <Properties>
+      <zune:ListPanel Name="Model" ListPanel="$Required"/>
+      <iris:Choice Name="Sorts" Choice="{null}"/>
+
+      <Type Name="GalleryViewType" Type="{typeof(me:GalleryView)}"/>
+      <Inset Name="ColumnInset" Inset="0,0,0,0"/>
+      <Inset Name="ScrollMargins" Inset="0,0,38,0"/>
+      <Size Name="LayoutSpacing" Size="10,0"/>
+      <Inset Name="HeaderMargins" Inset="0,0,0,22"/>
+      <Inset Name="HeaderPadding" Inset="0,0,0,0"/>
+      <Boolean Name="HighlightHeader" Boolean="true"/>
+
+      <core:ContextMenu Name="ContextMenu" ContextMenu="{null}"/>
+      <list:CommandContainer Name="EditContext" CommandContainer="{null}"/>
+
+      <iris:Command Name="ToggleSelectAllCommand" Command="{null}"/>
+      <Command Name="ExecuteCommand" Command="{null}"/>
+      <iris:Command Name="SelectedItemClicked" Command="{null}"/>
+
+      <SelectionManager Name="SelectionManager" SelectionManager="{null}"/>
+
+      <core:NavigateIntoIndexRequest Name="NavigateIntoArgs" NavigateIntoIndexRequest="{null}"/>
+
+      <Boolean Name="SupportsJumpInList" Boolean="false"/>
+    </Properties>
+
+    <Locals>
+      <Accessible Name="Accessible"/>
+    </Locals>
+
+    <Scripts>
+      <Script>Gallery.Content = [Model.Content];</Script>
+      <Script>Gallery.ContextMenu = [ContextMenu];</Script>
+      <Script>Gallery.ExecuteCommand = [ExecuteCommand];</Script>
+      <Script>Gallery.SupportsJumpInList = [SupportsJumpInList];</Script>
+      <Script>Gallery.SelectedItemClicked = [SelectedItemClicked];</Script>
+      <Script>Header.Sorts = [Sorts];</Script>
+
+      <Script>
+        if ([Accessible.Enabled])
+        {
+          Accessible.Name = [Model.MediaType].ToString();
+        }
+      </Script>
+    </Scripts>
+
+    <Content>
+      
+      
+      <Panel Navigation="ContainDirectional,RememberFocus" >
+        <Layout>
+          <DockLayout DefaultLayoutInput="Top,Near"/>
+        </Layout>
+        <Children>
+
+          <lv:ColumnPanelHeader Name="Header" ToggleSelectAll="{ToggleSelectAllCommand}" Sorts="{Sorts}" 
+                                Margins="{HeaderMargins}" HeaderPadding="{HeaderPadding}" 
+                                HighlightHeader="{HighlightHeader}" SizeToChildren="{!HighlightHeader}"/>
+
+          
+          <me:GalleryView Name="Gallery" GalleryView="{GalleryViewType}"
+              ListModel="{Model}"
+              ScrollOrientation="Vertical"
+              NavigateIntoArgs="{NavigateIntoArgs}"
+              SelectionManager="{SelectionManager}"
+              VerticalScrollMargins="{ScrollMargins}"
+              LayoutSpacing="{LayoutSpacing}"
+              ContextMenu="{ContextMenu}"
+              EditContext="{EditContext}"
+              Padding="{ColumnInset}"/>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="GalleryView" Base="core:GalleryView">
+    <Properties>
+      
+      <Single Name="FadeSize" Single="-4.0"/>
+      <Size Name="GridCellSize" Size="0,0"/>
+      <Size Name="LayoutSpacing" Size="10,0"/>
+      <Layout Name="ListLayout">
+        <Layout>
+          <GridLayout Orientation="Horizontal" AllowWrap="true" Spacing="{LayoutSpacing}" ReferenceSize="{GridCellSize}"/>
+        </Layout>
+      </Layout>
+    </Properties>
+  </UI>
+
+</UIX>

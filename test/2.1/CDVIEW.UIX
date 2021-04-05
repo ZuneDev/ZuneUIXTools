@@ -1,0 +1,1907 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:sys="assembly://mscorlib/System"
+  xmlns:data="res://ZuneShellResources!LibraryData.schema.xml"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:page="res://ZuneShellResources!PageStack.uix"
+  xmlns:spreadsheet="res://ZuneShellResources!SpreadSheetViewBase.uix"
+  xmlns:playlist="res://ZuneShellResources!PlaylistContentsPanel.uix"
+  xmlns:plc="res://ZuneShellResources!PlaylistContentsPanelColumns.uix"
+  xmlns:tpc="res://ZuneShellResources!TracksPanelColumns.uix"
+  xmlns:cd="res://ZuneShellResources!CDState.uix"
+  xmlns:animations="res://ZuneShellResources!Animations.uix"
+  xmlns:notification="res://ZuneShellResources!NotificationArea.uix"
+  xmlns:purchase="res://ZuneShellResources!PurchaseForBurn.uix"
+  xmlns:list="res://ZuneShellResources!ContentList.uix"
+  xmlns:dialogs="res://ZuneShellResources!LibraryDialogs.uix"
+  xmlns:me="Me">
+  
+  <Class Name="CDViewListModel" Base="spreadsheet:SpreadSheetListModel">
+    <Properties>
+      <cd:CD Name="CD"/>
+    </Properties>
+  </Class>
+
+  <UI Name="CDView" Base="page:PageBase">
+    <Properties>
+      <zune:Shell Name="Shell" Shell="$Required"/>
+      <zune:CDLand Name="Page" CDLand="$Required"/>
+    </Properties>
+
+    <Locals>
+      <cd:CD Name="CD" CD="{null}" />
+      <cd:BurnList Name="BurnList" BurnList="{null}"/>
+      <data:Album Name="CDAlbum" Album="{null}"/>
+      <cd:CDState Name="CDState"/>
+      <me:CDViewListModel Name="ListModel"/>
+      
+      <Inset Name="RipInset" Inset="24,16,0,0"/>
+      <Inset Name="BurnInset" Inset="4,16,0,0"/>
+      
+      
+      <zune:CDAlbumCommand Name="CurrentCodeAlbum" CDAlbumCommand="{null}"/>
+    </Locals>
+
+    <Scripts>
+      
+      <Script>
+        bool hasBurnList = false;
+        Inset inset;
+        
+        if (Page.Album == Shell.MainFrame.Disc.NoCD)
+        {
+          
+          Artist.Content = " ";
+          string noCD = me:Strings.NoCD;
+          AlbumTitle.Content = noCD;
+          CDView.AlbumArtContent = styles:Styles.NoAlbumArtRip;
+          CDView.AlbumInfoVisible = false;
+        }
+        else if (Page.Album == Shell.MainFrame.Disc.BurnList)
+        {
+          BurnList = CDState.TheBurnList;
+          
+          CDView.BurnList = BurnList;
+          BurnListPanel.BurnList = BurnList;
+          hasBurnList = (BurnList != null);
+
+          ActionButton.Model = BurnListPanel.ActionCommand;        
+          inset = BurnInset;
+        }
+        else
+        {
+          CD = (cd:CD) CDState.AlbumToCD.get_Item(Page.Album);
+          CDView.CD = CD;
+          ListModel.CD = CD;          
+          inset = RipInset;
+        }
+
+        BurnListPanel.Visible = hasBurnList;
+        ActionButton.Visible = hasBurnList;
+        ActionButtonPanel.Margins = inset;
+      </Script>
+
+      
+      <Script>ClearBurnList.Model = BurnListPanel.ClearBurnListCommand;</Script>
+
+      
+      <Script>ClearBurnList.Visible = [ClearBurnList.Model.Available];</Script>
+        
+      <Script>
+        if ([BurnList] != null)
+        {
+          if (zune:CDAccess.Instance.IsAudioBurn)
+          {
+            Artist.Content = me:Strings.BurnTitleAudio;
+          }
+          else
+          {
+            Artist.Content = me:Strings.BurnTitleData;
+          }
+        }
+      </Script>
+      
+      <Script>
+        if (CD != null)
+        {
+          CDAlbum = [CD.DataAlbum];
+        }
+      </Script>
+      
+      <Script>
+        if (BurnList != null)
+        {
+          StatusMessage.Content = [BurnListPanel.StatusMessage];
+        }
+      </Script>
+
+      <Script>
+        if (CD != null)
+        {
+          CDTrackList.Content = [CD.Tracks];
+        }
+        CDTrackList.Visible = (CDTrackList.Content != null);
+        
+      </Script>
+
+      <Script>
+        if ([CDAlbum] != null)
+        {
+          Artist.Content = [CDAlbum.ArtistName];
+          sys:String title = [CD.CodeAlbum.Description];
+          AlbumTitle.Content = title;
+
+         if (CDAlbum.AlbumArtSuperLarge != null)
+          {
+            CDView.AlbumArtContent = [CDAlbum.AlbumArtSuperLarge];
+          }
+          else
+          {
+            CDView.AlbumArtContent = styles:Styles.NoAlbumArtRip;
+          }
+
+          int year = [CDAlbum.ReleaseDate].Year;
+          
+          if (year > 1)
+          {
+            
+            
+            
+            String fmt = zune:Shell.LoadString(zune:StringId.IDS_CD_LAND_ALBUM_INFO);
+            CDView.AlbumInfoContent = fmt.Format(year);
+            CDView.AlbumInfoVisible = true;
+          }
+          else
+          {
+            CDView.AlbumInfoContent = null;
+            CDView.AlbumInfoVisible = false;
+          }
+
+          if ([CD.CodeAlbum.IsRipping])
+          {
+            ActionButton.Model = CD.StopRip;
+          }
+          else
+          {
+            ActionButton.Model = CD.StartRip;
+          }
+
+          
+          if (BurnList == null)
+          {
+            ActionButton.Visible = true;
+          }      
+        }
+      </Script>
+
+       
+      <Script>
+        if ([CD] != null)
+        {
+          CurrentCodeAlbum = CD.CodeAlbum;
+        }
+        else
+        {
+          CurrentCodeAlbum = null;
+        }
+      </Script>
+     
+      <Script>
+        bool isCurrentCDErasing = false;
+        bool isCurrentCDRipping = false;
+        bool isCurrentBurnListBurning = false;
+        
+        if (CurrentCodeAlbum != null)
+        {
+          zune:BurnableCD burnCD = CurrentCodeAlbum.BurnCD;
+          if (burnCD != null)
+          {
+            isCurrentCDErasing = [zune:CDAccess.Instance.IsErasing] &amp;&amp; burnCD.IsErasing;
+          }
+          
+          isCurrentCDRipping = [CurrentCodeAlbum.IsRipping];
+        }
+        
+        isCurrentBurnListBurning = ([BurnList] != null) &amp;&amp; [zune:CDAccess.Instance.IsBurning];
+
+        if (isCurrentBurnListBurning || isCurrentCDErasing)
+        {
+          
+          ProgressNotification.Model = [zune:CDAccess.Instance.BurnNotification];
+        }
+        else if (isCurrentCDRipping)
+        {
+          
+          ProgressNotification.Model = [zune:CDAccess.Instance.Notification];
+        }
+        else
+        {
+          
+          ProgressNotification.Model = null;
+        }
+      </Script>
+
+    </Scripts>
+    <Content>
+
+      <Panel Layout="Dock">
+        <Animations>
+          <Animation Animation="{animations:Animations.HideNow}"/>
+        </Animations>
+        
+        <Children>
+          
+          <Panel Name="ArtistPanel" Margins="0,-4,0,12">
+            <Layout>
+              <FlowLayout Orientation="Vertical"/>
+            </Layout>
+            
+            <LayoutInput>
+              <DockLayoutInput Alignment="Near" Position="Top"/>
+            </LayoutInput>
+            <Children>
+             
+              
+              <core:AnimatedLabel Name="Artist" Style="{styles:SharedStyles.CDLandArtistName}" Margins="0,0,0,-14"/>
+              
+              <core:AnimatedLabel Name="AlbumTitle" Style="{styles:SharedStyles.CDLandAlbumName}"/>
+              
+            </Children>
+          </Panel>
+
+            
+          <Panel Name="LeftColumn" Layout="Anchor" Margins="3,0,12,0">            
+            <LayoutInput>
+              <DockLayoutInput Alignment="Near" Position="Left"/>
+            </LayoutInput>
+            
+            <Children>
+              
+              
+              
+              
+              <me:CurrentCD Name="CDView" Shell="{Shell}" Margins="0,0,0,40">
+                <LayoutInput>
+                  <AnchorLayoutInput Top="Parent,0" Left="Parent,0"/>
+                </LayoutInput>
+              </me:CurrentCD>
+
+              <notification:StandaloneProgressArea Name="ProgressNotification" Model="{null}" Margins="0,-6,0,0">
+                <LayoutInput>
+                  <AnchorLayoutInput Top="CDView,1,-40" Left="Parent,0"/>
+                </LayoutInput>
+              </notification:StandaloneProgressArea>
+
+            </Children>
+          </Panel>
+          
+          
+          <Panel Layout="Dock" Name="RightColumn" Margins="0,0,0,10">
+            <LayoutInput>
+              <DockLayoutInput Alignment="Near" Position="Right"/>
+            </LayoutInput>
+
+            <Children>
+              <Panel Name="Tracks">
+                <Animations>
+                  <Animation Animation="{animations:Animations.ListFadeIn}"/>
+                </Animations>
+
+                <Children>
+
+                  <me:TrackList Name="CDTrackList" ListModel="{ListModel}"/>
+
+                  <me:BurnListPanel Name="BurnListPanel" Page="{Page}" Model="{Page.BurnListPanel}"/>
+
+                </Children>
+              </Panel>
+
+              
+              <core:AnimatedLabel Name="StatusMessage" Style="{styles:SharedStyles.CDLandStatusError}" Margins="8,12,0,0">
+                <LayoutInput>
+                  <DockLayoutInput Alignment="Near" Position="Bottom"/>
+                </LayoutInput>
+              </core:AnimatedLabel>
+              
+              <Panel Name="ActionButtonPanel" Layout="HorizontalFlow">
+                <LayoutInput>
+                  <DockLayoutInput Alignment="Near" Position="Bottom"/>
+                </LayoutInput>
+                
+                <Animations>
+                  <Animation  Animation="{animations:Animations.ComponentShow}"/>
+                </Animations>
+
+                <Children>
+
+                  <core:BigActionButton Name="ActionButton"/>
+
+                  <core:BigActionButton Name="ClearBurnList"/>
+
+                </Children>
+              </Panel>
+            </Children>
+          </Panel>
+
+        </Children>
+      </Panel>
+
+    </Content>
+  </UI>
+
+  <UI Name="CurrentCD">
+    <Properties>
+      <zune:Shell Name="Shell" Shell="$Required"/>
+      <String Name="AlbumInfoContent" String="{null}"/>
+      <Image Name="AlbumArtContent" Image="{null}"/>
+      <bool Name="AlbumInfoVisible" bool="false"/>
+
+      <cd:CD Name="CD" CD="{null}"/>
+      <cd:BurnList Name="BurnList" BurnList="{null}"/>
+    </Properties>
+
+    <Locals>
+      <zune:MenuItemCommand Name="Play" Description="{zune:Shell.LoadString(zune:StringId.IDS_PLAY_MENUITEM)}"/>
+      <zune:MenuItemCommand Name="Erase" Description="{zune:Shell.LoadString(zune:StringId.IDS_ERASE_CD_MENUITEM)}"/>
+      <zune:MenuItemCommand Name="Eject" Description="{zune:Shell.LoadString(zune:StringId.IDS_EJECT_CD_MENUITEM)}"/>
+      <zune:MenuItemCommand Name="Edit" Description="{zune:Shell.LoadString(zune:StringId.IDS_CD_EDIT_ALBUM_INFO_MENU_ITEM)}"/>
+      <zune:MenuItemCommand Name="ChooseArt"/>
+
+      <core:ContextMenu Name="ContextMenu">
+        <Options>
+          <iris:Command Command="{Play}"/>
+          <iris:Command Command="{Edit}"/>
+          <iris:Command Command="{ChooseArt}"/>
+          <iris:Command Command="{Erase}"/>
+          <iris:Command Command="{Eject}"/>
+        </Options>
+      </core:ContextMenu>
+
+      <zune:CDAccess Name="CDAccess" CDAccess="{zune:CDAccess.Instance}"/>
+
+      <zune:CDAlbumCommand Name="CurrentCodeAlbum" CDAlbumCommand="{null}"/>
+
+      <Single Name="AnimLength" Single="{animations:CDAnimationHelper.FlipLength}"/>
+      <Single Name="ShineLength" Single="0.4"/>
+      <Animation Name="ShineAnimation" Type="Show" CenterPointPercent="0.5,0.5,1.0">
+        <Keyframes>
+          <AlphaKeyframe Time="0.0"                 Value="0"/>
+          <AlphaKeyframe Time="{ShineLength * 0.5}" Value="0.6"/>
+          <AlphaKeyframe Time="{ShineLength}"       Value="0"/>
+          <ScaleKeyframe Time="0.0"                 Value="0.4,0.4,1"/>
+          <ScaleKeyframe Time="{ShineLength * 0.5}" Value="1.5,1.5,1"/>
+          <ScaleKeyframe Time="{ShineLength}"       Value="0.4,0.4,1"/>
+          <PositionKeyframe Time="0.0"              Value="-200,-150,0"/>
+          <PositionKeyframe Time="{ShineLength}"    Value="150,25,0"/>
+        </Keyframes>
+      </Animation>
+
+      <dialogs:EditAlbumInfoDialog Name="EditAlbumInfoDialog" EditAlbumInfoDialog="{null}"/>
+      
+      <zune:AlbumArtUpdateHandler Name="Updater" AlbumArtUpdateHandler="{null}"/>
+
+      
+      <Int64 Name="UsedSpace"/>
+      <Int64 Name="AvailableSpace"/>
+
+      
+
+      <Int64 Name="OverTimeAllowed" Int64="{0L}"/>
+      <Int64 Name="OverSpaceAllowed" Int64="{0L}"/>
+    </Locals>
+
+    <Input>
+      <ClickHandler Name="RightClick" ClickType="RightMouse"/>
+    </Input>
+
+    
+    <Scripts>
+      <Script>
+        UsedSpace = 0L;
+        
+        if ([BurnList] != null)
+        {
+          AlbumInfo.Visible = false;
+
+          if (CDAccess.IsAudioBurn)
+          {
+            sys:TimeSpan totalTime = [BurnList.TotalTime];
+            AlbumTimeUsed.Visible = true;
+            if(totalTime.Ticks > 0L)
+            {
+              UsedSpace = totalTime.Ticks;
+              AlbumTimeUsed.Content = me:Strings.TimeUsed.Format(CDAccess.TimeSpanToStringForBurnTime(totalTime));
+            } 
+            else 
+            {
+              AlbumTimeUsed.Content = " ";
+            }
+            AlbumSizeUsed.Visible = false;
+          }
+          else
+          {
+            AlbumSizeUsed.Visible = true;
+            if(BurnList.TotalSize > (Int64)0)
+            {
+              AlbumSizeUsed.SizeData = [BurnList.TotalSize];
+              UsedSpace = BurnList.TotalSize;
+            }
+            else
+            {
+              AlbumSizeUsed.Content = " ";              
+            }
+            
+            AlbumTimeUsed.Visible = false;    
+          }
+
+          AlbumArt.Content = styles:Styles.NoAlbumArtBurn;
+        }
+        else
+        {
+          AlbumInfo.Visible = [AlbumInfoVisible];
+          AlbumInfo.Content = [AlbumInfoContent];
+          AlbumTimeUsed.Visible = false;
+          AlbumTimeAvailable.Visible = false;    
+          AlbumSizeUsed.Visible = false;
+          AlbumSizeAvailable.Visible = false;                
+          AlbumArt.Content = [AlbumArtContent];
+        }
+      </Script>
+
+      
+      <Script>
+        if ([CD] != null)
+        {
+          CurrentCodeAlbum = CD.CodeAlbum;
+        }
+        else
+        {
+          CurrentCodeAlbum = null;
+        }
+      </Script>
+
+      
+      <Script>
+        AvailableSpace = 0L;
+        
+        if ([BurnList] != null)
+        {
+          zune:BurnableCD burnCD = [CDAccess.BurnCDForNextSession];
+
+          bool isAudioBurn = CDAccess.IsAudioBurn;
+          AlbumTimeAvailable.Visible = isAudioBurn;
+          AlbumSizeAvailable.Visible = !isAudioBurn;
+
+          if (isAudioBurn)
+          {
+            sys:TimeSpan timeAvailable;
+            if (burnCD != null)
+            {
+              timeAvailable = burnCD.TimeAvailable;
+            }
+            else
+            {
+              timeAvailable = CDAccess.DefaultBurnTimeAvailable;
+            }
+            AvailableSpace = timeAvailable.Ticks;
+            
+            AlbumTimeAvailable.Content = me:Strings.TimeAvailable.Format(CDAccess.TimeSpanToStringForBurnTime(timeAvailable));
+            if(timeAvailable.Ticks &lt;= 0L)
+            {
+              AlbumTimeAvailable.Content = " ";
+            }
+          }
+          else
+          {
+            if (burnCD != null)
+            {
+               AlbumSizeAvailable.SizeData = burnCD.SpaceAvailable;
+               AvailableSpace = AlbumSizeAvailable.SizeData;
+            }
+            else
+            {
+              if(CDAccess.DefaultBurnSpaceAvailable > (Int64)0)
+              {
+                AlbumSizeAvailable.SizeData = CDAccess.DefaultBurnSpaceAvailable;
+              } 
+              else 
+              {
+                AlbumSizeAvailable.Content = " ";
+              }
+            }
+          }
+        }
+        else
+        {
+          AlbumTimeAvailable.Visible = false;
+          AlbumSizeAvailable.Visible = false;                    
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(AvailableSpace)]
+        [DeclareTrigger(UsedSpace)]
+        
+        bool over = false;
+        if (AvailableSpace > 0L)
+        {
+          if (CDAccess.IsAudioBurn)
+          {
+            if (UsedSpace > AvailableSpace + OverTimeAllowed) over = true;
+          }
+          else
+          {
+            if (UsedSpace > AvailableSpace + OverSpaceAllowed) over = true;
+          }
+        }
+        
+        if (over)
+        {
+          AlbumTimeUsed.Style = styles:SharedStyles.CDLandAlbumExceededCapacity;
+          AlbumSizeUsed.Style = styles:SharedStyles.CDLandAlbumExceededCapacity;
+        }
+        else
+        {
+          AlbumTimeUsed.Style = styles:SharedStyles.CDLandAlbumGenre;
+          AlbumSizeUsed.Style = styles:SharedStyles.CDLandAlbumGenre;
+        }
+      </Script>
+
+
+      
+      <Script>
+        [DeclareTrigger(RightClick.Invoked)]
+
+        ContextMenu.LayoutInput = new PopupLayoutInput();
+        ContextMenu.LayoutInput.Placement = PlacementMode.MouseOrigin;
+        ContextMenu.Helper.Show(ContextMenu);
+      </Script>
+
+      
+      <Script>
+        if ([ContextMenu.Helper.IsOpening])
+        {
+          if (CD == null)
+          {
+            
+            ContextMenu.Helper.Hide();
+          }
+          else
+          {
+            Play.Available = !List.IsNullOrEmpty(CD.Tracks);
+            
+            if (CurrentCodeAlbum != null)
+            {
+              Eject.Available = CurrentCodeAlbum.IsMediaLoaded &amp;&amp; !CurrentCodeAlbum.IsRipping &amp;&amp; !CurrentCodeAlbum.BurnCD.IsErasing;
+              Eject.Hidden = false;
+              Erase.Available = !CDAccess.IsErasing &amp;&amp; !CDAccess.IsBurning;
+              Erase.Hidden = !CurrentCodeAlbum.CanErase;
+            }
+            else
+            {
+              Eject.Hidden = true;
+              Erase.Hidden = true;
+            }
+
+            if (CD.DataAlbum != null)
+            {
+              ChooseArt.Hidden = false;
+              if (CD.DataAlbum.HasAlbumArt)
+              {
+                ChooseArt.Description = zune:Shell.LoadString(zune:StringId.IDS_UPDATE_ALBUM_ART);
+              }
+              else
+              {
+                ChooseArt.Description = zune:Shell.LoadString(zune:StringId.IDS_ADD_ALBUM_ART);
+              }
+            }
+            else
+            {
+              ChooseArt.Hidden = true;
+            }
+          }  
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(Play.Invoked)]
+        if (CD != null)
+        {
+          CD.Play.Invoke();
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(Eject.Invoked)]
+
+        if (CurrentCodeAlbum != null)
+        {
+          CurrentCodeAlbum.CDDevice.Eject();
+        }
+        else
+        {
+          
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(Erase.Invoked)]
+
+        if (CurrentCodeAlbum != null)
+        {
+          CurrentCodeAlbum.BurnCD.Erase();
+        }
+        else
+        {
+          
+        }
+      </Script>
+
+      <Script>
+        [DeclareTrigger(Edit.Invoked)]
+        
+        if (EditAlbumInfoDialog == null) EditAlbumInfoDialog = new dialogs:EditAlbumInfoDialog();
+        
+        EditAlbumInfoDialog.Album = CD.DataAlbum;
+        EditAlbumInfoDialog.Tracks = CD.Tracks;
+        EditAlbumInfoDialog.Helper.Show(EditAlbumInfoDialog);
+      </Script>
+      
+      
+      <Script>
+        [DeclareTrigger(ChooseArt.Invoked)]
+
+        if (CD.DataAlbum != null)
+        {
+          Updater = new zune:AlbumArtUpdateHandler(CD.DataAlbum);
+          Updater.Start();
+        }
+      </Script>
+      <Script>
+        if (Updater != null &amp;&amp; [Updater.Done])
+        {
+          if (!sys:String.IsNullOrEmpty(Updater.Path))
+          {
+            data:Album album = (data:Album)Updater.Album;
+
+            album.ThumbnailPath = Updater.Path;
+          }
+
+          UI.DisposeOwnedObject(Updater);
+          Updater = null;
+        }
+      </Script>      
+
+      <Script>animations:CDAnimationHelper.FlipLength = AnimLength;</Script>
+    </Scripts>
+    <Content>
+
+      <Panel Layout="VerticalFlow">
+        <Children>
+          <Panel Name="CDDataView" Layout="VerticalFlow" Margins="0,0,0,22" MinimumSize="272,0">
+            <LayoutInput>
+              <AnchorLayoutInput Top="Parent,0" Left="Parent,0"/>
+            </LayoutInput>
+
+            <Animations>
+              <Animation Animation="{animations:Animations.TitleContentChange}" />
+              <Animation Animation="{animations:Animations.TitleShow}" />
+            </Animations>
+            <Children>
+
+              <core:Label   Name="AlbumInfo" Style="{styles:SharedStyles.CDLandAlbumGenre}"/>
+              <core:Label   Name="AlbumTimeAvailable" Style="{styles:SharedStyles.CDLandAlbumGenre}"/>
+              <core:Label   Name="AlbumTimeUsed" Style="{styles:SharedStyles.CDLandAlbumGenre}"/>
+              <tpc:SizeCell Name="AlbumSizeAvailable" FormatString="{me:Strings.SizeAvailable}" Style="{styles:SharedStyles.CDLandAlbumGenre}" />
+              <tpc:SizeCell Name="AlbumSizeUsed" FormatString="{me:Strings.SizeUsed}" Style="{styles:SharedStyles.CDLandAlbumGenre}"/>
+
+            </Children>
+          </Panel>
+
+          
+          <Panel Name="ArtPanel" Margins="12,0,0,0" Layout="Anchor">
+            <LayoutInput>
+              <AnchorLayoutInput Top="CDDataView,1" Left="CDDataView,0"/>
+            </LayoutInput>
+            
+            
+
+            <Animations>
+              <Animation Animation="{animations:Animations.MoveNow}"/>
+              <SwitchAnimation Type="Show" Expression="{animations:CDAnimationHelper.ShowAnim}">
+                <Options>
+                  <Animation Name="Flip" CenterPointPercent="0.5,0.5,1.0">
+                    <Keyframes>
+                      <PositionKeyframe Time="0.0"          Value="0,200,0" Interpolation="Sine"/>
+                      <PositionKeyframe Time="{AnimLength}" Value="0,0,0"/>
+                    </Keyframes>
+                  </Animation>
+                </Options>
+              </SwitchAnimation>
+            </Animations>
+            
+            <Children>
+              <Graphic Name="AlbumShine" Content="{styles:Styles.CDShine}" Padding="16,16,16,16">
+                <LayoutInput>
+                  <AnchorLayoutInput Left="Drop,0" Top="Drop,0" Right="Drop,1" Bottom="Drop,1" ContributesToHeight="false"/>
+                </LayoutInput>
+
+                <Animations>
+                  <Animation Animation="{animations:Animations.MoveNow}"/>
+                  <SwitchAnimation Type="Show" Expression="{animations:CDAnimationHelper.ShowAnim}">
+                    <Options>
+                      <TransformAnimation Name="Flip" Delay="{AnimLength + 0.1}" Source="{ShineAnimation}"/>
+                      <TransformAnimation Name="Slide" Delay="0.1" Source="{ShineAnimation}"/>
+                    </Options>
+                  </SwitchAnimation>
+                </Animations>
+              </Graphic>
+
+              
+              <Graphic Name="Drop" Content="{styles:Styles.CDArtShadow}" SizingPolicy="SizeToChildren" StretchingPolicy="Fill" Margins="-16,-16,0,0" Padding="16,16,16,16">
+                <LayoutInput>
+                  <AnchorLayoutInput Left="Parent,0" Top="Parent,0"/>
+                </LayoutInput>
+
+                <Animations>
+                  <Animation Animation="{animations:Animations.MoveNow}"/>
+                  <SwitchAnimation Type="Show" Expression="{animations:CDAnimationHelper.ShowAnim}">
+                    <Options>
+                      <Animation Name="Flip" CenterPointPercent="0.3,0.5,1.0">
+                        <Keyframes>
+                          <PositionKeyframe Time="0.0"          Value="-20,0,0"     Interpolation="Cosine"/>
+                          <PositionKeyframe Time="{AnimLength}" Value="0,0,0"/>
+                          <ScaleKeyframe Time="0.00"            Value="0.1,0.1,1.0" Interpolation="EaseOut,1.3,0.7"/>
+                          <ScaleKeyframe Time="{AnimLength}"    Value="0.95,0.95,1" Interpolation="EaseIn,1.3,0.3"/>
+                          <ScaleKeyframe Time="{AnimLength + animations:CDAnimationHelper.SlideLength}"  Value="1,1,1"/>
+                        </Keyframes>
+                      </Animation>
+                      <Animation Name="Slide" CenterPointOffset="0.7,0.5,1.0" >
+                        <Keyframes>
+                          <AlphaKeyframe Time="0.0"     Value="0.0"/>
+                          <AlphaKeyframe Time="0.1"     Value="1.0"/>
+                          <ScaleKeyframe Time="0.0"     Value="0.95,0.95,1" Interpolation="EaseIn,1.3,0.3"/>
+                          <ScaleKeyframe Time="0.5" RelativeTo="Final"/>
+                        </Keyframes>
+                      </Animation>
+                    </Options>
+                  </SwitchAnimation>
+                        
+                </Animations>
+                <Children>
+                  
+                  <Graphic Name="AlbumArt" SizingPolicy="SizeToConstraint" MaximumSize="240,240" StretchingPolicy="Uniform">
+                    <Animations>
+                      <Animation Type="ContentChangeHide">
+                        <Keyframes>
+                          <AlphaKeyframe Time="0.0" Value="1" Interpolation="Log"/>
+                          <AlphaKeyframe Time="{animations:Animations.PopLength}" Value="0"/>
+                        </Keyframes>
+                      </Animation>
+                    </Animations>
+                  </Graphic>
+                </Children>
+              </Graphic>
+            </Children>
+          </Panel>
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  <UI Name="TrackList" Base="spreadsheet:SpreadSheet">
+    <Properties>
+      <spreadsheet:ColumnData Name="ColumnData" ColumnData="{me:Columns.DefaultViewColumnData}"/>
+      <Type Name="ListItemType" Type="{typeof(me:TrackListItem)}"/>
+      <me:CDViewListModel Name="ListModel" CDViewListModel="$Required"/>
+      <Boolean Name="HighlightHeaders" Boolean="false"/>
+      <Size Name="RowSize" Size="0,27"/>
+      <Inset Name="RowPadding" Inset="0,0,0,0"/>
+
+      <list:CommandContainer Name="EditContext"/>
+      <core:NavigateIntoIndexRequest Name="NavigateIntoArgs"/>
+      
+      <zune:MenuItemCommand Name="Play" Description="{zune:Shell.LoadString(zune:StringId.IDS_PLAY_MENUITEM)}"/>
+      <iris:Command Name="Edit" Description="{zune:Shell.LoadString(zune:StringId.IDS_LIBRARY_EDIT_MENU_ITEM)}"/>
+      
+      <core:ContextMenu Name="ContextMenu">
+        <Options>
+          <iris:Command Command="{Play}"/>
+          <iris:Command Command="{Edit}"/>
+        </Options>
+      </core:ContextMenu>      
+    </Properties>
+    
+    <Locals>
+      <Command Name="Execute" />
+      <cd:CD Name="CD" />
+    </Locals>
+
+    <Input>
+      <KeyHandler Name="EditKey" Key="F2" DisallowedModifiers="Alt,Ctrl,Shift" HandlerStage="Bubbled" Handle="true"/>      
+    </Input>
+    
+    <Scripts>
+      
+      <Script> ExecuteCommand = Execute; </Script>
+
+      <Script>
+        CD = [ListModel.CD];
+
+        
+        me:FocusState.Track = 0;
+      </Script>
+
+      <Script>
+        
+        if (CD != null &amp;&amp; CD.CodeAlbum != null)
+        {
+          if (CD.Tracks == null)
+          {
+            
+            zune:TransportControls.Instance.PagePlaySelection.Available = false;
+          }
+          else
+          {
+            
+            zune:TransportControls.Instance.PagePlaySelection.Available = ([CD.Tracks.Count] > 0);
+          }
+        }
+      </Script>
+
+      
+      
+      
+      <Script>
+        [DeclareTrigger(zune:TransportControls.Instance.PagePlaySelection.Invoked)]
+        [DeclareTrigger(Execute.Invoked)]
+        [DeclareTrigger(Play.Invoked)]
+
+        if (CD != null)
+        {
+          List tracks = CD.Tracks;
+
+          if (tracks != null)
+          {
+            zune:TransportControls.Instance.PlayItems(tracks, me:FocusState.Track);
+          }
+        }
+      </Script>
+      
+      
+      <Script>
+        [DeclareTrigger(EditKey.Invoked)]
+
+        if (EditKey.EventContext is list:ListItemContext)
+        {
+          list:ListItemContext context = (list:ListItemContext)EditKey.EventContext;
+
+          if (context.Edit != null)
+          {
+            context.Edit.Invoke();
+          }
+        }
+      </Script>
+      
+      
+      <Script>
+        [DeclareTrigger(Edit.Invoked)]
+
+        if (EditContext.Model != null)
+        {
+          EditContext.Model.Invoke();
+        }
+      </Script>      
+    </Scripts>
+  </UI>
+
+  
+  <UI Name="TrackListItem" Base="spreadsheet:SpreadSheetListItem">
+    <Properties>
+      <me:CDViewListModel Name="ListModel" CDViewListModel="$Required"/>
+      <data:Track Name="Model" Track="$Required"/>
+    </Properties>
+
+    <Locals>
+      <zune:CDAlbumTrack Name="TrackInfo" CDAlbumTrack="{null}" />
+    </Locals>
+
+    <Input>
+      <KeyHandler Name="SpaceKey" Key="Space" HandlerStage="Direct"/>
+    </Input>
+    
+    <Scripts>
+      
+      <Script>
+        zune:CDAlbumCommand currentCD = ListModel.CD.CodeAlbum;
+        TrackInfo = currentCD.GetTrack(Index.Value);
+      </Script>      
+      
+      <Script>
+        if ([UI.DeepKeyFocus])
+        {
+          me:FocusState.Track = Index.Value;
+        }
+      </Script>
+
+      <Script>
+        [DeclareTrigger(SpaceKey.Invoked)]
+        
+        TrackInfo.RipTrack = !TrackInfo.RipTrack;
+      </Script>
+
+    </Scripts>
+  </UI>
+
+  
+  <Class Name="FocusState" Shared="True">
+    <Properties>
+      <int Name="Track" int="0" />
+    </Properties>
+  </Class>
+
+  
+  <Class Name="Columns" Shared="True">
+    <Properties>
+
+      
+      <spreadsheet:ColumnData Name="DefaultViewColumnData" HideColumns="true">
+        <Columns>
+
+          <spreadsheet:ColumnInfo CellType="{typeof(tpc:LibraryMediaStatusCell)}" Resizable="false" CellPadding="4,4,4,0">
+            <ColumnSize>
+              <SharedSize Size="25,0"/>
+            </ColumnSize>
+            <LayoutInput>
+              <StackLayoutInput Priority="High"/>
+            </LayoutInput>
+          </spreadsheet:ColumnInfo>
+
+          <spreadsheet:ColumnInfo CellType="{typeof(me:CheckCell)}"
+                                  HeaderType="{typeof(me:SongsHeader)}"
+                                  CellPadding="0,5,0,0" 
+                                  Resizable="false">
+            <ColumnSize>
+              <SharedSize Size="18,0"/>
+            </ColumnSize>
+            <LayoutInput>
+              <StackLayoutInput Priority="High"/>
+            </LayoutInput>
+          </spreadsheet:ColumnInfo>
+
+          <spreadsheet:ColumnInfo CellType="{typeof(me:NumberCell)}"
+                                  CellPadding="10,0,0,0" 
+                                  Resizable="false">
+            <ColumnSize>
+              <SharedSize Size="40,0"/>
+            </ColumnSize>
+            <LayoutInput>
+              <StackLayoutInput Priority="High"/>
+            </LayoutInput>
+          </spreadsheet:ColumnInfo>
+
+          <spreadsheet:ColumnInfo CellType="{typeof(me:TitleCell)}"
+                                  CellEditType="{typeof(tpc:SongEditCell)}"
+                                  CellPadding="0,5,0,0" 
+                                  Resizable="false">
+            <ColumnSize>
+              <SharedSize Size="9999,0"/>
+            </ColumnSize>
+            <LayoutInput>
+              <StackLayoutInput Priority="Medium" MinimumSize="100,0"/>
+            </LayoutInput>
+          </spreadsheet:ColumnInfo>
+          
+          <spreadsheet:ColumnInfo Header="{zune:Shell.LoadString(zune:StringId.IDS_LENGTH_COLUMN_HEADER)}"
+                                  CellType="{typeof(me:LengthCell)}"
+                                  Resizable="false">
+            <ColumnSize>
+              <SharedSize Size="75,0"/>
+            </ColumnSize>
+            <LayoutInput>
+              <StackLayoutInput Priority="High"/>
+            </LayoutInput>
+          </spreadsheet:ColumnInfo>
+
+          <spreadsheet:ColumnInfo Header="{zune:Shell.LoadString(zune:StringId.IDS_STATUS_COLUMN_HEADER)}"
+                                  CellType="{typeof(me:StatusCell)}"
+                                  CellPadding="5,0,10,0"
+                                  Resizable="false">
+            <ColumnSize>
+              <SharedSize Size="100,0"/>
+            </ColumnSize>
+            <LayoutInput>
+              <StackLayoutInput Priority="High"/>
+            </LayoutInput>
+          </spreadsheet:ColumnInfo>
+
+        </Columns>
+      </spreadsheet:ColumnData>
+
+    </Properties>
+  </Class>
+
+  
+  <Class Name="TrackColumn" Shared="True">
+    <Properties>
+      <SharedSize Name="TrackNumberSharedSize" />
+    </Properties>
+  </Class>
+
+  <UI Name="SongsHeader" Base="spreadsheet:LabelCell">
+    <Locals>
+      <cd:CDState Name="CDState" />
+    </Locals>
+    <Scripts>
+      <Script>
+        UI.FocusInterestTarget = private_Label;
+        UI.AllowDoubleClicks = false;
+      </Script>
+      
+      <Script>
+        int count = 0;
+
+        if (((me:CDViewListModel) ListModel).CD != null)
+        {
+          count = [((me:CDViewListModel) ListModel).CD.CodeAlbum.TrackCount];
+        }
+
+        Content = sys:String.Format(me:Strings.SongsHeader, count);
+      </Script>
+
+      <Script>
+        [DeclareTrigger(Clicker.Invoked)]
+        cd:CD currentCD = ((me:CDViewListModel) ListModel).CD;
+
+        if (currentCD != null)
+        {
+          currentCD.CodeAlbum.ToggleRipAll();
+        }
+      </Script>
+    </Scripts>
+    <Input>
+      
+      <ClickHandler Name="Clicker" />
+    </Input>
+    <Content>
+
+      
+      <Panel Name="ToolTipOrigin" Layout="Form">
+        <Children>
+
+          <Panel Layout="HorizontalFlow"> 
+            <LayoutInput>
+              <AnchorLayoutInput Left="Parent,0" Right="Parent,1,999" Top="Parent,0" Bottom="Parent,1,999" ContributesToWidth="false"/>
+            </LayoutInput>
+            <Children>
+
+              <Text Name="private_Label" MouseInteractive="true"/>
+
+            </Children>
+          </Panel>
+          
+        </Children>
+      </Panel>
+
+    </Content>
+  </UI>
+
+  
+  <UI Name="CheckCell" Base="spreadsheet:Cell">
+    <Properties>
+      <me:CDViewListModel Name="ListModel" CDViewListModel="$Required"/>
+      <data:Track Name="Model" Track="$Required"/>
+    </Properties>
+
+    <Locals>
+      <iris:BooleanChoice Name="RipIt" Value="false"/>
+      <zune:CDAlbumTrack Name="TrackInfo" CDAlbumTrack="{null}" />
+    </Locals>
+
+    <Scripts>
+      
+      <Script>
+        zune:CDAlbumCommand currentCD = ListModel.CD.CodeAlbum;
+        TrackInfo = currentCD.GetTrack(RowIndex.Value);
+        CheckBox.AccessibleDescription = [Model.Title];
+        RipIt.Value = TrackInfo.RipTrack;
+      </Script>
+
+      <Script>TrackInfo.RipTrack = [RipIt.Value];</Script>
+
+      <Script>RipIt.Value = [TrackInfo.RipTrack];</Script>
+
+      <Script>
+         bool ripping = ([TrackInfo.RipState] == zune:RipState.InProgress);
+         CheckBox.Available = !ripping;        
+      </Script>
+    </Scripts>
+
+    <Content>
+      <core:CheckBox Name="CheckBox" Model="{RipIt}" BoxSize="18,18" KeyInteractive="false"/>
+    </Content>
+  </UI>
+
+  <UI Name="NumberCell" Base="tpc:TrackNumberCell">
+    <Scripts>
+      <Script>Style = styles:SharedStyles.CDLandTrackNumberStyle;</Script>
+    </Scripts>
+  </UI>
+
+  
+  <UI Name="TitleCell" Base="tpc:SongCell">
+    <Properties>
+      <me:CDViewListModel Name="ListModel" CDViewListModel="$Required"/>
+      <data:Track Name="Model" Track="$Required"/>
+    </Properties>
+
+    <Locals>
+      <zune:CDAlbumTrack Name="TrackInfo" CDAlbumTrack="{null}" />
+    </Locals>
+
+    <Scripts>
+      
+      <Script>
+        zune:CDAlbumCommand currentCD = ListModel.CD.CodeAlbum;
+        TrackInfo = currentCD.GetTrack(RowIndex.Value);
+      </Script>
+
+      <Script>
+         bool ripping = ([TrackInfo.RipState] == zune:RipState.InProgress);
+         if (ripping)
+         {
+           private_Label.Color = styles:Styles.TextSelected;
+         }
+         else
+         {
+           private_Label.Color = Style.Color;
+         }
+      </Script>
+    </Scripts>
+  </UI>
+  
+  
+  <UI Name="LengthCell" Base="spreadsheet:LengthCell">
+    <Scripts>
+      <Script>
+        Length = ((data:Track)Model).Duration;
+        ToolTipOrigin.Margins = new Inset(0,4,0,0);
+      </Script>
+    </Scripts>
+  </UI>
+
+  
+  
+  <UI Name="StatusCell" Base="spreadsheet:LabelCell">
+    <Properties>
+      <me:CDViewListModel Name="ListModel" CDViewListModel="$Required"/>
+    </Properties>
+    <Locals>
+      <zune:CDAlbumTrack Name="TrackInfo" CDAlbumTrack="{null}" />
+    </Locals>
+
+    <Input>
+      <ClickHandler Name="Clicker" Enabled="false" ClickType="Mouse"/>
+    </Input>
+
+    <Scripts>
+      
+      <Script>
+        zune:CDAlbumCommand currentCD = ListModel.CD.CodeAlbum;
+        TrackInfo = currentCD.GetTrack(RowIndex.Value);
+      </Script>
+
+      <Script>
+        ToolTipOrigin.Margins = new Inset(0,6,0,0);
+        Style = styles:SharedStyles.CDLandStatus;
+        ToolTipStyle = styles:SharedStyles.ToolTipStyle;
+      </Script>
+
+      <Script>
+        private_Label.Visible = true;
+        Clicker.Enabled = false;
+        ToolTipPlacement = PlacementMode.Origin;
+        
+        zune:RipState state = [TrackInfo.RipState];
+        if (state == zune:RipState.NotInLibrary)
+        {
+            Content = "";
+            Style = styles:SharedStyles.CDLandStatus;
+            CDIcon.Visible = false;
+        }
+        else if (state == zune:RipState.InLibrary)
+        {
+            Content = me:Strings.RipDone;
+            Style = styles:SharedStyles.CDLandStatus;
+            CDIcon.Visible = false;
+        }
+        else if (state == zune:RipState.Pending)
+        {
+            Content = me:Strings.RipPending;
+            Style = styles:SharedStyles.CDLandStatus;
+            CDIcon.Visible = false;
+        }
+        else if (state == zune:RipState.Error)
+        {
+            Content = me:Strings.RipErrorToolTip;
+            Style = styles:SharedStyles.CDLandStatusError;
+            CDIcon.Visible = true;
+            CDIcon.Content = styles:Styles.AttentionImage;
+
+            private_Label.Visible = false;
+            Clicker.Enabled = true;
+            ToolTipPlacement = PlacementMode.MouseBottom;
+        }
+        else if (state == zune:RipState.Incomplete)
+        {
+            Content = me:Strings.RipIncomplete;
+            Style = styles:SharedStyles.CDLandStatus;
+            CDIcon.Visible = false;
+        }
+        else if (state == zune:RipState.InProgress)
+        {
+            Content = sys:String.Format(me:Strings.RipProgress, [TrackInfo.PercentComplete]);
+            Style = styles:SharedStyles.CDLandStatusRipping;
+            CDIcon.Visible = true;
+            CDIcon.Content = styles:Styles.CDImage;
+        }         
+      </Script>
+      
+      
+      <Script>
+        [DeclareTrigger(Clicker.Invoked)]
+
+        zune:Shell.ShowErrorDialog(TrackInfo.RipErrorCode, me:Strings.RipErrorDialogTitle);
+      </Script>
+    </Scripts>
+     <Content>
+      <Panel Name="ToolTipOrigin" Layout="HorizontalFlow" MouseInteractive="true">
+        <Children>
+          <Graphic Name="CDIcon" MaximumSize="16,16" MinimumSize="16,16" Margins="0,0,2,0" Visible="false">
+            <Animations>
+              <Animation Animation="{animations:Animations.BasicFadeIn}"/>
+              <Animation Animation="{animations:Animations.BasicFadeOut}"/>
+              <Animation Type="Idle" Loop="-1" CenterPointPercent="0.5,0.5,0.5">
+                <Keyframes>
+                  <ScaleKeyframe Time="0.0" Value="1,1,1" Interpolation="Sine"/>
+                  <ScaleKeyframe Time="1.0" Value="1.1,1.1,1" Interpolation="Sine"/>
+                  <ScaleKeyframe Time="2.0" Value="1,1,1"/>
+                </Keyframes>
+              </Animation>
+            </Animations>
+          </Graphic>
+          <Text Name="private_Label"/>
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+
+
+
+
+  <UI Name="BurnListPanel" Base="playlist:PlaylistContentsPanel">
+    <Properties>
+      <zune:CDAccess Name="CDAccess" CDAccess="{zune:CDAccess.Instance}"/>
+
+      <cd:BurnList Name="BurnList" BurnList="{null}"/>
+
+      <zune:PlaylistContentsPanel Name="Model" PlaylistContentsPanel="$Required" />
+
+      <spreadsheet:ColumnData Name="ColumnData">
+        <ColumnData>
+          
+
+
+
+          <Script>
+            if (CDAccess.IsAudioBurn)
+            {
+              return me:BurnListColumns.AudioColumnData;
+            }
+
+            return me:BurnListColumns.DataColumnData;
+          </Script>
+        </ColumnData>
+      </spreadsheet:ColumnData>
+
+      <me:BurnListPanelListModel Name="ListModel" Model="{Model}"/>
+
+      <zune:StringId Name="EmptyPlaylistMessageId" StringId="{zune:StringId.IDS_BURNLIST_EMPTY}"/>
+      
+      
+      <iris:Command Name="ActionCommand"/>
+      <iris:Command Name="ClearBurnListCommand" Description="{zune:Shell.LoadString(zune:StringId.IDS_CLEAR_BURN_LIST)}" Available="false"/>
+      <String Name="StatusMessage"/>
+    </Properties>
+
+    <Locals>
+      <List Name="Tracks" List="{null}"/>
+
+      <sys:TimeSpan Name="TotalTime"/>
+      <Int64 Name="TotalSize"/>
+      
+      <List Name="BurnListAudioContextMenuOptions">
+        <Source>
+          <iris:Command Command="{PlayAll}"/>
+          <iris:Command Command="{Play}"/>
+          <iris:Command Command="{RemoveFromPlaylist}"/>
+          <iris:Command Command="{Properties}"/>
+          <iris:Command Command="{FindInCollection}"/>
+        </Source>
+      </List>
+
+      <List Name="BurnListDataContextMenuOptions">
+        <Source>
+          <iris:Command Command="{RemoveFromPlaylist}"/>
+          <iris:Command Command="{Properties}"/>
+          <iris:Command Command="{FindInCollection}"/>
+        </Source>
+      </List>
+      
+      <Int32 Name="MediaTypeAudio" Int32="{sys:Convert.ToInt32(zune:MediaType.Track)}"/>
+      <Int32 Name="MediaTypePodcastEpisode" Int32="{sys:Convert.ToInt32(zune:MediaType.PodcastEpisode)}"/>
+
+      <Command Name="StartBurn"/>
+      <Command Name="CancelBurn"/>
+      <purchase:PurchaseForBurn Name="PurchaseForBurn" PurchaseForBurn="{null}"/>
+    </Locals>
+
+    <Scripts>
+      
+      <Script>
+        if ([CanPlay])
+        {
+          ContextMenu.Options = BurnListAudioContextMenuOptions;
+          Worker.ExecuteCommand = Execute;
+        }
+        else
+        {
+          ContextMenu.Options = BurnListDataContextMenuOptions;
+          Worker.ExecuteCommand = null;
+        }
+      </Script>
+      <Script>ListModel.BurnList = [BurnList];</Script>
+
+      
+      <Script>
+        RemoveFromPlaylist.Description = zune:Shell.LoadString(zune:StringId.IDS_REMOVE_FROM_BURNLIST);
+        AddToBurnList.Hidden = true;
+      </Script>
+
+      <Script>
+        [DeclareTrigger(BurnList.PlaylistId)]
+
+        List playlistIds;
+
+        if (BurnList != null)
+        {
+          playlistIds = new List();
+          playlistIds.Add(BurnList.PlaylistId);
+          
+          
+          
+          
+          
+          
+          
+          
+          TrackQuery.Enabled = false;
+          TrackQuery.PlaylistId = BurnList.PlaylistId;
+          TrackQuery.Enabled = true;
+        }
+
+        Model.SelectedPlaylistIds = playlistIds;
+      </Script>
+
+      <Script>
+        [DeclareTrigger(TrackQuery.Result.Items)]
+
+        if (TrackQuery.PlaylistId >= 0)
+        {
+          Tracks = TrackQuery.Result.Items;
+        }
+        else
+        {
+          Tracks = null;
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(Tracks.Count)]
+
+        TotalTime = new sys:TimeSpan();
+        TotalSize = 0L;
+        
+        bool isEmpty = List.IsNullOrEmpty(Tracks);
+        if (!isEmpty)
+        {
+          if (CDAccess.IsAudioBurn)
+          {
+            bool hasOnlyAudioMedia = true;
+            
+            foreach (data:PlaylistContentItem content in Tracks)
+            {
+              TotalTime = TotalTime.Add(content.Duration);
+              
+              if (!(content.MediaType == MediaTypeAudio || 
+                   (content.MediaType == MediaTypePodcastEpisode &amp;&amp; !zune:PlaylistManager.IsVideo(content.MediaId, zune:MediaType.PodcastEpisode))))
+              {
+                hasOnlyAudioMedia = false;
+              }
+            }
+            
+            CanPlay = hasOnlyAudioMedia;
+          }
+          else
+          {
+            foreach (data:PlaylistContentItem content in Tracks)
+            {
+              TotalSize = TotalSize + content.FileSize;
+            }
+            
+            CanPlay = false;
+          }
+        }
+        else
+        {
+          CanPlay = false;
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(TotalTime)]
+        [DeclareTrigger(TotalSize)]
+        [DeclareTrigger(CanPlay)]
+        if (BurnList != null)
+        {
+          BurnList.TotalTime = TotalTime;
+          BurnList.TotalSize = TotalSize;
+          BurnList.CanPlay = CanPlay;
+        }
+      </Script>
+
+      
+      <Script>
+        if ([CDAccess.IsBurning])
+        {
+          ActionCommand.Description = zune:Shell.LoadString(zune:StringId.IDS_STOP_BURN_BUTTON);
+        }
+        else
+        {
+          ActionCommand.Description = zune:Shell.LoadString(zune:StringId.IDS_START_BURN_BUTTON);
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(ActionCommand.Invoked)]
+
+        if (CDAccess.IsBurning)
+        {
+          CancelBurn.Invoke();
+        }
+        else
+        {
+          
+          
+          
+          
+          CDAccess.PrepareForBurn(null, TrackQuery.PlaylistId, Tracks);
+          
+          if (CDAccess.IsAudioBurn)
+          {
+            
+            if (PurchaseForBurn == null) PurchaseForBurn = new purchase:PurchaseForBurn();
+            PurchaseForBurn.OnSuccess = StartBurn;
+            PurchaseForBurn.OnCancel = CancelBurn;
+            PurchaseForBurn.Items = Tracks;
+            PurchaseForBurn.Start.Invoke();
+          }
+          else
+          {
+            
+            StartBurn.Invoke();
+          }
+        }
+      </Script>
+
+      
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(Tracks.Count)]
+        [DeclareTrigger(CanEdit)]
+        
+        ClearBurnListCommand.Available = !List.IsNullOrEmpty(Tracks) &amp;&amp; CanEdit;
+      </Script>
+
+      <Script>
+        [DeclareTrigger(ClearBurnListCommand.Invoked)]
+        
+        CDAccess.ClearBurnList();
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(StartBurn.Invoked)]
+        CDAccess.StartBurn();
+      </Script>
+
+      <Script>
+        [DeclareTrigger(CancelBurn.Invoked)]
+        CDAccess.CancelBurn();
+        
+        
+        
+        ActionCommand.Available = false;        
+      </Script>
+
+      
+      <Script>CanEdit = ![CDAccess.IsBurning];</Script>
+
+      
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(Tracks.Count)]
+        [DeclareTrigger(CDAccess.BurnCDForNextSession)]
+        [DeclareTrigger(CDAccess.IsBurning)]
+        [DeclareTrigger(CDAccess.IsErasing)]
+        [DeclareTrigger(CDAccess.HasBurner)]
+        [DeclareTrigger(CanPlay)]
+
+        if (CDAccess.IsBurning)
+        {
+          ActionCommand.Available = !CDAccess.IsBurnCanceling;
+          StatusMessage = null;
+        }
+        else
+        {
+          StatusMessage = null;
+
+          if (!CDAccess.IsBurning)
+          {
+            if (!CanPlay &amp;&amp; CDAccess.IsAudioBurn &amp;&amp; !List.IsNullOrEmpty(Tracks))
+            {
+              StatusMessage = me:Strings.BurnErrorCantBurnDataToAudio;
+            }
+            else if (!CDAccess.HasBurner)
+            {
+              StatusMessage = me:Strings.BurnErrorAttachBurner;
+            }
+            else 
+            {
+              zune:BurnableCD burnCD = CDAccess.BurnCDForNextSession;
+              
+              if (burnCD == null)
+              {
+                StatusMessage = me:Strings.BurnErrorInsertDisc;
+              }
+              else if (CDAccess.IsAudioBurn &amp;&amp; !burnCD.CanBurnAudio)
+              {
+                StatusMessage = me:Strings.BurnErrorCantBurnAudioToDVD;
+              }
+            }
+          }
+          
+          ActionCommand.Available = (StatusMessage == null) &amp;&amp; !List.IsNullOrEmpty(Tracks) &amp;&amp; !CDAccess.IsErasing;          
+        }
+      </Script>
+
+      <Script>
+        
+        
+        EmptyPlaylistPanel.Margins = new Inset(-10,0,0,-40);
+      </Script>    
+    </Scripts>
+  </UI>
+
+  <Class Name="BurnListPanelListModel" Base="plc:PlaylistContentsPanelListModel">
+    <Properties>
+      <cd:BurnList Name="BurnList"/>
+    </Properties>
+  </Class>
+
+  
+  <Class Name="BurnListColumns" Shared="True">
+    <Properties>
+      <spreadsheet:ColumnInfo Name="TitleColumn"
+            Header="{zune:Shell.LoadString(zune:StringId.IDS_SONG_COLUMN_HEADER)}"
+            CellType="{typeof(tpc:SongCell)}"
+            Resizable="false">
+        <ColumnSize>
+          <SharedSize Size="9999,0"/>
+        </ColumnSize>
+        <LayoutInput>
+          <StackLayoutInput Priority="Medium" MinimumSize="200,0"/>
+        </LayoutInput>
+      </spreadsheet:ColumnInfo>
+
+      <spreadsheet:ColumnInfo Name="TimeColumn"
+            Header="{zune:Shell.LoadString(zune:StringId.IDS_LENGTH_COLUMN_HEADER)}"
+            CellType="{typeof(me:BurnListLengthCell)}"
+            Resizable="false">
+        <ColumnSize>
+          <SharedSize Size="75,0"/>
+        </ColumnSize>
+        <LayoutInput>
+          <StackLayoutInput Priority="High"/>
+        </LayoutInput>
+      </spreadsheet:ColumnInfo>
+
+      <spreadsheet:ColumnInfo Name="SizeColumn"
+            Header="{zune:Shell.LoadString(zune:StringId.IDS_SIZE_COLUMN_HEADER)}"
+            CellType="{typeof(me:SizeCell)}"
+            Resizable="false">
+        <ColumnSize>
+          <SharedSize Size="75,0"/>
+        </ColumnSize>
+        <LayoutInput>
+          <StackLayoutInput Priority="High"/>
+        </LayoutInput>
+      </spreadsheet:ColumnInfo>
+
+      <spreadsheet:ColumnInfo Name="StatusColumn"
+            Header="{zune:Shell.LoadString(zune:StringId.IDS_STATUS_COLUMN_HEADER)}"
+            CellType="{typeof(me:BurnStatusCell)}"
+            Resizable="false">
+        <ColumnSize>
+          <SharedSize Size="80,0"/>
+        </ColumnSize>
+        <LayoutInput>
+          <StackLayoutInput Priority="High"/>
+        </LayoutInput>
+      </spreadsheet:ColumnInfo>
+
+      
+      <spreadsheet:ColumnData Name="AudioColumnData" HideColumns="true" 
+                              SortedColumn="{plc:SortInfo.Ordinal}">
+        <Columns>
+          <spreadsheet:ColumnInfo ColumnInfo="{TitleColumn}"/>
+          <spreadsheet:ColumnInfo ColumnInfo="{TimeColumn}"/>
+          <spreadsheet:ColumnInfo ColumnInfo="{StatusColumn}"/>
+        </Columns>
+      </spreadsheet:ColumnData>
+
+      
+      <spreadsheet:ColumnData Name="DataColumnData" HideColumns="true"
+                              SortedColumn="{plc:SortInfo.Ordinal}">
+        <Columns>
+          <spreadsheet:ColumnInfo ColumnInfo="{TitleColumn}"/>
+          <spreadsheet:ColumnInfo ColumnInfo="{SizeColumn}"/>
+          <spreadsheet:ColumnInfo ColumnInfo="{StatusColumn}"/>
+        </Columns>
+      </spreadsheet:ColumnData>
+    </Properties>
+  </Class>
+
+
+  
+
+
+
+  <UI Name="BurnListLengthCell" Base="spreadsheet:LabelCell">
+    <Properties>
+      <data:PlaylistContentItem Name="Model" PlaylistContentItem="$Required"/>
+    </Properties>
+    <Scripts>
+      <Script>
+        if (Model.Duration.Ticks != 0L)
+        {
+          Content = zune:Shell.TimeSpanToString(Model.Duration);
+        }
+        else
+        {
+          Content = null;
+        }
+     </Script>
+    </Scripts>
+  </UI>
+
+  
+
+
+
+  <UI Name="SizeCell" Base="tpc:SizeCell">
+    <Properties>
+      <data:PlaylistContentItem Name="Model" PlaylistContentItem="$Required"/>
+      <Int64 Name="SizeData" Int64="{Model.FileSize}"/>
+    </Properties>
+  </UI>
+
+  
+
+
+
+  <UI Name="BurnStatusCell" Base="spreadsheet:LabelCell">
+    <Properties>
+      <data:PlaylistContentItem Name="Model" PlaylistContentItem="$Required"/>
+      <me:BurnListPanelListModel Name="ListModel" BurnListPanelListModel="$Required"/>
+    </Properties>
+
+    <Locals>
+      <zune:BurnSessionItem Name="BurnItem" BurnSessionItem="{null}" />
+      <String Name="CanBurnFileError" String="{null}"/>
+      <Timer Name="CheckCanBurnTimer" Interval="2000" AutoRepeat="false" Enabled="true"/> 
+      <Boolean Name="CheckCanBurn"/>
+    </Locals>
+
+    <Input>
+      <ClickHandler Name="Clicker" ClickType="Mouse" Enabled="false"/>
+    </Input>
+
+    <Scripts>
+      
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(zune:CDAccess.Instance.IsBurning)]
+        [DeclareTrigger(zune:CDAccess.Instance.MediaChanged)]
+
+        BurnItem = zune:CDAccess.Instance.GetBurnItemByPlaylistContentId(Model.LibraryId);
+      </Script>
+
+      
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(CheckCanBurnTimer.Tick)]
+        
+        CanBurnFileError = null;
+        if (zune:CDAccess.Instance.IsAudioBurn &amp;&amp; BurnItem == null)
+        {
+          string filePath = Model.FilePath;
+          
+          if (String.IsNullOrEmpty(filePath))
+          {
+            if (!zune:GuidHelper.IsEmpty(Model.ServiceId))
+            {
+              CanBurnFileError = me:Strings.NoBurnRightsNeedToBuy;
+            }
+          }
+          else if (CheckCanBurn &amp;&amp; !zune:CDAccess.Instance.CanBurnFile(filePath))
+          {
+            CanBurnFileError = me:Strings.NoBurnRightsNeedToBuy;
+          }
+        }
+        
+        
+        
+        
+        
+        
+        CheckCanBurn = true;
+      </Script>
+
+      
+      <Script>
+        bool hasError = false;
+        if (BurnItem == null)
+        {
+          
+          
+          
+          
+          if ([CanBurnFileError] != null)
+          {
+            Content = null;
+            StatusIcon.Content = styles:Styles.AttentionImage;
+            hasError = true;
+          }
+          else
+          {
+            Content = null;
+            StatusIcon.Content = null;
+          }
+        }
+        else if ([BurnItem.ErrorCode] != 0)
+        {
+          Content = null; 
+          StatusIcon.Content = styles:Styles.AttentionImage;
+          hasError = true;
+        }
+        else if ([BurnItem.Downloading])
+        {
+          Content = sys:String.Format(me:Strings.RipProgress, [BurnItem.DownloadProgress]);
+          StatusIcon.Content = styles:Styles.DownloadIconSmall;
+        }
+        else if ([BurnItem.BurnCanceled])
+        {
+          Content = null;
+          StatusIcon.Content = null;
+        }
+        else if ([BurnItem.BurnComplete])
+        {
+          Content = me:Strings.BurnComplete;
+          StatusIcon.Content = null;
+        }
+        else if ([BurnItem.BurnProgress] &lt; 0)
+        {
+          Content = me:Strings.BurnPending;
+          StatusIcon.Content = null;
+        }
+        else
+        {
+          Content = me:Strings.BurnProgress.Format(BurnItem.BurnProgress);
+          StatusIcon.Content = styles:Styles.CDImageSmall;
+        }
+
+        StatusIcon.Visible = (StatusIcon.Content != null);
+        Clicker.Enabled = hasError;
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(Clicker.Invoked)]
+        if (BurnItem != null &amp;&amp; BurnItem.ErrorCode != 0)
+        {
+          zune:Shell.ShowErrorDialog(BurnItem.ErrorCode, me:Strings.BurnErrorDialogTitle);
+        }
+        else if (CanBurnFileError != null)
+        {
+          zune:MessageBox.Show(me:Strings.NoBurnRightsDialogTitle, CanBurnFileError, null);
+        }
+      </Script>
+    </Scripts>
+     <Content>
+      <Panel Name="ToolTipOrigin" Layout="HorizontalFlow">
+        <Children>
+          <Graphic Name="StatusIcon" MaximumSize="16,16"
+                   StretchingPolicy="Uniform" SizingPolicy="SizeToConstraint" Margins="0,0,2,0" Visible="true">
+          </Graphic>
+          <Text Name="private_Label"/>
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+
+  <Class Name="Strings" Shared="true">
+      <Properties>
+        <string Name="RipDone" string="{zune:Shell.LoadString(zune:StringId.IDS_RIP_TRACK_DONE)}" />
+        <string Name="RipPending" string="{zune:Shell.LoadString(zune:StringId.IDS_RIP_TRACK_PENDING)}" />
+        <string Name="RipIncomplete" string="{zune:Shell.LoadString(zune:StringId.IDS_RIP_TRACK_INCOMPLETE)}" />
+        <string Name="RipProgress" string="{zune:Shell.LoadString(zune:StringId.IDS_RIP_TRACK_PROGRESS)}" />
+        <string Name="RipErrorDialogTitle" string="{zune:Shell.LoadString(zune:StringId.IDS_RIP_ERROR_DIALOG_TITLE)}"/>
+        <string Name="RipErrorToolTip" string="{zune:Shell.LoadString(zune:StringId.IDS_RIP_ERROR_TOOLTIP)}"/>
+
+        <string Name="NoCD" string="{zune:Shell.LoadString(zune:StringId.IDS_NO_CD)}" />
+        <string Name="BlankCD" string="{zune:Shell.LoadString(zune:StringId.IDS_BLANK_CD)}" />
+        <string Name="DataOnly" string="{zune:Shell.LoadString(zune:StringId.IDS_DATA_ONLY_DISC)}" />
+
+        <string Name="SongsHeader" string="{zune:Shell.LoadString(zune:StringId.IDS_ALL_SONGS_COLUMN_HEADER)}" />
+
+        <string Name="TimeAvailable" string="{zune:Shell.LoadString(zune:StringId.IDS_BURN_LENGTH_AVAILABLE)}"/>
+        <string Name="TimeUsed" string="{zune:Shell.LoadString(zune:StringId.IDS_BURN_LENGTH_USED)}"/>
+        <string Name="SizeAvailable" string="{zune:Shell.LoadString(zune:StringId.IDS_BURN_SIZE_AVAILABLE)}"/>
+        <string Name="SizeUsed" string="{zune:Shell.LoadString(zune:StringId.IDS_BURN_SIZE_USED)}"/>
+
+        <string Name="BurnError" string="{zune:Shell.LoadString(zune:StringId.IDS_BURN_TRACK_ERROR)}"/>
+        <string Name="BurnPending" string="{zune:Shell.LoadString(zune:StringId.IDS_BURN_TRACK_PENDING)}"/>
+        <string Name="BurnProgress" string="{zune:Shell.LoadString(zune:StringId.IDS_BURN_TRACK_PROGRESS)}"/>
+        <string Name="BurnComplete" string="{zune:Shell.LoadString(zune:StringId.IDS_BURN_TRACK_COMPLETE)}"/>
+        <string Name="BurnErrorDialogTitle" string="{zune:Shell.LoadString(zune:StringId.IDS_BURN_ERROR_DIALOG_TITLE)}"/>
+
+        <string Name="BurnErrorInsertDisc" string="{zune:Shell.LoadString(zune:StringId.IDS_BURNERROR_INSERT_WRITEABLE_DISC)}"/>
+        <string Name="BurnErrorAttachBurner" string="{zune:Shell.LoadString(zune:StringId.IDS_BURNERROR_ATTACH_BURNER)}"/>
+        <string Name="BurnErrorCantBurnAudioToDVD" string="{zune:Shell.LoadString(zune:StringId.IDS_BURNERROR_CANT_BURN_AUDIO_TO_DVD)}"/>
+        <string Name="BurnErrorCantBurnDataToAudio" string="{zune:Shell.LoadString(zune:StringId.IDS_BURNERROR_CANT_BURN_DATA_TO_AUDIO)}"/>
+        
+        <string Name="BurnTitleAudio" string="{zune:Shell.LoadString(zune:StringId.IDS_BURN_LIST_AUDIO)}"/>
+        <string Name="BurnTitleData" string="{zune:Shell.LoadString(zune:StringId.IDS_BURN_LIST_DATA)}"/>
+        
+        <string Name="NoBurnRightsDialogTitle" string="{zune:Shell.LoadString(zune:StringId.IDS_NO_BURN_RIGHTS_DIALOG_TITLE)}"/>        
+        <string Name="NoBurnRightsNeedToBuy" string="{zune:Shell.LoadString(zune:StringId.IDS_NO_BURN_RIGHTS_NEED_TO_BUY)}"/>
+     </Properties>
+  </Class>  
+</UIX>
+

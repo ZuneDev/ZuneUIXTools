@@ -1,0 +1,283 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:core="res://ZuneShellResources!CoreControls.uix"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:style="res://ZuneShellResources!Style.uix"  
+  xmlns:page="res://ZuneShellResources!PageStack.uix"
+  xmlns:animations="res://ZuneShellResources!Animations.uix"
+  xmlns:lwa="res://ZuneShellResources!LabelWithArrow.uix" 
+  xmlns:me="Me">
+
+  <UI Name="Default" Base="page:PageBase">
+    <Properties>
+      <zune:Shell Name="Shell" Shell="$Required"/>
+      <zune:CategoryPage Name="Page" CategoryPage="$Required"/>
+    </Properties>
+
+    <Locals>
+      <ScrollingData Name="ScrollData"/>
+      <styles:LabelStyle Name="StyleHeader" Color="{styles:Styles.TextSelected}" Font="{styles:Styles.SettingsTextDesc}"/>
+    </Locals>
+
+    <Input>
+      <ScrollingHandler Name="ScrollHandler" ScrollingData="{ScrollData}"/>
+    </Input>
+
+    <Scripts>
+      <Script>
+        zune:Category category = [Page.CurrentCategory];
+        if (category != null)
+        {
+          Display.RequestSource(category.Target, "Page", Page);
+        }
+      </Script>
+      <Script>
+        ScrollBar.RegionHover = [UI.DeepMouseFocus];
+      </Script>
+      <Script>
+        [DeclareTrigger(Page.MenuDisabled)]
+        [InitialEvaluate(true)]
+        SelectableMenu.Visible = !Page.IsWizard &amp;&amp; !Page.MenuDisabled;
+        ReadOnlyMenu.Visible = Page.IsWizard || Page.MenuDisabled;
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel Layout="Anchor">
+        <Children>
+
+          <Panel Name="Menu" Padding="0,0,10,10">
+            <Layout>
+              <FlowLayout Orientation="Horizontal" Spacing="10,0" StripAlignment="Near" ItemAlignment="Center"/>
+            </Layout>
+            <LayoutInput>
+              <AnchorLayoutInput Left="Parent,0" Top="Parent,0" Right="Parent,0,154" Bottom="Parent,1"/>
+            </LayoutInput>
+            <Children>
+
+              <me:SelectableCategoryList Name="SelectableMenu" Model="{Page.Menu}"/>
+              <me:ReadOnlyCategoryList Name="ReadOnlyMenu" Model="{Page.Menu}"/>
+
+            </Children>
+          </Panel>
+
+          
+          <Graphic Name="LeftDivider"  Content="{styles:Styles.DividerVerticalSettings}">
+            <LayoutInput>
+              <AnchorLayoutInput Left="Menu,1" Top="Parent,0" Bottom="Parent,1"/>
+            </LayoutInput>
+          </Graphic>
+
+          <core:ScrollBar Name="ScrollBar" ScrollData="{ScrollData}">
+            <LayoutInput>
+              <AnchorLayoutInput Left="Parent,1,-26" Top="Parent,0" Bottom="MainContent,1"/>
+            </LayoutInput>
+          </core:ScrollBar>
+
+          <Scroller Name="MainContent" Orientation="Vertical" FadeSize="-1" ScrollingData="{ScrollData}">
+            <LayoutInput>
+              <AnchorLayoutInput Left="LeftDivider,1" Top="Parent,0" Right="ScrollBar,0" Bottom="Parent,1,0"/>
+            </LayoutInput>
+            <Children>
+
+              <Host Name="Display" Padding="35,0,10,10">
+                <Animations>
+                  <Animation Animation="{animations:Animations.SettingsViewContentChange}"/>
+                  <Animation Animation="{animations:Animations.SettingsViewShow}"/>
+                  
+                  <Animation Animation="{animations:Animations.MoveNow}"/>
+                </Animations>
+              </Host>
+
+            </Children>
+          </Scroller>
+          
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="CheckBox" Base="core:CheckBox">
+    <Properties>
+      <Font Name="LabelFont" Font="{styles:Styles.SettingsText}"/>
+      <Color Name="LabelColor" Color="{styles:Styles.SettingsTextActive}"/>
+    </Properties>
+  </UI>
+
+  
+  
+  
+  <UI Name="Label" Base="core:Label">
+    <Properties>
+      <styles:Style Name="Style" Color="{styles:Styles.SettingsTextActive}" Font="{styles:Styles.SettingsTextSubHeader}"/>
+    </Properties>
+  </UI>
+
+  
+  
+  
+  <UI Name="Link" Base="core:Button">
+    <Properties>
+      <style:Style Name="OverrideStyle" Style="{styles:SharedStyles.ExternalLinkStyle}"/>
+    </Properties>
+  </UI>
+
+
+  
+  
+  
+  <UI Name="SelectableCategoryList" Base="core:RadioGroup">
+    <Content Name="RadioButton">
+      <me:MenuButton
+        Available="{AvailableChoice}" 
+        Model="{Model}" 
+        OverrideStyle="{styles:SharedStyles.MgmtMenuItemStyle}"
+        Option="{RepeatedItem}" 
+        BoxNonFocusImage="{null}"
+        BoxCheckedImage="{styles:Styles.LeftMenuSelectArrow}"
+        BoxDisabledImage="{null}"
+        BoxSize="4,7"
+        >
+        <Animations>
+          <TransformByAttributeAnimation TransformByAttributeAnimation="{animations:Animations.GalleryIndexFade}"/>
+        </Animations>
+      </me:MenuButton>          
+    </Content>
+  </UI>
+
+  <UI Name="MenuButton" Base="core:RadioButton">
+    <Scripts>
+      <Script>Box.Margins = new Inset(0,2,3,0);</Script>
+    </Scripts>
+  </UI>
+
+  
+  
+  
+  <UI Name="ReadOnlyCategoryList">
+    <Properties>
+      <iris:Choice Name="Model" Choice="$Required"/>
+    </Properties>
+
+    <Scripts>
+      <Script>
+        if ([Model] != null)
+        {
+          Repeater.Source = Model.Options;
+        }
+      </Script>      
+    </Scripts>
+    
+    <Content>
+      <Panel Name="RootPanel" Layout="VerticalFlow">
+        <Children>
+          <Repeater Name="Repeater" ContentName="MenuItem">
+            <Layout>
+              <FlowLayout Orientation="Vertical" Spacing="5,0" ItemAlignment="Near" AllowWrap="true"/>
+            </Layout>
+          </Repeater>
+
+        </Children>
+      </Panel>
+    </Content>
+
+    <Content Name="MenuItem">
+      <me:ReadOnlyCategory Model="{Model}" Option="{RepeatedItem}"/>
+    </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="ReadOnlyCategory">
+    <Properties>
+      <iris:Choice Name="Model" Choice="$Required"/>
+      <Boolean Name="WordWrap" Boolean="true"/>
+      <Object Name="Option" Object="$Required"/>
+
+      
+      <style:Style Name="OverrideStyle" Style="{null}"/>
+      <style:Style Name="BaseStyle" Style="{styles:SharedStyles.MgmtMenuItemStyle}"/>
+    </Properties>
+
+    <Locals>
+      <style:StatefulCompositeStyle Name="Style" Base="{BaseStyle}"/>
+    </Locals>
+
+    <Scripts>
+      
+      <Script>Style.Override = [OverrideStyle];</Script>
+
+      
+      <Script>
+        Style.State.Selected = ([Model.Chosen] == Option);
+        Label.ShowArrow = Style.State.Selected;
+      </Script>
+
+      <Script>
+        if ([Option] is String)
+        {
+          Label.Content = (String)Option;
+        }
+        else if (Option is iris:ModelItem)
+        {
+          Label.Content = ((iris:ModelItem)Option).Description;
+        }
+      </Script>
+    </Scripts>
+
+    <Content>
+      
+      <lwa:LabelWithArrow Name="Label" Style="{Style}" WordWrap="{WordWrap}"/>
+      
+    </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="Background" Base="page:PageBase">
+    <Properties>
+      <zune:Shell Name="Shell" Shell="$Required"/>
+      <zune:CategoryPage Name="Page" CategoryPage="$Required"/>
+    </Properties>
+
+    <Scripts>
+      <Script>
+        MainBackground.Content = new Image([zune:Management.Instance.BackgroundImage], styles:Styles.BackgroundMargins);
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Graphic
+        Name="MainBackground"
+        Layout="Fill"
+        ErrorImage="{styles:Styles.DefaultBackgroundImage}"
+        >
+        <Animations>
+          <Animation Type="ContentChangeHide">
+            <Keyframes>
+              <AlphaKeyframe Time="0.0" Value="1.0" Interpolation="Linear"/>
+              <AlphaKeyframe Time="0.25" Value="0.0"/>
+            </Keyframes>
+          </Animation>
+
+          <Animation Type="ContentChangeShow">
+            <Keyframes>
+              <AlphaKeyframe Time="0.0" Value="1.0"/>
+              <AlphaKeyframe Time="0.25" Value="1.0"/>
+            </Keyframes>
+          </Animation>
+        </Animations>
+        
+      </Graphic>
+    </Content>
+  </UI>
+  
+</UIX>

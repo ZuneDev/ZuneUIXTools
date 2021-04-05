@@ -1,0 +1,83 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:styles="res://ZuneShellResources!Styles.uix">
+
+   <UI Name="Default">
+    <Properties>
+      <zune:CategoryPage Name="Page" CategoryPage="$Required" />
+    </Properties>
+    <Locals>     
+      <iris:Command Name="Back" Description="{zune:Shell.LoadString(zune:StringId.IDS_BACK_BUTTON)}"/>
+      <iris:Command Name="CompleteSetup" Description="{zune:Shell.LoadString(zune:StringId.IDS_DONE_BUTTON)}"/>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        [DeclareTrigger(CompleteSetup.Invoked)]      
+        zune:Management.Instance.CommitListSave();
+        zune:SyncSetupManager.Instance.Complete();
+        Page.DoneButton.Invoke();
+      </Script>
+
+      <Script>
+        [DeclareTrigger(Back.Invoked)]      
+        Page.NextButton = null;
+        Page.BackButton = null;
+
+        Page.BackButton.Invoke();
+      </Script>
+
+      <Script>
+        if ([zune:SyncSetupManager.Instance.DevicePartnership] == zune:SyncPartnership.SyncWithOtherMachine)
+        {
+          AlwaysConnectAsGuest.Available = true;
+          
+          
+          Page.NextButton = CompleteSetup;
+          
+          
+          if (Page.BackButton.Available)
+          {
+            Page.BackButton = Back;
+          }
+        }
+        else
+        {
+          AlwaysConnectAsGuest.Available = false;
+          Page.NextButton = null;
+          Page.BackButton = null;
+        }
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel>
+        <Children>
+
+          <Panel>
+            <Layout>
+              <FlowLayout Orientation="Vertical" Spacing="4,0" StripAlignment="Near"/>
+            </Layout>
+            <Children>
+
+              <Text Content="{zune:Shell.LoadString(zune:StringId.IDS_EXISTING_PARTNERSHIP)}" Color="{styles:Styles.SettingsTextActive}" Font="{styles:Styles.SettingsTextSubHeader}" WordWrap="true"/>
+              
+              <Text Content="{zune:Shell.LoadString(zune:StringId.IDS_EXISTING_PARTNERSHIP_DESCRIPTION)}" Color="{styles:Styles.SettingsTextActive}" Font="{styles:Styles.SettingsText}" WordWrap="true" Padding="0,0,0,10"/>
+              
+              <core:RadioGroup Name="PartnershipGroup" Model="{zune:SyncSetupManager.Instance.PartnershipChoice}" Padding="0,0,0,5"/>
+              
+              <core:CheckBox Name="AlwaysConnectAsGuest" Model="{zune:SyncSetupManager.Instance.AlwaysConnectAsGuest}" Margins="15,0,0,15"/>
+              
+            </Children>
+          </Panel>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+</UIX>

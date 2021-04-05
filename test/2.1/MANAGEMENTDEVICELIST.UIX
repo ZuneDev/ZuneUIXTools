@@ -1,0 +1,110 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:spreadsheet="res://ZuneShellResources!SpreadSheetViewBase.uix"
+  xmlns:zunepia="assembly://ZuneDBApi/Microsoft.Zune.Configuration"
+  xmlns:me="Me">
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  <Class Name="DeviceListModel" Base="spreadsheet:SpreadSheetListModel">
+    <Properties>
+      <zune:Management Name="Instance" Management="{null}"/>
+    </Properties>
+  </Class>
+  
+  
+  
+  
+  <UI Name="DeviceListView" Base="spreadsheet:SpreadSheet">
+    <Properties>
+      <Boolean Name="ShowHeaders" Boolean="false"/>
+      <String Name="ListTitle" String="$Required"/>
+      
+      <Size Name="RowSize" Size="0,28"/>
+      
+      <spreadsheet:ColumnData Name="ColumnData">
+        <Columns>
+          
+          
+          <spreadsheet:ColumnInfo Header="{ListTitle}"
+              CellType="{typeof(me:DeviceNameCell)}">
+            <ColumnSize>
+              <SharedSize Size="160,0" MinimumSize="65,0" MaximumSize="160,0"/>
+            </ColumnSize>
+          </spreadsheet:ColumnInfo>
+
+          
+          <spreadsheet:ColumnInfo Header="{zune:Shell.LoadString(zune:StringId.IDS_REGDEVICES_LASTUSED_COLUMN_HEADER)}"
+              CellType="{typeof(me:DeviceFirstUsedDateCell)}">
+            <ColumnSize>
+              <SharedSize Size="160,0" MinimumSize="35,0" MaximumSize="160,0"/>
+            </ColumnSize>
+          </spreadsheet:ColumnInfo>
+          
+          
+          <spreadsheet:ColumnInfo Header="{zune:Shell.LoadString(zune:StringId.IDS_BLANK_COLUMN_HEADER)}"
+              CellType="{typeof(me:DeviceRemoveActionCell)}">
+            <ColumnSize>
+              <SharedSize Size="100,0" MinimumSize="100,0" MaximumSize="100,0"/>
+            </ColumnSize>
+          </spreadsheet:ColumnInfo>
+          
+        </Columns>
+      </spreadsheet:ColumnData>
+      
+      <zune:Management Name="Instance" Management="$Required"/>
+      <me:DeviceListModel Name="ListModel" Instance="{Instance}"/>
+    </Properties>
+  </UI>
+  
+  
+  
+  
+  <UI Name="DeviceNameCell" Base="spreadsheet:LabelCell">
+    <Properties>
+      <zunepia:RegDeviceInfo Name="Model" RegDeviceInfo="$Required"/>
+    </Properties>
+    <Scripts>
+      <Script>Content = Model.DeviceName;</Script>
+    </Scripts>
+  </UI>
+  
+  
+  
+  
+  <UI Name="DeviceFirstUsedDateCell" Base="spreadsheet:LongDateTimeCell">
+    <Properties>
+      <zunepia:RegDeviceInfo Name="Model" RegDeviceInfo="$Required"/>
+    </Properties>
+    <Scripts>
+      <Script>Date = Model.DateLastUsed;</Script>
+    </Scripts>
+  </UI>
+  
+  
+  
+  
+  <UI Name="DeviceRemoveActionCell" Base="spreadsheet:ActionButtonCell">
+    <Properties>
+      <zunepia:RegDeviceInfo Name="Model" RegDeviceInfo="$Required"/>
+      <iris:Command Name="Command" Description="{zune:Shell.LoadString(zune:StringId.IDS_REGDEVICES_REMOVE_BUTTON)}"/>
+    </Properties>
+
+    <Scripts>
+      <Script>
+        [DeclareTrigger(Command.Invoked)]
+        ((me:DeviceListModel)ListModel).Instance.RemoveDevice(Model);
+      </Script>
+    </Scripts>
+  </UI>
+</UIX>

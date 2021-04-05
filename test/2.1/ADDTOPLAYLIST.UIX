@@ -1,0 +1,150 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:col="assembly://mscorlib/System.Collections"
+  xmlns:svc="assembly://ZuneDBApi/Microsoft.Zune.Service"
+  xmlns:data="res://ZuneMarketplaceResources!MarketplaceData.schema.xml"
+  xmlns:buy="res://ZuneMarketplaceResources!PurchaseDialog.uix"
+  xmlns:signin="res://ZuneShellResources!SignInDialog.uix"
+  >
+
+  
+  
+  
+  
+  
+  
+  <Class Name="AddToPlaylist">
+    <Properties>
+      
+      <List Name="Items" List="{null}"/>
+
+      
+      <Int32 Name="PlaylistId" Int32="-1"/>
+
+      
+      <iris:Command Name="Start"/>
+    </Properties>
+
+    <Locals>
+      
+      <signin:SignInDialog Name="SignInDialog" SignInDialog ="{null}"/>
+      <buy:PurchaseDialog Name="PurchaseDialog" PurchaseDialog="{null}"/>
+
+      
+      <Command Name="PurchasePhase"/>
+      <Command Name="DownloadPhase"/>
+
+      <Boolean Name="ContentNotInLibrary" Boolean="false"/>
+    </Locals>
+
+    <Scripts>
+
+      
+      <Script>
+        [DeclareTrigger(Start.Invoked)]
+        
+        
+        if (!List.IsNullOrEmpty(Items) &amp;&amp; Items.GetItem(0) is data:Track)
+        {
+          foreach(data:Track track in Items)
+          {
+            if (!ContentNotInLibrary &amp;&amp; (!track.InCollection &amp;&amp; !track.IsDownloading))
+            { 
+              ContentNotInLibrary = true;
+            }
+          }
+        }
+
+        
+        
+        if (ContentNotInLibrary)
+        {
+          if (!zune:SignIn.Instance.SignedIn)
+          {
+            if (SignInDialog == null) SignInDialog = new signin:SignInDialog();
+            SignInDialog.OnSuccess = PurchasePhase;
+            SignInDialog.Helper.Show(SignInDialog);
+          }
+          else
+          {
+            
+            PurchasePhase.Invoke();
+          }
+        }
+        else
+        { 
+          
+          DownloadPhase.Invoke();
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(PurchasePhase.Invoked)]
+
+        
+        if (PurchaseDialog != null) Class.DisposeOwnedObject(PurchaseDialog);
+        PurchaseDialog = new buy:PurchaseDialog();
+        PurchaseDialog.Instance = PurchaseDialog;
+        
+        if (ContentNotInLibrary)
+        {
+          foreach(data:Track track in Items)
+          {
+            if (!track.InCollection &amp;&amp; !track.CanDownload &amp;&amp; track.CanPurchase)
+            {
+              PurchaseDialog.TrackIds.Add(track.Id);
+            }
+          }
+        }
+
+        if (PurchaseDialog.TrackIds.Count > 0)
+        {
+          PurchaseDialog.OnSuccess = DownloadPhase;
+          PurchaseDialog.Helper.Show(PurchaseDialog);
+        }
+        else
+        {
+          
+          DownloadPhase.Invoke();
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(DownloadPhase.Invoked)]
+        
+        
+        if (ContentNotInLibrary)
+        {
+          col:ArrayList trackGuids = new col:ArrayList(Items.Count);
+          foreach(data:Track track in Items)
+          {
+            if (track.CanDownload)
+            {
+              trackGuids.Add(track.Id);
+            }
+          }
+
+          if (trackGuids.Count > 0)
+          {
+            zune:Download.Instance.DownloadContent(null, trackGuids, null, svc:EContentRights.SubscriptionDownload);
+          }
+          
+          ContentNotInLibrary = false;
+        }
+
+        
+        zune:PlaylistManager.Instance.AddToPlaylist(PlaylistId, Items);
+        
+        
+        Items = null;
+      </Script>
+
+    </Scripts>
+  </Class>
+
+</UIX>

@@ -1,0 +1,93 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:data="res://ZuneShellResources!LibraryData.schema.xml"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:rules="res://ZuneShellResources!SyncRules.uix">
+
+  <UI Name="MusicSyncRulesPanel" Base="rules:SyncRulesPanelBase">
+    <Properties>
+      <zune:MusicLibraryPage Name="Page" MusicLibraryPage="$Required"/>
+      <Int32 Name="MinimumWidth" Int32="45"/>
+      <Single Name="MinimumPercent" Single="0.0"/>
+    </Properties>
+    <Locals>
+      <data:LibraryArtistQuery Name="ArtistQuery"
+        RulesOnly="true"
+        DeviceId="{Page.DeviceId}"
+        ShowDeviceContents="true"/>
+      <data:LibraryAlbumQuery Name="AlbumQuery"
+        RulesOnly="true"
+        DeviceId="{Page.DeviceId}"
+        ShowDeviceContents="true"/>
+
+      <data:LibraryTrackQuery Name="TrackQuery"
+        ArtistId="-1" AlbumId="-1" RulesOnly="true"
+        Sort="+Title"
+        Detailed="false"
+        DeviceId="{Page.DeviceId}"
+        ShowDeviceContents="true"/>
+      <List Name="TrackQueryWrapper">
+        <Source>
+          <data:LibraryTrackQuery LibraryTrackQuery="{TrackQuery}"/>
+        </Source>
+      </List>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        <![CDATA[
+        int deviceID = [Page.DeviceId];
+        
+        ArtistQuery.DeviceId = deviceID;
+        AlbumQuery.DeviceId = deviceID;
+        TrackQuery.DeviceId = deviceID;
+        ]]>
+      </Script>
+
+      <Script>
+        <![CDATA[
+        [DeclareTrigger(ArtistQuery.Result.Items)]
+        [DeclareTrigger(AlbumQuery.Result.Items)]
+        [DeclareTrigger(TrackQuery.Result.Items)]
+        [InitialEvaluate(true)]
+        
+        bool devicePresent = zune:SyncControls.Instance.CurrentDeviceExists;
+        bool syncAll = zune:SyncControls.Instance.GetSyncAll(zune:MediaType.Track);
+        iris:AggregateList newList = null;
+        
+        if (Source != null)
+        {
+          UI.DisposeOwnedObject(Source);
+          Source = null;
+        }
+        
+        if (!devicePresent)
+        {
+          newList = new iris:AggregateList();
+        }
+        else if (syncAll)
+        {
+          newList = new iris:AggregateList(AllItemsText);
+        }
+        else if ([TrackQuery.Result.Items.Count] <= 0)
+        {
+          newList = new iris:AggregateList(AllItemsText,
+                                           ArtistQuery.Result.Items,
+                                           AlbumQuery.Result.Items);
+        }
+        else
+        {
+          newList = new iris:AggregateList(AllItemsText,
+                                           ArtistQuery.Result.Items,
+                                           AlbumQuery.Result.Items,
+                                           TrackQueryWrapper);
+        }
+
+        Source = newList;
+        ]]>
+      </Script>
+    </Scripts>
+  </UI>
+</UIX>

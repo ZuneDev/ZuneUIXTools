@@ -1,0 +1,476 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:core="res://ZuneShellResources!CoreControls.uix"
+  xmlns:animations="res://ZuneShellResources!Animations.uix"
+  xmlns:me="Me"
+  >
+
+  <UI Name="MiniGasGauge">
+    <Properties>
+      <Int64 Name="OldSize" Int64="$Required"/>
+      <Int64 Name="NewSize" Int64="$Required"/>
+      <Int64 Name="TotalSize" Int64="$Required"/>
+    </Properties>
+    <Locals>
+      
+      <Int32 Name="SizeOfMargins" Int32="2"/>
+      
+      <Size Name="Max" Size="220,8"/>
+      <Size Name="Old" Height="{Max.Height}" Width="{zune:SyncControls.GetGasGaugeSegmentWidth(Max.Width, OldSize, TotalSize, SizeOfMargins)}"/>
+    </Locals>
+    <Scripts>
+      <Script>
+        <![CDATA[
+		Int32 size = zune:SyncControls.GetGasGaugeSegmentWidth(Max.Width, [NewSize] - OldSize, TotalSize, SizeOfMargins);
+
+		if (size + SizeOfMargins > Max.Width - Old.Width)
+		{
+			size = Max.Width - Old.Width - SizeOfMargins;
+		}
+		
+        Size newSize = new Size(size, Max.Height);
+        NewUsedSpace.MinimumSize = newSize;
+        NewUsedSpace.MaximumSize = newSize;
+        ]]>
+      </Script>
+    </Scripts>
+    <Content>
+
+      <Panel Layout="Anchor" MaximumSize="{Max}">
+        <Children>
+
+          <Panel Name="Bar" Layout="Dock">
+            <LayoutInput>
+              <AnchorLayoutInput Left="Border,0" Bottom="Border,1"/>
+            </LayoutInput>
+            <Children>
+              <ColorFill Content="{styles:Styles.GasGaugeMiniBorder}">
+                <LayoutInput>
+                  <DockLayoutInput Position="Left"/>
+                </LayoutInput>
+                <Layout>
+                  <DockLayout DefaultLayoutInput="Left,Center" SizeToChildren="true"/>
+                </Layout>
+                <Animations>
+                  <Animation Type="Size" Loop="0">
+                    <Keyframes>
+                      <SizeKeyframe Time="0" RelativeTo="Current" Value="0,0,0" Interpolation="SCurve"/>
+                      <SizeKeyframe Time="0.2" RelativeTo="Final" Value="0,0,0"/>
+                    </Keyframes>
+                  </Animation>
+                </Animations>
+                <Children>
+
+                  <ColorFill Name="OldUsedSpace" Content="{styles:Styles.GasGaugeUnimportantUsedSpace}"
+                             MaximumSize="{Old}" MinimumSize="{Old}" Margins="0,0,1,0"/>
+
+                  <ColorFill Name="NewUsedSpace" Content="{styles:Styles.GasGaugeNewlyUsedSpace}" Margins="0,0,1,0">
+                    <Animations>
+                      <Animation Type="Size" Loop="0">
+                        <Keyframes>
+                          <SizeKeyframe Time="0" RelativeTo="Current" Value="0,0,0" Interpolation="SCurve"/>
+                          <SizeKeyframe Time="0.2" RelativeTo="Final" Value="0,0,0"/>
+                        </Keyframes>
+                      </Animation>
+                    </Animations>
+                  </ColorFill>
+                  
+                </Children>
+              </ColorFill>
+
+              <ColorFill Name="FreeBar" Content="{styles:Styles.GasGaugeFreeSpace}">
+                <LayoutInput>
+                  <DockLayoutInput Position="Client"/>
+                </LayoutInput>
+              </ColorFill>
+
+            </Children>
+          </Panel>
+
+          <me:Border Name="Border" MaximumSize="{new Size(0, Max.Height)}" BorderColor="{styles:Styles.GasGaugeMiniBorder}">
+            <LayoutInput>
+              <AnchorLayoutInput Left="Bar,0" Top="Bar,0" Right="Bar,1" Bottom="Bar,1" Vertical="Center"/>
+            </LayoutInput>
+          </me:Border>
+
+        </Children>
+      </Panel>
+     
+    </Content>
+  </UI>
+
+  <UI Name="GasGauge">
+    <Locals>
+      <me:GasGaugePortionSet Name="Portions"/>
+
+      <me:GasGaugePortion Name="CurrentPortion"/>
+
+      <String Name="SizeInKB" String="{zune:Shell.LoadString(zune:StringId.IDS_GAS_GAUGE_SIZE_IN_KB)}"/>
+      <String Name="SizeInMB" String="{zune:Shell.LoadString(zune:StringId.IDS_GAS_GAUGE_SIZE_IN_MB)}"/>
+      <String Name="SizeInGB" String="{zune:Shell.LoadString(zune:StringId.IDS_GAS_GAUGE_SIZE_IN_GB)}"/>
+      <String Name="FreeSpaceTitle" String="{zune:Shell.LoadString(zune:StringId.IDS_FREE_GAS_GAUGE_FORMAT)}"/>
+    </Locals>
+    <Scripts>
+      <Script>
+        
+        
+        
+        Boolean isGuest = [zune:SyncControls.Instance.CurrentDeviceIsGuest];
+
+        MusicBar.Visible = !isGuest;
+        VideoBar.Visible = !isGuest;
+        PhotoBar.Visible = !isGuest;
+        PodcastBar.Visible = !isGuest;
+        OtherBar.Visible = !isGuest;
+        TotalBar.Visible = isGuest;
+      </Script>
+      
+      <Script>
+        MusicBar.PercentSize = [Portions.Music.PercentSize];
+      </Script>
+      <Script>
+        MusicBar.PercentStart = [Portions.Music.StartPercentSize];
+      </Script>
+      <Script>
+        VideoBar.PercentSize = [Portions.Video.PercentSize];
+      </Script>
+      <Script>
+        VideoBar.PercentStart = [Portions.Video.StartPercentSize];
+      </Script>
+      <Script>
+        PhotoBar.PercentSize = [Portions.Photo.PercentSize];
+      </Script>
+      <Script>
+        PhotoBar.PercentStart = [Portions.Photo.StartPercentSize];
+      </Script>
+      <Script>
+        PodcastBar.PercentSize = [Portions.Podcast.PercentSize];
+      </Script>
+      <Script>
+        PodcastBar.PercentStart = [Portions.Podcast.StartPercentSize];
+      </Script>
+      <Script>
+        OtherBar.PercentSize = [Portions.Other.PercentSize];
+      </Script>
+      <Script>
+        OtherBar.PercentStart = [Portions.Other.StartPercentSize];
+      </Script>
+      <Script>
+        TotalBar.PercentSize = [Portions.Total.PercentSize];
+      </Script>
+      <Script>
+        TotalBar.PercentStart = [Portions.Total.StartPercentSize];
+      </Script>
+
+      <Script>
+        Int64 usedSpace = [CurrentPortion.RawSize];
+
+        if (usedSpace &lt; 0L)
+        {
+          usedSpace = 0L;
+        }
+        
+        if (usedSpace &lt; 1000000L &amp;&amp; usedSpace != 0L) 
+        {
+          CurrentSpaceReadout.Content = [CurrentPortion.Title].Format( SizeInKB.Format( (float)usedSpace / 1000.0 ) );
+        }
+        else if (CurrentPortion.RawSize &lt; 1000000000L) 
+        {
+          CurrentSpaceReadout.Content = CurrentPortion.Title.Format( SizeInMB.Format( (float)usedSpace / 1000000.0 ) );
+        }
+        else
+        {
+          CurrentSpaceReadout.Content = CurrentPortion.Title.Format( SizeInGB.Format( (float)usedSpace / 1000000000.0 ) );
+        }
+      </Script>
+
+      <Script>
+        Int64 freeSpace = [zune:SyncControls.Instance.FreeSpace];
+        
+        if (freeSpace &lt; 0L)
+        {
+          freeSpace = 0L;
+        }
+
+        if (freeSpace &lt; 1000000L &amp;&amp; freeSpace != 0L) 
+        {
+          FreeSpaceReadout.Content = [FreeSpaceTitle].Format( SizeInKB.Format( (float)freeSpace / 1000.0 ) );
+        }
+        else if (freeSpace &lt; 1000000000L) 
+        {
+          FreeSpaceReadout.Content = FreeSpaceTitle.Format( SizeInMB.Format( (float)freeSpace / 1000000.0 ) );
+        }
+        else
+        {
+          FreeSpaceReadout.Content = FreeSpaceTitle.Format( SizeInGB.Format( (float)freeSpace / 1000000000.0 ) );
+        }
+      </Script>
+      
+      <Script>
+        
+        if ([MusicBar.Focused])
+        {
+          CurrentPortion = Portions.Music;
+        }
+        else if ([VideoBar.Focused])
+        {
+          CurrentPortion = Portions.Video;
+        }
+        else if ([PhotoBar.Focused])
+        {
+          CurrentPortion = Portions.Photo;
+        }
+        else if ([PodcastBar.Focused])
+        {
+          CurrentPortion = Portions.Podcast;
+        }
+        else if ([OtherBar.Focused])
+        {
+          CurrentPortion = Portions.Other;
+        }
+        else
+        {
+          
+          zune:Node currentNode = ((zune:Shell) zune:Shell.DefaultInstance).CurrentNode;
+          
+          if (currentNode == zune:Shell.MainFrame.Device.Music)
+          {
+            CurrentPortion = Portions.Music;
+          }
+          else if (currentNode == zune:Shell.MainFrame.Device.Videos)
+          {
+            CurrentPortion = Portions.Video;
+          }
+          else if (currentNode == zune:Shell.MainFrame.Device.Photos)
+          {
+            CurrentPortion = Portions.Photo;
+          }
+          else if (currentNode == zune:Shell.MainFrame.Device.Podcasts)
+          {
+            CurrentPortion = Portions.Podcast;
+          }
+          
+          else
+          {
+            CurrentPortion = Portions.Total;
+          }
+        }
+      </Script>
+    </Scripts>
+    <Content>
+
+      <Panel Layout="Anchor" MaximumSize="297,0">
+        <Children>
+
+          <core:Label Name="CurrentSpaceReadout" Style="{styles:SharedStyles.GasGaugeCurrentSpace}" Padding="0,0,0,4">
+            <LayoutInput>
+              <AnchorLayoutInput Bottom="Bar,0" Left="Bar,0" Right="Bar,0,9999" ContributesToWidth="false"/>
+            </LayoutInput>
+            <Animations>
+              <Animation Animation="{animations:Animations.BasicMove}"/>
+            </Animations>
+          </core:Label>
+
+          <Panel Name="Bar" Layout="Dock" MinimumSize="0,8" MaximumSize="0,8">
+            <LayoutInput>
+              <AnchorLayoutInput Left="Parent,0" Vertical="Center"/>
+            </LayoutInput>
+            <Children>
+              <ColorFill Content="{styles:Styles.GasGaugeBorder}">
+                <LayoutInput>
+                  <DockLayoutInput Position="Left"/>
+                </LayoutInput>
+                <Layout>
+                  <DockLayout DefaultLayoutInput="Left,Center" SizeToChildren="true"/>
+                </Layout>
+                <Children>
+                  <me:GasGaugeSegment Name="MusicBar" MaxWidth="295"  Node="{zune:Shell.MainFrame.Device.Music}"/>
+                  <me:GasGaugeSegment Name="VideoBar" MaxWidth="295" Node="{zune:Shell.MainFrame.Device.Videos}"/>
+                  <me:GasGaugeSegment Name="PhotoBar" MaxWidth="295" Node="{zune:Shell.MainFrame.Device.Photos}"/>
+                  <me:GasGaugeSegment Name="PodcastBar" MaxWidth="295" Node="{zune:Shell.MainFrame.Device.Podcasts}"/>
+                  <me:GasGaugeSegment Name="OtherBar" MaxWidth="295" Node="{null}"/>
+                  <me:GasGaugeSegment Name="TotalBar" MaxWidth="295" Node="{null}" AcceptFocus="false"/>
+                </Children>
+              </ColorFill>  
+              
+              <ColorFill Name="FreeBar" Content="{styles:Styles.GasGaugeFreeSpace}">
+                <LayoutInput>
+                  <DockLayoutInput Position="Client"/>
+                </LayoutInput>
+              </ColorFill>
+              
+            </Children>
+          </Panel>
+
+          <me:Border Name="Border" MaximumSize="0,8">
+            <LayoutInput>
+              <AnchorLayoutInput Left="Bar,0" Top="Bar,0" Right="Bar,1" Bottom="Bar,1" Vertical="Center"/>
+            </LayoutInput>
+          </me:Border>          
+
+          <core:Label Name="FreeSpaceReadout" Style="{styles:SharedStyles.GasGaugeFreeSpaceText}" Padding="0,1,0,0">
+            <LayoutInput>
+              <AnchorLayoutInput Right="Bar,1" Top="Bar,1"/>
+            </LayoutInput>
+          </core:Label>
+          
+        </Children>
+      </Panel>
+
+    </Content>
+  </UI>
+
+  <UI Name="Border">
+    <Properties>
+      <Color Name="BorderColor" Color="{styles:Styles.GasGaugeBorder}"/>
+    </Properties>
+    <Content>
+      <Panel Name="Bar" Layout="Dock">
+        <Children>
+          <ColorFill Name="TopBorder" Content="{BorderColor}" MaximumSize="0,1">
+            <LayoutInput>
+              <DockLayoutInput Position="Top"/>
+            </LayoutInput>
+          </ColorFill>
+
+          <ColorFill Name="BottomBorder" Content="{BorderColor}" MaximumSize="0,1">
+            <LayoutInput>
+              <DockLayoutInput Position="Bottom"/>
+            </LayoutInput>
+          </ColorFill>
+
+          <ColorFill Name="LeftBorder" Content="{BorderColor}" MaximumSize="1,0">
+            <LayoutInput>
+              <DockLayoutInput Position="Left"/>
+            </LayoutInput>
+          </ColorFill>
+          
+          <ColorFill Name="RightBorder" Content="{BorderColor}" MaximumSize="1,0">
+            <LayoutInput>
+              <DockLayoutInput Position="Right"/>
+            </LayoutInput>
+          </ColorFill>
+        </Children>
+      </Panel>      
+    </Content>
+  </UI>
+  
+  <Class Name="GasGaugePortionSet">
+    <Properties>
+      <me:GasGaugePortion Name="Music" Title="{zune:Shell.LoadString(zune:StringId.IDS_MUSIC_GAS_GAUGE_FORMAT)}"/>
+      <me:GasGaugePortion Name="Video" Title="{zune:Shell.LoadString(zune:StringId.IDS_VIDEO_GAS_GAUGE_FORMAT)}"/>
+      <me:GasGaugePortion Name="Photo" Title="{zune:Shell.LoadString(zune:StringId.IDS_PHOTO_GAS_GAUGE_FORMAT)}"/>
+      <me:GasGaugePortion Name="Podcast" Title="{zune:Shell.LoadString(zune:StringId.IDS_PODCAST_GAS_GAUGE_FORMAT)}"/>
+      <me:GasGaugePortion Name="Other" Title="{zune:Shell.LoadString(zune:StringId.IDS_OTHER_GAS_GAUGE_FORMAT)}"/>
+      <me:GasGaugePortion Name="Total" Title="{zune:Shell.LoadString(zune:StringId.IDS_TOTAL_GAS_GAUGE_FORMAT)}"/>
+    </Properties>
+    <Locals>
+      <zune:SyncControls Name="Controls" SyncControls="{zune:SyncControls.Instance}"/>
+    </Locals>
+    <Scripts>
+      <Script>
+        Music.RawSize = [Controls.MusicSpace];
+      </Script>
+      <Script>
+        Video.RawSize = [Controls.VideoSpace];
+      </Script>
+      <Script>
+        Photo.RawSize = [Controls.PhotoSpace];
+      </Script>
+      <Script>
+        Podcast.RawSize = [Controls.PodcastSpace];
+      </Script>
+      <Script>
+        Other.RawSize = [Controls.OtherSpace];
+      </Script>
+
+      <Script>
+        Total.RawSize = [Controls.TotalSpace] - [Controls.FreeSpace];
+      </Script>
+
+      <Script>
+        Video.StartPercentSize = [Music.PercentSize];
+        Photo.StartPercentSize = Video.StartPercentSize + [Video.PercentSize];
+        Podcast.StartPercentSize = Photo.StartPercentSize + [Photo.PercentSize];
+        Other.StartPercentSize = Podcast.StartPercentSize + [Podcast.PercentSize];
+      </Script>
+    </Scripts>
+  </Class>
+  
+  <Class Name="GasGaugePortion">
+    <Properties>
+      <String Name="Title"/>
+      <Int64 Name="RawSize" Int64="0"/>
+      <Single Name="PercentSize"/>
+      <Single Name="StartPercentSize"/>
+    </Properties>
+    <Scripts>
+      <Script>
+        PercentSize = (Single)[RawSize] / (Single)[zune:SyncControls.Instance.TotalSpace];
+      </Script>
+    </Scripts>
+  </Class>
+
+  <UI Name="GasGaugeSegment">
+    <Properties>
+      <zune:Node Name="Node" Node="$Required"/>
+      <Single Name="PercentSize" Single="0.0"/>
+      <Single Name="PercentStart" Single="0.0"/>
+      <Int32 Name="MaxWidth" Int32="0"/>
+      <Boolean Name="AcceptFocus" Boolean="true"/>
+
+      <Boolean Name="Focused" Boolean="false"/>
+    </Properties>
+    <Locals>
+      <Int32 Name="Height" Int32="8"/>
+      <Int32 Name="SizeOfMargins" Int32="5"/>
+    </Locals>
+    <Input>
+      <ClickHandler Command="{Node}" Name="Clicky" HandlerStage="Direct"/>
+    </Input>
+    <Scripts>
+      <Script>
+        Int32 width = (Int32)((Single)[MaxWidth] * [PercentSize]) - 1;
+        Int32 startWidth = (Int32)((Single)MaxWidth * [PercentStart]);
+        
+        if (width + SizeOfMargins > MaxWidth - startWidth)
+        {
+          width = MaxWidth - startWidth - SizeOfMargins;
+        }
+        
+        if (width >= 0)
+        {
+          Size size = new Size(width, Height);
+          Visual.MinimumSize = size;
+          Visual.Visible = true;
+        }
+        else
+        {
+          Visual.Visible = false;
+        }
+      </Script>
+      <Script>
+        Clicky.Enabled = [AcceptFocus];
+      </Script>
+      <Script>
+        if ([UI.MouseFocus] &amp;&amp; [AcceptFocus])
+        {
+          Visual.Content = styles:Styles.GasGaugeImportantUsedSpace;
+          Focused = true;
+        }
+        else
+        {
+          Visual.Content = styles:Styles.GasGaugeUnimportantUsedSpace;
+          Focused = false;
+        }
+      </Script>
+    </Scripts>
+    <Content>
+      <ColorFill Name="Visual" Margins="0,0,1,0"/>
+    </Content>
+  </UI>
+  
+</UIX>

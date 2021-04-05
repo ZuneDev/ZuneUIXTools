@@ -1,0 +1,285 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:sys="assembly://mscorlib/System"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:zuneshell="assembly://ZuneShell/Microsoft.Zune.Shell"
+  xmlns:zuneutil="assembly://ZuneShell/Microsoft.Zune.Util"
+  xmlns:zuneutilapi="assembly://ZuneDBApi/Microsoft.Zune.Util"
+  xmlns:msg="assembly://ZuneDBApi/Microsoft.Zune.Messaging"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:msgdata="res://ZuneShellResources!MessagingData.schema.xml"
+  xmlns:me="Me">
+
+  
+  
+  
+  <UI Name="MessageDetailsProvider">
+    <Properties>
+      <zune:SelectionDetailsPanel Name="Model" SelectionDetailsPanel="$Required" />
+      <zune:InboxPage Name="Page" InboxPage="$Required"/>
+      <msgdata:UriResourceMessageDetailsQuery Name="MessageDetailsQuery" URI="{Model.SelectedItem.DetailsLink}"/>
+      <Boolean Name="MessageDetailsCompleted"/>
+      <Timer Name="MessageReadTimer" Enabled="false" AutoRepeat="false" Interval="2000"/>
+    </Properties>
+    <Scripts>
+      <Script>
+        if ([MessageDetailsCompleted] &amp;&amp; Model.SelectedItem.Unread)
+        {
+          MessageReadTimer.Start();
+        }
+      </Script>
+      <Script>
+        [DeclareTrigger(MessageReadTimer.Tick)]
+        MessageReadTimer.Stop();
+        if (me:MarkMessageReadWorker.Details == null)
+        {
+          me:MarkMessageReadWorker.Details = Model;
+        }
+      </Script>
+    </Scripts>
+  </UI>
+
+  
+  
+  
+  <Class Name="RemoveSelectedItemWorker" Shared="true">
+    <Properties>
+      <zune:SelectionDetailsPanel Name="Details" SelectionDetailsPanel="{null}" />
+    </Properties>
+
+    <Scripts>
+      <Script>
+        [DeclareTrigger(Details)]
+        if (Details == null)
+        {
+          return;
+        }
+        zune:InboxEntryItem message = (zune:InboxEntryItem)Details.SelectedItem;
+        if (message == null)
+        {
+          return;
+        }
+        if (msg:MessagingService.Instance.MessageDelete(message.DetailsLink))
+        {
+          
+          Details.SelectedItem = null;
+
+          
+          if (message.Unread)
+          {
+            Details.MainPanel.UpdateShellUnreadCount(-1, true);
+          }
+
+          
+          zune:InboxPanel panel;
+          if (message.Wishlist)
+          {
+            panel = Details.MainPanel.BuyPanel;
+          }
+          else
+          {
+            panel = Details.MainPanel.MessagePanel;
+          }
+          iris:ArrayListDataSet list = (iris:ArrayListDataSet)panel.Content;
+          if (list != null)
+          {
+            int index = list.IndexOf(message);
+            if (index >= 0)
+            {
+              
+              list.RemoveAt(index);
+
+              
+              if (index >= list.Count)
+              {
+                  index = list.Count - 1;
+              }
+
+              if (index &lt; 0)
+              {
+                
+                if (message.Wishlist)
+                {
+                  panel = Details.MainPanel.MessagePanel;
+                }
+                else
+                {
+                  panel = Details.MainPanel.BuyPanel;
+                }
+
+                
+                if (!List.IsNullOrEmpty(panel.Content))
+                {
+                  if (message.Wishlist)
+                  {
+                    
+                    index = 0;
+                  }
+                  else
+                  {
+                    
+                    index = panel.Content.Count - 1;
+                  }
+                }
+              }
+
+              if (index >= 0)
+              {
+                Details.MainPanel.MessageIdToSelect = ((zune:InboxEntryItem)panel.Content.get_Item(index)).Id;
+              }
+            }
+            else
+            {
+              
+            }
+          }
+        }
+        else
+        {
+          
+        }
+        
+        Details = null;
+      </Script>
+    </Scripts>
+  </Class>
+
+  
+  
+  
+  <Class Name="MarkMessageReadWorker" Shared="true">
+    <Properties>
+      <zune:SelectionDetailsPanel Name="Details" SelectionDetailsPanel="{null}"/>
+    </Properties>
+    <Scripts>
+      <Script>
+        if ([Details] != null &amp;&amp; Details.SelectedItem != null &amp;&amp; Details.SelectedItem.Unread)
+        {
+          if (msg:MessagingService.Instance.MessageSetRead(Details.SelectedItem.DetailsLink))
+          {
+            Details.SelectedItem.Unread = false;
+            Details.MainPanel.UpdateShellUnreadCount(-1, true);
+          }
+        }
+        
+        Details = null;
+      </Script>
+    </Scripts>
+  </Class>
+
+  
+  
+  
+  <UI Name="MessageDetailsHeader">
+    <Properties>
+      <zune:SelectionDetailsPanel Name="Model" SelectionDetailsPanel="$Required" />
+      <msgdata:UriResourceMessageDetailsQuery Name="MessageDetailsQuery" UriResourceMessageDetailsQuery="$Required" />
+      <String Name="TextContent" />
+      <Boolean Name="UseMessageTextContent" Boolean="true" />
+    </Properties>
+
+    <Scripts>
+      
+      <Script>
+        if (Model.SelectedItem != null)
+        {
+          
+          Details.Content = sys:String.Format(zune:Shell.LoadString(zune:StringId.IDS_INBOX_DETAILS_HEADER), Model.SelectedItem.From, Model.SelectedItem.Received.ToString("G"));
+        }
+      </Script>
+      
+      <Script>
+        if([MessageDetailsQuery.Status] == iris:DataProviderQueryStatus.Complete)
+        {
+          if (UseMessageTextContent)
+          {
+            TextContent = MessageDetailsQuery.Result.TextContent;
+          }
+        }
+      </Script>
+      
+      <Script>
+        if (!String.IsNullOrEmpty([TextContent]))
+        {
+          TextMessage.Content = TextContent;
+          TextMessage.Visible = true;
+        }
+      </Script>
+
+    </Scripts>
+
+    <Content>
+      <Panel Layout="VerticalFlow" Padding="15,0,0,0">
+        <Children>
+          <core:Label Name="Details" Style="{styles:SharedStyles.InboxDetailStyle}" />
+          <core:Label Name="TextMessage" WordWrap="true" Margins="0,10,13,13" Style="{styles:SharedStyles.InboxMessageStyle}"/>
+        </Children>
+      </Panel>
+    </Content>
+
+  </UI>
+
+  
+  
+  
+  <UI Name="MessageDetailsFooter">
+    <Properties>
+      <zune:SelectionDetailsPanel Name="Model" SelectionDetailsPanel="$Required" />
+      <msgdata:UriResourceMessageDetailsQuery Name="MessageDetailsQuery" UriResourceMessageDetailsQuery="$Required" />
+    </Properties>
+
+    <Locals>
+      <iris:Command Name="DeleteCommand" Description="{zune:Shell.LoadString(zune:StringId.IDS_DELETEMESSAGE)}" />
+      <iris:Command Name="ReplyCommand" Description="{zune:Shell.LoadString(zune:StringId.IDS_REPLYMESSAGE)}" Available="false" />
+    </Locals>
+
+    <Scripts>
+      
+      <Script>
+        if([MessageDetailsQuery.Status] == iris:DataProviderQueryStatus.Complete)
+        {
+          ReplyCommand.Available = !String.IsNullOrEmpty(MessageDetailsQuery.Result.ReplyLink);
+        }
+      </Script>
+      
+
+
+      <Script>
+        [DeclareTrigger(DeleteCommand.Invoked)]
+        
+        if (me:RemoveSelectedItemWorker.Details == null)
+        {
+          me:RemoveSelectedItemWorker.Details = Model;
+        }
+      </Script>
+      
+      <Script>
+        [DeclareTrigger(ReplyCommand.Invoked)]
+        zuneshell:ZuneApplication.Service.LaunchBrowserForExternalUrl(MessageDetailsQuery.Result.ReplyLink, true);
+        zuneutil:SQMLog.Log(zuneutilapi:SQMDataId.InboxMessageReply, 1);
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel Layout="Anchor">
+        <Children>
+          <core:BigActionButton Name="ReplyButton" Model="{ReplyCommand}">
+            <LayoutInput>
+              <AnchorLayoutInput Right="Parent,1" Top="Parent,0"/>
+            </LayoutInput>
+          </core:BigActionButton>
+
+          <core:BigActionButton Name="DeleteButton" Model="{DeleteCommand}">
+            <LayoutInput>
+              <AnchorLayoutInput Right="ReplyButton,0" Top="Parent,0"/>
+            </LayoutInput>
+          </core:BigActionButton>
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+</UIX>

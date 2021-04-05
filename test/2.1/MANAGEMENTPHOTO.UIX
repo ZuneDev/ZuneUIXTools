@@ -1,0 +1,63 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:sys="assembly://mscorlib/System"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:mgmt="res://ZuneShellResources!Management.uix">
+
+  <UI Name="Default">
+    <Properties>
+      <zune:CategoryPage Name="Page" CategoryPage="$Required" />
+    </Properties>
+    <Locals>
+      <zune:Management Name="Management" Management="{zune:Management.Instance}"/>
+    </Locals>
+    
+    <Scripts>
+      <Script>
+        int speed = ([Management.SlideShowSpeed.Value] + 500) / 1000;
+
+        SlideShowSpeedValue.Content = sys:String.Format(zune:Shell.LoadString(zune:StringId.IDS_SLIDESHOW_OPTION_VALUE), speed);
+      </Script>
+    </Scripts>
+    
+    <Content>
+      <Panel>
+        <Children>
+
+          <Panel>
+            <Layout>
+              <FlowLayout Orientation="Vertical" Spacing="4,0" StripAlignment="Near" ItemAlignment="Near"/>
+            </Layout>
+            <Children>
+
+              <mgmt:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_SPEED_HEADER)}" WordWrap="false"/>
+
+              <Panel Name="SliderPanel">
+                <Layout>
+                  <FlowLayout Orientation="Horizontal" ItemAlignment="Center" Spacing="10,0"/>
+                </Layout>
+
+                <Children>
+                  <Text Content="{zune:Shell.LoadString(zune:StringId.IDS_SLIDESHOW_SHORT)}" Color="{styles:Styles.SettingsTextActive}" Font="{styles:Styles.SettingsText}" WordWrap="false"/>
+                  <core:Slider
+                    Name="Slider"
+                    Model="{Management.SlideShowSpeed}" 
+                    DiscreteValues="true"
+                    MaximumSize="75,0"/>
+                  <Text Content="{zune:Shell.LoadString(zune:StringId.IDS_SLIDESHOW_LONG)}" Color="{styles:Styles.SettingsTextActive}" Font="{styles:Styles.SettingsText}" WordWrap="false"/>
+                </Children>
+              </Panel>
+              <Text Name="SlideShowSpeedValue" Color="{styles:Styles.SettingsTextActive}" Font="{styles:Styles.SettingsText}" WordWrap="false"/>
+              
+            </Children>
+          </Panel>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+</UIX>

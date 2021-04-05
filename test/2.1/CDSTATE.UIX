@@ -1,0 +1,282 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX xmlns="http://schemas.microsoft.com/2007/uix"
+     xmlns:iris="assembly://UIX/Microsoft.Iris"
+     xmlns:zune="assembly://ZuneShell/ZuneUI"
+     xmlns:sys="assembly://mscorlib/System"
+     xmlns:col="assembly://mscorlib/System.Collections"
+     xmlns:data="res://ZuneShellResources!LibraryData.schema.xml"
+     xmlns:me="Me">
+
+  
+  
+  
+  
+  <Class Name="CD">
+    <Properties>
+      <data:Album                  Name="DataAlbum"  Album="{null}" />
+      <zune:CDAlbumCommand         Name="CodeAlbum"  CDAlbumCommand="{null}" />
+      <List                        Name="Tracks"     List="{null}" />
+      <iris:Command                Name="Play" />
+      <iris:Command               Name="StartRip"    Description="{zune:Shell.LoadString(zune:StringId.IDS_START_RIP_BUTTON)}"/>
+      <iris:Command               Name="StopRip"     Description="{zune:Shell.LoadString(zune:StringId.IDS_STOP_RIP_BUTTON)}"/>
+      <bool Name="Unknown" />
+    </Properties>
+
+    <Locals>
+      <data:LibraryAlbumByTOCQuery Name="AlbumQuery" Enabled="false"/>
+      <data:LibraryTrackQuery      Name="TrackQuery" Enabled="false" DiscMediaView="true" Sort="+WM/TrackNumber" />
+    </Locals>
+
+    <Scripts>
+
+      <Script>
+        [InitialEvaluate(false)]
+        
+        
+        AlbumQuery.Enabled = false;
+        AlbumQuery.TOC = [CodeAlbum].TOC;
+        AlbumQuery.Enabled = true;
+      </Script>
+      <Script>
+        [DeclareTrigger(AlbumQuery.Result.Items.Count)]
+        if ((AlbumQuery.Result != null) &amp;&amp; !List.IsNullOrEmpty(AlbumQuery.Result.Items) &amp;&amp; (DataAlbum == null))
+        {
+          data:Album dataAlbum = (data:Album) AlbumQuery.Result.Items.get_Item(0);
+          CodeAlbum.LibraryID = dataAlbum.LibraryId;          
+          DataAlbum = dataAlbum;
+        }
+      </Script>
+
+      <Script>
+        if (DataAlbum != null)
+        {
+          
+          
+          TrackQuery.Enabled = false;
+          TrackQuery.AlbumId = [DataAlbum.LibraryId];
+          TrackQuery.Enabled = true;
+
+          Tracks = TrackQuery.Result.Items;
+        }
+      </Script>
+      <Script>
+        if ((Tracks != null) &amp;&amp; ([Tracks.Count] > 0))
+        {
+          
+          CodeAlbum.TrackCount = Tracks.Count;
+
+          
+          
+          int i = 0;
+          bool hasTracksToRip = false;
+          foreach(data:Track dataTrack in Tracks)
+          {
+            zune:CDAlbumTrack track = CodeAlbum.GetTrack(i);
+            i = i + 1;
+            if (dataTrack.InLibrary)
+            {
+              track.RipState = zune:RipState.InLibrary;
+            }
+            else
+            {
+              track.RipTrack = true;
+              hasTracksToRip = true;
+            }
+          }
+
+          
+          if (hasTracksToRip &amp;&amp; CodeAlbum.InsertedDuringSession &amp;&amp; zune:Management.Instance.AutoCopyCD.Value)
+          {
+            StartRip.Invoke();
+          }
+        }
+      </Script>
+
+      <Script>
+        [DeclareTrigger(CodeAlbum.AutoPlayAction)]
+        [DeclareTrigger(Tracks.Count)]
+
+        if (Tracks != null &amp;&amp; Tracks.Count > 0)
+        {
+          if (CodeAlbum.AutoPlayAction == zune:CDAction.Rip)
+          {
+            StartRip.Invoke();
+          }
+          else if (CodeAlbum.AutoPlayAction == zune:CDAction.Play)
+          {
+            Play.Invoke();
+          }
+
+          CodeAlbum.ClearAutoPlayAction();
+        }
+      </Script>
+
+      <Script>
+        StartRip.Available = (CodeAlbum != null) &amp;&amp; ([CodeAlbum.RipCount] > 0);
+      </Script>
+
+      <Script>
+        [DeclareTrigger(Play.Invoked)]
+        if (Tracks != null &amp;&amp; Tracks.Count > 0)
+        {
+          zune:TransportControls.Instance.PlayItems(Tracks, 0);
+        }
+      </Script>
+
+      <Script>
+        [DeclareTrigger(StartRip.Invoked)]
+
+        if (CodeAlbum.RipCount > 0)
+        {
+          CodeAlbum.StartRip();
+        }
+      </Script>
+
+      <Script>
+        [DeclareTrigger(StopRip.Invoked)]
+        CodeAlbum.StopRip();
+      </Script>
+
+      <Script>
+        
+        if (DataAlbum != null)
+        {
+          if ((DataAlbum.Title != null) &amp;&amp; DataAlbum.Title.StartsWith(me:Strings.UnknownAlbumPrefix))
+          {
+            CodeAlbum.Description = me:Strings.UnknownAlbum;
+            Unknown = true;
+          }
+          else
+          {
+            CodeAlbum.Description = [DataAlbum.Title];
+          }
+        }
+      </Script>
+    </Scripts>
+  </Class>
+
+
+  
+
+
+
+  <Class Name="BurnList">
+    <Properties>
+      <String Name="Title"/>
+
+      <Int32 Name="PlaylistId" Int32="-1"/>
+      <Boolean Name="CanPlay"/>
+      <sys:TimeSpan Name="TotalTime"/> 
+      <Int64 Name="TotalSize" Int64="{(Int64)0}"/> 
+    </Properties>
+
+    <Scripts>
+      
+      <Script>
+        [DeclareTrigger(PlaylistId)]
+        Title = zune:Shell.LoadString(zune:StringId.IDS_PLAYLIST_BURN_LIST);
+      </Script>
+    </Scripts>
+  </Class>
+
+
+  
+  
+  
+  
+  <Class Name="CDState" Shared="True">
+    <Properties>
+      <zune:CDAccess Name="CDAccess" CDAccess="{zune:CDAccess.Instance}"/>
+      <me:BurnList Name="TheBurnList" BurnList="{null}"/>
+      <bool Name="HasMedia"/>
+
+      <col:Hashtable Name="AlbumToCD"/> 
+    </Properties>
+
+    <Locals>
+      <me:CD Name="PendingPlay" CD="{null}"/>
+      <me:CD Name="PendingRip"  CD="{null}"/>
+    </Locals>
+
+    <Scripts>
+      
+      <Script>
+        int burnListId = [CDAccess.BurnListId];
+        if (burnListId >= 0)
+        {
+          if (TheBurnList == null)
+          {
+            TheBurnList = new me:BurnList();
+          }
+          
+          TheBurnList.PlaylistId = -1;
+          TheBurnList.PlaylistId = burnListId;
+        }
+        else if (TheBurnList != null)
+        {
+          Class.DisposeOwnedObject(TheBurnList);
+          TheBurnList = null;
+        }
+      </Script>
+
+      
+
+
+
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(zune:CDAccess.Instance.MediaChanged)]
+
+        List nodes = (List) zune:Shell.MainFrame.Disc.NodesList;
+
+        bool hasMedia = false;
+        
+        if (nodes != null)
+        {
+          
+          
+
+          foreach(zune:CDAlbumCommand album in nodes)
+          {         
+            if ((album != zune:Shell.MainFrame.Disc.NoCD) &amp;&amp; (album != zune:Shell.MainFrame.Disc.BurnList))
+            {
+              if (!AlbumToCD.Contains(album))
+              {
+                me:CD cd = new me:CD();
+                cd.CodeAlbum = album;
+                
+                AlbumToCD.set_Item(album, cd);
+              }
+              hasMedia = true;
+            }
+          }
+        }
+
+        List discardedCDs = zune:CDAccess.Instance.DiscardedCDs;
+        
+        if (discardedCDs != null)
+        {
+          foreach(zune:CDAlbumCommand album in discardedCDs)
+          {
+            me:CD cd = (me:CD)AlbumToCD.get_Item(album);
+            if (cd != null)
+            {
+              Class.DisposeOwnedObject(cd);
+            }
+            AlbumToCD.Remove(album);
+          }
+          zune:CDAccess.Instance.DiscardedCDs = null;
+        }
+        HasMedia = hasMedia;
+      </Script>
+    </Scripts>
+  </Class>
+
+  <Class Name="Strings" Shared="true">
+      <Properties>
+        <string Name="UnknownAlbum" string="{zune:Shell.LoadString(zune:StringId.IDS_MEDIASTORE_UNKNOWN_ALBUM)}"/>
+        <string Name="UnknownAlbumPrefix" string="{zune:Shell.LoadString(zune:StringId.IDS_MEDIASTORE_UNKNOWN_ALBUM_PREFIX)}"/>
+     </Properties>
+  </Class>  
+
+</UIX>

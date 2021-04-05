@@ -1,0 +1,286 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:data="res://ZuneShellResources!LibraryData.schema.xml"
+  xmlns:page="res://ZuneShellResources!PageStack.uix"
+  xmlns:menu="res://ZuneShellResources!ContextMenu.uix"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:anim="res://ZuneShellResources!Animations.uix"
+  xmlns:now="res://ZuneShellREsources!NowPlayingLand.uix" 
+  xmlns:styles="res://ZuneShellResources!Styles.uix">
+
+  
+  <UI Name="PhotoSlideShow" Base="page:PageBase">
+    <Properties>
+      <zune:SlideshowLand Name="Page" SlideshowLand="$Required"/>
+    </Properties>
+
+    <Locals>
+      <Timer Name="AdvanceTimer" AutoRepeat="true" Enabled="false"/>
+
+      <zune:SlideShowState Name="State" SlideShowState='{Page.SlideShowState}'/>
+
+      <data:LibraryPhotoQuery Name="PhotosByFolderQuery" Sort="{State.Sort}" FolderId="{State.FolderId}"/>
+
+      <iris:Command Name="PlayPause"/>
+      <menu:ContextMenu Name="ContextMenu" ContextMenu="{null}"/>
+
+      <Int32 Name="PreloadIndex" Int32="-1"/>
+      <Image Name="PreloadImage" Image="{null}"/>
+
+      <styles:WindowState Name="WindowState"/>
+    </Locals>
+
+    <Input>
+      <ClickHandler Name="RightClick" ClickType="RightMouse"/>
+      <KeyHandler Name="LeftKeyHandler" Key="Left" HandlerStage="Bubbled, Direct" Repeat="true" />
+      <KeyHandler Name="RightKeyHandler" Key="Right" HandlerStage="Bubbled, Direct" Repeat="true" />
+      <KeyHandler Name="SpaceKeyHandler" Key="Space" HandlerStage="Bubbled, Direct" Repeat="false" />
+      <MouseWheelHandler Name="WheelHandler"/>
+    </Input>
+
+    <Scripts>
+      
+      <Script>
+        bool fullBleed = false;
+
+        if (([Image.Content] != null) &amp;&amp; ([Image.Content.Status] == ImageStatus.Complete))
+        {
+          int picWidth  = [Image.Content.Width];
+          int picHeight = [Image.Content.Height];
+
+          
+          iris:WindowSize wndSize = iris:Application.Window.ClientSize;
+          int wndWidth            = wndSize.Width;
+          int wndHeight           = wndSize.Height;
+
+          if ((picWidth &gt; 0) &amp;&amp; (picHeight &gt; 0) &amp;&amp;
+              (wndWidth &gt; 0) &amp;&amp; (wndHeight &gt; 0))
+          {
+            float picRatio = (float)picWidth / (float)picHeight;
+            float wndRatio = (float)wndWidth / (float)wndHeight;
+            float match    = picRatio / wndRatio;
+
+            
+            
+            
+
+            
+            
+            fullBleed = ((match &gt; styles:Styles.FullBleedPhotoAspectToleranceMin) &amp;&amp;
+                         (match &lt; styles:Styles.FullBleedPhotoAspectToleranceMax));
+          }
+        }
+
+        
+        if (fullBleed)
+        {
+          Image.StretchingPolicy = StretchingPolicy.UniformToFill;
+        }
+        else
+        {
+          Image.StretchingPolicy = StretchingPolicy.Uniform;
+        }
+      </Script>
+
+      
+      <Script>
+        AdvanceTimer.Interval = [zune:Management.Instance.SlideShowSpeed.Value];
+
+        bool play = [State.Play];
+
+        AdvanceTimer.Enabled = play;
+        if (play)
+          PlayPause.Description = zune:Shell.LoadString(zune:StringId.IDS_PHOTO_PAUSE_MENUITEM);
+        else
+          PlayPause.Description = zune:Shell.LoadString(zune:StringId.IDS_PHOTO_PLAY_MENUITEM);
+      </Script>
+
+      
+      <Script>
+        [InitialEvaluate(false)]
+        if ([State.Play])
+        {
+          State.Index = State.Index + 1;
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(RightClick.Invoked)]
+
+        
+        
+        
+
+        if (ContextMenu != null)
+        {
+          UI.DisposeOwnedObject(ContextMenu);
+        }
+
+        
+        
+        
+
+        ContextMenu = new menu:ContextMenu();
+        ContextMenu.Options.Add(PlayPause);
+
+        ContextMenu.Helper.Show(ContextMenu);
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(PlayPause.Invoked)]
+        [DeclareTrigger(SpaceKeyHandler.Invoked)]
+
+        State.Play = !State.Play;
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(LeftKeyHandler.Invoked)]
+        [DeclareTrigger(WheelHandler.UpInvoked)]
+
+        State.Index = State.Index - 1;
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(RightKeyHandler.Invoked)]
+        [DeclareTrigger(WheelHandler.DownInvoked)]
+        [DeclareTrigger(AdvanceTimer.Tick)]
+
+        State.Index = State.Index + 1;
+      </Script>
+
+      
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(PhotosByFolderQuery.Result.Items.Count)] 
+
+        bool timerRunning = AdvanceTimer.Enabled;
+        AdvanceTimer.Enabled = false;
+
+        if (!List.IsNullOrEmpty(PhotosByFolderQuery.Result.Items))
+        {
+          
+          if ([State.Index] &lt; 0)
+          {
+            State.Index = State.Index + PhotosByFolderQuery.Result.Items.Count;
+          }
+
+          State.Index = State.Index % PhotosByFolderQuery.Result.Items.Count;
+
+          
+          
+          Image.AcquiringImage = Image.Content;
+
+          
+          if (State.Index == PreloadIndex)
+          {
+            Image.Content = PreloadImage;
+            
+          }
+          else
+          {
+            
+            data:Photo currentPhoto = (data:Photo)PhotosByFolderQuery.Result.Items.get_Item(State.Index);
+            Image.Content = new Image("file://" + currentPhoto.ImagePath,  new Inset(0,0,0,0), new Size(2000,2000));
+            
+          }
+
+          
+          PreloadIndex = (State.Index + 1) % PhotosByFolderQuery.Result.Items.Count;
+
+          data:Photo preloadPhoto = (data:Photo)PhotosByFolderQuery.Result.Items.get_Item(PreloadIndex);
+          PreloadImage = new Image("file://" + preloadPhoto.ImagePath,  new Inset(0,0,0,0), new Size(2000,2000));
+
+          
+          PreloadImage.Load();
+          
+        }
+
+        AdvanceTimer.Enabled = timerRunning;
+      </Script>
+
+      
+      <Script>
+        Fade.Visible = [WindowState.InputActive];
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel Layout="Form" Margins="0,0,-5,0">
+        <Animations>
+          <Animation Animation="{anim:Animations.NowPlayingPageFadeIn}"/>
+          <Animation Animation="{anim:Animations.NowPlayingPageFadeOut}"/>
+        </Animations>
+        <Children>
+
+          <now:NowPlayingBorders>
+            <LayoutInput>
+              <FormLayoutInput 
+                  Left="Parent,0" Right="Parent,1,-5" 
+                  Top="Parent,0" Bottom="Parent,1"/>
+            </LayoutInput>
+          </now:NowPlayingBorders>
+
+          
+          <Graphic Name="Fade" Content="{styles:Styles.NowPlayingFade}" SizingPolicy="SizeToConstraint">
+            <LayoutInput>
+              <FormLayoutInput
+                  Left="Parent,0" Right="Parent,1"
+                  Top="Parent,1,-330" Bottom="Parent,1"/>
+            </LayoutInput>
+            <Animations>
+              <Animation Animation="{anim:Animations.NowPlayingFadeIn}"/>
+              <Animation Animation="{anim:Animations.NowPlayingFadeOut}"/>
+            </Animations>
+          </Graphic>
+
+          <Graphic Name="Image"
+              HorizontalAlignment="Center" VerticalAlignment="Center"
+              StretchingPolicy="UniformToFill" SizingPolicy="SizeToConstraint">
+            <LayoutInput>
+              <FormLayoutInput
+                  Left="Parent,0" Right="Parent,1" Horizontal="Center"
+                  Top="Parent,0" Bottom="Parent,1" Vertical="Center"/>
+            </LayoutInput>
+            <Animations>
+              <Animation Animation="{anim:Animations.SlideShowImageChangeHide}"/>
+              <Animation Animation="{anim:Animations.SlideShowImageChangeShow}"/>
+              <Animation Animation="{anim:Animations.SlideShowImageShow}" />
+            </Animations>
+          </Graphic>
+
+          <ColorFill Name="LeftBackground" Content="Black">
+            <LayoutInput>
+              <FormLayoutInput Left="Parent,0" Right="Image,0" Top="Image,0" Bottom="Image,1"/>
+            </LayoutInput>
+          </ColorFill>
+
+          <ColorFill Name="TopBackground" Content="Black">
+            <LayoutInput>
+              <FormLayoutInput Left="Parent,0" Right="Parent,1" Top="Parent,0" Bottom="Image,0"/>
+            </LayoutInput>
+          </ColorFill>
+
+          <ColorFill Name="RightBackground" Content="Black">
+            <LayoutInput>
+              <FormLayoutInput Left="Image,1" Right="Parent,1" Top="Image,0" Bottom="Image,1"/>
+            </LayoutInput>
+          </ColorFill>
+
+          <ColorFill Name="BottomBackground" Content="Black">
+            <LayoutInput>
+              <FormLayoutInput Left="Parent,0" Right="Parent,1" Top="Image,1" Bottom="Parent,1"/>
+            </LayoutInput>
+          </ColorFill>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+</UIX>

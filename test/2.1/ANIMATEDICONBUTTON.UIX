@@ -1,0 +1,57 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:button="res://ZuneShellResources!Button.uix">
+
+  <UI Name="AnimatedIconButton" Base="button:IconButton">
+    <Properties>
+      <Boolean Name="Active" Boolean="False"/>
+      
+      <Animation Name="IconActiveAnimation" Animation="{null}"/>
+      <Animation Name="IconIdleAnimation"  Animation="{null}"/>
+    </Properties>
+
+    <Locals>
+      <iris:Choice Name="IconAnimationChoice">
+        <Options>
+          <String String="Active"/>
+          <String String="None"/>
+        </Options>
+      </iris:Choice>
+
+      <SwitchAnimation Name="ContentChangeAnimation" Type="ContentChangeShow" Expression="{IconAnimationChoice}">
+        <Options>
+          <Animation Name="Active" Animation="{IconActiveAnimation}"/>
+        </Options>
+      </SwitchAnimation>
+      <SwitchAnimation Name="IdleAnimation" Type="Idle" Expression="{IconAnimationChoice}">
+        <Options>
+          <Animation Name="Active" Animation="{IconIdleAnimation}"/>                  
+        </Options>
+      </SwitchAnimation>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        IconAnimationChoice.Chosen = "None";  
+
+        Background.AttachAnimation(ContentChangeAnimation);
+        Background.AttachAnimation(IdleAnimation);
+      </Script>
+
+      <Script>
+        [DeclareTrigger(Background.Content)]
+        IconAnimationChoice.Chosen = "None";
+      </Script>
+
+      <Script>
+        if ([Active])
+          IconAnimationChoice.Chosen = "Active";
+        else
+          IconAnimationChoice.Chosen = "None";
+      </Script>
+    </Scripts>
+  </UI>
+
+</UIX>

@@ -1,0 +1,1243 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:sys="assembly://mscorlib/System"
+  xmlns:col="assembly://mscorlib/System.Collections"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:data="res://ZuneShellResources!LibraryData.schema.xml"
+  xmlns:mpdata="res://ZuneMarketplaceResources!MarketplaceData.schema.xml"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:linkbuttons="res://ZuneShellResources!LinkButtons.uix"
+  xmlns:page="res://ZuneShellResources!PageStack.uix"
+  xmlns:spreadsheet="res://ZuneShellResources!SpreadSheetViewBase.uix"
+  xmlns:tpc="res://ZuneShellResources!TracksPanelColumns.uix"
+  xmlns:anim="res://ZuneShellResources!Animations.uix"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:contextmenu="res://ZuneShellResources!LibraryContextMenu.uix"
+  xmlns:dialogs="res://ZuneShellResources!LibraryDialogs.uix"
+  xmlns:me="Me"
+  >
+
+  
+  
+  
+  <UI Name="NowPlayingLand" Base="page:PageBase">
+    <Properties>
+      <zune:NowPlayingLand Name="Page" NowPlayingLand="$Required"/>
+    </Properties>
+
+    <Locals>
+      <zune:TransportControls Name="TransportControls" TransportControls="{zune:TransportControls.Instance}"/>
+      <SelectionManager Name="SelectionManager"/>
+      <core:NavigateIntoIndexRequest Name="NavigateIntoArgs"/>
+      <me:NowPlayingListModel Name="NowPlayingListModel" Page="{Page}"/>
+
+      <iris:Command Name="Play" Description="{zune:Shell.LoadString(zune:StringId.IDS_PLAY_MENUITEM)}"/>
+      <iris:Command Name="Remove" Description="{zune:Shell.LoadString(zune:StringId.IDS_NOW_PLAYING_REMOVE)}"/>
+      <zune:MenuItemCommand Name="Properties" Description="{zune:Shell.LoadString(zune:StringId.IDS_LIBRARY_PROPERTIES_MENU_ITEM)}"/>
+      <contextmenu:RateCommand Name="Rate"/>
+      <zune:MenuItemCommand Name="FindInCollection" Description="{zune:Shell.LoadString(zune:StringId.IDS_FIND_IN_COLLECTION)}"/>
+      <zune:MenuItemCommand Name="FindInMarketplace" Description="{zune:Shell.LoadString(zune:StringId.IDS_NOW_PLAYING_FIND_IN_MARKETPLACE)}"/>
+
+      <contextmenu:LibraryContextMenu Name="ContextMenu">
+        <Options>
+          <iris:Command Command="{Play}"/>
+          <iris:Command Command="{Remove}"/>
+          <contextmenu:RateCommand RateCommand="{Rate}"/>
+          <iris:Command Command="{Properties}"/>
+          <iris:Command Command="{FindInCollection}"/>
+          <iris:Command Command="{FindInMarketplace}"/>
+        </Options>
+      </contextmenu:LibraryContextMenu>
+
+      <dialogs:PropertiesDialog Name="PropertiesDialog" PropertiesDialog="{null}"/>
+
+      <styles:WindowState Name="WindowState"/>
+
+      <Boolean Name="AllowMusicControls"/>
+    </Locals>
+
+    <Input>
+      <KeyHandler Name="SpaceKeyHandler" Key="Space" HandlerStage="Bubbled, Direct" Repeat="false" />
+      <KeyHandler Key="Delete" DisallowedModifiers="Alt,Ctrl,Shift" HandlerStage="Bubbled" Command="{Remove}"/>
+    </Input>
+
+    <Scripts>
+      
+      <Script>
+        UI.CreateInterestOnFocus = false;
+      </Script>
+      <Script>
+        bool playingVideo = [TransportControls.PlayingVideo];
+
+        
+        if (Page.TransportControlStyle != zune:TransportControlStyle.Photo)
+        {
+          if (playingVideo)
+          {
+            Page.TransportControlStyle = zune:TransportControlStyle.Video;
+          }
+          else
+          {
+            Page.TransportControlStyle = zune:TransportControlStyle.Music;
+          }
+        }
+      </Script>
+      <Script>
+        
+        
+        
+        AllowMusicControls = ([Page.ActiveTransportControlStyle] == zune:TransportControlStyle.Music);
+
+        
+        
+        CurrentTrack.Visible = ([Page.TransportControlStyle] == zune:TransportControlStyle.Music);
+      </Script>
+
+      
+      <Script>
+        if (CurrentTrack.Visible)
+        {
+          CurrentTrack.CurrentTrack = [TransportControls.CurrentTrack];
+        }
+        else
+        {
+          CurrentTrack.CurrentTrack = null;
+        }
+      </Script>
+
+      
+      <Script>TracksList.Content = [TransportControls.CurrentPlaylist];</Script>
+
+      
+      <Script>
+        [DeclareTrigger(Play.Invoked)]
+        if (SelectionManager.Count > 0)
+        {
+          if (SelectionManager.Count == 1)
+          {
+            TransportControls.StartPlayingAt(SelectionManager.SelectedIndex);
+          }
+          else
+          {
+            
+          }
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(SpaceKeyHandler.Invoked)]
+        if (TransportControls.PlayingVideo)
+        {
+          if (TransportControls.Playing)
+          {
+            TransportControls.Pause.Invoke();
+          }
+          else
+          {
+            TransportControls.Play.Invoke();
+          }
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(ContextMenu.Helper.IsOpening)]
+        if (ContextMenu.Helper.IsOpening)
+        {
+          int selectionCount = SelectionManager.Count;
+          Remove.Available = (selectionCount > 0);
+
+          bool selectedOne = (selectionCount == 1);
+          Play.Available = selectedOne;
+
+          zune:PlaybackTrack track = (zune:PlaybackTrack)SelectionManager.SelectedItem;
+          
+          bool selectedOneLibraryItem = selectedOne &amp;&amp;
+                                        (track is zune:LibraryPlaybackTrack);
+          bool selectedOneLibraryTrack;
+          bool isInCollection = false;
+          if (selectedOneLibraryItem)
+          {
+            zune:LibraryPlaybackTrack libraryTrack = (zune:LibraryPlaybackTrack)track;
+            selectedOneLibraryTrack = libraryTrack.MediaType == zune:MediaType.Track;
+            isInCollection = selectedOneLibraryTrack &amp;&amp; libraryTrack.IsInCollection;
+          }
+          Properties.Hidden = !selectedOneLibraryTrack;
+          Rate.Command.Hidden = !((track != null) &amp;&amp; track.CanRate);
+          FindInCollection.Hidden = !isInCollection;
+
+          bool canFindInMarketplace;
+          if (selectedOne &amp;&amp; !zune:GuidHelper.IsEmpty(track.ServiceId) &amp;&amp; track.IsMusic)
+          {
+            canFindInMarketplace = true;
+          }
+          FindInMarketplace.Hidden = !canFindInMarketplace;
+        }
+        else
+        {
+          Play.Available = true;
+          Remove.Available = true;
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(Remove.Invoked)]
+        TransportControls.RemoveFromNowPlaying(SelectionManager.SelectedIndices);
+
+        
+        NavigateIntoArgs.Select = true;
+        NavigateIntoArgs.Index = TransportControls.CurrentTrackIndex;
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(Properties.Invoked)]
+
+        
+        if (PropertiesDialog == null) PropertiesDialog = new dialogs:PropertiesDialog();
+
+        if (SelectionManager.SelectedItem is zune:LibraryPlaybackTrack)
+        {
+          zune:LibraryPlaybackTrack track = (zune:LibraryPlaybackTrack)SelectionManager.SelectedItem;
+
+          PropertiesDialog.LibraryId = track.MediaId;
+          PropertiesDialog.ItemType = track.MediaType;
+
+          PropertiesDialog.Helper.Show(PropertiesDialog);
+        }
+      </Script>
+
+      <Script>
+        [DeclareTrigger(Rate.Command.Invoked)]
+        foreach (zune:PlaybackTrack track in SelectionManager.SelectedItems)
+        {
+          track.UserRating = Rate.Rating;
+        }
+
+        
+        Page.RatingsChanged.Invoke();
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(FindInCollection.Invoked)]
+
+        if (SelectionManager.SelectedItem is zune:LibraryPlaybackTrack)
+        {
+          zune:LibraryPlaybackTrack track = (zune:LibraryPlaybackTrack)SelectionManager.SelectedItem;
+
+          track.FindInCollection();
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(FindInMarketplace.Invoked)]
+
+        if (SelectionManager.SelectedItem != null)
+        {
+          zune:PlaybackTrack track = (zune:PlaybackTrack)SelectionManager.SelectedItem;
+
+          col:Hashtable args = new col:Hashtable();
+          args.set_Item("TrackId", track.ServiceId);
+          zune:Shell.DefaultInstance.Execute("Marketplace\Music\Artist", args);
+        }
+      </Script>
+
+      
+      <Script>
+        
+        if (!(UI.DeepMouseFocus &amp;&amp; iris:Application.Window.MouseActive ||
+              UI.DeepKeyFocus &amp;&amp; styles:WindowState.KeysActive))
+        {
+          NavigateIntoArgs.Select = false;
+          NavigateIntoArgs.Index = [TransportControls.CurrentTrackIndex];
+        }
+      </Script>
+
+      
+      <Script>
+        TracksList.Visible = [AllowMusicControls] &amp;&amp; [WindowState.InputActive];
+        TrackListBackground.Visible = TracksList.Visible;
+      </Script>
+
+      
+      
+      <Script>
+        [DeclareTrigger(TransportControls.VideoPlaybackStopped)]
+        if (Page.TransportControlStyle == zune:TransportControlStyle.Video)
+        {
+          zune:Shell.DefaultInstance.NavigateBack();
+        }
+      </Script>
+    </Scripts>
+
+    <Content>
+      <ColorFill Content="Transparent" Layout="Form">
+        <Animations>
+          <Animation Animation="{anim:Animations.NowPlayingPageFadeIn}"/>
+          <Animation Animation="{anim:Animations.NowPlayingPageFadeOut}"/>
+        </Animations>
+        <Children>
+
+          
+          <me:CurrentTrackInfo Name="CurrentTrack" Page="{Page}">
+            <LayoutInput>
+              <AnchorLayoutInput
+                Left="Parent,0,45" Right="Parent,1,-20" Horizontal="Near"
+                Top="Parent,0,-30"/>
+            </LayoutInput>
+          </me:CurrentTrackInfo>
+
+          
+          <Panel Name="TracksListPanel" Margins="20,20,20,20" MaximumSize=" 270,300">
+            <LayoutInput>
+              <AnchorLayoutInput Right="Parent,1,20" Top="Parent,0,150" Bottom="Parent,1,-5" Vertical="Far"/>
+            </LayoutInput>
+            <Animations>
+              <Animation Animation="{anim:Animations.NowPlayingTrackListShow}"/>
+              <Animation Animation="{anim:Animations.NowPlayingFadeOut}"/>
+            </Animations>
+            <Children>
+
+              <me:NowPlayingSpreadSheet
+                  Name="TracksList"
+                  ListModel="{NowPlayingListModel}"
+                  SelectionManager="{SelectionManager}"
+                  NavigateIntoArgs="{NavigateIntoArgs}"
+                  ColumnData="{me:Columns.DefaultViewColumnData}"
+                  ShowHeaders="false"
+                  ContextMenu="{ContextMenu}"
+                  ExecuteCommand="{Play}">
+                <Animations>
+                  <Animation Animation="{anim:Animations.NowPlayingFadeIn}"/>
+                </Animations>
+              </me:NowPlayingSpreadSheet>
+
+            </Children>
+          </Panel>
+
+          
+          <Graphic Name="TrackListBackground" Content="{styles:Styles.NowPlayingBoxShadow}" SizingPolicy="SizeToChildren"
+              Margins="-8,-20,-19,-17" Alpha="0.90">
+            <LayoutInput>
+              <AnchorLayoutInput
+                  Left="TracksListPanel,0" Right="TracksListPanel,1"
+                  Top="TracksListPanel,0" Bottom="TracksListPanel,1"/>
+            </LayoutInput>
+            <Animations>
+              <Animation Animation="{anim:Animations.NowPlayingTrackListShow}"/>
+              <Animation Animation="{anim:Animations.NowPlayingFadeOut}"/>
+            </Animations>
+          </Graphic>
+
+        </Children>
+      </ColorFill>
+    </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="MusicNowPlayingBackground">
+    <Properties>
+      <Size Name="IdealCellSize" Size="86,86"/>
+    </Properties>
+
+    <Locals>
+      <zune:TransportControls Name="TransportControls" TransportControls="{zune:TransportControls.Instance}"/>
+
+      <data:LibraryAlbumQuery Name="AlbumQuery"/>
+
+      <Int32 Name="DesiredHorizontalItems"/>
+      <Int32 Name="DesiredVerticalItems"/>
+      <Boolean Name="EnoughAlbums"/>
+
+      <Int32 Name="MinimumAlbumsNeeded" Int32="5"/>
+      
+      <AnchorLayoutInput Name="AnchorInput" Left="Parent,0" Right="Parent,0,100" Top="Parent,0" Bottom="Parent,0,100"/>
+      <AnchorLayoutInput Name="DummyInput"/>
+
+      <sys:Random Name="Random"/>
+
+      <iris:BooleanChoice Name="HasShownIntro">
+        <Options>
+          <String String="Intro"/>
+          <String String="Normal"/>
+        </Options>
+      </iris:BooleanChoice>
+        
+      
+      <Timer Name="SwitchArtTimer" Interval="5000" AutoRepeat="true" Enabled="true"/>
+      <Int32 Name="NextAlbumToSwap"/>
+
+      <Timer Name="HideBackgroundTimer" 
+             Interval="{((int)(anim:Animations.NowPlayingGrid_Length + anim:Animations.NowPlayingGrid_MaxDelay + 5.0))*1000}" 
+             AutoRepeat="false" Enabled="false"/>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        iris:WindowSize currentSize = [iris:Application.Window.ClientSize];
+
+        
+        float fitHorizontalItems = ((float)currentSize.Width / (float)IdealCellSize.Width);
+        float fitVerticalItems   = ((float)currentSize.Height / (float)IdealCellSize.Height);
+
+        
+        int roundedFitHorizontalItems = (int)(fitHorizontalItems + 1.0);
+        int roundedFitVerticalItems   = (int)(fitVerticalItems + 1.0);
+
+        
+
+        
+        
+        
+        if (roundedFitHorizontalItems > DesiredHorizontalItems)
+          DesiredHorizontalItems = roundedFitHorizontalItems + 1;
+        if (roundedFitVerticalItems > DesiredVerticalItems)
+          DesiredVerticalItems = roundedFitVerticalItems + 1;
+      </Script>
+
+      <Script>
+        
+        
+        EnoughAlbums = [AlbumQuery.Result.Items.Count] > MinimumAlbumsNeeded;
+      </Script>
+
+      <Script>
+        [DeclareTrigger(EnoughAlbums)]
+        [DeclareTrigger(DesiredHorizontalItems)]
+        [DeclareTrigger(DesiredVerticalItems)]
+
+        if (EnoughAlbums)
+        {
+          
+          Size size = new Size(DesiredHorizontalItems * IdealCellSize.Width,
+                               DesiredVerticalItems * IdealCellSize.Height);
+          AnchorInput.Right.Offset = size.Width;
+          AnchorInput.Bottom.Offset = size.Height;
+          Grid.LayoutInput = DummyInput;
+          Grid.LayoutInput = AnchorInput;
+
+          
+
+          Grid.Content = TransportControls.CreateAlbumListForBackground(AlbumQuery.Result.Items, DesiredVerticalItems, DesiredHorizontalItems);
+          if (!List.IsNullOrEmpty(Grid.Content))
+          {
+            NextAlbumToSwap = Grid.Content.Count - 1; 
+          }
+        }
+        else
+        {
+          
+          Grid.Content = null;
+        }
+      </Script>
+
+      <Script>
+        [DeclareTrigger(SwitchArtTimer.Tick)]
+        
+        List background = Grid.Content;
+        
+        List allAlbums = AlbumQuery.Result.Items;
+        if (!List.IsNullOrEmpty(allAlbums) &amp;&amp; !List.IsNullOrEmpty(background))
+        {
+          NextAlbumToSwap = (NextAlbumToSwap + 1) % allAlbums.Count;  
+          data:Album newAlbum = (data:Album)allAlbums.GetItem(NextAlbumToSwap);
+          
+          int guyToSwap = Random.Next(0, background.Count);
+          background.SetItem(guyToSwap, newAlbum);
+          
+          
+          
+          
+          
+          TransportControls.DisableSlowDataThumbnailExtraction(newAlbum);
+          
+          
+        }
+      </Script>
+
+      
+      <Script>
+        if ([Grid.Content] != null)
+        {
+          
+          HideBackgroundTimer.Enabled = true;
+        }
+        else
+        {
+          
+          Background.Visible = true;
+          HideBackgroundTimer.Enabled = false;
+        }
+      </Script>
+
+      <Script>
+        [DeclareTrigger(HideBackgroundTimer.Tick)]
+        
+        Background.Visible = false;
+        HasShownIntro.Value = true;
+      </Script>
+    </Scripts>
+
+    <Content>
+      
+      <Panel Layout="Form">
+        <Children>
+
+          
+          
+          
+          
+          
+          
+          <me:NowPlayingGrid Name="Grid" 
+              Random="{Random}" 
+              HasShownIntro="{HasShownIntro}" 
+              ReferenceSize="{IdealCellSize}" 
+              ColorFilter="180,180,180"
+              Margins="-2,-2,-4,-4">
+          </me:NowPlayingGrid>
+
+          
+          
+          <Graphic Name="Background" Content="{styles:Styles.FUEBackground}" 
+              StretchingPolicy="UniformToFill" SizingPolicy="SizeToConstraint"/>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="NowPlayingGrid">
+    <Properties>
+      <List Name="Content" List="{null}"/>
+      <Size Name="ReferenceSize" Size="$Required"/>
+      <sys:Random Name="Random" Random="$Required"/>
+      <iris:BooleanChoice Name="HasShownIntro" BooleanChoice="$Required"/>
+    </Properties>
+
+    <Scripts>
+      <Script>Repeater.Source = [Content];</Script>
+    </Scripts>
+
+    <Content>
+      <Repeater Name="Repeater">
+        <Layout>
+          <GridLayout ReferenceSize="{ReferenceSize}" AllowWrap="true"/>
+        </Layout>
+        <Content>
+
+          <me:NowPlayingGridCell Album="{(data:Album)RepeatedItem}" Random="{Random}">
+            <Animations>
+              <SwitchAnimation Type="Show" Expression="{HasShownIntro}">
+                <Options>
+                  <TransformAnimation Name="Intro" 
+                      Delay="{((Single)Random.Next(0,anim:Animations.NowPlayingGrid_DelaySlices) * 0.1) + anim:Animations.NowPlayingGrid_MinDelay}" 
+                      Source="{anim:Animations.NowPlayingGridShow}"/>
+
+                  
+                </Options>
+              </SwitchAnimation>
+
+              <Animation Animation="{anim:Animations.NowPlayingGridSwapAlbumOut}"/> 
+
+            </Animations>
+          </me:NowPlayingGridCell>
+
+        </Content>
+      </Repeater>
+    </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="NowPlayingGridCell">
+    <Properties>
+      <data:Album Name="Album" Album="$Required"/>
+      <sys:Random Name="Random" Random="$Required"/>
+    </Properties>
+
+    <Scripts>
+      <Script>
+        if ([Album.AlbumArtSmall] != null)
+        {
+          AlbumArt.Content = Album.AlbumArtSmall;
+        }
+        else
+        {
+          
+          List artList = styles:Styles.NowPlayingNoArt;
+          int randomImage = Random.Next(0, artList.Count);
+          AlbumArt.Content = (Image)artList.GetItem(randomImage);
+        }
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Graphic Name="AlbumArt" SizingPolicy="SizeToConstraint" StretchingPolicy="UniformToFill" AcquiringImage="{null}" ErrorImage="{null}"/>
+    </Content>
+  </UI>
+
+  
+
+
+
+  <UI Name="NowPlayingBackground" Base="page:PageBase">
+    <Properties>
+      <zune:NowPlayingLand Name="Page" NowPlayingLand="$Required"/>
+    </Properties>
+
+    <Locals>
+      <zune:TransportControls Name="TransportControls" TransportControls="{zune:TransportControls.Instance}"/>
+      <styles:WindowState Name="WindowState"/>
+    </Locals>
+
+    <Scripts>
+      
+      
+      <Script>
+        bool playingVideo = [TransportControls.PlayingVideo];
+
+        
+        Video.Visible = playingVideo;
+        if (playingVideo)
+        {
+          iris:VideoStream stream = [TransportControls.VideoStream];
+
+          
+          Video.VideoStream = stream;
+
+          
+          
+          if (iris:Application.RenderingType == iris:RenderingType.GDI)
+          {
+            Video.Margins = styles:Styles.VideoMarginsGDIMode;
+            GDIVideoBackground.Visible = true;
+          }
+          else
+          {
+            Video.Margins = new Inset();
+            GDIVideoBackground.Visible = false;
+          }
+        }
+        else
+        {
+          Video.VideoStream = null;
+          GDIVideoBackground.Visible = false;
+        }
+      </Script>
+
+      <Script>
+        
+        if (![TransportControls.PlayingVideo])
+          MusicBackground.RequestSource(typeof(me:MusicNowPlayingBackground));
+        else
+          MusicBackground.RequestSource(null);
+      </Script>
+
+      
+      <Script>
+        Page.AutoHideToolbars = ![zune:PopupManager.Instance.IsModal];
+      </Script>
+
+      
+      <Script>
+        Fade.Visible = [WindowState.InputActive];
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel Layout="Form">
+        <Animations>
+          <Animation Animation="{anim:Animations.NowPlayingPageFadeIn}"/>
+          <Animation Animation="{anim:Animations.NowPlayingPageFadeOut}"/>
+        </Animations>
+        <Children>
+
+          <me:NowPlayingBorders>
+            <LayoutInput>
+              <FormLayoutInput
+                  Left="Parent,0" Right="Parent,1"
+                  Top="Parent,0"  Bottom="Parent,1"/>
+            </LayoutInput>
+          </me:NowPlayingBorders>
+
+          
+          <Graphic Name="Fade" Content="{styles:Styles.NowPlayingFade}" SizingPolicy="SizeToConstraint">
+            <LayoutInput>
+              <FormLayoutInput
+                  Left="Parent,0" Right="Parent,1"
+                  Top="Parent,1,-330" Bottom="Parent,1"/>
+            </LayoutInput>
+            <Animations>
+              <Animation Animation="{anim:Animations.NowPlayingFadeIn}"/>
+              <Animation Animation="{anim:Animations.NowPlayingFadeOut}"/>
+            </Animations>
+          </Graphic>
+
+
+          
+          <Video Name="Video" LetterboxColor="TVBlack" Layout="Fill" Visible="false"/>
+
+          
+          <ColorFill Name="GDIVideoBackground" Content="TVBlack" Layout="Fill" Visible="false"/>
+
+
+          
+          
+
+          <Host Name="MusicBackground"/>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  <Class Name="NowPlayingListModel" Base="spreadsheet:SpreadSheetListModel">
+    <Properties>
+      <zune:NowPlayingLand Name="Page" NowPlayingLand="$Required"/>
+    </Properties>
+  </Class>
+
+  
+
+
+
+  <UI Name="NowPlayingSpreadSheet" Base="spreadsheet:SpreadSheet">
+    <Properties>
+      <Boolean Name="CanReorder" Boolean="true"/>
+      <Size Name="LayoutSpacing" Size="{styles:Styles.LibraryListLayoutSpacing}"/>
+      <Size Name="RowSize" Size="{styles:Styles.LibraryListItemSize}"/>
+      <Inset Name="RowPadding" Inset="{styles:Styles.LibraryListItemMargins}"/>
+    </Properties>
+
+    <Scripts>
+      
+      <Script>
+        [DeclareTrigger(Target.Dropped)]
+
+        object value = Target.GetValue();
+
+        if (!(value is SelectionManager))
+        {
+          
+        }
+        else
+        {
+          SelectionManager selectionManager = (SelectionManager)value;
+          int insertAt = InsertIndex.Value;
+
+          zune:TransportControls.Instance.ReorderNowPlaying(selectionManager.SelectedIndices, insertAt);
+        }
+      </Script>
+
+      
+      <Script>
+        styles:WindowState.PageInputActivity = [UI.DeepMouseFocus];
+      </Script>
+    </Scripts>
+  </UI>
+
+  
+
+
+  <UI Name="CurrentTrackInfo">
+    <Properties>
+      <zune:NowPlayingLand Name="Page" NowPlayingLand="$Required"/>
+      <zune:PlaybackTrack Name="CurrentTrack" PlaybackTrack="{null}"/>
+    </Properties>
+
+    <Locals>
+      <me:NowPlayingInfo Name="NowPlayingInfo"/>
+      <zune:ShellCommand Name="CurrentTrackMoreInfo"
+        Command="Marketplace\Music\Artist"
+        Description="{zune:Shell.LoadString(zune:StringId.IDS_NOW_PLAYING_LINK_TO_MARKETPLACE)}"
+        Available="false"/>
+
+      <styles:WindowState Name="WindowState"/>
+    </Locals>
+
+    <Scripts>
+      
+      <Script>
+        NowPlayingInfo.CurrentTrack = [CurrentTrack];
+        
+        Form.Visible = (CurrentTrack != null);
+      </Script>
+      <Script>
+        TrackTitle.Content = [NowPlayingInfo.TrackTitle];
+        TrackShadow.Visible = !String.IsNullOrEmpty(NowPlayingInfo.TrackTitle);
+      </Script>
+      <Script>
+        ArtistName.Content = [NowPlayingInfo.ArtistName];
+        ArtistShadow.Visible = !String.IsNullOrEmpty(NowPlayingInfo.ArtistName);
+      </Script>
+      <Script>
+        AlbumTitle.Content = [NowPlayingInfo.AlbumTitle];
+        AlbumShadow.Visible = !String.IsNullOrEmpty(NowPlayingInfo.AlbumTitle);
+      </Script>
+      <Script>
+        AlbumArt.Content = [NowPlayingInfo.AlbumArt];
+        AlbumArtShadow.Visible = (AlbumArt.Content != null);
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(CurrentTrack)]
+        bool hasServiceId = false;
+        if (CurrentTrack != null &amp;&amp; !zune:GuidHelper.IsEmpty(CurrentTrack.ServiceId) &amp;&amp; CurrentTrack.IsMusic)
+        {
+          hasServiceId = true;
+          CurrentTrackMoreInfo.CommandArguments.set_Item("TrackId", CurrentTrack.ServiceId);
+        }
+        CurrentTrackMoreInfo.Available = hasServiceId;
+      </Script>
+
+      <Script>
+        bool showMoreLink = [WindowState.InputActive] &amp;&amp; [CurrentTrackMoreInfo.Available];
+        MoreInfo.Visible = showMoreLink;
+        MoreInfoShadow.Visible = showMoreLink;
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(CurrentTrack)]
+        AlbumArtShadow.ForceContentChange();
+        LabelRoot.ForceContentChange();
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel Name="Form" Layout="Form" MaximumSize="0,200">
+        <Children>
+
+          
+          <Panel Name="AlbumArtPanel">
+            <LayoutInput>
+              <FormLayoutInput Left="Parent,0" Bottom="Parent,1"/>
+            </LayoutInput>
+            <Children>
+
+              <Graphic Name="AlbumArtShadow" Content="{styles:Styles.NowPlayingBoxShadow}" SizingPolicy="SizeToChildren" Margins="-18,-20,-19,-17" Padding="18,20,19,17">
+                <Animations>
+                  <TransformAnimation TransformAnimation="{anim:Animations.NowPlayingAlbumArtShow}"/>
+                  <Animation Animation="{anim:Animations.NowPlayingAlbumArtContentShow}"/>
+                </Animations>
+                <Children>
+
+                  <Graphic Name="AlbumArt" Margins="4,4,4,4"
+                      SizingPolicy="SizeToConstraint"
+                      StretchingPolicy="Uniform"
+                      MaximumSize="200,200"/>
+
+                </Children>
+              </Graphic>
+
+            </Children>
+          </Panel>
+
+          <Panel Name="MoreInfoLinkPanel" Layout="Anchor">
+            <LayoutInput>
+              <AnchorLayoutInput Left="Parent,0,-2" Top="Parent,1,5" Bottom="Parent,1,999" ContributesToHeight="false" ContributesToWidth="false"/>
+            </LayoutInput>
+            <Animations>
+              <TransformAnimation TransformAnimation="{anim:Animations.NowPlayingAlbumArtShow}"/>
+            </Animations>
+            <Children>
+
+              <linkbuttons:MoreLink Name="MoreInfo" Model="{CurrentTrackMoreInfo}" 
+               OverrideStyle="{styles:SharedStyles.NowPlayingLinkStyle}" ShowToolTipWhenClipped="false"
+               Arrow="res://ZuneShellResources!Arrow.More.White.png" IconMargin="5,0,0,0">
+                <Animations>
+                  <Animation Animation="{anim:Animations.NowPlayingMoreInfoShow}"/>
+                  <Animation Animation="{anim:Animations.NowPlayingMoreInfoHide}"/>
+                  <Animation Animation="{anim:Animations.MoveNow}"/>
+                </Animations>
+              </linkbuttons:MoreLink>
+
+              <Graphic Name="MoreInfoShadow" Content="{styles:Styles.NowPlayingShadow}" Margins="-20" Alpha="0.5">
+                <LayoutInput>
+                  <AnchorLayoutInput Left="MoreInfo,0,-5" Right="MoreInfo,1,-5" Top="MoreInfo,0" Bottom="MoreInfo,1" ContributesToHeight="false" ContributesToWidth="false"/>
+                </LayoutInput>
+                <Animations>
+                  <Animation Animation="{anim:Animations.NowPlayingMoreInfoShow}"/>
+                  <Animation Animation="{anim:Animations.NowPlayingMoreInfoHide}"/>
+                  <Animation Animation="{anim:Animations.MoveNow}"/>
+                </Animations>
+              </Graphic>
+
+            </Children>
+          </Panel>
+
+
+          <Panel Name="LabelRoot" Layout="Anchor">
+            <Animations>
+              <TransformAnimation TransformAnimation="{anim:Animations.NowPlayingAlbumArtShow}"/>
+              <TransformAnimation TransformAnimation="{anim:Animations.NowPlayingTitleContentShow}"/>
+              <Animation Animation="{anim:Animations.NowPlayingTitleContentHide}"/>
+              <Animation Animation="{anim:Animations.MoveNow}"/>
+            </Animations>
+            <LayoutInput>
+              <FormLayoutInput Left="AlbumArtPanel,1,20" Bottom="Parent,1" Top="Parent,0" Vertical="Center"/>
+            </LayoutInput>
+            <Children>
+
+              
+
+              <core:Label Name="ArtistName" Style="{styles:SharedStyles.NowPlayingPrimaryLabel}" ShowToolTipWhenClipped="false">
+                <LayoutInput>
+                  <AnchorLayoutInput Left="Parent,0" Top="Parent,0"/>
+                </LayoutInput>
+              </core:Label>
+
+              <core:Label Name="AlbumTitle" Style="{styles:SharedStyles.NowPlayingSecondaryLabel}" ShowToolTipWhenClipped="false">
+                <LayoutInput>
+                  <AnchorLayoutInput Left="Parent,0" Top="ArtistName,1,-20"/>
+                </LayoutInput>
+              </core:Label>
+
+              <core:Label Name="TrackTitle" Style="{styles:SharedStyles.NowPlayingSecondaryLabel}" ShowToolTipWhenClipped="false">
+                <LayoutInput>
+                  <AnchorLayoutInput Left="Parent,0" Top="AlbumTitle,1,-16"/>
+                </LayoutInput>
+              </core:Label>
+
+              
+
+              <Graphic Name="ArtistShadow" Content="{styles:Styles.NowPlayingShadow}" Margins="-10" Alpha="0.5">
+                <LayoutInput>
+                  <AnchorLayoutInput Left="ArtistName,0,-5" Right="ArtistName,1,10" Top="ArtistName,0" Bottom="ArtistName,1" ContributesToHeight="false" ContributesToWidth="false"/>
+                </LayoutInput>
+              </Graphic>
+
+              <Graphic Name="AlbumShadow" Content="{styles:Styles.NowPlayingShadow}" Margins="-12" Alpha="0.5">
+                <LayoutInput>
+                  <AnchorLayoutInput Left="AlbumTitle,0,-5" Right="AlbumTitle,1,10" Top="AlbumTitle,0" Bottom="AlbumTitle,1" ContributesToHeight="false" ContributesToWidth="false"/>
+                </LayoutInput>
+              </Graphic>
+
+              <Graphic Name="TrackShadow" Content="{styles:Styles.NowPlayingShadow}" Margins="-12" Alpha="0.5">
+                <LayoutInput>
+                  <AnchorLayoutInput Left="TrackTitle,0,-5" Right="TrackTitle,1,10" Top="TrackTitle,0" Bottom="TrackTitle,1" ContributesToHeight="false" ContributesToWidth="false"/>
+                </LayoutInput>
+              </Graphic>
+
+            </Children>
+          </Panel>
+
+        </Children>
+      </Panel>
+
+    </Content>
+  </UI>
+
+  
+
+
+  <Class Name="NowPlayingInfo">
+    <Properties>
+      
+      <zune:PlaybackTrack Name="CurrentTrack" PlaybackTrack="{null}"/>
+
+      
+      <String Name="TrackTitle" String="{null}"/>
+      <String Name="ArtistName" String="{null}"/>
+      <String Name="AlbumTitle" String="{null}"/>
+      <Image  Name="AlbumArt"   Image="{null}"/>
+    </Properties>
+
+    <Locals>
+      <zune:LibraryAlbumInfo Name="LibraryAlbumInfo" LibraryAlbumInfo="{null}"/>
+      <mpdata:MarketplaceSingleTrackDataQuery Name="MPTrackQuery" Enabled="false"/>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        [DeclareTrigger(CurrentTrack)]
+
+        
+        
+        
+        if (LibraryAlbumInfo != null)
+        {
+          Class.DisposeOwnedObject(LibraryAlbumInfo);
+          LibraryAlbumInfo = null;
+        }
+        
+        MPTrackQuery.Enabled = false;
+
+        zune:PlaybackTrack track = CurrentTrack;
+        if (track != null)
+        {
+          TrackTitle = track.Title;
+
+          if (track is zune:LibraryPlaybackTrack)
+          {
+            LibraryAlbumInfo = new zune:LibraryAlbumInfo((zune:LibraryPlaybackTrack)track);
+          }
+          else if (track is zune:MarketplacePlaybackTrack)
+          {
+            zune:MarketplacePlaybackTrack mptrack = (zune:MarketplacePlaybackTrack)track;
+            AlbumTitle = mptrack.Album;
+            ArtistName = mptrack.Artist;
+          }
+          else if (track is zune:MusicVideoPlaybackTrack)
+          {
+            zune:MusicVideoPlaybackTrack mvtrack = (zune:MusicVideoPlaybackTrack)track;
+            ArtistName = mvtrack.Artist;
+          }
+          
+          if (!track.IsInCollection)
+          {
+            sys:Guid serviceId = track.ServiceId;
+            if (!zune:GuidHelper.IsEmpty(serviceId))
+            {
+              MPTrackQuery.Id = serviceId.ToString();
+              MPTrackQuery.Enabled = true;
+            }
+          }
+        }
+        else
+        {
+          TrackTitle = null;
+          AlbumTitle = null;
+          ArtistName = null;
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(LibraryAlbumInfo.AlbumTitle)]
+        if (LibraryAlbumInfo != null)
+        {
+          AlbumTitle = LibraryAlbumInfo.AlbumTitle;
+        }
+        else
+        {
+          AlbumTitle = null;
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(LibraryAlbumInfo.ArtistName)]
+        if (LibraryAlbumInfo != null)
+        {
+          ArtistName = LibraryAlbumInfo.ArtistName;
+        }
+        else
+        {
+          ArtistName = null;
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(LibraryAlbumInfo.AlbumArtUrl)]
+
+        if (LibraryAlbumInfo != null)
+        {
+          if (!String.IsNullOrEmpty(LibraryAlbumInfo.AlbumArtUrl))
+          {
+            
+            
+
+            
+            AlbumArt = new Image(LibraryAlbumInfo.AlbumArtUrl, new Inset(0,0,0,0), new Size(200,200));
+          }
+          else
+          {
+            
+            AlbumArt = styles:Styles.NoAlbumArtNowPlayingBig;
+          }
+        }
+        else
+        {
+          AlbumArt = null;
+        }
+      </Script>
+
+      <Script>
+        [DeclareTrigger(MPTrackQuery.Result.AlbumImageUri)]
+        
+        
+        
+        
+        
+        if (!String.IsNullOrEmpty(MPTrackQuery.Result.AlbumImageUri) &amp;&amp; MPTrackQuery.Enabled)
+        {
+          AlbumArt = new Image(MPTrackQuery.Result.AlbumImageUri);
+        }
+      </Script>
+    </Scripts>
+  </Class>
+
+  
+
+
+
+  <Class Name="Columns" Shared="True">
+    <Properties>
+
+      <spreadsheet:ColumnData Name="DefaultViewColumnData" SaveKeyPrefix="NowPlaying">
+        <Columns>
+
+          <spreadsheet:ColumnInfo
+            CellType="{typeof(me:StatusCell)}"
+            Resizable="false"
+            CellPadding="0,1,0,0">
+            <ColumnSize>
+              <SharedSize Size="17,0"/>
+            </ColumnSize>
+          </spreadsheet:ColumnInfo>
+
+          <spreadsheet:ColumnInfo
+            Header="{zune:Shell.LoadString(zune:StringId.IDS_SONG_COLUMN_HEADER)}"
+            CellType="{typeof(me:SongCell)}"
+            CellPadding="5,0,5,0">
+            <ColumnSize>
+              <SharedSize Size="215,0" MinimumSize="35,0" MaximumSize="500,0"/>
+            </ColumnSize>
+          </spreadsheet:ColumnInfo>
+
+          <spreadsheet:ColumnInfo
+            HeaderIcon="{styles:Styles.RatingHeader}"
+            CellType="{typeof(me:RatingCell)}"
+            Resizable="false"
+            CellPadding="4,0,4,0">
+            <ColumnSize>
+              <SharedSize Size="25,0"/>
+            </ColumnSize>
+          </spreadsheet:ColumnInfo>
+
+        </Columns>
+      </spreadsheet:ColumnData>
+
+    </Properties>
+  </Class>
+
+  <UI Name="SongCell" Base="spreadsheet:LabelCell">
+    <Properties>
+      <zune:PlaybackTrack Name="Model" PlaybackTrack="$Required"/>
+    </Properties>
+    <Scripts>
+      <Script>Content = Model.Title;</Script>
+    </Scripts>
+  </UI>
+
+  <UI Name="StatusCell" Base="spreadsheet:MediaStatusCell">
+    <Properties>
+      <zune:PlaybackTrack Name="Model" PlaybackTrack="$Required"/>
+    </Properties>
+    <Scripts>
+      <Script>
+        IsNowPlaying = (Model == [zune:TransportControls.Instance.CurrentTrack]);
+      </Script>
+
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(zune:TransportControls.Instance.ErrorCount)]
+        ErrorCode = zune:TransportControls.Instance.GetLibraryErrorCode(Model);
+      </Script>
+    </Scripts>
+  </UI>
+
+  <UI Name="RatingCell" Base="tpc:RatingCellBase">
+    <Properties>
+      <me:NowPlayingListModel Name="ListModel" NowPlayingListModel="$Required"/>
+      <zune:PlaybackTrack Name="Model" PlaybackTrack="$Required"/>
+      <Int32 Name="UserRating" Int32="{Model.UserRating}"/>
+    </Properties>
+    <Scripts>
+      
+      <Script>
+        ChangeRating.Available = Model.CanRate;
+      </Script>
+
+      <Script>
+        [DeclareTrigger(ListModel.Page.RatingsChanged.Invoked)]
+        UserRating = Model.UserRating;
+      </Script>
+
+      <Script>
+        [DeclareTrigger(UserRating)]
+        if (Model.UserRating != UserRating)
+          Model.UserRating = UserRating;
+      </Script>
+
+      <Script>
+        [DeclareTrigger(ChangeRating.Invoked)]
+
+        
+        
+        if (ListModel.SelectionManager != null &amp;&amp;
+            ListModel.SelectionManager.IsSelected(RowIndex.Value))
+        {
+          foreach (zune:PlaybackTrack track in ListModel.SelectionManager.SelectedItems)
+          {
+            if (track.UserRating != UserRating)
+              track.UserRating = UserRating;
+          }
+
+          
+          ListModel.Page.RatingsChanged.Invoke();
+        }
+      </Script>
+    </Scripts>
+  </UI>
+
+  
+
+
+  <UI Name="NowPlayingBorders">
+    <Scripts>
+      <Script>
+        Borders.Visible = ([iris:Application.Window.WindowState] != iris:WindowState.Maximized);
+      </Script>
+    </Scripts>
+    
+    <Content>
+      <Panel Name="Borders" Layout="Form">
+        <Children>
+
+          
+          <ColorFill Content="{styles:Styles.NowPlayingBorderColor}">
+            <LayoutInput>
+              <FormLayoutInput Left="Parent,0,1"  Right="Parent,1,-1"
+                               Top="Parent,0"   Bottom="Parent,0,1"/>
+            </LayoutInput>
+          </ColorFill>
+          
+          
+          <ColorFill Content="{styles:Styles.NowPlayingBorderColor}">
+            <LayoutInput>
+              <FormLayoutInput Left="Parent,0"  Right="Parent,0,1"
+                               Top="Parent,0"   Bottom="Parent,1"/>
+            </LayoutInput>
+          </ColorFill>
+          
+          
+          <ColorFill Content="{styles:Styles.NowPlayingBorderColor}">
+            <LayoutInput>
+              <FormLayoutInput Left="Parent,1,-1"  Right="Parent,1"
+                               Top="Parent,0"   Bottom="Parent,1"/>
+            </LayoutInput>
+          </ColorFill>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+</UIX>

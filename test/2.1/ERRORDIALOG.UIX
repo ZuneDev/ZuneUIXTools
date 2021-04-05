@@ -1,0 +1,101 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX 
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:zune="assembly://ZuneShell/ZuneUI" 
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:dialog="res://ZuneShellResources!Dialog.uix"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:linkButtons="res://ZuneShellResources!LinkButtons.uix" 
+  >
+
+  
+    
+
+  
+  
+  
+  <UI Name="ErrorDialogContentUI" Base="dialog:DialogContentUI">
+    <Locals>
+      <zune:ErrorDialogInfo Name="Model" ErrorDialogInfo="{(zune:ErrorDialogInfo)Dialog.Helper}"/>
+      <zune:WebHelpCommand Name="WebHelp" 
+          Description="{zune:Shell.LoadString(zune:StringId.IDS_DIALOG_WEBHELP)}"
+          Url="{Model.WebHelpUrl}"/>
+    </Locals>
+
+    <Scripts>
+      
+      <Script>
+        Dialog.Cancel.Description = zune:Shell.LoadString(zune:StringId.IDS_DIALOG_OK);
+        Dialog.AccessibleDescription = "{0}. {1}".Format(Model.Title, Model.Description);
+      </Script>
+
+      
+      <Script>
+        if (Model.OriginalHR != 0 &amp;&amp; Model.HR != Model.OriginalHR)
+        {
+          OriginalErrorCode.Visible = true;
+          OriginalErrorCode.Content = "({0:X8})".Format(Model.OriginalHR);
+        }
+      </Script>
+    </Scripts>
+    
+    <Content>
+      <Panel Navigation="ContainAll,WrapAll" MaximumSize="300,0" Margins="10">
+        <Layout>
+          <FlowLayout ItemAlignment="Near" Orientation="Vertical"/>
+        </Layout>
+        <Children>
+
+          <core:Label 
+            Content="{Model.Title}" 
+            Style="{styles:SharedStyles.DialogHeaderStyle}"
+            WordWrap="true"
+            />
+          
+          <core:Label
+            Content="{zune:Shell.LoadString(zune:StringId.IDS_DIALOG_ERROR_SUMMARY)}" Margins="0,10,0,0"
+            Style="{styles:SharedStyles.DialogSubHeaderStyle}"
+            WordWrap="true"
+            />
+          
+          <core:Label
+            Content="{Model.Description}" 
+            Style="{styles:SharedStyles.DialogTextStyle}"
+            WordWrap="true"
+            />
+          
+          <core:Label
+            Content="{zune:Shell.LoadString(zune:StringId.IDS_DIALOG_ERROR_CODE)}" Margins="0,10,0,0" 
+            Style="{styles:SharedStyles.DialogSubHeaderStyle}"
+            WordWrap="true"
+            />
+          
+          <core:Label
+            Content='{"{0:X8}".Format(Model.HR)}' 
+            Style="{styles:SharedStyles.DialogTextStyle}"
+            />
+
+          <core:Label Name="OriginalErrorCode" 
+            Style="{styles:SharedStyles.DialogTextStyle}"
+            Visible="false"
+            />
+          
+          <linkButtons:ExternalLink Model="{WebHelp}" Margins="0,10,10,0" ToolTipEnabled="false"/>
+
+          <Panel>
+            <Layout>
+              <DockLayout SizeToChildren="true" DefaultLayoutInput="Right,Near"/>
+            </Layout>
+            <Children>
+
+              <core:BigActionButton Model="{Dialog.Cancel}" Margins="0,10,10,0" ToolTipEnabled="false" FocusOrder="0"/>         
+              
+            </Children>
+          </Panel>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+</UIX> 

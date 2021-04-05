@@ -1,0 +1,334 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:data="res://ZuneShellResources!LibraryData.schema.xml"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:status="res://ZuneShellResources!DeviceStatus.uix"
+  xmlns:spreadsheet="res://ZuneShellResources!SpreadSheetViewBase.uix"
+  xmlns:me="Me">
+
+  <UI Name="StandardDrilldownPage" Base="status:DeviceStatusInnerPageBase">
+    <Properties>
+      <Type Name="MusicType" Type="{typeof(me:MusicItem)}"/>
+      <Type Name="VideoType" Type="{typeof(me:VideoItem)}"/>
+      <Type Name="PhotoType" Type="{typeof(me:PhotoItem)}"/>
+      <Type Name="PodcastType" Type="{typeof(me:PodcastItem)}"/>
+    </Properties>
+    <Locals>
+      <status:QueryGroup Name="Group"
+                         Remaining="{Page.Remaining}"
+                         Complete="{Page.Complete}"
+                         Failed="{Page.Failed}"
+                         Operation="{Page.Operation}"/>
+    </Locals>
+    <Scripts>
+      <Script>Title.Content = Page.Title;</Script>
+    </Scripts>
+    <Content>
+      <Panel Layout="Anchor">
+        <Children>
+
+          <core:Label Name="Title" Style="{styles:SharedStyles.SyncTitle}" Margins="0,-60,0,25">
+            <LayoutInput>
+              <AnchorLayoutInput Left="Parent,0" Top="Parent,0"/>
+            </LayoutInput>
+          </core:Label>
+
+          <Panel Name="List" Layout="Anchor">
+
+            <LayoutInput>
+              <AnchorLayoutInput Left="Parent,0" Top="Title,1"/>
+            </LayoutInput>
+
+            <Animations>
+              
+              <Animation Type="Move">
+                <Keyframes>
+                  <PositionKeyframe Time="0.00" RelativeTo="Current" Interpolation="Sine"/>
+                  <PositionKeyframe Time="0.025" RelativeTo="Final"/>
+                </Keyframes>
+              </Animation>
+            </Animations>
+
+            <Children>
+
+              <me:SchemaList Name="List1"
+                             Query="{Group.MusicQuery}"
+                             HeaderBaseText="{zune:Shell.LoadString(zune:StringId.IDS_DEVICE_STATUS_HEADER_MUSIC)}"
+                             ItemType="{MusicType}"
+                             ShowErrors="{Page.Failed}">
+                <LayoutInput>
+                  <AnchorLayoutInput Top="Parent,0" Left="Parent,0" Horizontal="Fill"/>
+                </LayoutInput>
+              </me:SchemaList>
+
+              <me:SchemaList Name="List2"
+                             Query="{Group.VideoQuery}"
+                             HeaderBaseText="{zune:Shell.LoadString(zune:StringId.IDS_DEVICE_STATUS_HEADER_VIDEO)}"
+                             ItemType="{VideoType}"
+                             ShowErrors="{Page.Failed}">
+                <LayoutInput>
+                  <AnchorLayoutInput Top="List1,1" Left="Parent,0" Horizontal="Fill"/>
+                </LayoutInput>
+              </me:SchemaList>
+
+              <me:SchemaList Name="List3"
+                             Query="{Group.PhotoQuery}"
+                             HeaderBaseText="{zune:Shell.LoadString(zune:StringId.IDS_DEVICE_STATUS_HEADER_PHOTO)}"
+                             ItemType="{PhotoType}"
+                             ShowErrors="{Page.Failed}">
+                <LayoutInput>
+                  <AnchorLayoutInput Top="List2,1" Left="Parent,0" Horizontal="Fill"/>
+                </LayoutInput>
+              </me:SchemaList>
+
+              <me:SchemaList Query="{Group.PodcastQuery}"
+                             HeaderBaseText="{zune:Shell.LoadString(zune:StringId.IDS_DEVICE_STATUS_HEADER_PODCAST)}"
+                             ItemType="{PodcastType}"
+                             ShowErrors="{Page.Failed}">
+                <LayoutInput>
+                  <AnchorLayoutInput Top="List3,1" Left="Parent,0" Horizontal="Fill"/>
+                </LayoutInput>
+              </me:SchemaList>
+
+
+            </Children>
+          </Panel>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  <UI Name="ErrorDrilldownPage" Base="me:StandardDrilldownPage">
+    <Properties>
+      <Type Name="MusicType" Type="{typeof(me:MusicError)}"/>
+      <Type Name="VideoType" Type="{typeof(me:VideoError)}"/>
+      <Type Name="PhotoType" Type="{typeof(me:PhotoError)}"/>
+      <Type Name="PodcastType" Type="{typeof(me:PodcastError)}"/>
+    </Properties>
+  </UI>
+
+  <UI Name="SchemaList">
+    <Properties>
+      <data:LibrarySyncItemQuery Name="Query" LibrarySyncItemQuery="$Required"/>
+      <String Name="HeaderBaseText" String="$Required"/>
+      <Type Name="ItemType" Type="$Required"/>
+      <Boolean Name="ShowErrors" Boolean="$Required"/>
+    </Properties>
+    <Scripts>
+      <Script>
+        List.Source = [Query.Result.Items];
+      </Script>
+      <Script>
+        Int32 count = [Query.Result.Items.Count];
+        bool display = (count > 0);
+
+        Container.Visible = display;
+        Header.Content = HeaderBaseText.Format(count);
+      </Script>
+    </Scripts>
+    <Content>
+
+      <Panel Name="Container" Layout="Anchor" Margins="0,0,0,17">
+        <Children>
+
+          <core:Label Name="Header" Style="{styles:SharedStyles.SyncHeader}" Margins="0,3,0,14">
+            <LayoutInput>
+              <AnchorLayoutInput Top="Parent,0" Left="Parent,0"/>
+            </LayoutInput>
+          </core:Label>
+
+          <Repeater Name="List" Source="{Query.Result.Items}" DiscardOffscreenVisuals="true">
+            <LayoutInput>
+              <AnchorLayoutInput Top="Header,1" Left="Parent,0"/>
+            </LayoutInput>
+            <Layout>
+              <GridLayout Columns="1" Orientation="Vertical"/>
+            </Layout>
+            <Content>
+              <me:SchemaListItem SchemaListItem="{ItemType}" Model="{(data:SyncItem)RepeatedItem}" IncludeError="{ShowErrors}" Margins="0,1,0,2"/>
+            </Content>
+          </Repeater>
+
+        </Children>
+      </Panel>
+
+    </Content>
+  </UI>
+
+  <UI Name="SchemaListItem">
+    <Properties>
+      <data:SyncItem Name="Model"/>
+      <Boolean Name="IncludeError"/>
+      <String Name="Content"/>
+    </Properties>
+  </UI>
+
+  <UI Name="LabelSchemaListItem" Base="me:SchemaListItem">
+    <Content>
+
+      <core:Label Name="Text" Style="{styles:SharedStyles.SyncItem}"/>
+
+    </Content>
+  </UI>
+
+  <UI Name="MusicItem" Base="me:LabelSchemaListItem">
+    <Locals>
+      <String Name="BaseText" String="{zune:Shell.LoadString(zune:StringId.IDS_MUSIC_SYNCITEM_DETAILS)}"/>
+    </Locals>
+    <Scripts>
+      <Script>
+        Text.Content = BaseText.Format([Model.Title], [Model.ArtistName], [Model.AlbumName]);
+      </Script>
+    </Scripts>
+  </UI>
+
+  <UI Name="VideoItem" Base="me:LabelSchemaListItem">
+    <Locals>
+      <String Name="BaseText" String="{zune:Shell.LoadString(zune:StringId.IDS_VIDEO_SYNCITEM_DETAILS)}"/>
+    </Locals>
+    <Scripts>
+      <Script>
+        Text.Content = BaseText.Format([Model.Title], [Model.Series], [Model.DateAdded]);
+      </Script>
+    </Scripts>
+  </UI>
+
+  <UI Name="PhotoItem" Base="me:LabelSchemaListItem">
+    <Locals>
+      <String Name="BaseText" String="{zune:Shell.LoadString(zune:StringId.IDS_PHOTO_SYNCITEM_DETAILS)}"/>
+    </Locals>
+    <Scripts>
+      <Script>
+        Text.Content = BaseText.Format([Model.Title], [Model.DateTaken]);
+      </Script>
+    </Scripts>
+  </UI>
+
+  <UI Name="PodcastItem" Base="me:LabelSchemaListItem">
+    <Locals>
+      <String Name="BaseText" String="{zune:Shell.LoadString(zune:StringId.IDS_PODCAST_SYNCITEM_DETAILS)}"/>
+    </Locals>
+    <Scripts>
+      <Script>
+        Text.Content = BaseText.Format([Model.Series], [Model.Title]);
+      </Script>
+    </Scripts>
+  </UI>
+
+  <UI Name="LinkSchemaListItem" Base="me:SchemaListItem">
+    <Properties>
+      <zune:StringId Name="ErrorTitleId" StringId="{zune:StringId.IDS_CANNOT_SYNC}"/>
+      <String Name="ErrorTooltip" String="{zune:Shell.LoadString(zune:StringId.IDS_CANNOT_SYNC_TOOLTIP)}"/>
+      
+      <String Name="Content"/>
+      <String Name="ToolTip"/>
+    </Properties>
+    
+    <Locals>
+      <String Name="ErrorTitle" String="{zune:Shell.LoadString(ErrorTitleId)}"/>      
+      <iris:Command Name="ShowErrorDialog"/>
+      <String Name="Error"/>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        zune:MappedError result = new zune:MappedError([Model.Error]);
+        Error = result.Text;
+        ErrorCell.ErrorCode = Model.Error;
+      </Script>
+      
+      <Script>
+        Link.Provider.PrimaryLabel = [Content];
+      </Script>
+      
+      <Script>
+        Link.Provider.ToolTip = [ToolTip];
+      </Script>
+      
+      <Script>
+        [DeclareTrigger(ShowErrorDialog.Invoked)]
+        zune:Shell.ShowErrorDialog(Model.Error, ErrorTitle);
+      </Script>
+    </Scripts>
+    <Content>
+      <Panel Layout="HorizontalFlow"> 
+        <Children>
+          
+          <spreadsheet:MediaStatusCell Name="ErrorCell"
+                    ErrorTitle="{ErrorTitleId}" 
+                    ErrorTooltip="{zune:StringId.IDS_CANNOT_SYNC_TOOLTIP}"
+                    Model="{ShowErrorDialog}"
+                    Style="{null}" Margins="0,1,0,0"/>
+          
+          <core:Button Name="Link" Model="{ShowErrorDialog}"
+                    KeyInteractiveNStuff="false"
+                    OverrideStyle="{styles:SharedStyles.SyncItem}"
+                    AlwaysShowToolTip="true"
+                    ToolTipPlacement="MouseBottom">
+            <LayoutInput>
+              <AnchorLayoutInput Left="Parent,0" Top="Parent,0"/>
+            </LayoutInput>
+          </core:Button>
+          
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  <UI Name="MusicError" Base="me:LinkSchemaListItem">
+    <Locals>
+      <String Name="BaseText" String="{zune:Shell.LoadString(zune:StringId.IDS_MUSIC_SYNCITEM_DETAILS)}"/>
+      <String Name="ToolTipBaseText" String="{zune:Shell.LoadString(zune:StringId.IDS_MUSIC_ERROR_SYNCITEM_DETAILS)}"/>
+    </Locals>
+    <Scripts>
+      <Script>
+        Content = BaseText.Format([Model.Title], [Model.ArtistName], [Model.AlbumName]);
+        ToolTip = ToolTipBaseText.Format(Model.Title, Model.ArtistName, Model.AlbumName, [Error]);
+      </Script>
+    </Scripts>
+  </UI>
+
+  <UI Name="VideoError" Base="me:LinkSchemaListItem">
+    <Locals>
+      <String Name="BaseText" String="{zune:Shell.LoadString(zune:StringId.IDS_VIDEO_SYNCITEM_DETAILS)}"/>
+      <String Name="ToolTipBaseText" String="{zune:Shell.LoadString(zune:StringId.IDS_VIDEO_ERROR_SYNCITEM_DETAILS)}"/>
+    </Locals>
+    <Scripts>
+      <Script>
+        Content = BaseText.Format([Model.Title], [Model.Series], [Model.DateAdded]);
+        ToolTip = ToolTipBaseText.Format(Model.Title, Model.Series, Model.DateAdded, [Error]);
+      </Script>
+    </Scripts>
+  </UI>
+
+  <UI Name="PhotoError" Base="me:LinkSchemaListItem">
+    <Locals>
+      <String Name="BaseText" String="{zune:Shell.LoadString(zune:StringId.IDS_PHOTO_SYNCITEM_DETAILS)}"/>
+      <String Name="ToolTipBaseText" String="{zune:Shell.LoadString(zune:StringId.IDS_PHOTO_ERROR_SYNCITEM_DETAILS)}"/>
+    </Locals>
+    <Scripts>
+      <Script>
+        Content = BaseText.Format([Model.Title], [Model.DateTaken]);
+        ToolTip = ToolTipBaseText.Format(Model.Title, Model.DateTaken, [Error]);
+      </Script>
+    </Scripts>
+  </UI>
+
+  <UI Name="PodcastError" Base="me:LinkSchemaListItem">
+    <Locals>
+      <String Name="BaseText" String="{zune:Shell.LoadString(zune:StringId.IDS_PODCAST_SYNCITEM_DETAILS)}"/>
+      <String Name="ToolTipBaseText" String="{zune:Shell.LoadString(zune:StringId.IDS_PODCAST_ERROR_SYNCITEM_DETAILS)}"/>
+    </Locals>
+    <Scripts>
+      <Script>
+        Content = BaseText.Format([Model.Series], [Model.Title]);
+        ToolTip = ToolTipBaseText.Format(Model.Series, Model.Title, [Error]);
+      </Script>
+    </Scripts>
+  </UI>
+</UIX>

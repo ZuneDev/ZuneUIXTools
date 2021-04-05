@@ -1,0 +1,766 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:sys="assembly://mscorlib/System"
+  xmlns:col="assembly://mscorlib/System.Collections"
+  xmlns:data="res://ZuneShellResources!LibraryData.schema.xml"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:panels="res://ZuneShellResources!LibraryPanels.uix"
+  xmlns:gp="res://ZuneShellResources!GalleryPanel.uix"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:thumbbutton="res://ZuneShellResources!ThumbnailButton.uix"
+  xmlns:photobutton="res://ZuneShellResources!PhotoButton.uix"
+  xmlns:li="res://ZuneShellResources!ContentList.uix"
+  xmlns:drag="res://ZuneShellResources!DragFeedback.uix"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:library="res://ZuneShellResources!Library.uix"
+  xmlns:me="Me">
+
+  <Class Name="PhotoPanelData" Shared="true">
+    <Properties>
+      
+
+      <iris:ArrayListDataSet Name="SortOptions">
+        <Source>
+          <zune:SortCommand Description="{me:Strings.NameSort}" Sort="+Title"     SupportsJumpInList="true"/>
+          <zune:SortCommand Description="{me:Strings.DateSort}" Sort="-DateTaken" />
+        </Source>
+      </iris:ArrayListDataSet>
+      
+      
+
+      <List Name="FolderSortOptions">
+        <Source>
+          <String String="+FileName"/>
+          <String String="-DateCreated"/>
+        </Source>
+      </List>
+      
+      <panels:SortData Name="Sorts" Options="{SortOptions}" SaveKey="PhotoSort"/>
+      
+      <Command Name="FilterFolders"/>
+    </Properties>
+  </Class>
+
+  
+  
+  
+  <UI Name="PhotoPanel" Base="panels:LibraryGalleryPanel">
+    <Properties>
+      <zune:PhotoLibraryPage Name="Page" PhotoLibraryPage="$Required"/>
+      <zune:PhotosPanel Name="Model" PhotosPanel="$Required" />
+
+      <Type Name="GalleryViewType" Type="{typeof(me:GalleryView)}"/>
+
+      <panels:SortData Name="SortData" SortData="{me:PhotoPanelData.Sorts}"/>
+
+      <Single Name="MinimumPercent" Single="0.50"/>
+      
+      <Inset Name="ColumnMargins" Inset="-24,0,0,0"/>
+      <Inset Name="ColumnInset" Inset="24,0,0,0"/>
+      <Inset Name="HeaderMargins" Inset="0,0,0,6"/>
+      <Inset Name="HeaderPadding" Inset="24,0,5,0"/>
+    </Properties>
+
+    <Locals>
+      <data:LibraryMediaFolderQuery Name="MediaFolderQuery" FolderMediaType="Photo" FolderId="0" ShowDeviceContents="{Page.ShowDeviceContents}" Enabled="false"
+                                    AntialiasImageEdges="{iris:Application.RenderingType != iris:RenderingType.GDI}" />
+      <data:LibraryPhotoQuery Name="PhotosByFolderQuery" ShowDeviceContents="{Page.ShowDeviceContents}" Enabled="false"
+                                       AntialiasImageEdges="{iris:Application.RenderingType != iris:RenderingType.GDI}" />
+
+      <zune:SlideshowLand Name="SlideShowLand" SlideShowState="{Page.SlideShowState}"/>
+
+      <zune:SlideShowState Name="State" SlideShowState='{Page.SlideShowState}'/>
+
+      
+      <Command Name="ExecutePhoto"/>
+      
+      
+      <Command Name="NavigateWorker"/>
+
+      
+      <iris:Command Name="PlaySlideshow" Description="{me:Strings.PlayCommand}" Available="false"/>
+      <zune:MenuItemCommand Name="Open" Description="{me:Strings.OpenCommand}" Available="false"/>
+      <core:MenuDivider Name="PropertiesDivider"/>      
+      <List Name="MenuOptions">
+        <Source>
+          <zune:MenuItemCommand MenuItemCommand="{Open}"/>
+          <iris:Command Command="{PlaySlideshow}"/>
+          <iris:Command Command="{AddToBurnList}"/>
+          <core:MenuDivider/>
+          <iris:Command Command="{Edit}"/>
+          <iris:Command Command="{Delete}"/>
+          <core:MenuDivider MenuDivider="{SyncDivider}"/>
+          <iris:Command Command="{Sync}"/>
+          <iris:Command Command="{SyncAllUnexclude}"/>
+          <zune:MenuItemCommand MenuItemCommand="{Exclude}"/>
+          <zune:MenuItemCommand MenuItemCommand="{Unexclude}"/>
+          <core:MenuDivider MenuDivider="{PropertiesDivider}"/>
+          <iris:Command Command="{Properties}"/>
+        </Source>
+      </List>
+
+      <List Name="DeviceMenuOptions">
+        <Source>
+          <zune:MenuItemCommand MenuItemCommand="{Open}"/>
+          <iris:Command Command="{ReverseSync}"/>
+          <iris:Command Command="{DeleteFromDevice}"/>
+        </Source>
+      </List>
+
+      <iris:AggregateList Name="AggregatingList" AggregateList="{null}"/>
+      <zune:RootFolderList Name="RootFolderList" RootFolderList="{null}"/>
+
+      <Int32 Name="PhotoCount"/>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        int deviceID = [Page.DeviceId];
+        MediaFolderQuery.DeviceId = deviceID;
+        PhotosByFolderQuery.DeviceId = deviceID;
+      </Script>
+
+      
+      <Script>
+        
+        
+        Worker.ExecuteCommand = ExecutePhoto;
+
+        if (!Page.ShowDeviceContents)
+        {
+          ContextMenu.Options = MenuOptions;
+        }
+        else
+        {
+          ContextMenu.Options = DeviceMenuOptions;
+          DeleteKey.Command = DeleteFromDevice;
+        }
+
+        Worker.Margins = new Inset(7,0,0,0);
+      </Script>
+
+      <Script>
+        State.Play = false;
+      </Script>
+
+      <Script>
+        
+        int folderID = [Page.FolderId];
+
+        
+        MediaFolderQuery.FolderId = folderID;
+        PhotosByFolderQuery.FolderId = folderID;
+      </Script>
+
+      <Script>
+        PhotosByFolderQuery.RulesOnly = [Page.UseRulesQuery];
+      </Script>
+
+      <Script>
+        zune:SortCommand sort = (zune:SortCommand)[SortData.Sorts.Chosen];
+
+        PhotosByFolderQuery.Sort = sort.Sort;
+        MediaFolderQuery.Sort = (string)me:PhotoPanelData.FolderSortOptions.GetItem(SortData.Sorts.ChosenIndex);
+
+        
+        
+        
+        SupportsJumpInList = sort.SupportsJumpInList &amp;&amp; ([PhotoCount] > 0);
+      </Script>
+
+      <Script>
+        MediaFolderQuery.Enabled = true;
+        PhotosByFolderQuery.Enabled = true;
+      </Script>
+
+      
+
+      <Script>
+        if (Page.FolderId == 0 &amp;&amp;
+            Page.ShowDeviceContents &amp;&amp;
+            MediaFolderQuery.Result.Items != null &amp;&amp;
+           [MediaFolderQuery.Result.Items.Count] == 1)
+        {
+          Page.FolderId = ((data:MediaFolder)((List)MediaFolderQuery.Result.Items).GetItem(0)).LibraryId;
+        }
+      </Script>
+
+      
+      <Script>
+        <![CDATA[
+        [InitialEvaluate(true)]
+        [DeclareTrigger(MediaFolderQuery.Result.Items)]
+        [DeclareTrigger(PhotosByFolderQuery.Result.Items)]
+        
+        if (Page.FolderId != 0 || Page.ShowDeviceContents)
+        {
+          if (AggregatingList != null)
+          {
+            UI.DisposeOwnedObject(AggregatingList);
+            AggregatingList = null;
+          }
+
+          
+          List folders = MediaFolderQuery.Result.Items;
+          List photos = PhotosByFolderQuery.Result.Items;
+
+          if ((folders != null) || (photos != null))
+          {
+            AggregatingList = new zune:SearchableAggregateList(folders, photos, 1);
+          }
+        }
+        else
+        {
+          if (RootFolderList == null) RootFolderList = new zune:RootFolderList();
+          
+          RootFolderList.Folders = MediaFolderQuery.Result.Items;
+          
+          
+          FolderCountMonitor.Source = MediaFolderQuery.Result.Items;
+          FolderCountMonitor.Visible = true;
+        }
+        ]]>
+      </Script>
+
+      <Script>
+        if ([Page.UseRulesQuery])
+        {
+          Model.Content = [PhotosByFolderQuery.Result.Items];
+        }
+        else if (Page.FolderId != 0 || Page.ShowDeviceContents)
+        {
+          Model.Content = [AggregatingList];
+        }
+        else 
+        {
+          Model.Content = RootFolderList.FilteredFolders;
+        }
+      </Script>
+      
+      <Script>
+        
+        Page.IsEmpty = RootFolderList != null &amp;&amp; 
+                       [RootFolderList.FilteredFolders.Count] == 0;
+      </Script>
+
+      
+      <Script>
+        int folderCount = 0;
+
+        if (![Page.UseRulesQuery])
+        {
+          if (Page.FolderId != 0 || Page.ShowDeviceContents)
+          {
+            folderCount = [MediaFolderQuery.Result.Items.Count];
+          }
+          else
+          {
+            folderCount = [RootFolderList.FilteredFolders.Count];
+          }
+        }
+        PhotoCount = [PhotosByFolderQuery.Result.Items.Count];
+
+        string header;
+
+        
+        
+        if (folderCount == 0)
+        {
+          if (PhotoCount == 1)
+          {
+            header = me:Strings.Header01;
+          }
+          else 
+          {
+            header = sys:String.Format(me:Strings.Header0N, PhotoCount);
+          }
+        }
+        else if (folderCount == 1)
+        {
+          if (PhotoCount == 0)
+          {
+            header = me:Strings.Header10;
+          }
+          else if (PhotoCount == 1)
+          {
+            header = me:Strings.Header11;
+          }
+          else 
+          {
+            header = sys:String.Format(me:Strings.Header1N, PhotoCount);
+          }
+        }
+        else 
+        {
+          if (PhotoCount == 0)
+          {
+            header = sys:String.Format(me:Strings.HeaderM0, folderCount);
+          }
+          else if (PhotoCount == 1)
+          {
+            header = sys:String.Format(me:Strings.HeaderM1, folderCount);
+          }
+          else 
+          {
+            header = sys:String.Format(me:Strings.HeaderMN, folderCount, PhotoCount);
+          }
+        }
+        ToggleSelectAllCommand.Description = header;
+
+        State.CanPlay = (PhotoCount > 0);
+      </Script>
+      
+      <Script>
+        [DeclareTrigger(me:PhotoPanelData.FilterFolders.Invoked)]
+        if (RootFolderList != null)
+          RootFolderList.Filter();
+      </Script>
+
+      <Script>
+        [DeclareTrigger(NavigateWorker.Invoked)]
+
+        Object item = SelectionManager.SelectedItem;
+
+        State.Sort = PhotosByFolderQuery.Sort;
+
+        
+        if (item is data:MediaFolder)
+        {
+          data:MediaFolder folder = (data:MediaFolder)item;
+
+          State.Index = 0;
+          State.FolderId = folder.LibraryId;
+        }
+        
+        else
+        {
+          if (SelectionManager.Count > 0)
+          {
+            State.Index = (Int32)SelectionManager.SelectedIndices.GetItem(0) - MediaFolderQuery.Result.Items.Count;
+          }
+          else
+          {
+            State.Index = 0;
+          }
+
+          State.FolderId = Page.FolderId;
+        }
+
+        zune:Shell.DefaultInstance.NavigateToPage(SlideShowLand);
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(ExecutePhoto.Invoked)]
+
+        
+        if (SelectionManager.Count == 1)
+        {
+          List selected = SelectionManager.SelectedItems;
+
+          if (SelectionManager.SelectedItems.GetItem(0) is data:MediaFolder)
+          {
+            Open.Invoke();
+          }
+          else if (!Page.ShowDeviceContents) 
+          {
+            State.Play = false;
+            NavigateWorker.Invoke();
+          }
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(State.Navigate.Invoked)]
+
+        State.Play = true;
+        NavigateWorker.Invoke();
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(PlaySlideshow.Invoked)]
+
+        if (SelectionManager.Count > 0)
+        {
+          State.Navigate.Invoke();
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(Open.Invoked)]
+
+        if (SelectionManager.Count > 0)
+        {
+          List selected = SelectionManager.SelectedItems;
+          Object item = selected.GetItem(0);
+
+          if (item is data:MediaFolder)
+          {
+            data:MediaFolder folder = (data:MediaFolder)item;
+
+            if (!Page.ShowDeviceContents) 
+            {
+              
+              col:Hashtable args = new col:Hashtable();
+              args.Add("FolderId", folder.LibraryId);
+
+              
+              String destination = "Collection\Photos";
+              zune:Shell.DefaultInstance.Execute(destination, args);
+            }
+            else 
+            {
+              
+              
+              Page.AddFolderToBackStack(Page.FolderId);
+              Page.FolderId = folder.LibraryId;
+            }
+          }
+          else
+          {
+            
+          }
+        }
+      </Script>
+
+      
+      <Script>
+        if ([ContextMenu.Helper.IsOpening])
+        {
+          
+          bool singleSelect = (SelectionManager.Count == 1);
+          PlaySlideshow.Available = singleSelect;
+          Open.Available = singleSelect;
+
+          bool folderSelected = false;
+
+          
+          foreach (object item in SelectionManager.SelectedItems)
+          {
+            if (item is data:MediaFolder)
+            {
+              folderSelected = true;
+              
+            }
+          }
+
+          Open.Hidden = !folderSelected;
+          PropertiesDivider.Visible = !folderSelected;
+          Properties.Hidden = folderSelected;
+          AddToBurnList.Hidden = folderSelected;
+        }
+      </Script>
+
+    </Scripts>
+    
+    <Content>
+      <Panel>
+        <Children>
+          
+          <gp:GalleryPanelWorker Name="Worker"
+            Model="{Model}"
+            SelectionManager="{SelectionManager}"
+            ContextMenu="{ContextMenu}"
+            EditContext="{EditContext}"
+            NavigateIntoArgs="{NavigateIntoArgs}"
+            GalleryViewType="{GalleryViewType}"
+            ToggleSelectAllCommand="{ToggleSelectAllCommand}"
+            Padding="{ColumnMargins}"
+            ColumnInset="{ColumnInset}"
+            LayoutSpacing="{LayoutSpacing}" 
+            HeaderMargins="{HeaderMargins}"
+            HeaderPadding="{HeaderPadding}"/>
+          
+          
+
+
+
+
+
+
+
+
+          <Repeater Name="FolderCountMonitor" Visible="false">
+            <Content>
+              <me:FolderCountMonitor Folder="{(data:MediaFolder)RepeatedItem}"/>
+            </Content>
+          </Repeater>
+          
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+  
+  
+  
+  
+  
+  
+  <UI Name="FolderCountMonitor">
+    <Properties>
+      <data:MediaFolder Name="Folder" MediaFolder="$Required"/>
+    </Properties>
+    
+    <Scripts>
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(Folder.TotalCount)]
+        me:PhotoPanelData.FilterFolders.Invoke();
+      </Script>
+    </Scripts>
+  </UI>
+
+  
+  
+  
+  <UI Name="GalleryView" Base="gp:GalleryView">
+    <Properties>
+      <Type Name="ProviderType" Type="{typeof(me:PhotoThumbnailButtonProvider)}"/>
+      <Size Name="GridCellSize" Size="190,231"/>
+      <Size Name="TileSize" Size="190,175"/>
+      <Size Name="LabelSize" Size="0,40"/>
+      <Size Name="LayoutSpacing" Size="35,3"/>
+      <Boolean Name="OnlyShowClipsWhenScrollable" Boolean="true"/>
+    </Properties>
+    <Content Name="Item">
+      <me:PhotoListItemBase
+        Index="{RepeatedItemIndex}"
+        TileSize="{TileSize}"
+        LabelSize="{LabelSize}"
+        SelectionManager="{SelectionManager}"
+        EditingList="{EditingList}">
+
+        <Provider>
+          <me:PhotoThumbnailButtonProvider PhotoThumbnailButtonProvider="{ProviderType}"
+              Model="{RepeatedItem}"
+              Index="{RepeatedItemIndex}"
+              SelectionManager="{SelectionManager}"
+              ListModel="{ListModel}"/>
+        </Provider>
+        <Animations>
+          <SwitchAnimation SwitchAnimation="{ItemShow}"/>
+          <AnimationProvider AnimationProvider="{ItemMove}"/>
+          <AnimationProvider AnimationProvider="{ItemHide}"/>
+        </Animations>
+      </me:PhotoListItemBase>
+    </Content>    
+  </UI>
+
+  
+  
+  
+  <Class Name="PhotoThumbnailButtonProvider" Base="thumbbutton:ThumbnailButtonProvider">
+    <Properties>
+      <Object Name="Model" Object="$Required"/>
+      <Index Name="Index" Index="$Required"/>
+      <SelectionManager Name="SelectionManager" SelectionManager="$Required"/>
+    </Properties>
+
+    <Scripts>
+      <Script>DragValue = SelectionManager;</Script>
+
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(((data:Photo)Model).Thumbnail)]
+        [DeclareTrigger(((data:MediaFolder)Model).Thumbnail)]
+        [DeclareTrigger(((data:Photo)Model).Title)]
+        [DeclareTrigger(((data:Photo)Model).DateTaken)]
+
+        if (Model is data:Photo)
+        {
+          data:Photo photo = (data:Photo)Model;
+          PrimaryLabel = photo.Title;
+          SecondaryLabel = photo.DateTaken.ToString("d");
+
+          Image = photo.Thumbnail;
+        }
+        else if (Model is data:MediaFolder)
+        {
+          data:MediaFolder folder = (data:MediaFolder)Model;
+
+          if (folder.ParentId == 0)
+          {
+            
+            PrimaryLabel = zune:Shell.ReformatFolderPathName(folder.FolderPath);
+          }
+          else
+          {
+            
+            PrimaryLabel = folder.Title;
+          }
+
+          Image = folder.Thumbnail;
+        }
+      </Script>
+
+      <Script>
+        [DeclareTrigger(PrimaryLabel)]
+        if (Model is data:Photo)
+        {
+          ((data:Media)Model).Title = PrimaryLabel;
+        }
+      </Script>
+
+      
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(SelectionManager.SelectedIndices)]
+        if (SelectionManager != null)
+        {
+          Selected = SelectionManager.IsSelected([Index.Value]);
+        }
+      </Script>
+    </Scripts>
+  </Class>
+
+  
+  
+  
+  <UI Name="PhotoListItemBase" Base="photobutton:PhotoButtonBase">
+    <Properties>
+      <Index Name="Index" Index="$Required"/>
+      <SelectionManager Name="SelectionManager" SelectionManager="{null}"/>
+      <drag:DragFeedback Name="DragFeedback" DragFeedback="{null}"/>
+    </Properties>
+
+    <Locals>
+      <li:ListItemContext Name="ListContext" Index="{Index}"/>
+    </Locals>
+
+    <Input>
+      
+      <EventContext Name="Context" Value="{ListContext}"/>
+
+      
+      <DragSourceHandler Name="DragSource" AllowedDropActions="Copy" HandlerStage="Direct, Bubbled"
+                         CancelCursor="Arrow" CopyCursor="Arrow"/>
+    </Input>
+
+    <Scripts>
+      <Script>
+        DragSource.Value = [Provider.DragValue];
+      </Script>
+
+      <Script>
+        FallbackImage = styles:Styles.NoArtWide;
+      </Script>
+
+      <Script>
+        if (Provider.Model is data:Photo)
+        {
+          
+          ListContext.Edit = Provider.EditPrimaryLabel;
+        }
+      </Script>
+      <Script>
+        
+        
+        if ([DragSource.Dragging])
+        {
+          if (DragFeedback == null)
+            DragFeedback = new drag:DragFeedback();
+
+          if (SelectionManager != null)
+          {
+            if (!SelectionManager.IsSelected(Index.Value))
+              SelectionManager.Select(Index.Value, true);
+
+            DragFeedback.Count = SelectionManager.Count;
+          }
+
+          DragFeedback.Thumbnail = Provider.Image;
+          DragFeedback.Helper.Show(DragFeedback);
+        }
+        else if (DragFeedback != null)
+        {
+          DragFeedback.Helper.Hide();
+          UI.DisposeOwnedObject(DragFeedback);
+          DragFeedback = null;
+        }
+
+        drag:DragInfo.IsDraggingInternally = DragSource.Dragging;
+      </Script>
+
+      <Script>
+        if (DragFeedback != null)
+          DragFeedback.DropAction = [DragSource.CurrentDropAction];
+      </Script>
+
+      <Script>
+        if (Provider.Model is data:MediaFolder)
+        {
+          data:MediaFolder folder = (data:MediaFolder)Provider.Model;
+          OverlayContent.Visible = true;
+          OverlayType = typeof(me:FolderCountOverlay);
+        }
+      </Script>
+    </Scripts>
+  </UI>
+
+  
+  
+  
+  <UI Name="FolderCountOverlay" Base="core:ThumbnailButtonOverlay">
+    <Scripts>
+      <Script>
+        Count.Content = [((data:MediaFolder)Provider.Model).TotalCount].ToString();
+        CountDrop.Content = Count.Content;
+      </Script>
+    </Scripts>
+    <Content>
+      <Panel Layout="Form">
+        <Children>
+          <core:Label Name="Count" Style="{styles:SharedStyles.PhotoFolderCountStyle}">
+            <LayoutInput>
+              <FormLayoutInput Horizontal="Center" Vertical="Center"/>
+            </LayoutInput>
+          </core:Label>
+          <Text Name="CountDrop" Font="{styles:SharedStyles.PhotoFolderCountStyle.Font}" Color="{styles:Styles.DarkGray}">
+            <LayoutInput>
+              <FormLayoutInput Left="Count,0,1" Top="Count,0,1"/>
+            </LayoutInput>
+          </Text>
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  <Class Name="Strings" Shared="true">
+      <Properties>
+        <string Name="Header01" string="{zune:Shell.LoadString(zune:StringId.IDS_PHOTOS_0_1_HEADER)}" />
+        <string Name="Header0N" string="{zune:Shell.LoadString(zune:StringId.IDS_PHOTOS_0_N_HEADER)}" />
+        <string Name="Header10" string="{zune:Shell.LoadString(zune:StringId.IDS_PHOTOS_1_0_HEADER)}" />
+        <string Name="Header11" string="{zune:Shell.LoadString(zune:StringId.IDS_PHOTOS_1_1_HEADER)}" />
+        <string Name="Header1N" string="{zune:Shell.LoadString(zune:StringId.IDS_PHOTOS_1_N_HEADER)}" />
+        <string Name="HeaderM0" string="{zune:Shell.LoadString(zune:StringId.IDS_PHOTOS_M_0_HEADER)}" />
+        <string Name="HeaderM1" string="{zune:Shell.LoadString(zune:StringId.IDS_PHOTOS_M_1_HEADER)}" />
+        <string Name="HeaderMN" string="{zune:Shell.LoadString(zune:StringId.IDS_PHOTOS_M_N_HEADER)}" />
+
+
+        <string Name="NameSort" string="{zune:Shell.LoadString(zune:StringId.IDS_NAME_SORT)}" />
+        <string Name="DateSort" string="{zune:Shell.LoadString(zune:StringId.IDS_DATETAKEN_SORT)}" />
+
+        <string Name="PlayCommand" string="{zune:Shell.LoadString(zune:StringId.IDS_PHOTO_PLAY_MENUITEM)}" />
+        <string Name="OpenCommand" string="{zune:Shell.LoadString(zune:StringId.IDS_PHOTO_OPENFOLDER_MENUITEM)}" />
+      </Properties>
+  </Class>
+  
+  
+  
+  
+  
+  <UI Name="EmptyPage" Base="library:EmptyLibraryPage">
+    <Properties>
+      <String Name="Title" String="{zune:Shell.LoadString(zune:StringId.IDS_PHOTO_EMPTY)}"/>
+      <iris:Command Name="Link1Command" Description="{zune:Shell.LoadString(zune:StringId.IDS_PHOTO_EMPTY_SETTINGS_LINK)}"/>
+    </Properties>
+  </UI>
+</UIX>

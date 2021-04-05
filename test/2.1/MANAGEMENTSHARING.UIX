@@ -1,0 +1,200 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:mgmt="res://ZuneShellResources!Management.uix"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:me="Me">
+
+  <UI Name="Default">
+    <Properties>
+      <zune:CategoryPage Name="Page" CategoryPage="$Required" />
+    </Properties>
+    <Locals>
+      <zune:WebHelpCommand Name="MoreInfoLink"
+        Description="{zune:Shell.LoadString(zune:StringId.IDS_SHARING_INFO_BUTTON)}"
+        Url="{zune:Shell.LoadString(zune:StringId.IDS_SHARING_MOREINFO_URL)}"/>
+      <iris:Command Name="ShareMediaButtonModel"/>
+      <Image Name="SecurityIcon" Image="res://ZuneShellResources!Security.png"/>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        [DeclareTrigger(ShareMediaButtonModel.Invoked)]
+        zune:Management.Instance.SharingEnabled = !zune:Management.Instance.SharingEnabled; 
+      </Script>
+      <Script>
+        if ( [zune:Management.Instance.SharingEnabled] )
+        {
+          ShareMediaButtonModel.Description = zune:Shell.LoadString(zune:StringId.IDS_STOP_SHARING_MEDIA);
+        }
+        else
+        {
+          ShareMediaButtonModel.Description = zune:Shell.LoadString(zune:StringId.IDS_SHARE_MEDIA);
+        }
+        SharingOptions.InputEnabled = zune:Management.Instance.SharingEnabled;
+      </Script>
+      <Script>
+          if (zune:Management.Instance.SharingEnableRequiresElevation) 
+          {
+            ShareMediaButton.Icon.Image = SecurityIcon;
+          }
+          else
+          {
+            ShareMediaButton.Icon.Image = null;
+          }
+      </Script>
+      <Script>
+        if (zune:Management.Instance.UserCanModifySharing)
+        {
+          AllSharingOptions.Visible = true;
+        }
+        else
+        {
+          
+          
+          xpRequiresAdminText.Content = zune:Shell.LoadString(zune:StringId.IDS_SHARE_MEDIA_XP_NON_ADMIN_MESSAGE);
+          xpRequiresAdminText.Visible = true;
+        }
+      </Script>
+    </Scripts>
+    
+    <Content>
+      <Panel>
+        <Children>
+
+          <Text Name="xpRequiresAdminText" Color="{styles:Styles.WarningColor}" Font="{styles:Styles.SettingsText}" Visible="false"/>
+          
+          <Panel Name="AllSharingOptions" Visible="false">
+            <Layout>
+              <FlowLayout Orientation="Vertical" Spacing="4,0" StripAlignment="Near" ItemAlignment="Near"/>
+            </Layout>
+            <Children>
+
+              <Text Color="{styles:Styles.SettingsTextActive}" Font="{styles:Styles.SettingsText}" WordWrap="false" Content="{zune:Shell.LoadString(zune:StringId.IDS_SHARE_MEDIA_HEADER)}"/>
+
+              <core:ActionButtonWithIcon Name="ShareMediaButton" Model="{ShareMediaButtonModel}" Padding="0,0,0,15"/>
+              
+              <me:Sharing Name="SharingOptions"/>
+              
+              <mgmt:Link Model="{MoreInfoLink}" Padding="4,12,0,0"/>
+              
+            </Children>
+          </Panel>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+  
+  <UI Name="Sharing">
+    <Locals>
+      <iris:Command Name="SetButton" Description="{zune:Shell.LoadString(zune:StringId.IDS_SET_NAME_BUTTON)}"/>
+    </Locals>
+    
+    <Properties>
+      <EditableTextData Name="MediaLibraryNameEditBox" MaxLength="16"/>
+    </Properties>
+
+    <Scripts>
+      <Script>
+        MediaLibraryNameEditBox.Value = [zune:Management.Instance.SharingDisplayName];
+      </Script>
+      <Script>
+        [DeclareTrigger(SetButton.Invoked)]
+        zune:Management.Instance.SharingDisplayName = MediaLibraryNameEditBox.Value;
+      </Script>
+      <Script>
+        
+        Boolean allDevicesEnabled = [zune:Management.Instance.SharingAllDevicesEnabled];
+        DeviceList.InputEnabled = !allDevicesEnabled;
+      </Script>
+    </Scripts>
+    
+    <Content>
+      <Panel>
+        <Children>
+
+          <Panel>
+            <Layout>
+              <FlowLayout Orientation="Vertical" Spacing="4,0" StripAlignment="Near" ItemAlignment="Near"/>
+            </Layout>
+            <Children>
+                  <Text Color="{styles:Styles.SettingsTextActive}" Font="{styles:Styles.SettingsText}" WordWrap="false" Content="{zune:Shell.LoadString(zune:StringId.IDS_LIBRARY_NAME)}"/>
+
+                  <Panel Layout="HorizontalFlow">
+                    <Children>
+                      <Panel Name="MediaLibraryNameBox" Layout="Anchor" Padding="0,0,0,15">
+                        <LayoutInput>
+                          <AnchorLayoutInput Left="Parent,0" Right="Parent,1"/>
+                        </LayoutInput>
+                        <Children>
+
+                          <core:Editbox Model="{MediaLibraryNameEditBox}" Name="MediaLibraryName" AccessibleDescription="{zune:Shell.LoadString(zune:StringId.IDS_LIBRARY_NAME)}"
+                                            TileMinSize="120,0" TileMaxSize="120,0"/>
+                          
+                          <ColorFill Content="{styles:Styles.EditTextBorder}" MinimumSize="120,22">
+                            <LayoutInput>
+                              <AnchorLayoutInput Left="MediaLibraryName,0" Top="MediaLibraryName,0"/>
+                            </LayoutInput>
+                            <Children>
+                              <ColorFill Content="White" MinimumSize="120,22" Margins="1,1,1,1">
+                              </ColorFill>
+                            </Children>
+                          </ColorFill>
+
+                        </Children>
+                        
+                      </Panel>
+                      
+                      <core:ActionButton Model="{SetButton}"/>
+                    </Children>
+                  </Panel>
+                  
+                  <mgmt:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_SHARE_TYPE_HEADER)}" WordWrap="false" Margins="0,5,0,0"/>
+                  
+                  <mgmt:CheckBox Model="{zune:Management.Instance.SharingEnableMusic}"/>
+                  <mgmt:CheckBox Model="{zune:Management.Instance.SharingEnableVideo}"/>
+                  <mgmt:CheckBox Model="{zune:Management.Instance.SharingEnablePhoto}" Padding="0,0,0,15"/>
+                  
+                  <core:RadioGroup Model="{zune:Management.Instance.SharingSelectDeviceChoice}" AccessibleDescription="{zune:Shell.LoadString(zune:StringId.IDS_SHARE_TYPE_HEADER)}"/>
+
+                  <me:DeviceList Name="DeviceList" Padding="15,0,0,0"/>
+                 
+                </Children>
+              </Panel>
+            </Children>
+          </Panel>
+
+    </Content>
+  </UI>
+
+  <UI Name="DeviceList">
+    <Scripts>
+      <Script>
+        Repeater.Source = [zune:Management.Instance.SharingDeviceList];
+      </Script>
+    </Scripts>
+    
+    <Content>
+      <Panel>
+        <Children>
+
+          <Repeater Name="Repeater">
+            <Layout>
+              <FlowLayout Orientation="Vertical" Spacing="4,0" StripAlignment="Near"/>
+            </Layout>
+            <Content>
+              <mgmt:CheckBox Model="{(zune:BooleanInputChoice)RepeatedItem}"/>
+            </Content>
+          </Repeater>
+          
+        </Children>
+      </Panel>
+
+    </Content>
+  </UI>
+  
+</UIX>

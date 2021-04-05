@@ -1,0 +1,36 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:mgmt="res://ZuneShellResources!Management.uix">
+
+  <UI Name="Default">
+    <Properties>
+      <zune:CategoryPage Name="Page" CategoryPage="$Required" />
+    </Properties>
+    <Locals>
+      <zune:WebHelpCommand Name="ReadOnlineLink" 
+        Description="{zune:Shell.LoadString(zune:StringId.IDS_PRIVACY_STATEMENT_BUTTON)}"
+        Url="{zune:Shell.LoadString(zune:StringId.IDS_PRIVACY_STATEMENT_URL)}"
+        />
+    </Locals>
+
+    <Content>
+          <Panel Name="NavButtons">
+            <Layout>
+              <FlowLayout Orientation="Vertical" Spacing="4,0" StripAlignment="Near"/>
+            </Layout>
+            <Children>
+
+              <mgmt:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_USAGE_DATA_HEADER)}" WordWrap="true"/>
+              <mgmt:CheckBox Name="SqmCheckbox" Model="{zune:Management.Instance.SqmChoice}" Padding="0,0,0,15"/>
+
+              <mgmt:Link Model="{ReadOnlineLink}" Padding="0,2,0,0"/>              
+              
+            </Children>
+          </Panel>
+
+    </Content>
+  </UI>
+
+</UIX>

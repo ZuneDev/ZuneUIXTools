@@ -1,0 +1,294 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:data="res://ZuneShellResources!LibraryData.schema.xml"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:panels="res://ZuneShellResources!LibraryPanels.uix"
+  xmlns:spreadsheet="res://ZuneShellResources!SpreadsheetViewBase.uix"
+  xmlns:columns="res://ZuneShellResources!PlaylistContentsPanelColumns.uix"
+  xmlns:contextmenu="res://ZuneShellResources!LibraryContextMenu.uix"
+  xmlns:lib="res://ZuneShellResources!Library.uix"
+  xmlns:me="Me"
+  >
+
+  
+  
+  
+  <UI Name="PlaylistContentsPanel" Base="panels:LibraryPanelBase">
+    <Properties>
+      <zune:PlaylistContentsPanel Name="Model" PlaylistContentsPanel="$Required" />
+
+      <spreadsheet:ColumnData Name="ColumnData" ColumnData="{columns:PlaylistViewData.ColumnData}"/>
+
+      <columns:PlaylistContentsPanelListModel Name="ListModel" Model="{Model}"/>
+
+      <Boolean Name="CanEdit" Boolean="true"/>
+      <Boolean Name="CanPlay" Boolean="true"/>
+      
+      
+
+
+
+      <Boolean Name="BlockUpdatesDuringGrovel" Boolean="false"/>
+      
+      <zune:StringId Name="EmptyPlaylistMessageId" StringId="{zune:StringId.IDS_PLAYLIST_EMPTY}"/>      
+    </Properties>
+
+    <Locals>
+      <data:LibraryPlaylistContentQuery Name="TrackQuery" Enabled="false"
+        Sort="+WM/TrackNumber"
+        RulesOnly="false"
+        ShowDeviceContents="{Page.ShowDeviceContents}"
+        />
+
+
+      
+      <iris:Command Name="RemoveFromPlaylist" Description="{zune:Shell.LoadString(zune:StringId.IDS_REMOVE_FROM_PLAYLIST)}"/>
+      <zune:MenuItemCommand Name="FindInCollection"/>
+      <List Name="LibraryContextMenuOptions">
+        <Source>
+          <iris:Command Command="{PlayAll}"/>
+          <iris:Command Command="{Play}"/>
+          <iris:Command Command="{AddToNowPlaying}"/>
+          <iris:Command Command="{AddToPlaylist}"/>
+          <iris:Command Command="{AddToBurnList}"/>
+          <core:MenuDivider/>
+          <iris:Command Command="{Edit}"/>
+          <contextmenu:RateCommand RateCommand="{Rate}"/>
+          <core:MenuDivider MenuDivider="{SyncDivider}"/>
+          <iris:Command Command="{Sync}"/>
+          <iris:Command Command="{SyncAllUnexclude}"/>
+          <core:MenuDivider/>
+          <iris:Command Command="{RemoveFromPlaylist}"/>
+          <core:MenuDivider/>
+          <iris:Command Command="{Properties}"/>
+          <iris:Command Command="{FindInCollection}"/>
+        </Source>
+      </List>
+
+      <List Name="DeviceContextMenuOptions">
+        <Source>
+          
+        </Source>
+      </List>
+
+      <Boolean Name="HasSetPagePlay"/> 
+    </Locals>
+
+    <Scripts>
+      <Script>TrackQuery.DeviceId = [Page.DeviceId];</Script>
+      <Script>TrackQuery.UserId = [zune:SignIn.Instance.LastSignedInUserId];</Script>
+      
+      <Script>
+        if (Page.ShowDeviceContents)
+        {
+          ContextMenu.Options = DeviceContextMenuOptions;
+          DeleteKey.Command = DeleteFromDevice;
+          columns:PlaylistViewData.SyncColumn.Visible = false;
+          columns:PlaylistViewData.SizeOnDeviceColumn.Visible = true;
+        }
+        else
+        {
+          ContextMenu.Options = LibraryContextMenuOptions;
+          DeleteKey.Command = RemoveFromPlaylist;
+          columns:PlaylistViewData.SyncColumn.Visible = true;
+          columns:PlaylistViewData.SizeOnDeviceColumn.Visible = false;
+        }
+      </Script>
+
+      
+      <Script>TrackQuery.PlaylistId = [Model.SelectedPlaylistId];</Script>
+
+      
+      <Script>
+        spreadsheet:SortDescription sort = (spreadsheet:SortDescription)[ColumnData.SortedColumn];
+
+        string sortBy = (string)panels:Globals.SortAscendingMap.GetItem([ColumnData.SortAscending]) + 
+                        sort.Attribute;
+
+        TrackQuery.Sort = sortBy;
+        SupportsJumpInList = sort.SupportsJumpInList;
+      </Script>
+
+      <Script>
+        Worker.SupportsJumpInList = [SupportsJumpInList];
+      </Script>
+      
+      
+      <Script>TrackQuery.Enabled = true;</Script>
+
+      
+      <Script>
+        Model.Content = [TrackQuery.Result.Items];
+        Worker.Content = Model.Content;
+      </Script>
+
+      <Script>
+        if ([ContextMenu.Helper.IsOpening])
+        {
+          RemoveFromPlaylist.Available = (SelectionManager.Count > 0) &amp;&amp; CanEdit;
+          FindInCollection.Hidden = true;
+          if (SelectionManager.Count == 1)
+          {
+            data:PlaylistContentItem item = (data:PlaylistContentItem)SelectionManager.SelectedItem;
+            zune:MediaType type = zune:ZuneShell.MapIntToMediaType(item.MediaType);
+            
+            if (zune:PlaylistManager.IsInCollection(item.MediaId, type))
+            {
+              if (type == zune:MediaType.Track)
+              {
+                FindInCollection.Description = zune:Shell.LoadString(zune:StringId.IDS_FIND_IN_COLLECTION);
+                FindInCollection.Hidden = false;
+              }
+              else if (type == zune:MediaType.Video)
+              {
+                FindInCollection.Description = zune:Shell.LoadString(zune:StringId.IDS_FIND_VIDEO_IN_COLLECTION);
+                FindInCollection.Hidden = false;
+              }
+            }
+          }
+        }
+      </Script>
+
+      
+      <Script>
+        DeleteKey.Enabled = [CanEdit];
+        Worker.CanReorder = CanEdit;
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(RemoveFromPlaylist.Invoked)]
+
+        if (SelectionManager.Count > 0)
+        {
+          zune:PlaylistManager.Instance.RemoveFromPlaylist(TrackQuery.PlaylistId, SelectionManager.SelectedItems);
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(FindInCollection.Invoked)]
+
+        data:PlaylistContentItem item = (data:PlaylistContentItem)SelectionManager.SelectedItem;
+
+        if (item != null)
+        {
+          zune:MediaType type = zune:ZuneShell.MapIntToMediaType(item.MediaType);
+
+          if (type == zune:MediaType.Track)
+          {
+            zune:MusicLibraryPage.FindInCollection(item.AlbumArtistLibraryId, item.AlbumLibraryId, item.MediaId);
+          }
+          else if (type == zune:MediaType.Video)
+          {
+            zune:VideoLibraryPage.FindInCollection(item.MediaId);
+          }
+        }
+      </Script>
+
+      
+      <Script>
+        if (TrackQuery.PlaylistId >= 0 || HasSetPagePlay)
+        {
+          HasSetPagePlay = true;
+          if ([CanPlay] &amp;&amp; TrackQuery.Result.Items != null)
+          {
+            zune:TransportControls.Instance.PagePlaySelection.Available = ([TrackQuery.Result.Items.Count] > 0);
+          }
+          else
+          {
+            zune:TransportControls.Instance.PagePlaySelection.Available = false;
+          }
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(zune:TransportControls.Instance.PagePlaySelection.Invoked)]
+        Execute.Invoke();
+      </Script>
+
+      
+      <Script>
+        if ([TrackQuery.PlaylistId] >= 0)
+        {
+          bool isEmpty = [TrackQuery.Result.IsEmpty] &amp;&amp; !Page.ShowDeviceContents;
+          EmptyPlaylistPanel.Visible = isEmpty;
+          Worker.Visible = !isEmpty;
+        }
+        else
+        {
+          EmptyPlaylistPanel.Visible = false;
+          Worker.Visible = false;
+        }
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel>
+        <Children>
+
+          <me:PlaylistContentsSpreadSheet Name="Worker"
+            ListModel="{ListModel}"
+            Content="{Model.Content}"
+            ColumnData="{ColumnData}"
+            NavigateIntoArgs="{NavigateIntoArgs}"
+            SelectionManager="{SelectionManager}"
+            ContextMenu="{ContextMenu}"
+            EditContext="{EditContext}"
+            ExecuteCommand="{Execute}"
+            Margins="-5,0,-11,-11"
+            Padding="28,0,0,0"
+            HeaderSpacing="22"
+            LayoutSpacing="{styles:Styles.LibraryListLayoutSpacing}"
+            RowSize="{styles:Styles.LibraryListItemSize}"
+            RowPadding="{styles:Styles.LibraryListItemMargins}"
+            />
+
+          <lib:EmptyPage Name="EmptyPlaylistPanel" 
+                         Title="{zune:Shell.LoadString(EmptyPlaylistMessageId)}"
+                         TitleStyle="{styles:SharedStyles.NoPlaylistContentText}"
+                         Margins="30,21,0,0"/>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+
+
+
+  <UI Name="PlaylistContentsSpreadSheet" Base="spreadsheet:SpreadSheet">
+    <Properties>
+      <columns:PlaylistContentsPanelListModel Name="ListModel" PlaylistContentsPanelListModel="$Required"/>
+      <Boolean Name="CanReorder" Boolean="true"/>
+    </Properties>
+
+    <Scripts>      
+      
+      <Script>
+        [DeclareTrigger(Target.Dropped)]
+
+        object value = Target.GetValue();
+
+        if (!(value is SelectionManager))
+        {
+          
+        }
+        else
+        {
+          SelectionManager selectionManager = (SelectionManager)value;
+          int insertAt = InsertIndex.Value;
+
+          zune:PlaylistManager.Instance.ReorderInPlaylist(ListModel.Model.SelectedPlaylistId, selectionManager.SelectedItems, insertAt);
+        }
+      </Script>
+    </Scripts>
+  </UI>
+
+</UIX>

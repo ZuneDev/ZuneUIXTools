@@ -1,0 +1,101 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:button="res://ZuneShellResources!Button.uix"
+  xmlns:scrollbar="res://ZuneShellResources!ScrollBar.uix"
+  xmlns:me="Me">
+
+  
+  
+  
+  <UI Name="PagingControl" Base="scrollbar:ScrollControl">
+    <Properties>
+      <ScrollingData Name="ScrollData" ScrollingData="$Required"/>
+      <Boolean Name="Wrap" Boolean="false"/>
+    </Properties>
+
+    <Locals>
+      <iris:Command Name="NextPageCommand"/>
+      <iris:Command Name="PrevPageCommand"/>
+    </Locals>
+
+    <Scripts>
+      
+      
+      <Script>ScrollData.PageStep = 1.0;</Script>
+
+      
+      <Script>
+        bool canWrap = false;
+        if ([ScrollData.TotalPages] > 1.0)
+          canWrap = true;
+
+        PrevPageCommand.Available = [ScrollData.CanScrollUp] || (Wrap &amp;&amp; canWrap);
+        NextPageCommand.Available = [ScrollData.CanScrollDown] || (Wrap &amp;&amp; canWrap);
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(PrevPageCommand.Invoked)]
+        if (ScrollData.CanScrollUp)
+          ScrollData.PageUp();
+        else if (Wrap)
+          ScrollData.End();
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(NextPageCommand.Invoked)]
+        if (ScrollData.CanScrollDown)
+          ScrollData.PageDown();
+        else if (Wrap)
+          ScrollData.Home();
+      </Script>
+    </Scripts>
+
+    <Content>
+      <me:PrevNextArrows PrevCommand="{PrevPageCommand}" NextCommand="{NextPageCommand}"/>
+    </Content>
+  </UI>
+  
+  
+  
+  
+  <UI Name="PrevNextArrows">
+    <Properties>
+      <iris:Command Name="PrevCommand" Command="$Required"/>
+      <iris:Command Name="NextCommand" Command="$Required"/>
+    </Properties>
+
+    <Scripts>
+      <Script>
+        Root.Visible = ([PrevCommand.Available] || [NextCommand.Available]);
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel Name="Root" Layout="HorizontalFlow" Padding="4,4,4,4">
+        <Children>
+
+          <button:IconButton Model="{PrevCommand}"
+              AllowDoubleClicks="false" 
+              Image="res://ZuneShellResources!Page.Prev.png"
+              HoverImage="res://ZuneShellResources!Page.Prev.Hover.png"
+              PressedImage="res://ZuneShellResources!Page.Prev.Pressed.png"
+              DisabledImage="res://ZuneShellResources!Page.Prev.Disabled.png"/>
+
+          <button:IconButton Model="{NextCommand}"
+              AllowDoubleClicks="false"
+              Image="res://ZuneShellResources!Page.Next.png"
+              HoverImage="res://ZuneShellResources!Page.Next.Hover.png"
+              PressedImage="res://ZuneShellResources!Page.Next.Pressed.png"
+              DisabledImage="res://ZuneShellResources!Page.Next.Disabled.png"/>
+
+        </Children>
+      </Panel>
+
+    </Content>
+  </UI>
+
+</UIX>

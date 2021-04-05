@@ -1,0 +1,90 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:style="res://ZuneShellResources!Style.uix"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:button="res://ZuneShellResources!Button.uix"
+  xmlns:signin="res://ZuneShellResources!SignInDialog.uix"
+  xmlns:me="Me">
+
+  
+  
+  
+  <UI Name="SignedOutOrEmptyInbox">
+
+    <Locals>
+      <iris:Command Name="SignInCommand" Description="{zune:Shell.LoadString(zune:StringId.IDS_INBOX_SIGNIN_HEADER)}"/>
+      <zune:SignIn Name="SignIn" SignIn="{zune:SignIn.Instance}"/>
+      <signin:SignInDialog Name="SignInDlg" SignInDialog="{null}"/>
+    </Locals>
+
+    <Scripts>
+      
+      <Script>
+        [DeclareTrigger(SignInCommand.Invoked)]
+        if (!(SignIn.SignedIn || SignIn.SigningIn))
+        {
+          if (SignInDlg != null) UI.DisposeOwnedObject(SignInDlg);
+          SignInDlg = new signin:SignInDialog();
+          SignInDlg.Helper.Show(SignInDlg);
+        }
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel Layout="Anchor">
+        <Children>
+          <me:PanelLink Model="{SignInCommand}" LabelString="{zune:Shell.LoadString(zune:StringId.IDS_INBOX_SIGNIN_MESSAGE)}" />
+        </Children>
+      </Panel>
+    </Content>
+
+  </UI>
+
+  <UI Name="PanelLink" Base="button:Button">
+    <Properties>
+      <String Name="LabelString"/>
+    </Properties>
+
+    <Locals>
+      <style:Style Name="LabelStyle" Style="{styles:SharedStyles.InboxSignInDescriptionStyle}"/>
+      <style:StatefulCompositeStyle Name="SecondaryStyle" Base="{LabelStyle}"/>
+    </Locals>
+
+    <Scripts>
+      <Script>OverrideStyle = styles:SharedStyles.InboxSignInHeaderStyle;</Script>
+      <Script>SecondaryStyle.State.Focused = [Style.State.Focused];</Script>
+      <Script>SecondaryStyle.State.Hovered = [Style.State.Hovered];</Script>
+      <Script>UI.KeyFocusOnMouseDown = false;</Script>
+    </Scripts>
+
+    <Content>
+      <ColorFill Name="Background" MouseInteractive="true" Layout="VerticalFlow" Margins="4,26,0,0">
+        <Children>
+
+          <Panel>
+            <Layout>
+              <FlowLayout Orientation="Horizontal" ItemAlignment="Center"/>
+            </Layout>
+            <Children>
+
+              
+              <core:Label Name="Label" Style="{Style}"/>
+
+              
+              <Graphic Name="IconGraphic" Content="res://ZuneShellResources!Arrow.More.png" Margins="4,0,0,0" Visible="true"/>
+
+            </Children>
+          </Panel>
+
+          <core:Label Name="SecondaryLabel" Content="{LabelString}" Style="{SecondaryStyle}" WordWrap="true"/>
+
+        </Children>
+      </ColorFill>
+    </Content>
+  </UI>
+
+</UIX>

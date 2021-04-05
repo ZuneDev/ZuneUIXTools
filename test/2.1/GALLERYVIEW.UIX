@@ -1,0 +1,118 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX 
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:zune="assembly://ZuneShell/ZuneUI" 
+  xmlns:list="res://ZuneShellResources!ContentList.uix" 
+  xmlns:thumbbutton="res://ZuneShellResources!ThumbnailButton.uix"
+  xmlns:animations="res://ZuneShellResources!Animations.uix"
+  xmlns:me="Me">
+
+  
+  
+  
+  <UI Name="Default">
+    <Content>
+      <me:GalleryView>
+        <Content>
+          <iris:ArrayListDataSet>
+            <Source>
+              <zune:ThumbnailCommand Description="The Information" ImagePath="res://ZuneShellTests!Beck01.jpg"/>
+              <zune:ThumbnailCommand Description="Sea Change" ImagePath="res://ZuneShellTests!Beck02.jpg"/>
+              <zune:ThumbnailCommand Description="Guero" ImagePath="res://ZuneShellTests!Beck03.jpg"/>
+              <zune:ThumbnailCommand Description="Midnight Vultures" ImagePath="res://ZuneShellTests!Beck04.jpg"/>
+              <zune:ThumbnailCommand Description="Mutations" ImagePath="res://ZuneShellTests!Beck05.jpg"/>
+              <zune:ThumbnailCommand Description="Odelay" ImagePath="res://ZuneShellTests!Beck06.jpg"/>
+            </Source>
+          </iris:ArrayListDataSet>
+        </Content>
+      </me:GalleryView>
+    </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="GalleryView" Base="list:ScrollingContentListBase">
+    <Properties>
+      <Size Name="TileSize" Size="70,70"/>
+      <Size Name="LabelSize" Size="0,20"/>
+      <Size Name="LayoutSpacing" Size="15,5"/>
+      <Layout Name="ListLayout">
+        <Layout>
+          <GridLayout Orientation="Horizontal" Spacing="{LayoutSpacing}"/>
+        </Layout>
+      </Layout>
+      <Orientation Name="ScrollOrientation" Orientation="Horizontal"/>
+
+      <Type Name="ListItemType" Type="{typeof(list:ThumbnailListItemBase)}"/>
+      <Type Name="ProviderType" Type="{typeof(thumbbutton:CommandThumbnailButtonProvider)}"/>
+
+      <Type Name="ThumbnailCaptionAreaType" Type="{typeof(thumbbutton:ThumbnailCaptionArea)}"/>
+
+      <StretchingPolicy Name="StretchingPolicy" StretchingPolicy="Uniform"/>
+
+      
+
+      <Object Name="ListModel" Object="{null}"/>
+
+      
+      <Animation Name="ItemMove" Animation="{animations:Animations.MoveNow}"/>
+      <Animation Name="ItemHide" Animation="{null}"/>
+    </Properties>
+
+    <Locals>
+      
+      
+      <Timer Name="ContentChangedTimer" AutoRepeat="false" Interval="1500" Enabled="true"/>
+      <iris:BooleanChoice Name="ContentRecentlyChanged" Value="true"/>
+      <Single Name="AnimDelay" Single="{animations:Animations.GalleryIndexFadeDelay}"/>
+
+      
+      <SwitchAnimation Name="ItemShow" Expression="{ContentRecentlyChanged}">
+        <Options>
+          <TransformByAttributeAnimation Name="True" Attribute="Index" Delay="{AnimDelay}" Source="{animations:Animations.GalleryFadeIn}"/>
+        </Options>
+      </SwitchAnimation>
+    </Locals>
+
+    <Scripts>
+      
+      <Script>        
+        [DeclareTrigger(Content)]
+        ContentChangedTimer.Start();
+        ContentRecentlyChanged.Value = true;
+      </Script>
+
+      
+      <Script>        
+        [DeclareTrigger(ContentChangedTimer.Tick)]
+        ContentRecentlyChanged.Value = false;
+      </Script>
+    </Scripts>
+
+    <Content Name="Item">
+      <list:ThumbnailListItemBase ThumbnailListItemBase="{ListItemType}"
+        Index="{RepeatedItemIndex}" 
+        TileSize="{TileSize}"
+        LabelSize="{LabelSize}"
+        StretchingPolicy="{StretchingPolicy}" 
+        EditingList="{EditingList}"
+        ThumbnailCaptionAreaType="{ThumbnailCaptionAreaType}">
+        <Provider>
+          <thumbbutton:ThumbnailButtonProvider ThumbnailButtonProvider="{ProviderType}" 
+              Model="{RepeatedItem}" 
+              Index="{RepeatedItemIndex}"
+              SelectionManager="{SelectionManager}"
+              ListModel="{ListModel}"/>
+        </Provider>
+        <Animations>
+          <SwitchAnimation SwitchAnimation="{ItemShow}"/>
+          <AnimationProvider AnimationProvider="{ItemMove}"/>
+          <AnimationProvider AnimationProvider="{ItemHide}"/>
+        </Animations>
+      </list:ThumbnailListItemBase>
+    </Content>
+  </UI>
+
+</UIX>

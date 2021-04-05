@@ -1,0 +1,94 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:data="res://ZuneShellResources!LibraryData.schema.xml"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:rules="res://ZuneShellResources!SyncRules.uix">
+
+  <UI Name="SyncRulesPanel" Base="rules:SyncRulesPanelBase">
+    <Properties>
+      <zune:PodcastLibraryPage Name="Page" PodcastLibraryPage="$Required"/>
+      <Int32 Name="MinimumWidth" Int32="144"/>
+      <Single Name="MinimumPercent" Single="0.0"/>
+      <List Name="AllItemsText">
+        <Source>
+          <String String="{zune:Shell.LoadString(zune:StringId.IDS_ALL_PODCAST_ITEMS)}"/>
+        </Source>
+      </List>
+    </Properties>
+    
+    <Locals>
+      <data:LibraryPodcastSeriesQuery Name="SeriesQuery" 
+        RulesOnly="true"
+        DeviceId="{Page.DeviceId}"
+        ShowDeviceContents="true"/>
+
+      <data:LibraryPodcastEpisodeQuery Name="EpisodeQuery"
+        RulesOnly="true"
+        DeviceId="{Page.DeviceId}"
+        ShowDeviceContents="true"/>
+      <List Name="EpisodeQueryWrapper">
+        <Source>
+          <data:LibraryPodcastEpisodeQuery LibraryPodcastEpisodeQuery="{EpisodeQuery}"/>
+        </Source>
+      </List>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        <![CDATA[
+        int deviceID = [Page.DeviceId];
+
+        SeriesQuery.DeviceId = deviceID;
+        EpisodeQuery.DeviceId = deviceID;
+        ]]>
+      </Script>
+      <Script>
+        <![CDATA[
+        [DeclareTrigger(SeriesQuery.Result.Items)]
+        [DeclareTrigger(EpisodeQuery.Result.Items)]
+        [InitialEvaluate(true)]
+        
+        bool devicePresent = zune:SyncControls.Instance.CurrentDeviceExists;
+        bool syncAll = zune:SyncControls.Instance.GetSyncAll(zune:MediaType.Podcast);
+        iris:AggregateList newList = null;
+        
+        if (Source != null)
+        {
+          UI.DisposeOwnedObject(Source);
+          Source = null;
+        }
+        
+        if (!devicePresent)
+        {
+          newList = new iris:AggregateList();
+        }
+        else if (syncAll)
+        {
+          newList = new iris:AggregateList(AllItemsText);
+        }
+        else if ([EpisodeQuery.Result.Items.Count] <= 0)
+        {
+          newList = new iris:AggregateList(AllItemsText,
+                                           SeriesQuery.Result.Items);
+        }
+        else
+        {
+          newList = new iris:AggregateList(AllItemsText,
+                                           SeriesQuery.Result.Items,
+                                           EpisodeQueryWrapper);
+        }
+
+        Source = newList;
+        ]]>
+      </Script>
+      <Script>
+        <![CDATA[
+        EpisodeQuery.UserId = [zune:SignIn.Instance.LastSignedInUserId];
+        ]]>
+      </Script>
+    </Scripts>
+  </UI>
+
+</UIX>

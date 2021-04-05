@@ -1,0 +1,402 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:style="res://ZuneShellResources!Style.uix"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:page="res://ZuneShellResources!PageStack.uix"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:spreadsheet="res://ZuneShellResources!SpreadSheetViewBase.uix"
+  xmlns:linkButtons="res://ZuneShellResources!LinkButtons.uix" 
+  xmlns:me="Me"
+  >
+
+  
+  <Class Name="LibraryListModel" Base="spreadsheet:SpreadSheetListModel">
+    <Properties>
+      <zune:ListPanel Name="Model"/>
+      <iris:Command Name="ToggleSelectAllCommand" Command="{null}"/>
+      <iris:Choice Name="Sorts" Choice="{null}"/>
+    </Properties>
+  </Class>
+
+  
+  <UI Name="Library" Base="page:PageBase">
+    <Properties>
+      <zune:LibraryPage Name="Page" LibraryPage="$Required"/>
+    </Properties>
+
+    <Locals>
+      
+
+
+      <Boolean Name="Dragging"/>
+    </Locals>
+
+    <Input>
+      <DropTargetHandler Name="Target" HandlerStage="Direct,Bubbled"/>
+    </Input>
+
+    <Scripts>
+      <Script>ViewPivots.Filters = [Page.Views];</Script>
+
+      <Script> Splitter.Panels = [Page.Children]; </Script>
+      
+      <Script>
+        if (!String.IsNullOrEmpty([Page.ChildrenName]))
+          Splitter.Positions = (core:SplitterPositions)me:Globals.PagePositions.GetItem(Page.ChildrenName);
+        else
+          Splitter.Positions = null;
+      </Script>
+
+      <Script>
+        [DeclareTrigger(Page.Children)]
+
+        
+        
+        
+        
+        Splitter.NavigateInto();
+      </Script>
+
+      <Script> Dragging = [Target.Dragging]; </Script>
+
+      <Script>
+        [DeclareTrigger(Dragging)]
+
+        Target.AllowedDropActions = DropAction.None;
+        if (Dragging)
+        {
+          zune:MediaType mediaType = Page.MediaType;
+
+          if (mediaType != zune:MediaType.Undefined)
+          {
+            Object value = Target.GetValue();
+            
+
+            if (value is List)
+            {
+              
+              Page.CheckCanAddMedia((List)value);
+            }
+          }
+        }
+        else
+        {
+          Page.StopCheckingCanAddMedia();
+        }
+      </Script>
+
+      <Script>
+        if ([Page.CanAddMedia] &amp;&amp; Target.Dragging)
+          Target.AllowedDropActions = DropAction.Copy;
+      </Script>
+
+      <Script>
+        [DeclareTrigger(Target.Dropped)]
+
+        Object value = Target.GetValue();
+        
+
+        if (value is List)
+        {
+          Page.AddMedia((List)value);
+        }
+        else
+        {
+          
+        }
+      </Script>
+      
+      <Script>
+        bool showEmpty = [Page.IsEmpty] &amp;&amp; 
+                          Page.EmptyUI != null &amp;&amp;
+                          !Page.ShowDeviceContents;
+        
+        if (showEmpty)
+        {
+          EmptyPage.Visible = true;
+          
+          
+          
+          LibraryContent.Alpha = 0.0;
+          Splitter.InputEnabled = false;
+          ViewPivots.InputEnabled = false;
+          EmptyPage.RequestSource(Page.EmptyUI);
+        }
+        else
+        {
+          EmptyPage.Visible = false;
+          LibraryContent.Alpha = 1.0;
+          Splitter.InputEnabled = true;
+          ViewPivots.InputEnabled = true;
+        }
+      </Script>
+
+    </Scripts>
+
+    <Content>
+      
+      <Panel MouseInteractive="true">
+        <Children>
+          
+          <me:EmptyPageBase Name="EmptyPage" Visible="false" Page="{Page}"/>
+                    
+          
+          <Panel Name="LibraryContent" Layout="Dock" Padding="0,15,0,25" >
+            <Children>
+
+              
+              <core:FilterList Name="ViewPivots" Margins="0,-40,0,30" Style="{styles:SharedStyles.LibraryPivot}">
+                <LayoutInput>
+                  <DockLayoutInput Position="Top" Alignment="Far"/>
+                </LayoutInput>
+              </core:FilterList>
+                 
+              <core:Splitter Name="Splitter" FocusOrder="0" Page="{Page}">
+                <LayoutInput>
+                  <DockLayoutInput Position="Left"/>
+                </LayoutInput>
+              </core:Splitter>
+              
+            </Children>
+          </Panel>
+          
+        </Children>
+      </Panel>
+     
+    </Content>
+  </UI>
+
+  
+  
+  
+  
+  <UI Name="Column">
+    <Properties>
+      <zune:LibraryPanel Name="Model" LibraryPanel="$Required"/>
+      <zune:ZunePage Name="Page" ZunePage="$Required"/>
+      <Boolean Name="SupportsJumpInList" Boolean="false"/>
+
+      <Int32 Name="MinimumWidth" Int32="150"/>
+      <Single Name="MinimumPercent" Single="0.1"/>
+    </Properties>
+
+    <Scripts>
+      <Script>
+        Model.MinimumWidth = [MinimumWidth];
+        Model.MinimumPercent = [MinimumPercent];
+      </Script>
+    </Scripts>
+  </UI>
+  
+  
+  <Class Name="Globals" Shared="true">
+    <Properties>
+      <Dictionary Name="PagePositions">
+        <Source>
+          
+          <core:SplitterPositions Name="MusicBrowseView" SaveKeyPrefix="MusicBrowseView">
+            <DefaultPositions>
+              
+              <Single Single="0.15"/> 
+              
+              <Single Single="0.57"/>
+              
+            </DefaultPositions>
+          </core:SplitterPositions>
+          
+          <core:SplitterPositions Name="MusicSyncRulesArtist" SaveKeyPrefix="MusicSyncRulesArtist">
+            <DefaultPositions>
+              
+              <Single Single="0.25"/>
+              
+              <Single Single="0.50"/> 
+              
+              <Single Single="0.75"/>
+              
+            </DefaultPositions>
+          </core:SplitterPositions>
+          
+          <core:SplitterPositions Name="MusicSyncRulesAlbum" SaveKeyPrefix="MusicSyncRulesAlbum">
+            <DefaultPositions>
+              
+              <Single Single="0.33"/>
+              
+              <Single Single="0.66"/> 
+              
+            </DefaultPositions>
+          </core:SplitterPositions>
+          
+          <core:SplitterPositions Name="MusicSyncRulesTrack" SaveKeyPrefix="MusicSyncRulesTrack">
+            <DefaultPositions>
+              
+              <Single Single="0.5"/>
+              
+            </DefaultPositions>
+          </core:SplitterPositions>
+          
+          <core:SplitterPositions Name="MusicSyncRulesConnect" SaveKeyPrefix="MusicSyncRulesConnect">
+            <DefaultPositions>
+              
+              <Single Single="0.5"/>
+              
+            </DefaultPositions>
+          </core:SplitterPositions>
+          
+          
+          <core:SplitterPositions Name="PhotoSyncRules" SaveKeyPrefix="PhotoSyncRules">
+            <DefaultPositions>
+              
+              <Single Single="0.0"/>
+              
+            </DefaultPositions>
+          </core:SplitterPositions>
+          
+          
+          <core:SplitterPositions Name="Playlist" SaveKeyPrefix="Playlist">
+            <DefaultPositions>
+              
+              <Single Single="0.1"/>
+              
+            </DefaultPositions>
+          </core:SplitterPositions>
+          
+          
+          <core:SplitterPositions Name="Podcast" SaveKeyPrefix="Podcast">
+            <DefaultPositions>
+              
+              <Single Single="0.18"/>
+              
+              <Single Single=".95"/>
+              
+            </DefaultPositions>
+          </core:SplitterPositions>
+          
+          <core:SplitterPositions Name="PodcastSyncAll" SaveKeyPrefix="PodcastSyncAll">
+            <DefaultPositions>
+              
+              <Single Single="0.18"/>
+              
+            </DefaultPositions>
+          </core:SplitterPositions>
+          
+          <core:SplitterPositions Name="PodcastSyncRulesSeries" SaveKeyPrefix="PodcastSyncRulesSeries">
+            <DefaultPositions>
+              
+              <Single Single="0.1"/>
+              
+              <Single Single="0.29"/>
+              
+            </DefaultPositions>
+          </core:SplitterPositions>
+          
+          <core:SplitterPositions Name="PodcastSyncRulesEpisodes" SaveKeyPrefix="PodcastSyncRulesEpisodes">
+            <DefaultPositions>
+              
+              <Single Single="0.1"/>
+              
+            </DefaultPositions>
+          </core:SplitterPositions>
+         
+          
+          <core:SplitterPositions Name="Inbox" SaveKeyPrefix="Inbox">
+            <DefaultPositions>
+              
+              <Single Single="0.618"/> 
+              
+            </DefaultPositions>
+          </core:SplitterPositions>
+        
+        </Source>
+      </Dictionary>
+    </Properties>
+  </Class>
+  
+  
+  
+  
+  
+  <UI Name="EmptyPageBase">
+    <Properties>
+      <zune:ZunePage Name="Page" ZunePage="{null}"/>
+    </Properties>
+  </UI>
+  
+  
+  
+  
+  <UI Name="EmptyPage" Base="me:EmptyPageBase">
+    <Properties>
+      <String Name="Title" String=""/>
+      <String Name="Description" String=""/>
+      
+      <iris:Command Name="Link1Command" Command="{null}"/>
+      <iris:Command Name="Link2Command" Command="{null}"/>
+      
+      <style:Style  Name="TitleStyle"  Style="{styles:SharedStyles.EmptyCollectionText}"/>
+      <style:Style  Name="DescriptionStyle"  Style="{styles:SharedStyles.InboxPrompt}"/>
+    </Properties>
+    
+    <Content>
+      <Panel Layout="VerticalFlow" Margins="0,40,0,0">
+        <Children>
+
+          <core:Label Name="TitleLabel" Content="{Title}" Style="{TitleStyle}" WordWrap="true"/>
+          
+          <core:Label Name="DescriptionLabel" Content="{Description}" Style="{DescriptionStyle}" 
+                      WordWrap="true" Visible="{!String.IsNullOrEmpty(Description)}"
+                      Margins="3,5,0,5" MaximumSize="600,0"/>
+
+          <linkButtons:MoreLink Name="Link1"
+                                Model="{Link1Command}" 
+                                Visible="{Link1Command != null}"
+                                Margins="3,0,0,-7"/>
+
+          <linkButtons:MoreLink Name="Link2" 
+                                Model="{Link2Command}" 
+                                Visible="{Link2Command != null}"
+                                Margins="3,0,0,0"/>
+
+        </Children>
+      </Panel>
+
+    </Content>
+  </UI>
+  
+  
+  
+  
+  
+  <UI Name="EmptyLibraryPage" Base="me:EmptyPage">
+    <Properties>
+      <String Name="MarketplaceDestination" String=""/>
+    </Properties>
+    <Scripts>
+      <Script>
+        [DeclareTrigger(Link1Command.Invoked)]
+
+        zune:Shell.SettingsFrame.Settings.Invoke();
+      </Script>
+      
+      <Script>
+        [DeclareTrigger(Link2Command.Invoked)]
+
+        zune:Shell.DefaultInstance.Execute(MarketplaceDestination, null);
+      </Script>
+    </Scripts>
+  </UI>
+  
+  
+  
+  
+  <UI Name="EmptyMusicPage" Base="me:EmptyLibraryPage">
+    <Properties>
+      <String Name="Title" String="{zune:Shell.LoadString(zune:StringId.IDS_MUSIC_EMPTY)}"/>
+      <iris:Command Name="Link1Command" Description="{zune:Shell.LoadString(zune:StringId.IDS_MUSIC_EMPTY_SETTINGS_LINK)}"/>
+      <iris:Command Name="Link2Command" Description="{zune:Shell.LoadString(zune:StringId.IDS_MUSIC_EMPTY_MARKETPLACE_LINK)}"/>
+      <String Name="MarketplaceDestination" String="Marketplace\Music\Home"/>
+    </Properties>
+  </UI>
+
+</UIX>

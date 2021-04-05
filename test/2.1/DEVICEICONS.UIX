@@ -1,0 +1,215 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:me="Me">
+
+  <Class Name="DeviceIconWrapper" Shared="true">
+    <Properties>
+      <me:DeviceIcons Name="DeviceIcons"/>
+    </Properties>
+  </Class>
+
+  <Class Name="DeviceIcons">
+    <Properties>
+      
+      <me:DeviceIconSet Name="Current" DeviceIconSet="{null}"/>
+    </Properties>
+    <Locals>
+      
+      <me:AutoDeviceIconSet Name="BlackKeel"
+                            Family="Keel"
+                            Color="Black"/>
+      <me:AutoDeviceIconSet Name="WhiteKeel"
+                            Family="Keel"
+                            Color="White"
+                            DarkColor="false"/>
+      <me:AutoDeviceIconSet Name="BrownKeel"
+                            Family="Keel"
+                            Color="Brown"/>
+
+      <me:AutoDeviceIconSet Name="BlackDraco"
+                            Family="Draco"
+                            Color="Black"/>
+
+      <me:AutoDeviceIconSet Name="BlackScorpius"
+                            Family="Scorpius"
+                            Color="Black"/>
+      <me:AutoDeviceIconSet Name="PinkScorpius"
+                            Family="Scorpius"
+                            Color="Pink"
+                            DarkColor="false"/>
+      <me:AutoDeviceIconSet Name="RedScorpius"
+                            Family="Scorpius"
+                            Color="Red"/>
+      <me:AutoDeviceIconSet Name="CamoScorpius"
+                            Family="Scorpius"
+                            Color="Camo"/>
+      <me:AutoDeviceIconSet Name="CitronScorpius"
+                            Family="Scorpius"
+                            Color="Citron"
+                            DarkColor="false"/>
+
+      
+      <me:DeviceIconSet Name="Default"/>
+
+      
+
+      <List Name="Icons">
+        
+
+
+
+        <Source>
+
+          
+          <List>
+            
+
+
+
+            <Source>
+
+              
+              <me:DeviceIconSet DeviceIconSet="{null}"/>
+              
+              <me:DeviceIconSet DeviceIconSet="{WhiteKeel}"/>
+              
+              <me:DeviceIconSet DeviceIconSet="{BlackKeel}"/>
+              
+              <me:DeviceIconSet DeviceIconSet="{BrownKeel}"/>
+
+            </Source>
+          </List>
+
+          
+          <List List="{null}"/>
+
+          
+          <List>
+            <Source>
+
+              
+              <me:DeviceIconSet DeviceIconSet="{null}"/>
+              
+              <me:DeviceIconSet DeviceIconSet="{null}"/>
+              
+              <me:DeviceIconSet DeviceIconSet="{BlackScorpius}"/>
+              
+              <me:DeviceIconSet DeviceIconSet="{null}"/>
+              
+              <me:DeviceIconSet DeviceIconSet="{PinkScorpius}"/>
+              
+              <me:DeviceIconSet DeviceIconSet="{CamoScorpius}"/>
+              
+              <me:DeviceIconSet DeviceIconSet="{RedScorpius}"/>
+              
+              <me:DeviceIconSet DeviceIconSet="{CitronScorpius}"/>
+
+            </Source>
+          </List>
+
+          
+          <List>
+            <Source>
+
+              
+              <me:DeviceIconSet DeviceIconSet="{null}"/>
+              
+              <me:DeviceIconSet DeviceIconSet="{null}"/>
+              
+              <me:DeviceIconSet DeviceIconSet="{BlackDraco}"/>
+
+            </Source>
+          </List>
+
+        </Source>
+      </List>
+    </Locals>
+    <Scripts>
+      <Script>
+        <![CDATA[
+        
+        
+        Int32 familyID = [zune:SyncControls.Instance.CurrentDeviceFamilyID];
+        Int32 colorID = [zune:SyncControls.Instance.CurrentDeviceColorID];
+        Current = Default;
+        
+        if (familyID >= 0 &&
+            familyID < Icons.Count)
+        {
+          List colorList = (List)Icons.GetItem(familyID);
+          
+          if (colorList != null &&
+              colorID >= 0 &&
+              colorID < colorList.Count)
+          {
+            me:DeviceIconSet temp = (me:DeviceIconSet)colorList.GetItem(colorID);
+            
+            if (temp != null)
+            {
+              Current = temp;
+            }
+          }
+        }
+        ]]>
+      </Script>
+    </Scripts>
+  </Class>
+
+  <Class Name="DeviceIconSet">
+    <Properties>
+      <me:ImageStyle Name="Disconnected"
+                     Default="res://ZuneShellResources!Draco.Black.Disconnected.Default.png"
+                     Hover="res://ZuneShellResources!Draco.Black.Disconnected.Hover.png"
+                     Click="res://ZuneShellResources!Draco.Black.Disconnected.Click.png"
+                     Drag="res://ZuneShellResources!Draco.Black.Disconnected.Drag.png"/>
+                     
+      <me:ImageStyle Name="Connected"
+                     Default="res://ZuneShellResources!Draco.Black.Connected.Default.png"
+                     Hover="res://ZuneShellResources!Draco.Black.Connected.Hover.png"
+                     Click="res://ZuneShellResources!Draco.Black.Connected.Click.png"
+                     Drag="res://ZuneShellResources!Draco.Black.Connected.Drag.png"/>
+
+      <me:ImageStyle Name="Syncing"
+                     Default="res://ZuneShellResources!Draco.Black.Syncing.Default.png"/>
+
+      <Image Name="LargeImage" Image="res://ZuneShellResources!Draco.Black.Large.png"/>
+      <Image Name="Background" Image="res://ZuneShellResources!Draco.Black.Background.png"/>
+      <String Name="Color" String="Black"/>
+      <Boolean Name="DarkColor" Boolean="true"/>
+    </Properties>
+  </Class>
+
+  <Class Name="AutoDeviceIconSet" Base="me:DeviceIconSet">
+    <Properties>
+      <String Name="Family" String="Keel"/>      
+    </Properties>
+    <Scripts>
+      <Script>
+        String base = "res://ZuneShellResources!{0}.{1}.".Format([Family], [Color]);
+        Disconnected.Default = (Image) (base + "Disconnected.Default.png");
+        Disconnected.Hover = (Image) (base + "Disconnected.Hover.png");
+        Disconnected.Click = (Image) (base + "Disconnected.Click.png");
+        Disconnected.Drag = (Image) (base + "Disconnected.Drag.png");
+        Connected.Default = (Image) (base + "Connected.Default.png");
+        Connected.Hover = (Image) (base + "Connected.Hover.png");
+        Connected.Click = (Image) (base + "Connected.Click.png");
+        Connected.Drag = (Image) (base + "Connected.Drag.png");
+        Syncing.Default = (Image) (base + "Syncing.Default.png");
+        LargeImage = (Image) (base + "Large.png");
+        Background = (Image) (base + "Background.png");
+      </Script>
+    </Scripts>
+  </Class>
+
+  <Class Name="ImageStyle">
+    <Properties>
+      <Image Name="Default" Image="$Required"/>
+      <Image Name="Hover" Image="{null}"/>
+      <Image Name="Click" Image="{null}"/>
+      <Image Name="Drag" Image="{null}"/>
+    </Properties>
+  </Class>
+  
+</UIX>

@@ -1,0 +1,127 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:zune="assembly://ZuneShell/ZuneUI" 
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:mgmt="res://ZuneShellResources!Management.uix"
+  >
+
+  <UI Name="Default">
+    <Properties>
+      <zune:CategoryPage Name="Page" CategoryPage="$Required" />
+    </Properties>
+
+    <Locals>
+      <iris:Choice Name="BackgroundChoice" Options="{styles:Styles.FrameBackgrounds}" ChosenIndex="{styles:Styles.DefaultBackgroundIndex}"/>
+      
+      <iris:Command Name="AccelerationButtonModel"/>
+
+      <styles:LabelStyle Name="StyleWarn" Color="{styles:Styles.TextActive}" Font="{styles:Styles.SettingsText}"/>
+    </Locals>
+
+    <Scripts>
+      
+      <Script>
+        string backgroundImage = zune:Management.Instance.BackgroundImage;
+        foreach (zune:NamedStringOption option in (List)BackgroundChoice.Options)
+        {
+          if (option.Value == backgroundImage)
+          {
+            BackgroundChoice.Chosen = option;
+          }
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(BackgroundChoice.Chosen)]
+        
+        zune:BackgroundOption backgroundOption = (zune:BackgroundOption)[BackgroundChoice.Chosen];
+        
+        zune:Management.Instance.BackgroundImage = backgroundOption.Value;
+        zune:Management.Instance.BackgroundColor = backgroundOption.Color;
+      </Script>
+
+      <Script>
+        [DeclareTrigger(AccelerationButtonModel.Invoked)]
+        if (zune:Management.Instance.ForceGDIMode)
+        {
+            
+            zune:Management.Instance.ReevaluateVideoAccelerationPrompt();
+        }
+        else
+        {
+            
+            zune:MessageBox.Show(zune:Shell.LoadString(zune:StringId.IDS_ACCELERATION_RESTART_HEADER), zune:Shell.LoadString(zune:StringId.IDS_ACCELERATION_RESTART_TEXT), null);
+            zune:Management.Instance.ForceGDIMode = true;
+        }
+      </Script>
+
+      
+
+      <Script>
+        VideoAccelerationButton.InputEnabled = !((iris:Application.RenderingType == iris:RenderingType.GDI) &amp;&amp; 
+                                                !([zune:Management.Instance.ForceGDIMode]));
+      </Script>
+
+      
+      <Script> 
+        bool showAnimationOptions = true;
+
+        if ([zune:Management.Instance.ForceGDIMode] || (iris:Application.RenderingType == iris:RenderingType.GDI))
+        {
+            showAnimationOptions = false;
+            AccelerationButtonModel.Description = zune:Shell.LoadString(zune:StringId.IDS_ACCELERATION_BUTTON_ENABLE);
+        }
+        else
+        {
+            AccelerationButtonModel.Description = zune:Shell.LoadString(zune:StringId.IDS_ACCELERATION_BUTTON_DISABLE);
+        }
+        
+        AnimationTitle.Visible = showAnimationOptions;
+        AmbientAnimationsCheckbox.Visible = showAnimationOptions;        
+      </Script>
+
+      <Script>
+      </Script>
+    </Scripts>
+    
+    
+    <Content>
+      <Panel>
+        <Children>
+
+          <Panel>
+            <Layout>
+              <FlowLayout Orientation="Vertical" Spacing="6,0" StripAlignment="Near" ItemAlignment="Near"/>
+            </Layout>
+            <Children>
+              
+              
+              <mgmt:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_BACKGROUND_TITLE)}" />
+
+              <core:RadioGroup 
+                AccessibleDescription="{zune:Shell.LoadString(zune:StringId.IDS_BACKGROUND_TITLE)}"
+                Model="{BackgroundChoice}"
+                />
+              
+              
+              <mgmt:Label Name="AnimationTitle" Content="{zune:Shell.LoadString(zune:StringId.IDS_AMBIENTANIMATIONS_TITLE)}" Margins="0,15,0,0"/>
+              
+              <mgmt:CheckBox Name="AmbientAnimationsCheckbox" Model="{zune:Management.Instance.AmbientAnimations}"/>
+              
+              
+              <mgmt:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_ENABLE_ACCELERATION_TITLE)}" Margins="0,15,0,0"/>
+
+              <core:ActionButton Name="VideoAccelerationButton" Model="{AccelerationButtonModel}" Padding="-2,0,0,0"/>
+
+            </Children>
+          </Panel>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+</UIX>

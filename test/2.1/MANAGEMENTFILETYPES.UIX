@@ -1,0 +1,74 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:mgmt="res://ZuneShellResources!Management.uix"
+  xmlns:me="Me">
+
+  <UI Name="Default">
+    <Properties>
+      <zune:CategoryPage Name="Page" CategoryPage="$Required" />
+    </Properties>
+    <Locals>
+      <iris:Command Name="SelectAllButtonModel" Description="{zune:Shell.LoadString(zune:StringId.IDS_SELECT_ALL_BUTTON)}"/>
+    </Locals>
+
+    <Scripts>
+      
+      <Script>
+        [DeclareTrigger(SelectAllButtonModel.Invoked)]
+        zune:Management.Instance.SelectAllFileTypes();
+      </Script>
+
+      <Script>
+        SelectAllButtonModel.Available = [zune:Management.Instance.CanFileAssociationBeChanged];
+      </Script>
+     
+    </Scripts>
+    
+    <Content>
+      <Panel Name="NavButtons">
+        <Layout>
+          <FlowLayout Orientation="Vertical" Spacing="4,0" StripAlignment="Near"/>
+        </Layout>
+        <Children>
+
+          <Text Content="{zune:Shell.LoadString(zune:StringId.IDS_FILE_TYPES_DESCRIPTION)}" Color="{styles:Styles.TextActive}" Font="{styles:Styles.SettingsText}" WordWrap="true" Padding="0,0,0,15"/>
+
+          
+          <Repeater Source="{zune:Management.Instance.FileTypes}" Name="FileType">
+            <Layout>
+              <FlowLayout Orientation="Vertical" Spacing="4,0" StripAlignment="Near"/>
+            </Layout>
+            <Content>
+              <me:FileTypeCheckbox CheckboxItem="{(zune:BooleanInputChoice)RepeatedItem}"/>
+            </Content>
+          </Repeater>
+
+          <core:ActionButton Model="{SelectAllButtonModel}" Padding="0,5,0,15"/>
+          
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  <UI Name="FileTypeCheckbox">
+    <Properties>
+      <zune:BooleanInputChoice Name="CheckboxItem" BooleanInputChoice="$Required"/>
+    </Properties>
+
+    <Content>
+      <Panel>
+        <Children>
+
+          <mgmt:CheckBox Model="{CheckboxItem}" Available="{CheckboxItem.Available}"/>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+</UIX>

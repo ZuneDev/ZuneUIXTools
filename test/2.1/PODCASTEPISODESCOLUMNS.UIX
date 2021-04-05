@@ -1,0 +1,372 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:data="res://ZuneShellResources!LibraryData.schema.xml"
+  xmlns:spreadsheet="res://ZuneShellResources!SpreadSheetViewBase.uix"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"  
+  xmlns:tpc="res://ZuneShellResources!TracksPanelColumns.uix"
+  xmlns:signin="res://ZuneShellResources!SignInDialog.uix"
+  xmlns:dbapi="assembly://ZuneDBApi/"  
+  xmlns:style="res://ZuneShellResources!Style.uix"
+  xmlns:me="Me">
+
+  
+  <Class Name="Columns" Shared="True">
+    <Properties>
+
+      
+      <spreadsheet:ColumnInfo Name="ErrorColumn" 
+          CellType="{typeof(me:EpisodeStatusCell)}"
+          CellPadding="4,0,4,0"
+          Resizable="false" HighlightHeader="false">
+        <ColumnSize>
+          <SharedSize Size="25,0"/>
+        </ColumnSize>
+        <LayoutInput>
+          <StackLayoutInput Priority="High"/>
+        </LayoutInput>
+      </spreadsheet:ColumnInfo>
+      
+      
+      <spreadsheet:ColumnInfo Name="DownloadStatusButton" Header="{zune:Shell.LoadString(zune:StringId.IDS_BLANK_COLUMN_HEADER)}"
+          CellType="{typeof(me:DownloadStatusCell)}"
+          Resizable="false">
+        <ColumnSize>
+          <SharedSize Size="105,0"/>
+        </ColumnSize>
+        <LayoutInput>
+          <StackLayoutInput Priority="High"/>
+        </LayoutInput>
+      </spreadsheet:ColumnInfo>
+
+      
+      <spreadsheet:ColumnInfo Name="SignInOnlyDownloadStatusButton" Header="{zune:Shell.LoadString(zune:StringId.IDS_BLANK_COLUMN_HEADER)}"
+          CellType="{typeof(me:SignInOnlyDownloadCell)}"
+          Resizable="false">
+        <ColumnSize>
+          <SharedSize Size="105,0"/>
+        </ColumnSize>
+        <LayoutInput>
+          <StackLayoutInput Priority="High"/>
+        </LayoutInput>
+      </spreadsheet:ColumnInfo>     
+      
+      
+      <spreadsheet:ColumnInfo Name="SyncStatusColumn"
+          Header="{zune:Shell.LoadString(zune:StringId.IDS_SYNC_STATUS_COLUMN_HEADER)}"
+          HeaderIcon="{styles:Styles.SyncHeader}"
+          CellType="{typeof(tpc:SyncCell)}"
+          CellPadding="{tpc:Constants.SyncCellPadding}"
+          HeaderPadding="{tpc:Constants.SyncHeaderPadding}"
+          Resizable="false">
+        <ColumnSize>
+          <SharedSize Size="25,0"/>
+        </ColumnSize>
+        <LayoutInput>
+          <StackLayoutInput Priority="High"/>
+        </LayoutInput>
+      </spreadsheet:ColumnInfo>
+
+      
+      <spreadsheet:ColumnInfo Name="SizeOnDeviceColumn" Header="{zune:Shell.LoadString(zune:StringId.IDS_SIZE_COLUMN_HEADER)}"
+          CellType="{typeof(tpc:SizeOnDeviceCell)}"
+          Resizable="false">
+        <ColumnSize>
+          <SharedSize Size="75,0"/>
+        </ColumnSize>
+        <LayoutInput>
+          <StackLayoutInput Priority="High"/>
+        </LayoutInput>
+      </spreadsheet:ColumnInfo>
+
+       
+      <spreadsheet:ColumnInfo Name="VideoIconColumn" 
+          Header="{zune:Shell.LoadString(zune:StringId.IDS_VIDEO_EPISODE_COLUMN_HEADER)}"
+          HeaderIcon="{styles:Styles.VideoHeader}" 
+          CellType="{typeof(me:VideoIconCell)}" 
+          CellPadding="4,5,3,0" 
+          HeaderPadding="5,5,0,0"  
+          Resizable="false">
+        <ColumnSize>
+          <SharedSize Size="22,0" MinimumSize="22,0"/>
+        </ColumnSize>
+        <LayoutInput>
+          <StackLayoutInput Priority="High"/>
+        </LayoutInput>
+      </spreadsheet:ColumnInfo>
+
+      <spreadsheet:ColumnData Name="DefaultViewColumnData" SaveKeyPrefix="Podcast" SortedColumn="{me:Sorts.ReleaseDate}" SortAscending="false" HideColumns="true">
+        <Columns>
+
+          
+          <spreadsheet:ColumnInfo ColumnInfo="{ErrorColumn}"/>
+
+          
+          <spreadsheet:ColumnInfo Header="{zune:Shell.LoadString(zune:StringId.IDS_TITLE_COLUMN_HEADER)}"
+              CellType="{typeof(me:TitleCell)}"
+              SortBy="{me:Sorts.Title}"
+              ShowDivider="false"
+              Resizable="false">
+            <ColumnSize>
+              <SharedSize Size="9999,0"/>
+            </ColumnSize>
+            <LayoutInput>
+              <StackLayoutInput Priority="Medium" MinimumSize="150,0"/>
+            </LayoutInput>
+          </spreadsheet:ColumnInfo>
+
+          
+          <spreadsheet:ColumnInfo ColumnInfo="{VideoIconColumn}"/>
+
+          
+          <spreadsheet:ColumnInfo Header="{zune:Shell.LoadString(zune:StringId.IDS_DATE_COLUMN_HEADER)}"
+              CellType="{typeof(me:DateCell)}"
+              SortBy="{me:Sorts.ReleaseDate}">
+            <ColumnSize>
+              <SharedSize Size="60,0" MinimumSize="60,0" MaximumSize="100,0"/>
+            </ColumnSize>
+            <LayoutInput>
+              <StackLayoutInput Priority="High"/>
+            </LayoutInput>
+          </spreadsheet:ColumnInfo>
+
+          
+          <spreadsheet:ColumnInfo ColumnInfo="{DownloadStatusButton}"/>
+
+          
+          <spreadsheet:ColumnInfo ColumnInfo="{SyncStatusColumn}"/>
+
+          
+          <spreadsheet:ColumnInfo ColumnInfo="{SizeOnDeviceColumn}"/>
+          
+        </Columns>
+      </spreadsheet:ColumnData>
+
+      
+      <spreadsheet:ColumnData Name="MarketplaceViewColumnData" SaveKeyPrefix="MPPodcast" HideColumns="true">
+        <Columns>
+
+          
+          <spreadsheet:ColumnInfo 
+              CellType="{typeof(me:EpisodeStatusCell)}"
+              CellPadding="4,0,4,0"
+              Resizable="false">
+            <ColumnSize>
+              <SharedSize Size="25,0"/>
+            </ColumnSize>
+          </spreadsheet:ColumnInfo>
+
+          
+          <spreadsheet:ColumnInfo Header="{zune:Shell.LoadString(zune:StringId.IDS_TITLE_COLUMN_HEADER)}"
+              CellType="{typeof(me:TitleCell)}">
+            <ColumnSize>
+              <SharedSize Size="225,0" MinimumSize="100,0" MaximumSize="500,0"/>
+            </ColumnSize>
+          </spreadsheet:ColumnInfo>
+
+          
+          <spreadsheet:ColumnInfo ColumnInfo="{VideoIconColumn}"/>          
+
+          
+          <spreadsheet:ColumnInfo Header="{zune:Shell.LoadString(zune:StringId.IDS_LENGTH_COLUMN_HEADER)}"
+              CellType="{typeof(me:LengthCell)}">
+            <ColumnSize>
+              <SharedSize Size="75,0"/>
+            </ColumnSize>
+          </spreadsheet:ColumnInfo>
+
+          
+          <spreadsheet:ColumnInfo Header="{zune:Shell.LoadString(zune:StringId.IDS_DATE_COLUMN_HEADER)}"
+              CellType="{typeof(me:DateCell)}">
+            <ColumnSize>
+              <SharedSize Size="72,0" MinimumSize="60,0" MaximumSize="100,0"/>
+            </ColumnSize>
+          </spreadsheet:ColumnInfo>
+
+          
+          <spreadsheet:ColumnInfo ColumnInfo="{SignInOnlyDownloadStatusButton}"/>
+
+        </Columns>
+      </spreadsheet:ColumnData>
+
+    </Properties>
+  </Class>
+
+  
+  <UI Name="EpisodeStatusCell" Base="tpc:LibraryMediaStatusCell">
+    <Properties>
+      <data:PodcastEpisode Name="Model" PodcastEpisode="$Required"/>
+    </Properties>
+    <Scripts>
+      <Script>
+        ErrorCode = [Model.DownloadErrorCode];
+        if (ErrorCode &lt; 0)
+        {
+          ErrorTitle = zune:StringId.IDS_PODCAST_EPISODE_ERROR_DIALOG_TITLE;
+        }
+      </Script>
+      <Script>
+        [DeclareTrigger(ShowErrorDialog.Invoked)]
+        Model.DownloadErrorCode = 0;
+      </Script>
+    </Scripts>
+  </UI>
+
+  
+  <UI Name="TitleCell" Base="spreadsheet:LabelCell">
+    <Properties>
+      <data:PodcastEpisode Name="Model" PodcastEpisode="$Required"/>
+    </Properties>
+    <Scripts>
+      <Script>Content = [Model.Title];</Script>  
+    </Scripts>
+  </UI>
+
+  
+  <UI Name="VideoIconCell" Base="spreadsheet:IconCell">
+    <Properties>
+      <data:PodcastEpisode Name="Model" PodcastEpisode="$Required"/>
+    </Properties>
+    <Scripts>
+      <Script>
+        int mediaType = Model.EpisodeMediaType;
+
+        if (mediaType == 4) 
+        {
+          Icon = styles:Styles.Video;
+        }
+      </Script>
+    </Scripts>
+  </UI>
+ 
+  
+  <UI Name="DateCell" Base="spreadsheet:DateCell">
+    <Properties>
+      <data:PodcastEpisode Name="Model" PodcastEpisode="$Required"/>
+      <String Name="Format" String="MM/dd"/>
+    </Properties>
+    <Scripts>
+      <Script>Date = [Model.ReleaseDate];</Script>
+    </Scripts>
+  </UI>
+
+  
+  <UI Name="LengthCell" Base="spreadsheet:LabelCell">
+    <Properties>
+      <data:PodcastEpisode Name="Model" PodcastEpisode="$Required"/>
+    </Properties>
+    <Scripts>
+      <Script>
+        if ([Model.Duration.Ticks] != 0L)
+        {
+          Content = zune:Shell.TimeSpanToString(Model.Duration);
+        }
+        else
+        {
+          Content = null;
+        }
+     </Script>
+    </Scripts>
+  </UI>
+
+  
+  <UI Name="DownloadCell" Base="spreadsheet:ActionButtonCell">
+    <Properties>
+      <data:PodcastEpisode Name="Model" PodcastEpisode="$Required"/>
+      <zune:EpisodeDownloadCommand Name="Command" EpisodeDownloadCommand="{new zune:EpisodeDownloadCommand(null, Model)}"/>
+    </Properties>
+
+    <Scripts>
+      <Script>
+        [DeclareTrigger(Model.DownloadState)]
+        [DeclareTrigger(Model.DownloadType)]
+        Command.Refresh();
+      </Script>
+    </Scripts>
+  </UI>
+
+  
+  <UI Name="DownloadStatusCell" Base="spreadsheet:ActionButtonCell">
+    <Properties>
+      <data:PodcastEpisode Name="Model" PodcastEpisode="$Required"/>
+      <zune:EpisodeDownloadCommand Name="Command" EpisodeDownloadCommand="{new zune:EpisodeDownloadCommand(null, Model)}"/>
+      <style:Style Name="EpisodeStyle" Color="{styles:Styles.PrimaryLabel}"  Font="{styles:Styles.ButtonText}"/>
+      <Boolean Name="CollectionView" Boolean="true"/>
+    </Properties>
+
+    <Locals>
+      <Boolean Name="Downloaded"/>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(Model.DownloadState)]
+        [DeclareTrigger(Model.DownloadType)]
+        Command.Refresh();
+        
+        bool downloading = Model.DownloadState == zune:EpisodeDownloadCommand.ConvertDownloadStatusToInt(dbapi:EEpisodeDownloadState.eDownloadStateDownloading);
+        Downloaded = Model.DownloadState == zune:EpisodeDownloadCommand.ConvertDownloadStatusToInt(dbapi:EEpisodeDownloadState.eDownloadStateDownloaded);
+        if ((CollectionView &amp;&amp; Downloaded) || downloading)
+        {
+          Command.Available = false;
+        }
+        else
+        {
+          Command.Available = true;
+        }
+      </Script>
+      <Script>
+        Button.DisabledImage = null;
+      </Script>
+    </Scripts>
+  </UI>  
+  
+  
+  <UI Name="SignInOnlyDownloadCell" Base="me:DownloadStatusCell">
+    <Properties>
+      <Boolean Name="CollectionView" Boolean="false"/>      
+    </Properties>
+    
+    <Locals>
+      <signin:SignInDialog Name="SignInDialog" SignInDialog ="{null}"/>
+      <Command Name="ConfirmedDownload"/>
+    </Locals>
+
+    <Scripts>
+      
+      <Script>
+        Command.RequireSignIn = ![Downloaded];
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(Command.Invoked)]
+        if (!zune:SignIn.Instance.SignedIn)
+        {
+          if (SignInDialog == null) SignInDialog = new signin:SignInDialog();
+          SignInDialog.OnSuccess = ConfirmedDownload;
+          SignInDialog.Helper.Show(SignInDialog);
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(ConfirmedDownload.Invoked)]
+        Command.Invoke();
+      </Script>
+    </Scripts>
+  </UI>
+
+  <Class Name="Sorts" Shared="true">
+    <Properties>
+      <spreadsheet:SortDescription Name="Duration"         Attribute="Duration" />
+      <spreadsheet:SortDescription Name="DownloadState"    Attribute="DownloadState" />
+      <spreadsheet:SortDescription Name="EpisodeMediaType" Attribute="EpisodeMediaType" />
+      <spreadsheet:SortDescription Name="ReleaseDate"      Attribute="ReleaseDate" />
+      <spreadsheet:SortDescription Name="Title"            Attribute="Title" SupportsJumpInList="true"/>
+    </Properties>
+  </Class>
+
+</UIX>

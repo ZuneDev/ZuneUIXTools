@@ -1,0 +1,1289 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX xmlns="http://schemas.microsoft.com/2007/uix"
+     xmlns:iris="assembly://UIX/Microsoft.Iris"
+     xmlns:core="res://ZuneShellResources!Controls.uix"
+     xmlns:tc="res://ZuneShellResources!TransportControls.uix"
+     xmlns:zune="assembly://ZuneShell/ZuneUI"
+     xmlns:sys="assembly://mscorlib/System" 
+     xmlns:notifications="res://ZuneShellResources!NotificationArea.uix"
+     xmlns:playlisticon="res://ZuneShellResources!PlaylistIcon.uix"
+     xmlns:addtosync="res://ZuneShellResources!AddToSync.uix"
+     xmlns:data="res://ZuneShellResources!LibraryData.schema.xml"
+     xmlns:mpdata="res://ZuneMarketplaceResources!MarketplaceData.schema.xml"
+     xmlns:cd="res://ZuneShellResources!CDState.uix"
+     xmlns:icons="res://ZuneShellResources!DeviceIcons.uix"
+     xmlns:dbapi="assembly://ZuneDBApi/"
+     xmlns:animations="res://ZuneShellResources!Animations.uix"
+     xmlns:styles="res://ZuneShellResources!Styles.uix" 
+     xmlns:zuneutil="assembly://ZuneShell/Microsoft.Zune.Util"
+     xmlns:zuneutilapi="assembly://ZuneDBApi/Microsoft.Zune.Util"
+     xmlns:syncAnim="res://ZuneShellResources!SyncAnimation.uix"
+     xmlns:devstatus="res://ZuneShellResources!DeviceStatus.uix"
+     xmlns:me="Me">
+
+  
+  <UI Name="BottomToolbar">
+    <Properties>
+      <zune:Shell Name="Shell" Shell="$Required"/>
+      <Boolean Name="InvisibleMode"/>
+    </Properties>
+
+    <Locals>
+      <zune:ZunePage Name="Page" ZunePage="{null}" />
+      <icons:DeviceIcons Name="DeviceIcons" DeviceIcons="{icons:DeviceIconWrapper.DeviceIcons}"/>
+      
+      
+
+
+
+
+      <FormLayoutInput Name="TransportAlignment" Left="Parent,0" Right="Parent,1" Top="Parent,0" Bottom="Parent,1,-5" Vertical="Center" Horizontal="Center"/>
+      <FormLayoutInput Name="LandAlignment" Left="IconContainer,1,12" Right="LandCustomBar,0,-24" Top="Parent,0" Bottom="Parent,1,-5" Vertical="Center" Horizontal="Center"/>
+      <FormLayoutInput Name="WideAlignment" Left="IconContainer,1,12" Right="Parent,1" Top="Parent,0" Bottom="Parent,1,-5" Vertical="Center" Horizontal="Center"/>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        Page = [Shell.CurrentPage];
+
+        zune:CategoryPage categoryPage = null;
+        if (Page is zune:CategoryPage)
+        {
+          categoryPage = (zune:CategoryPage) Page;
+        }
+        ManagementButtons.Visible = (categoryPage != null);
+        ManagementButtons.Page = categoryPage;
+
+        if (Page is zune:LibraryPage)
+        {
+          DeviceIcon.MediaType = ((zune:LibraryPage) Page).MediaType;
+        }
+        else
+        {
+          DeviceIcon.MediaType = zune:MediaType.Undefined;
+        }
+      </Script>
+      <Script>
+        NotificationArea.Visible = [Page.NotificationAreaVisible];
+      </Script>
+
+      <Script>
+        if ([Page.BottomBarUI] != null)
+        {
+          
+
+          LandCustomBar.RequestSource(Page.BottomBarUI, "Shell", Shell, "Page", Page);
+          NotificationArea.LayoutInput = LandAlignment;
+
+          TransportControls.Visible = false;
+        }
+        else
+        {
+          LandCustomBar.RequestSource(null);
+
+          if ([Page.TransportControlStyle] == zune:TransportControlStyle.Music ||
+               Page.TransportControlStyle == zune:TransportControlStyle.Video ||
+               Page.TransportControlStyle == zune:TransportControlStyle.Photo)
+          {
+             TransportControls.Visible = true;
+             TransportControls.Style = Page.TransportControlStyle;
+             NotificationArea.LayoutInput = TransportAlignment;
+          }
+          else
+          {
+             
+
+             NotificationArea.LayoutInput = WideAlignment;
+             TransportControls.Visible = false;
+          }
+        }
+      </Script>
+
+      <Script>
+        zune:ComputerIconState computerIcon = [Shell.CurrentPage.ShowComputerIcon];
+
+        if (computerIcon == zune:ComputerIconState.Hide)
+        {
+          ComputerIcon.Visible = false;
+          
+          ToolbarLabel.Style = styles:SharedStyles.ToolbarDarkStyle;
+        }
+        else 
+        {
+          ComputerIcon.Visible = true;
+          ComputerIcon.DropTarget = (computerIcon == zune:ComputerIconState.ShowAsDropTarget);
+
+          
+          if (DeviceIcons.Current.DarkColor)
+          {
+            ToolbarLabel.Style = styles:SharedStyles.ToolbarLightStyle;
+          }
+          else
+          {
+            ToolbarLabel.Style = styles:SharedStyles.ToolbarDarkStyle;
+          }
+        }
+      </Script>
+
+      <Script>
+        DeviceIcon.Alpha = (float)[Shell.CurrentPage.ShowDeviceIcon];
+        
+        DeviceIcon.InputEnabled = Shell.CurrentPage.ShowDeviceIcon;
+      </Script>
+
+      <Script>
+        PlaylistIcon.Visible = [Shell.CurrentPage.ShowPlaylistIcon];
+      </Script>
+
+      <Script>
+        CDIcon.Visible = [Shell.CurrentPage.ShowCDIcon];
+      </Script>
+
+      <Script>
+        styles:WindowState.BottomToolbarInputActivity = [UI.DeepMouseFocus];
+      </Script>
+
+      <Script>
+        bool hidden = [InvisibleMode];
+
+        float alpha = 1.0;
+        if (hidden)
+        {
+          alpha = 0.0;
+        }
+
+        Body.Alpha = alpha;
+      </Script>
+      
+      <Script>
+        String barText = null;        
+        if (!String.IsNullOrEmpty([PlaylistIcon.ToolbarText]))
+        {
+          barText = PlaylistIcon.ToolbarText;
+        }        
+        else if (!String.IsNullOrEmpty([DeviceIcon.ToolbarText]))
+        {
+          barText = DeviceIcon.ToolbarText;
+        }        
+        else if (!String.IsNullOrEmpty([CDIcon.ToolbarText]))
+        {
+          barText = CDIcon.ToolbarText;
+        }
+        else if (!String.IsNullOrEmpty([ComputerIcon.ToolbarText]))
+        {
+          barText = ComputerIcon.ToolbarText;
+        }       
+
+        
+        if (barText == null)
+        {
+          CDIcon.ShowText = true;
+          DeviceIcon.ShowText = true;
+          barText = "";
+        }
+        else
+        {
+          CDIcon.ShowText = false;
+          DeviceIcon.ShowText = false;
+        }
+        
+        ToolbarLabel.Content = barText;        
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel Name="Body" Layout="Center" MaximumSize="0,90" Padding="0,0,0,0">
+        <Animations>
+          <Animation Animation="{animations:Animations.ToolbarAlpha}"/>
+        </Animations>
+
+        <Children>
+
+          <Panel Name="NormalBottomBar" Layout="Form">
+            <Children>
+              <Panel Name="IconContainer" Margins="46,15,0,10">
+                <Layout>
+                  <DockLayout DefaultLayoutInput="Left,Near"/>
+                </Layout>
+                <Children>
+
+                  <me:ComputerIcon Name="ComputerIcon" Shell="{Shell}" Margins="10,0,0,0"/>
+
+                  <me:DeviceIcon Name="DeviceIcon" Shell="{Shell}" />
+                  
+                  <me:CDIcon Name="CDIcon" Shell="{Shell}" />
+
+                  <playlisticon:PlaylistIcon Name="PlaylistIcon"/>
+
+                </Children>
+              </Panel>
+
+              <notifications:NotificationArea Name="NotificationArea">
+                <LayoutInput>
+                  <FormLayoutInput Vertical="Near"/>
+                </LayoutInput>
+              </notifications:NotificationArea>
+
+              <Host Name="LandCustomBar">
+                <LayoutInput>
+                  <FormLayoutInput Top="Parent,0" Horizontal="Center" Vertical="Center"/>
+                </LayoutInput>
+              </Host>
+
+              <me:ManagementButtons Name="ManagementButtons" Margins="0,0,50,0">
+                <LayoutInput>
+                  <FormLayoutInput Vertical="Center" Horizontal="Far" />
+                </LayoutInput>
+              </me:ManagementButtons>
+
+              <tc:TransportControls Name="TransportControls" Visible="false">
+                <LayoutInput>
+                  <FormLayoutInput Top="Parent,0,-3" Right="Parent,1" Vertical="Center"/>
+                </LayoutInput>
+              </tc:TransportControls>
+
+              <core:Label Name="ToolbarLabel"
+                  ShowToolTipWhenClipped="false"
+                  Style="{styles:SharedStyles.ToolbarDarkStyle}" 
+                  MaximumSize="400,0"
+                  >
+                <LayoutInput>
+                  <FormLayoutInput Left="IconContainer,0,50" Top="IconContainer,1,-30" ContributesToWidth="false" ContributesToHeight="false"/>
+                </LayoutInput>
+                <NamedStyles>
+                  <TextStyle Name="b" TextStyle="{styles:SharedStyles.IconNotificationBold}"/>
+                </NamedStyles>
+              </core:Label>
+
+            </Children>
+          </Panel>
+
+          <me:NowPlayingAnimation Shell="{Shell}"/>
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+
+
+  <UI Name="ManagementButtons">
+    <Properties>
+      <zune:CategoryPage Name="Page" CategoryPage="{null}"/>
+    </Properties>
+
+    <Scripts>
+      <Script>
+        [DeclareTrigger(Page.NextButton)]
+        [DeclareTrigger(Page.CancelButton)]
+
+        if ([Page] != null)
+        {
+          BackButton.Visible  = [Page.IsWizard];
+          
+          NextButton.Visible  = Page.IsWizard &amp;&amp; ![Page.DoneButton.Available]; 
+          ApplyButton.Visible = !Page.IsWizard &amp;&amp; [Page.ApplyButton.Available];
+          DoneButton.Visible  = [Page.DoneButton.Available];
+          
+          BackButton.Model   = Page.BackButton;
+          NextButton.Model   = Page.NextButton;
+          ApplyButton.Model  = Page.ApplyButton;
+          DoneButton.Model   = Page.DoneButton;
+          CancelButton.Model = Page.CancelButton;
+        }
+        else
+        {
+          
+          BackButton.Model   = null;
+          NextButton.Model   = null;
+          ApplyButton.Model  = null;
+          DoneButton.Model   = null;
+          CancelButton.Model = null;
+        }
+      </Script>
+    </Scripts>
+    
+    <Content>
+      <Panel Name="ButtonNavigation" Padding="0,0,10,0">
+        <Layout>
+          <FlowLayout Orientation="Horizontal" Spacing="5,0" StripAlignment="Far" ItemAlignment="Center"/>
+        </Layout>
+        <Children>
+          <core:BigActionButton Name="BackButton"   Model="{null}"/>
+          <core:BigActionButton Name="NextButton"   Model="{null}"/>
+          <core:BigActionButton Name="ApplyButton"  Model="{null}"/>
+          <core:BigActionButton Name="DoneButton"   Model="{null}"/>
+          <core:BigActionButton Name="CancelButton" Model="{null}"/>
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+
+
+
+
+  <UI Name="ComputerIcon" Base="core:ToolbarIconBase">
+    <Properties>
+      <zune:Shell Name="Shell" Shell="$Required"/>
+      <bool Name="DropTarget" bool="true" />
+    </Properties>
+    
+    <Locals>
+      <Image Name="ReverseSync" Source="res://ZuneShellResources!Icon.ReverseSync.png"/>  
+      <Image Name="ReverseSyncDrag" Source="res://ZuneShellResources!Icon.ReverseSync.Drag.png"/>  
+    </Locals>
+    
+    <Scripts>
+      <Script>
+        [DeclareTrigger(Target.DragEnter)]
+        Object value = Target.GetValue();
+        
+        if (zune:SyncControls.Instance.CurrentDeviceExists)
+        {
+          List items = null;
+          if (value is List)
+          {
+             items = (List)value;
+          } 
+          else if (value is mpdata:PlaylistData)
+          {
+             items = ((mpdata:PlaylistData)value).Tracks;
+          } 
+          else if (value is SelectionManager)
+          { 
+             items = ((SelectionManager)value).SelectedItems;
+          }
+
+          Target.AllowedDropActions = DropAction.None;
+
+          if (items != null &amp;&amp; items.Count > 0)
+          {
+            Target.AllowedDropActions = DropAction.Copy;
+
+            foreach(Object item in items)
+            {
+              if (!(item is data:Media))
+              {
+                Target.AllowedDropActions = DropAction.None;
+              }
+            }
+          }
+        }
+      </Script>
+
+      <Script>
+        if (![Target.Dragging])
+          Target.AllowedDropActions = DropAction.None;
+      </Script>
+      
+      <Script>
+        Target.Enabled = [DropTarget];
+        zune:StringId id = zune:StringId.IDS_COMPUTER_ICON_TOOLTIP;
+        if (DropTarget)
+        {
+          id = zune:StringId.IDS_COMPUTER_ICON_DROP_TARGET_TOOLTIP;
+        }
+        ToolbarActiveText = zune:Shell.LoadString(id);
+        ToolbarInactiveText = ToolbarActiveText;
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(Target.Dropped)]
+        object value = Target.GetValue();
+
+        List items = null;
+        if (value is List)
+        {
+           items = (List)value;
+        } 
+        else if (value is mpdata:PlaylistData)
+        {
+           items = ((mpdata:PlaylistData)value).Tracks;
+        } 
+        else if (value is SelectionManager)
+        { 
+           items = ((SelectionManager)value).SelectedItems;
+        }
+
+        if (items != null &amp;&amp; items.Count > 0)
+        {
+          zune:SyncControls.Instance.ReverseSync(items);
+        }
+
+        zuneutil:SQMLog.Log(zuneutilapi:SQMDataId.ComputerLogoDrops, 1);
+      </Script>
+      
+      <Script>
+        if ([Target.Dragging] &amp;&amp; [Target.AllowedDropActions] != DropAction.None)
+          Button.Image = ReverseSyncDrag;
+        else
+          Button.Image = ReverseSync;
+      </Script>
+    </Scripts>
+    <Content>
+
+      <core:IconButton Name="Button" 
+                 Model="{Shell.MainFrame.Collection}" 
+                 ToolTipEnabled="false"
+                 HoverImage="res://ZuneShellResources!Icon.ReverseSync.Hover.png"
+                 PressedImage="res://ZuneShellResources!Icon.ReverseSync.Pressed.png"
+                 DisabledImage="{null}"
+                 Navigation="TabGroup"/>
+
+    </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="PercentageIcon" Base="core:ToolbarIconBase">
+    <Properties>
+      <bool Name="ShowText" bool="true" />
+      <zune:ProgressNotification Name="Notification" ProgressNotification="{null}" />
+      <Image Name="DisabledImage" Image="{null}"/>
+      <Image Name="Image" Image="{null}"/>
+      <Image Name="HoverImage" Image="{null}"/>
+      
+      <zune:Shell Name="Shell" Shell="$Required"/>
+    </Properties>
+    <Locals>
+      
+      <iris:Command Name="Model"/>
+    </Locals>
+    <Scripts>
+      <Script>
+         
+         Percentage.Visible = [ShowText];
+      </Script>
+      <Script>
+         
+         if (Notification != null)
+         {
+           Percentage.Content = notifications:Strings.Percentage.Format([Notification.Percentage]);
+         }
+         else
+         {
+           Percentage.Content = null;
+         }
+      </Script>
+      <Script>
+        if ([Percentage.Content] != null)
+        {
+          Button.AccessibleDescription = Percentage.Content;
+        }
+        else
+        {
+          Button.AccessibleDescription = [ToolbarInactiveText];
+        }
+      </Script>
+      
+    </Scripts>
+
+    
+    
+    <Content>
+      <Panel>
+        <Layout>
+          <FlowLayout Orientation="Vertical" ItemAlignment="Center"/>
+        </Layout>
+        <Children>
+          <core:IconButton Name="Button"            
+            DisabledImage="{DisabledImage}"
+            Image="{Image}"
+            HoverImage="{HoverImage}"
+            Model="{Model}"
+            Navigation="TabGroup"/>
+
+          <core:Label Name="Percentage"/>
+        </Children>
+      </Panel>
+    </Content>
+    
+  </UI>
+  
+  <UI Name="DeviceIcon" Base="me:PercentageIcon">
+    <Properties>
+      <zune:MediaType Name="MediaType" MediaType="{zune:MediaType.Undefined}" />
+    </Properties>
+    <Locals>
+      <core:ContextMenu Name="ContextMenu">
+        <Options>
+          <iris:Command Command="{zune:SyncControls.Instance.StartSyncCommand}"/>
+          <iris:Command Command="{zune:SyncControls.Instance.StopSyncCommand}"/>
+        </Options>
+      </core:ContextMenu>
+
+      <icons:DeviceIcons Name="DeviceIcons" DeviceIcons="{icons:DeviceIconWrapper.DeviceIcons}"/>
+
+      <addtosync:AddToSync Name="AddToSync" AddToSync="{null}"/>
+      <Boolean Name="PlayFirmwareUpgradeAnimation" Boolean="true"/>
+    </Locals>
+
+    <Input>
+      <ClickHandler Name="RightClick" ClickType="RightMouse" HandlerStage="Bubbled"/>
+    </Input>
+
+    <Scripts>
+      <Script>
+        Notification = [zune:SyncControls.Instance.Notification];
+      </Script>
+     <Script>
+        ToolbarInactiveText = zune:Shell.LoadString(zune:StringId.IDS_BOTTOM_TOOLBAR_NO_DEVICE);
+      </Script>
+
+      <Script>
+        if ((MediaType == zune:MediaType.Undefined) || zune:SyncControls.Instance.GetSyncAll([MediaType]))
+        {
+            ToolbarActiveText = zune:Shell.LoadString(zune:StringId.IDS_BOTTOM_TOOLBAR_DEVICE_AUTO);
+        }
+        else
+        {
+            ToolbarActiveText = sys:String.Format(zune:Shell.LoadString(zune:StringId.IDS_BOTTOM_TOOLBAR_DEVICE_MANUAL), [zune:SyncControls.Instance.CurrentDeviceName]);
+        }
+      </Script>
+
+      <Script>
+        if ([zune:SyncControls.Instance.CurrentDeviceSyncing])
+        {
+          Button.Image = [DeviceIcons.Current.Syncing.Default];
+          Button.HoverImage = [DeviceIcons.Current.Syncing.Default];
+          Button.PressedImage = [DeviceIcons.Current.Syncing.Default];
+          IsActive = true;
+        }
+        else if ([zune:Management.Instance.AlertedDeviceCategory] != null) 
+        {
+          Button.Image = [DeviceIcons.Current.Connected.Default];
+          Button.HoverImage = [DeviceIcons.Current.Connected.Hover];
+          Button.PressedImage = [DeviceIcons.Current.Connected.Click];
+          
+          
+          if(PlayFirmwareUpgradeAnimation)
+          {
+            IconPanel.PlayAnimation(animations:Animations.DeviceFirmwareUpgrade);
+            PlayFirmwareUpgradeAnimation = false;
+          }
+          IsActive = true;
+        }
+        else if ([zune:SyncControls.Instance.CurrentDeviceConnected])
+        {
+          Button.Image = [DeviceIcons.Current.Connected.Default];
+          Button.HoverImage = [DeviceIcons.Current.Connected.Hover];
+          Button.PressedImage = [DeviceIcons.Current.Connected.Click];
+          IsActive = true;
+        }
+        else
+        {
+          Button.Image = [DeviceIcons.Current.Disconnected.Default];
+          Button.HoverImage = [DeviceIcons.Current.Disconnected.Hover];
+          Button.PressedImage = [DeviceIcons.Current.Disconnected.Click];
+          IsActive = false;
+        }
+      </Script>
+      
+      <Script>
+        SyncAnimation.Alpha = (float)([Shell.AmbientAnimations] &amp;&amp; [zune:SyncControls.Instance.CurrentDeviceSyncing]);
+      </Script>
+      
+      
+      <Script>
+        <![CDATA[
+        [DeclareTrigger(Target.DragEnter)]
+        Object value = Target.GetValue();
+         
+        if (zune:SyncControls.Instance.CurrentDeviceExists)
+        {         
+          List items = null;
+          if (value is List)
+          {
+             items = (List)value;
+          } 
+          else if (value is mpdata:PlaylistData)
+          {
+             items = ((mpdata:PlaylistData)value).Tracks;
+          } 
+          else if (value is SelectionManager)
+          { 
+             items = ((SelectionManager)value).SelectedItems;
+          }
+
+          Target.AllowedDropActions = DropAction.None;
+
+          if (items != null && items.Count > 0)
+          {
+            Target.AllowedDropActions = DropAction.Copy;
+            
+            foreach(Object item in items)
+            {
+              if (item is data:PodcastEpisode &&
+                         ((data:PodcastEpisode)item).DownloadState != zune:EpisodeDownloadCommand.ConvertDownloadStatusToInt(dbapi:EEpisodeDownloadState.eDownloadStateDownloaded))
+              {
+                
+                Target.AllowedDropActions = DropAction.None;
+              }
+              else if (item is mpdata:Track)
+              {
+                if (!zune:SyncControls.Instance.CurrentDeviceIsGuest &&
+                    zune:SyncControls.Instance.GetSyncAll(zune:MediaType.Track) )
+                {
+                  Target.AllowedDropActions = DropAction.None;
+                }
+                else if (!((mpdata:Track)item).InCollection &&
+                         !((mpdata:Track)item).IsDownloading &&
+                         !((mpdata:Track)item).CanDownload &&
+                         !((mpdata:Track)item).CanPurchase)
+                {
+                  
+                  Target.AllowedDropActions = DropAction.None;
+                }
+              }
+              else if (item is mpdata:Album)
+              {
+                if (!zune:SyncControls.Instance.CurrentDeviceIsGuest &&
+                    zune:SyncControls.Instance.GetSyncAll(zune:MediaType.Track) )
+                {
+                  Target.AllowedDropActions = DropAction.None;
+                }
+              }
+              else if (!(item is data:Media))
+              {
+                Target.AllowedDropActions = DropAction.None;
+              }
+            }
+          }
+        }
+        ]]>
+      </Script>
+
+      <Script>
+        <![CDATA[
+          
+          if ([Target.Dragging] && [Target.AllowedDropActions] != DropAction.None)
+          {
+              
+              if ([zune:SyncControls.Instance.CurrentDeviceConnected] && ![zune:SyncControls.Instance.CurrentDeviceSyncing])
+              {            
+                Button.Image = [DeviceIcons.Current.Connected.Drag];
+              }
+              
+              else if (![zune:SyncControls.Instance.CurrentDeviceSyncing])
+              {
+                Button.Image = [DeviceIcons.Current.Disconnected.Drag];
+              }
+          }
+          else
+          {
+              Target.AllowedDropActions = DropAction.None; 
+              
+              
+              if ([zune:SyncControls.Instance.CurrentDeviceConnected] && ![zune:SyncControls.Instance.CurrentDeviceSyncing])
+              {            
+                Button.Image = [DeviceIcons.Current.Connected.Default];
+                Button.PlayAnimation(animations:Animations.IconContentChange);
+              }
+              
+              else if (![zune:SyncControls.Instance.CurrentDeviceSyncing])
+              {
+                Button.Image = [DeviceIcons.Current.Disconnected.Default];
+              }
+          }
+        ]]>
+      </Script>
+
+      <Script>
+        [DeclareTrigger(Target.Dropped)]
+
+        object value = Target.GetValue();
+  
+        List items = null;
+        String playlistName = null;
+        if (value is List)
+        {
+           items = (List)value;
+        } 
+        else if (value is mpdata:PlaylistData)
+        {
+           items = ((mpdata:PlaylistData)value).Tracks;
+           playlistName = ((mpdata:PlaylistData)value).Title;
+        }
+        else if (value is SelectionManager)
+        { 
+           items = ((SelectionManager)value).SelectedItems;
+        }
+
+        if (items != null &amp;&amp; items.Count > 0)
+        {
+          
+          
+          
+          
+          
+          Object item = items.GetItem(0);
+          
+          
+          if (
+               item is data:Media &amp;&amp; 
+            
+               !zune:SyncControls.Instance.CurrentDeviceIsGuest &amp;&amp; 
+               
+               (
+                 
+                 (item is data:PlaylistContentItem &amp;&amp; zune:SyncControls.Instance.GetSyncAll(((data:PlaylistContentItem)item).MediaType))
+                 
+                 ||
+
+                 
+                 zune:SyncControls.Instance.GetSyncAll(zune:Shell.MapStringToMediaType(((data:Media)item).Type))
+               )
+             )
+          {
+            zune:SyncControls.Instance.Unexclude(items);
+          }
+          else
+          {
+            if (AddToSync == null) AddToSync = new addtosync:AddToSync();
+            AddToSync.Items = items;
+            AddToSync.PlaylistName = playlistName;
+            AddToSync.Start.Invoke();
+          }
+        }
+
+        zuneutil:SQMLog.Log(zuneutilapi:SQMDataId.DeviceLogoDrops, 1);    
+      </Script>
+
+      
+      
+      <Script>
+        [DeclareTrigger(RightClick.Invoked)]
+
+        if (zune:SyncControls.Instance.CurrentDeviceConnected)
+        {
+          ContextMenu.LayoutInput = new PopupLayoutInput();
+          ContextMenu.LayoutInput.Placement = PlacementMode.MouseOrigin;
+          ContextMenu.Helper.Show(ContextMenu);
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(Model.Invoked)]
+        zune:Shell.MainFrame.Device.Invoke();
+  
+        devstatus:AnimationHelper.PlayFlipAnimation = true;
+        zuneutil:SQMLog.Log(zuneutilapi:SQMDataId.DeviceLogoClicks, 1);
+      </Script>
+    </Scripts>
+  
+    <Content>
+      <Panel Layout="Anchor">
+        <Children>
+
+          <Panel Name="IconPanel" Layout="Anchor">
+            <LayoutInput>
+              <AnchorLayoutInput Top="Parent,0" Left="Parent,0"/>
+            </LayoutInput>
+
+            <Children>
+              <syncAnim:SyncAnimation Name="SyncAnimation">
+                <LayoutInput>
+                  <AnchorLayoutInput Left="Button,0.27" Top="Button,0.22" Right="Button,0.75" Bottom="Button,0.6,-4" />
+                </LayoutInput>
+              </syncAnim:SyncAnimation>
+
+              <core:IconButton Name="Button"
+                Image="{DeviceIcons.Current.Disconnected.Default}"
+                DisabledImage="{null}"
+                HoverImage="{DeviceIcons.Current.Disconnected.Hover}"
+                Model="{Model}"
+                Navigation="TabGroup">
+
+                <LayoutInput>
+                  <AnchorLayoutInput Left="Parent,0" Top="Parent,0"/>
+                </LayoutInput>
+              </core:IconButton>
+
+            </Children>
+          </Panel>
+          
+          <core:Label Name="Percentage">
+            <LayoutInput>
+              <AnchorLayoutInput Left="IconPanel,0.3" Top="IconPanel,1"/>
+            </LayoutInput>
+          </core:Label>
+
+        </Children>
+      </Panel>
+          
+    </Content>
+  </UI>
+
+  <UI Name="CDIcon" Base="me:PercentageIcon">
+    <Locals>
+      <cd:CDState Name="CDState" />
+
+      <Image Name="BurnIcon" Source="res://ZuneShellResources!Icon.Burn.png"/>
+      <Image Name="BurnIconHover" Source="res://ZuneShellResources!Icon.Burn.Hover.png"/>
+      <Image Name="BurnIconPressed" Source="res://ZuneShellResources!Icon.Burn.Pressed.png"/>
+      <Image Name="BurnIconDrag" Source="res://ZuneShellResources!Icon.Burn.Drag.png"/>
+      <Image Name="BurnIconAction" Source="res://ZuneShellResources!Icon.Burn.png"/>
+      
+      <Image Name="BurnIconEmpty" Source="res://ZuneShellResources!Icon.Burn.Empty.png"/>
+      <Image Name="BurnIconEmptyHover" Source="res://ZuneShellResources!Icon.Burn.Empty.Hover.png"/>
+      <Image Name="BurnIconEmptyPressed" Source="res://ZuneShellResources!Icon.Burn.Empty.Pressed.png"/>
+      <Image Name="BurnIconEmptyDrag" Source="res://ZuneShellResources!Icon.Burn.Empty.Drag.png"/>
+
+      <Single Name="AnimLength" Single="6.0"/>
+      <Single Name="PauseLength" Single="1.5"/>
+      <Rotation Name="Spin" Rotation="-1440deg;0,0,1"/>
+
+      <zune:DiscExperience Name="Disc" DiscExperience="{zune:Shell.MainFrame.Disc}" />
+    </Locals>
+
+    <Scripts>
+      
+      <Script>
+        Notification = [zune:CDAccess.Instance.Notification];
+        if (Notification == null)
+        {
+          Notification = [zune:CDAccess.Instance.BurnNotification];
+        }
+      </Script>
+      
+      <Script>
+        String str = zune:Shell.LoadString(zune:StringId.IDS_CD_LAND_MESSAGE);
+        ToolbarActiveText = str;
+        ToolbarInactiveText = str;
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(Model.Invoked)]
+        if (Disc.Available)
+        {
+          animations:CDAnimationHelper.PlayFlipAnimation = true;
+          Disc.Invoke();
+          zuneutil:SQMLog.Log(zuneutilapi:SQMDataId.DiscLogoClicks, 1);  
+        }
+      </Script>
+
+      <Script>
+        bool dragging = [Target.Dragging] &amp;&amp; [Target.AllowedDropActions] != DropAction.None;
+
+        if ([zune:CDAccess.Instance.IsBurning] || [zune:CDAccess.Instance.IsRipping])
+        {
+          IsActive = false;
+          Button.Image = BurnIconAction;
+          Button.HoverImage = BurnIconAction;
+          Button.PressedImage = BurnIconAction;
+        }
+        else if ([Disc.Available])
+        {
+          IsActive = true;
+          if (dragging)
+            Button.Image = BurnIconDrag;
+          else
+            Button.Image = BurnIcon;
+
+          Button.HoverImage = BurnIconHover;
+          Button.PressedImage = BurnIconPressed;
+          Button.PlayAnimation(animations:Animations.IconContentChange);
+        }
+        else
+        {
+          IsActive = false;
+          if (dragging)
+            Button.Image = BurnIconEmptyDrag;
+          else
+            Button.Image = BurnIconEmpty;
+
+          Button.HoverImage = BurnIconEmptyHover;
+          Button.PressedImage = BurnIconEmptyPressed;
+        }
+      </Script>
+
+      <Script>
+        RipBurnAnimation.Visible = ([Shell.AmbientAnimations] &amp;&amp;([zune:CDAccess.Instance.IsBurning] || [zune:CDAccess.Instance.IsRipping]));      
+      </Script>
+    
+      
+      <Script>
+        [DeclareTrigger(Target.DragEnter)]
+  
+        
+        
+        
+        if (zune:CDAccess.Instance.IsBurning)
+        {
+          Target.AllowedDropActions = DropAction.None;
+          return;
+        }
+        
+        object value = Target.GetValue();
+
+        List items = null;
+        if (value is List)
+        {
+           items = (List)value;
+        } 
+        else if (value is mpdata:PlaylistData)
+        {
+           items = ((mpdata:PlaylistData)value).Tracks;
+        } 
+        else if (value is SelectionManager)
+        { 
+           items = ((SelectionManager)value).SelectedItems;
+        }
+
+        if (items != null &amp;&amp; items.Count > 0)
+        {
+          foreach(object item in items)
+          {
+            
+            
+            
+            if ((item is data:Media &amp;&amp; !(item is data:MediaFolder) 
+                &amp;&amp; !(item is data:PodcastSeries) 
+                &amp;&amp; !(item is data:PodcastEpisode &amp;&amp; String.IsNullOrEmpty(((data:PodcastEpisode)item).SourceUrl)))
+                || item is mpdata:Track)
+            {
+              Target.AllowedDropActions = DropAction.Copy;
+              
+            }
+          }
+        }
+      </Script>
+
+      <Script>
+        if (![Target.Dragging])
+          Target.AllowedDropActions = DropAction.None;
+      </Script>
+
+      <Script>
+        [DeclareTrigger(Target.Dropped)]
+        object value = Target.GetValue();
+        
+        List items = null;
+        if (value is List)
+        {
+           items = (List)value;
+        } 
+        else if (value is mpdata:PlaylistData)
+        {
+           items = ((mpdata:PlaylistData)value).Tracks;
+        } 
+        else if (value is SelectionManager)
+        { 
+           items = ((SelectionManager)value).SelectedItems;
+        }
+
+        if (items != null &amp;&amp; items.Count > 0)
+        {
+          zune:CDAccess.Instance.AddToBurnList(items);
+        }
+
+        zuneutil:SQMLog.Log(zuneutilapi:SQMDataId.DiscLogoDrops, 1);
+      </Script>
+    </Scripts>
+    
+     <Content>
+      <Panel Layout="Anchor">
+        <Children>
+          
+          
+          
+          <Panel Name="RipBurnAnimation" Layout="Dock">
+            <LayoutInput>
+              <AnchorLayoutInput Left="Button,0,6" Top="Button,0,6" Right="Button,1,-6" Bottom="Button,1,-6"/>
+            </LayoutInput>
+
+            <Animations>
+              <Animation Type="Idle" CenterPointPercent="0.5,0.5,1.0" Loop="-1">
+                <Keyframes>
+                  <RotateKeyframe Time="0.0" RelativeTo="Final"/>
+                  <RotateKeyframe Time="{AnimLength}" Value="{Spin}"/>
+                  <ScaleKeyframe  Time="0.0" RelativeTo="Final" Interpolation="EaseOut,2.5,0.99"/>
+                  <ScaleKeyframe  Time="{AnimLength}" Value="0.75,0.75,1.0"/>
+                  <AlphaKeyframe  Time ="0.0" RelativeTo="Final"/>
+                  <AlphaKeyframe  Time="{AnimLength - 0.5}" Value="1.0"/>
+                  <AlphaKeyframe  Time="{AnimLength}" Value="0.0"/>
+                  
+                  <RotateKeyframe Time="{AnimLength + PauseLength}" RelativeTo="Current"/>
+                  <ScaleKeyframe  Time="{AnimLength + PauseLength}" RelativeTo="Current"/>
+                  <AlphaKeyframe  Time="{AnimLength + PauseLength}" Value="0"/>
+                </Keyframes>
+              </Animation>
+            </Animations> 
+
+            <Children>
+              <Graphic Name="Indicator" Content="{styles:Styles.CDRipBurnGlow}" SizingPolicy="SizeToContent">
+                <LayoutInput>
+                  <DockLayoutInput Alignment="Center" Position="Top"/>
+                </LayoutInput>
+
+                <Animations>
+                  <Animation Type="Idle" Loop="-1">
+                    <Keyframes>
+                      <AlphaKeyframe Time="0.0" Value="0"/>
+                      <AlphaKeyframe Time="0.4" Value="1.0"/>
+                      
+                      <AlphaKeyframe Time="{AnimLength + PauseLength}" Value="1.0"/>
+                      
+                      <RotateKeyframe Time="0.0" Value="-30deg;0,0,1"/>
+                      <RotateKeyframe Time="{AnimLength}" Value="-10deg;0,0,1"/>
+                      <RotateKeyframe Time="{AnimLength + PauseLength}" RelativeTo="Final"/>
+                    </Keyframes>
+                  </Animation>
+                </Animations>
+              </Graphic>
+            </Children>
+          </Panel>
+
+          <core:IconButton 
+                      Name="Button"
+                      DisabledImage="{DisabledImage}"
+                      HoverImage="{HoverImage}"
+                      Image="{Image}"
+                      Model="{Model}"
+                      Navigation="TabGroup">
+
+            <LayoutInput>
+              <AnchorLayoutInput Left="Parent,0" Top="Parent,0"/>
+            </LayoutInput>
+          </core:IconButton>
+          
+          <core:Label Name="Percentage">
+            <LayoutInput>
+              <AnchorLayoutInput Left="Button,0.3" Top="Button,1"/>
+            </LayoutInput>
+          </core:Label>
+        </Children>
+      </Panel>
+    </Content>   
+  </UI>
+
+  
+  <UI Name="NowPlayingAnimation">
+    <Properties>
+      <zune:Shell Name="Shell" Shell="$Required"/>
+    </Properties>
+    
+    <Locals>
+      <zune:TransportControls Name="TransportControls" TransportControls="{zune:TransportControls.Instance}"/>
+      <Image Name="NowplayingAnimationOrange1"         Source="res://ZuneShellResources!NowplayingAnimationOrange1.png"/>
+      <Image Name="NowplayingAnimationOrange2"         Source="res://ZuneShellResources!NowplayingAnimationOrange2.png"/>
+      <Image Name="NowplayingAnimationPink1"           Source="res://ZuneShellResources!NowplayingAnimationPink1.png"/>
+      <Image Name="NowplayingAnimationPink2"           Source="res://ZuneShellResources!NowplayingAnimationPink2.png"/>
+      <Image Name="NowplayingAnimationPink3"           Source="res://ZuneShellResources!NowplayingAnimationPink3.png"/>
+      <Image Name="NowplayingAnimationOrangeAndPink"   Source="res://ZuneShellResources!NowplayingAnimationOrangeAndPink.png"/>
+      
+      <sys:Random Name="Random"/>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        LayersPanel.Visible = (iris:Application.RenderingType != iris:RenderingType.GDI) &amp;&amp;
+                               [Shell.AmbientAnimations] &amp;&amp;
+                               [TransportControls.Playing] &amp;&amp;
+                              ![TransportControls.PlayingVideo] &amp;&amp;
+                              ![TransportControls.Muted.Value];
+      </Script>
+    </Scripts>
+    <Content>
+      <Panel Name="LayersPanel" Layout="Dock" Margins="50,0,50,2">
+        <LayoutInput>
+          <DockLayoutInput Position="Bottom"/>
+        </LayoutInput>
+        <Children>
+          <Panel>
+            <Animations>
+              <Animation Animation="{animations:Animations.MoveNow}"/>
+              <Animation Type="Show" CenterPointPercent="0.5,1.0,1.0">
+                <Keyframes>
+                  <ScaleKeyframe Time="0.0" Value="2,0.0,1.0" Interpolation="Bezier,1.1,1.5"/>
+                  <ScaleKeyframe Time="2.0" Value="1.0,1.0,1.0"/>
+                </Keyframes>
+              </Animation>
+              
+               <Animation Type="Hide" CenterPointPercent="0.5,1.0,1.0">
+                <Keyframes>
+                  <ScaleKeyframe Time="0.0" RelativeTo="Current" Interpolation="EaseOut,1.5,0.7"/>
+                  <ScaleKeyframe Time="1.0" Value="0.2,0.0,1.0"/>
+                  <PositionKeyframe Time="0.0" RelativeTo="Current" Interpolation="EaseOut,1.5,0.8"/>
+                  <PositionKeyframe Time="1.0" Value="0,10,0"/>                                  
+                </Keyframes>
+              </Animation>
+            </Animations>
+                
+            <LayoutInput>
+              <DockLayoutInput Position="Bottom"/>
+            </LayoutInput>
+
+            <Children>               
+              <me:NowplayingAnimLayer Image="{NowplayingAnimationOrange1}" Random="{Random}">
+                <LayoutInput>
+                  <AnchorLayoutInput Bottom="Parent,1"/>
+                </LayoutInput>
+              </me:NowplayingAnimLayer>
+              
+               <me:NowplayingAnimLayer Image="{NowplayingAnimationPink1}" Random="{Random}" XMin="0.25">
+                <LayoutInput>
+                  <AnchorLayoutInput Bottom="Parent,1"/>
+                </LayoutInput>
+              </me:NowplayingAnimLayer>
+
+               <me:NowplayingAnimLayer Image="{NowplayingAnimationOrange2}" Random="{Random}" XMin="0.8" YMax="2">
+                <LayoutInput>
+                  <AnchorLayoutInput Bottom="Parent,1"/>
+                </LayoutInput>
+              </me:NowplayingAnimLayer>
+
+               <me:NowplayingAnimLayer Image="{NowplayingAnimationPink2}" Random="{Random}" XMin="0.4">
+                <LayoutInput>
+                  <AnchorLayoutInput Bottom="Parent,1"/>
+                </LayoutInput>
+              </me:NowplayingAnimLayer>
+              
+              <me:NowplayingAnimLayer Image="{NowplayingAnimationPink3}" Random="{Random}" XMin="0.3">
+                <LayoutInput>
+                  <AnchorLayoutInput Bottom="Parent,1"/>
+                </LayoutInput>
+              </me:NowplayingAnimLayer> 
+
+              <me:NowplayingAnimLayer Image="{NowplayingAnimationOrangeAndPink}" Random="{Random}" XMin="0.75" AlphaMin="0.4">
+                <LayoutInput>
+                  <AnchorLayoutInput Bottom="Parent,1"/>
+                </LayoutInput>
+              </me:NowplayingAnimLayer>
+
+            </Children>
+          </Panel>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  <UI Name="NowplayingAnimLayer">
+    <Properties>
+      <Image Name="Image" Image="$Required"/>
+      <sys:Random Name="Random" Random="$Required"/>
+      <Single Name="AlphaMin" Single="0.1"/>
+      <Single Name="AlphaMax" Single="0.85"/>
+      <Boolean Name="Scaling" Boolean="true"/>
+      
+      <Single Name="XMax" Single="1"/>
+      <Single Name="XMin" Single="0.4"/>
+      <Single Name="YMax" Single="0.9"/>
+    </Properties>
+
+    <Locals>
+      
+      <Single Name="YMin" Single="0.4"/>
+      <Single Name="FrameLengthMin" Single="1.5"/>
+      <Single Name="FrameLengthMax" Single="5.0"/>
+            
+      <Interpolation Name="LayerFade" Type="EaseIn" Weight="1.5" EasePercent="0.8"/>
+  
+      <Interpolation Name="LayerScale" Type="Bezier" BezierHandle1="1.5" BezierHandle2="1.1"/>
+
+      <AlphaKeyframe Name="FirstAlphaKeyframe" Time="0.0" Value="{AlphaMin}" Interpolation="{LayerFade}"/>
+      
+      <AlphaKeyframe Name="LastAlphaKeyframe" Value="{FirstAlphaKeyframe.Value}"/>
+  
+      <Vector3 Name="StartScale" X="{XMin}" Y="{YMax}" Z="1.0"/>
+      <ScaleKeyframe Name="FirstScaleKeyframe" Time="0.0" Value="{StartScale}" Interpolation="{LayerScale}"/>
+      
+      <ScaleKeyframe Name="LastScaleKeyframe" Value="{FirstScaleKeyframe.Value}"/>
+      
+      <Animation Name="IdleAnimation" Type="Idle" Loop="-1" CenterPointPercent="0.5,1.0,1.0">
+        <Keyframes>
+          <AlphaKeyframe AlphaKeyframe="{FirstAlphaKeyframe}"/>
+          <AlphaKeyframe Interpolation="{LayerFade}"/>
+          <AlphaKeyframe Interpolation="{LayerFade}"/>
+          <AlphaKeyframe Interpolation="{LayerFade}"/>
+          <AlphaKeyframe Interpolation="{LayerFade}"/>
+          <AlphaKeyframe Interpolation="{LayerFade}"/>
+          <AlphaKeyframe Interpolation="{LayerFade}"/>
+          <AlphaKeyframe Interpolation="{LayerFade}"/>
+          <AlphaKeyframe AlphaKeyframe="{LastAlphaKeyframe}"/>
+          
+          <ScaleKeyframe ScaleKeyframe="{FirstScaleKeyframe}"/>
+          <ScaleKeyframe Interpolation="{LayerScale}"/>
+          <ScaleKeyframe Interpolation="{LayerScale}"/>
+          <ScaleKeyframe Interpolation="{LayerScale}"/>
+          <ScaleKeyframe Interpolation="{LayerScale}"/>
+          <ScaleKeyframe Interpolation="{LayerScale}"/>
+          <ScaleKeyframe Interpolation="{LayerScale}"/>
+          <ScaleKeyframe Interpolation="{LayerScale}"/>
+          <ScaleKeyframe ScaleKeyframe="{LastScaleKeyframe}"/>
+        </Keyframes>
+      </Animation>
+    </Locals>
+
+    <Scripts>
+      
+      <Script>        
+        Int32 randTimeRange = (Int32)((FrameLengthMax - FrameLengthMin) * 100.0);
+        Int32 randAlphaValueRange = (Int32)((AlphaMax - AlphaMin) * 100.0);
+        Int32 yRandRange = (Int32)((YMax - YMin) * 100.0);
+        Int32 xRandRange = (Int32)((XMax - XMin) * 100.0);
+        
+        float alphaTime = FrameLengthMin;
+        float scaleTime = FrameLengthMin;
+        float yScaleVal;
+        float xScaleVal;
+        
+        foreach (Keyframe keyframe in IdleAnimation.Keyframes)
+        {
+          if (keyframe is AlphaKeyframe)
+          {
+            if (keyframe != FirstAlphaKeyframe)
+            {
+              AlphaKeyframe alphaKeyframe = (AlphaKeyframe)keyframe;
+              
+              alphaTime = alphaTime + ((Single)Random.Next(randTimeRange) / 100.0) + FrameLengthMin;
+              alphaKeyframe.Time = alphaTime;
+            
+              if (keyframe != LastAlphaKeyframe)
+              {
+                alphaKeyframe.Value = ((Single)Random.Next(randAlphaValueRange) / 100.0) + AlphaMin;
+              }
+            }
+          }
+          else 
+          {
+            if (keyframe != FirstScaleKeyframe)
+            {
+              if (Scaling)
+              {
+                ScaleKeyframe scaleKeyframe = (ScaleKeyframe)keyframe;
+                
+                scaleTime = scaleTime + ((Single)Random.Next(randTimeRange) / 100.0) + FrameLengthMin;
+                scaleKeyframe.Time = scaleTime;
+                
+                if (keyframe != LastScaleKeyframe)
+                {
+                  yScaleVal = ((Single)Random.Next(yRandRange) / 100.0) + YMin;
+                  xScaleVal = ((Single)Random.Next(xRandRange) / 100.0) + XMin;
+                  scaleKeyframe.Value = new Vector3(xScaleVal, yScaleVal, 1.0);
+                }
+              }
+            }
+          }
+        }
+      </Script>
+    </Scripts>
+    
+    <Content>
+      <Graphic Content="{Image}" SizingPolicy="SizeToConstraint" MaximumSize="0,40" Alpha="0.6">
+        <LayoutInput>
+          <AnchorLayoutInput Bottom="Parent,1"/>
+        </LayoutInput>
+
+        <Animations>
+          <Animation Animation="{IdleAnimation}"/>
+        </Animations>
+      </Graphic>
+    </Content>
+  </UI> 
+</UIX>

@@ -1,0 +1,2429 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:sys="assembly://mscorlib/System"
+  xmlns:col="assembly://mscorlib/System.Collections"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:style="res://ZuneShellResources!Style.uix"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:images="res://ZuneShellResources!ImageStyle.uix"
+  xmlns:animations="res://ZuneShellResources!Animations.uix"
+  xmlns:tooltip="res://ZuneShellResources!ToolTip.uix"
+  xmlns:drag="res://ZuneShellResources!DragFeedback.uix"
+  xmlns:contentList="res://ZuneShellResources!ContentList.uix"
+  xmlns:actionprogressbutton="res://ZuneShellResources!ActionProgressButton.uix"
+  xmlns:me="Me">
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+
+
+  
+  
+  
+  <Class Name="ColumnData">
+    <Properties>
+      <List Name="Columns" List="$Required"/>
+      <Boolean Name="CanReorderColumns" Boolean="false"/>
+
+      
+      <Boolean Name="HideColumns" Boolean="false"/>
+
+      
+      <Int32 Name="FixedColumns" Int32="0"/>
+
+      <Object Name="SortedColumn" Object="{null}"/>
+      <Boolean Name="SortAscending" Boolean="true"/>
+
+      
+      <String Name="SaveKeyPrefix" String=""/>
+
+      <Boolean Name="SaveColumnWidths" Boolean="true"/>
+      <Boolean Name="SaveColumnOrder" Boolean="false"/>
+      <Boolean Name="SaveColumnVisibility" Boolean="false"/>
+      <Boolean Name="SaveSort" Boolean="true"/>
+
+      
+
+      <List Name="OrderedColumns" List="{null}"/>
+      
+
+      <iris:ArrayListDataSet Name="DisplayedColumns"/>
+      <Command Name="ColumnWidthsChanged"/>
+      <Command Name="ColumnOrderChanged"/>
+      <Command Name="ColumnVisibilityChanged"/>
+    </Properties>
+
+    <Scripts>
+      <Script>
+        
+        foreach(me:ColumnInfoBase column in Columns)
+          column.VisibilitiesChanged.Add(ColumnVisibilityChanged);
+      </Script>
+      
+      
+      <Script>
+        if (SaveColumnWidths &amp;&amp; !String.IsNullOrEmpty(SaveKeyPrefix))
+        {
+          List savedWidths = zune:Shell.GetPositiveIntList(SaveKeyPrefix + "Widths", Columns.Count);
+
+          if (savedWidths != null)
+          {
+            int i = 0;
+            foreach(me:ColumnInfoBase column in Columns)
+            {
+              column.ColumnSize.Size = new Size((int)savedWidths.GetItem(i), 0);
+              i = i + 1;
+            }
+          }
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(ColumnWidthsChanged.Invoked)]
+
+        if (SaveColumnWidths &amp;&amp; !String.IsNullOrEmpty(SaveKeyPrefix))
+        {
+          List widths = new List();
+          foreach(me:ColumnInfoBase column in Columns)
+            widths.Add(column.ColumnSize.Size.Width);
+
+          zune:Shell.SaveIntList(SaveKeyPrefix + "Widths", widths);
+        }
+      </Script>
+
+      
+      <Script>
+        if (CanReorderColumns)
+        {
+          List savedOrder = null;
+          if (SaveColumnOrder &amp;&amp; !String.IsNullOrEmpty(SaveKeyPrefix))
+            savedOrder = zune:Shell.GetReorderedIntList(SaveKeyPrefix + "Order", Columns.Count);
+
+          OrderedColumns = new iris:ArrayListDataSet();
+          if (savedOrder != null)
+          {
+            int i = 0;
+            foreach(int orderIndex in savedOrder)
+            {
+              OrderedColumns.Add(Columns.GetItem(orderIndex));
+              i = i + 1;
+            }
+          }
+          else 
+          {
+            foreach(me:ColumnInfoBase column in Columns)
+                OrderedColumns.Add(column);
+          }
+        }
+        else
+        {
+          
+          OrderedColumns = Columns;
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(ColumnOrderChanged.Invoked)]
+        if (SaveColumnOrder &amp;&amp; !String.IsNullOrEmpty(SaveKeyPrefix))
+        {
+          List order = new List();
+          foreach(me:ColumnInfoBase column in OrderedColumns)
+          {
+            order.Add( ((col:IList)Columns).IndexOf(column) );
+          }
+
+          zune:Shell.SaveIntList(SaveKeyPrefix + "Order", order);
+        }
+      </Script>
+      
+            
+      
+      <Script>
+        if (SaveColumnVisibility &amp;&amp; !String.IsNullOrEmpty(SaveKeyPrefix))
+        {
+          List savedVisibilities = zune:Shell.GetIntList(SaveKeyPrefix + "Visibilities", Columns.Count);
+
+          if (savedVisibilities != null)
+          {
+            int i = 0;
+            foreach(int visible in savedVisibilities)
+            {
+              me:ColumnInfoBase column = (me:ColumnInfoBase)Columns.GetItem(i);
+
+              column.Visible = (bool)visible;
+
+              i = i + 1;
+            }
+          }
+        }
+        
+        
+        foreach(me:ColumnInfoBase column in OrderedColumns)
+        {
+          if (column.Visible)
+            DisplayedColumns.Add(column);
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(ColumnVisibilityChanged.Invoked)]
+        if (SaveColumnVisibility &amp;&amp; !String.IsNullOrEmpty(SaveKeyPrefix))
+        {
+          List visibilities = new List();
+          foreach(me:ColumnInfoBase column in Columns)
+          {
+            visibilities.Add((int)column.Visible);
+          }
+          
+          zune:Shell.SaveIntList(SaveKeyPrefix + "Visibilities", visibilities);
+        }
+      </Script>
+      
+      <Script>
+        [DeclareTrigger(ColumnOrderChanged.Invoked)]
+        [DeclareTrigger(ColumnVisibilityChanged.Invoked)]
+        
+        
+        
+        
+        int visibleColumnCount = 0;
+        foreach(me:ColumnInfoBase column in OrderedColumns)
+        {
+          int displayIndex = DisplayedColumns.IndexOf(column);
+          if (column.Visible)
+          {
+            if (displayIndex == -1)
+            {
+              DisplayedColumns.Insert(visibleColumnCount, column);
+            }
+            else if (displayIndex > visibleColumnCount)
+            {
+              DisplayedColumns.Move(displayIndex, visibleColumnCount);
+            }
+            else if (displayIndex &lt; visibleColumnCount)
+            {
+              
+              
+              
+            }
+            
+            visibleColumnCount = visibleColumnCount + 1;
+          }
+          else if (displayIndex != -1)
+          {
+            DisplayedColumns.RemoveAt(displayIndex);
+          }
+        }
+      </Script>
+
+      
+      <Script>
+        if (SaveSort &amp;&amp; !String.IsNullOrEmpty(SaveKeyPrefix))
+        {
+          
+          int i = 0;
+          int defaultSortedColumn = -1;
+          foreach (me:ColumnInfoBase column in Columns)
+          {
+            if (column.SortBy == SortedColumn)
+            {
+              defaultSortedColumn = i;
+              
+            }
+            i = i + 1;
+          }
+
+          
+          int sortedColumnIndex = zune:Shell.GetInt(SaveKeyPrefix + "SortColumn", 0, Columns.Count - 1, defaultSortedColumn);
+
+          if (sortedColumnIndex != -1)
+          {
+            
+            SortedColumn = ((me:ColumnInfoBase)Columns.GetItem(sortedColumnIndex)).SortBy;
+
+            
+            SortAscending = (bool)zune:Shell.GetInt(SaveKeyPrefix + "SortAscending", 0, 1, (int)SortAscending);
+          }
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(SortedColumn)]
+
+        if (SaveSort &amp;&amp; !String.IsNullOrEmpty(SaveKeyPrefix))
+        {
+          int i = 0;
+          int sortedColumn = 0;
+          foreach (me:ColumnInfoBase column in Columns)
+          {
+            if (column.SortBy == SortedColumn)
+            {
+              sortedColumn = i;
+              
+            }
+            i = i + 1;
+          }
+
+          zune:Shell.SaveInt(SaveKeyPrefix + "SortColumn", sortedColumn);
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(SortAscending)]
+
+        if (SaveSort &amp;&amp; !String.IsNullOrEmpty(SaveKeyPrefix))
+        {
+          zune:Shell.SaveInt(SaveKeyPrefix + "SortAscending", (int)SortAscending);
+        }
+      </Script>
+    </Scripts>
+  </Class>
+
+  
+  
+  
+  <Class Name="SpreadSheetListModel">
+    <Properties>
+      <me:ColumnData Name="ColumnData" ColumnData="{null}"/>
+      <SelectionManager Name="SelectionManager" SelectionManager="{null}"/>
+    </Properties>
+  </Class>
+
+
+  
+  
+  
+  
+  
+  <UI Name="SpreadSheet" Base="core:ReorderableListBase">
+    <Properties>
+      <me:ColumnData Name="ColumnData" ColumnData="$Required"/>
+      <me:SpreadSheetListModel Name="ListModel"/>
+
+      <Type Name="ListItemType" Type="{typeof(me:SpreadSheetListItem)}"/>
+
+      <Boolean Name="ShowColumnDividers" Boolean="false"/>
+
+      <Boolean Name="AllowHorizontalScrolling" Boolean="true"/>
+      <Boolean Name="AllowVerticalScrolling" Boolean="true"/>
+      <Inset Name="ScrollbarMargins" Inset="0,0,11,11"/>
+
+      <Boolean Name="SizeToChildren" Boolean="false"/>
+
+      <Boolean Name="AnimateItems" Boolean="True"/>
+      <Single Name="FadeSize" Single="-1.0"/>
+      <style:Style Name="OverrideStyle" Style="{null}"/>
+      <Boolean Name="CanDrag" Boolean="true"/>
+
+      <Boolean Name="ShowHeaders" Boolean="true"/>
+      <Boolean Name="HighlightHeaders" Boolean="true"/>
+      <style:Style Name="HeaderStyle" Style="{styles:SharedStyles.ColumnHeaderStyleSet}"/>
+
+
+
+      <Int32 Name="HeaderHeight" Int32="16"/>
+      <Int32 Name="HeaderSpacing" Int32="26"/> 
+
+      <core:ContextMenu Name="HeaderContextMenu" ContextMenu="{null}"/>
+
+      <Size Name="RowSize" Size="{styles:Styles.ListItemSize}"/>
+      <Inset Name="RowPadding" Inset="{styles:Styles.ListItemMargins}"/>
+
+      <Size Name="LayoutSpacing" Size="0,0"/>
+      <GridLayout Name="ListLayout" Orientation="Vertical" ReferenceSize="{RowSize}" Spacing="{LayoutSpacing}"/>
+
+      
+      <Int32 Name="FixedItems" Int32="0"/>
+    </Properties>
+
+    <Locals>
+      <ScrollingData Name="VerticalScrollData"/>
+      <ScrollingData Name="HorizontalScrollData"/>
+
+      
+      <DockLayout Name="NoHideColumnLayout" SizeToChildren="true" DefaultLayoutInput="Left,Near"/>
+
+      <Layout Name="ColumnLayout">
+        <Layout>
+          <Script>
+            if (ColumnData.HideColumns)
+              return (Layout)new StackLayout();
+            return (Layout)NoHideColumnLayout;
+          </Script>
+        </Layout>
+      </Layout>
+      <me:ListEditState Name="EditState"/>
+
+      <TransformAnimation Name="FadeXForm" TimeScale="1.0" Source="{animations:Animations.ListContentChange}"/>
+
+      <AnchorLayoutInput Name="VerticalScrollBarPosition" Right="Scroller,1" Horizontal="Far"
+                Top="Scroller,0" Vertical="Center"
+                ContributesToWidth="false" ContributesToHeight="false">
+        <Bottom>
+          <AnchorEdge Id="Scroller" Percent="1" Offset="{-1 * ScrollbarMargins.Bottom}"/>
+        </Bottom>
+      </AnchorLayoutInput>
+
+      <AnchorLayoutInput Name="VerticalScrollerPosition" Left="Parent,0" Top="Parent,0"/>
+
+      
+      <Command Name="ScrollUpCommand"/>
+      <Command Name="ScrollDownCommand"/>
+    </Locals>
+
+    <Input>
+      
+      <ScrollingHandler Name="VerticalScrollHandler" ScrollingData="{VerticalScrollData}"/>
+      <ScrollingHandler Name="HorizontalScrollHandler" ScrollingData="{HorizontalScrollData}"/>
+    </Input>
+
+    <Scripts>
+      <Script>
+        ListModel.ColumnData = ColumnData;
+        ListModel.SelectionManager = SelectionManager;
+      </Script>
+      <Script>
+        protected_VerticalScrollData = VerticalScrollData;
+        protected_HorizontalScrollData = HorizontalScrollData;
+      </Script>
+      <Script>
+        Headers.Visible = [ShowHeaders];
+
+        int offset = 0;
+        if (ShowHeaders)
+          offset = HeaderHeight + HeaderSpacing;
+
+        VerticalScrollBarPosition.Top.Offset = offset;
+        VerticalScrollerPosition.Top.Offset = offset;
+      </Script>
+      <Script>Dividers.Visible = [ShowColumnDividers];</Script>
+      <Script>Headers.ContextMenu = [HeaderContextMenu];</Script>
+      <Script>
+        
+        if(!AnimateItems)
+        {
+          
+          
+          
+          
+          FadeXForm.TimeScale = 0.01;
+         }
+      </Script>
+
+
+      <Script>
+        if (![AllowHorizontalScrolling])
+        {
+          HorzScrollBar.Visible = false;
+          HorizontalScrollData.Enabled = false;
+        }
+      </Script>
+      <Script>
+        if (![AllowVerticalScrolling])
+        {
+          VertScrollBar.Visible = false;
+          VerticalScrollData.Enabled = false;
+        }
+      </Script>
+
+      <Script>
+        
+        VertScrollBar.RegionHover = [UI.DeepMouseFocus] &amp;&amp; ![Headers.DeepMouseFocus];
+        HorzScrollBar.RegionHover = UI.DeepMouseFocus &amp;&amp; !Headers.DeepMouseFocus;
+      </Script>
+
+      
+      <Script>PopupRelativeToList.PlacementTarget = Scroller;</Script>
+
+      
+      <Script>
+        if ([CanReorder])
+        {
+          Repeater.ContentName = "ReorderableItem";
+          if (Content != null)
+          {
+            LastIndicator.Index = [Content.Count];
+          }
+        }
+        else
+          Repeater.ContentName = "Item";
+      </Script>
+
+
+      
+      <Script>
+        [InitialEvaluate(false)]
+        if (![UI.DeepKeyFocus])
+        {
+          EditState.InEditMode = false;
+        }
+      </Script>
+
+      <Script>
+        EditingList.Value = [EditState.InEditMode];
+      </Script>
+
+      
+      <Script>
+        bool inEditMode = [EditState.InEditMode];
+
+        if (inEditMode)
+        {
+          Repeater.Navigation = NavigationPolicies.ContainAll;
+          EditState.Cancelled = false;
+        }
+        else
+        {
+          Repeater.Navigation = NavigationPolicies.None;
+        }
+      </Script>
+
+      <Script>
+        [DeclareTrigger(Target.EventContext)]
+        
+        object context = Target.EventContext;
+
+        if (context is Command)
+        {
+          
+          
+          ((Command)context).Invoke();
+
+          
+          
+          
+          
+          
+          
+          ScrollUp.Scale = new Vector3(0.0,1.0,1.0);
+          ScrollDown.Scale = new Vector3(0.0,1.0,1.0);
+        }
+        else if (context is int)
+        {
+          
+          
+          ScrollUp.Scale = new Vector3(1.0,1.0,1.0);
+          ScrollDown.Scale = new Vector3(1.0,1.0,1.0);
+        }
+      </Script>
+
+      <Script> ScrollUp.Visible = [VerticalScrollData.CanScrollUp];  </Script>
+      <Script> ScrollDown.Visible = [VerticalScrollData.CanScrollDown]; </Script>
+
+      
+      <Script>
+        [DeclareTrigger(ScrollUpCommand.Invoked)]
+        VerticalScrollData.ScrollUp();
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(ScrollDownCommand.Invoked)]
+        VerticalScrollData.ScrollDown();
+      </Script>
+
+    </Scripts>
+
+    <Content>
+      <Panel Layout="Anchor" Navigation="TabGroup" MouseInteractive="false">
+        <Children>
+
+          
+          <core:ScrollBar Name="VertScrollBar" ScrollData="{VerticalScrollData}"
+                          LayoutInput="{VerticalScrollBarPosition}"/>
+
+          <core:ScrollBar Name="HorzScrollBar" ScrollData="{HorizontalScrollData}" Horizontal="true">
+            <LayoutInput>
+              <AnchorLayoutInput Bottom="Scroller,1" Vertical="Far"
+                Left="Scroller,0" Right="Scroller,1,-10" Horizontal="Center"
+                ContributesToWidth="false" ContributesToHeight="false"/>
+            </LayoutInput>
+          </core:ScrollBar>
+
+          
+          <Scroller Name="Scroller" Orientation="Horizontal" ScrollingData="{HorizontalScrollData}"
+                    Margins="{ScrollbarMargins}" FadeSize="{FadeSize}">
+            <LayoutInput>
+              <AnchorLayoutInput Left="Parent,0" Top="Parent,0"/>
+            </LayoutInput>
+            <Children>
+
+              <Panel Name="Panel" Navigation="ContainDirectional,RememberFocus">
+                <Layout>
+                  <AnchorLayout SizeToHorizontalChildren="true" SizeToVerticalChildren="{SizeToChildren}"/>
+                </Layout>
+                <Children>
+
+                  
+                  
+                  <Panel Name="HeadersPanel">
+                    <LayoutInput>
+                      <AnchorLayoutInput Left="Parent,0" Top="Parent,0"/>
+                    </LayoutInput>
+                    <Children>
+
+                      <me:ColumnHeaders Name="Headers" ColumnData="{ColumnData}"
+                                        ListModel="{ListModel}" HeaderSpacing="{HeaderSpacing}"
+                                        ListLayout="{ColumnLayout}" HighlightHeaders="{HighlightHeaders}"
+                                        HeaderHeight="{HeaderHeight}" HeaderStyle="{HeaderStyle}"
+                                        EditState="{EditState}"/>
+
+                    </Children>
+                  </Panel>
+
+                  
+                  <core:DropZone Name="ScrollUp" Context="{ScrollUpCommand}"
+                                 IsVisible="{IsDragging}">
+                    <LayoutInput>
+                      <AnchorLayoutInput Top="VertScroller,0" Bottom="VertScroller,0,30"
+                                         Left="VertScroller,0" Right="VertScroller,1"
+                                         ContributesToWidth="false" ContributesToHeight="false"/>
+                    </LayoutInput>
+                  </core:DropZone>
+
+                  
+                  <core:DropZone Name="ScrollDown" Context="{ScrollDownCommand}"
+                                 IsVisible="{IsDragging}">
+                    <LayoutInput>
+                      <AnchorLayoutInput Top="VertScroller,1,-30" Bottom="VertScroller,1"
+                                         Left="VertScroller,0" Right="VertScroller,1"
+                                         ContributesToWidth="false" ContributesToHeight="false"/>
+                    </LayoutInput>
+                  </core:DropZone>
+
+                  
+                  <me:ColumnDividers Name="Dividers" Columns="{ColumnData.DisplayedColumns}" ColumnLayout="{ColumnLayout}"
+                                     ColumnWidthsChanged="{ColumnData.ColumnWidthsChanged}">
+                    <LayoutInput>
+                      <AnchorLayoutInput Left="Parent,0" Top="VertScroller,0" Bottom="VertScroller,1"/>
+                    </LayoutInput>
+                  </me:ColumnDividers>
+
+                  
+                  <Scroller Name="VertScroller" Orientation="Vertical" ScrollingData="{VerticalScrollData}"
+                            FadeSize="{FadeSize}" Prefetch="0.5" LayoutInput="{VerticalScrollerPosition}"
+                            MouseInteractive="true">
+                    <Children>
+
+                      <Panel Layout="Anchor">
+                        <Children>
+
+                          
+                          <Graphic Name="SelectionRect" Content="{styles:Styles.DragSelectRect}"/>
+
+                          <Panel Name="Background" Layout="Anchor" FillView="{!SizeToChildren}">
+                            <LayoutInput>
+                              <AnchorLayoutInput Left="Parent,0" Top="Parent,0" />
+                            </LayoutInput>
+
+                            <Children>
+
+                              
+                              <Repeater Name="Repeater" Layout="{ListLayout}" DiscardOffscreenVisuals="true">
+                                <LayoutInput>
+                                  <AnchorLayoutInput Left="Parent,0" Top="Parent,0" />
+                                </LayoutInput>
+                                <Animations>
+                                  <TransformAnimation TransformAnimation="{FadeXForm}"/>
+                                </Animations>
+                              </Repeater>
+
+                              <core:Indicator Name="LastIndicator" InsertAtIndex="{InsertIndex}" MinimumSize="0, 1">
+                                <LayoutInput>
+                                  <AnchorLayoutInput Left="Repeater,0" Right="Repeater,1" Top="Repeater,1"/>
+                                </LayoutInput>
+                              </core:Indicator>
+
+                            </Children>
+                          </Panel>
+
+                        </Children>
+                      </Panel>
+
+                    </Children>
+                  </Scroller>
+
+                </Children>
+              </Panel>
+
+            </Children>
+          </Scroller>
+
+        </Children>
+      </Panel>
+    </Content>
+
+    <Content Name="Item">
+      <me:SpreadSheetListItem SpreadSheetListItem="{ListItemType}"
+        EditState="{EditState}"
+        Model="{RepeatedItem}"
+        ListModel="{ListModel}"
+        Index="{RepeatedItemIndex}"
+        Columns="{ColumnData.DisplayedColumns}"
+        NavigateIntoArgs="{NavigateIntoArgs}"
+        SelectionManager="{SelectionManager}"
+        OverrideStyle="{OverrideStyle}"
+        ColumnLayout="{ColumnLayout}"
+        CanDrag="{CanDrag}"
+        Navigation="Row"
+        RowPadding="{RowPadding}"
+        RowSize="{RowSize}"/>
+    </Content>
+
+    <Content Name="ReorderableItem">
+      <Panel Layout="Anchor">
+        <Children>
+
+          
+          
+          <core:ItemDropZone Index="{RepeatedItemIndex}" IsVisible="{IsDragging}"
+                             ValidTarget="{RepeatedItemIndex.Value >= FixedItems}">
+            <LayoutInput>
+              <AnchorLayoutInput Top="Item, 0" Bottom="Item, 0.5" Left="Item,0" Right="Item,1"
+                                 ContributesToWidth="false" ContributesToHeight="false"/>
+            </LayoutInput>
+          </core:ItemDropZone>
+
+          
+          <core:ItemDropZone Index="{RepeatedItemIndex}" IndexModifier="1" IsVisible="{IsDragging}"
+                             ValidTarget="{RepeatedItemIndex.Value + 1 >= FixedItems}">
+            <LayoutInput>
+              <AnchorLayoutInput Top="Item, 0.5" Left="Item,0" Right="Item,1"
+                                 ContributesToWidth="false" ContributesToHeight="false">
+                <Bottom>
+                  
+                  <AnchorEdge Id="Item" Percent="1" Offset="{LayoutSpacing.Height}"/>
+                </Bottom>
+              </AnchorLayoutInput>
+            </LayoutInput>
+          </core:ItemDropZone>
+
+          
+          <core:Indicator Index="{RepeatedItemIndex}" InsertAtIndex="{InsertIndex}"
+                          MinimumSize="0, 1">
+            <LayoutInput>
+              <AnchorLayoutInput Left="Item, 0" Right="Item, 1"  Top="Item, 0"
+                                 ContributesToWidth="false" ContributesToHeight="false"/>
+            </LayoutInput>
+          </core:Indicator>
+
+          <me:SpreadSheetListItem Name="Item" SpreadSheetListItem="{ListItemType}"
+            EditState="{EditState}"
+            Model="{RepeatedItem}"
+            ListModel="{ListModel}"
+            Index="{RepeatedItemIndex}"
+            Columns="{ColumnData.DisplayedColumns}"
+            NavigateIntoArgs="{NavigateIntoArgs}"
+            SelectionManager="{SelectionManager}"
+            OverrideStyle="{OverrideStyle}"
+            IsDragging="{IsDragging}"
+            DraggingIndex="{DraggingIndex}"
+            ColumnLayout="{ColumnLayout}"
+            DisplayDragFeedback="false"
+            CanDrag="{RepeatedItemIndex.Value >= FixedItems &amp;&amp; CanDrag}"
+            RowPadding="{RowPadding}"
+            RowSize="{RowSize}"
+            />
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+
+  
+  
+  
+  
+  
+  <UI Name="ColumnDividers">
+    <Properties>
+      <List Name="Columns" List="$Required"/>
+      <Layout Name="ColumnLayout" Layout="$Required"/>
+      <Command Name="ColumnWidthsChanged" Command="$Required"/>
+    </Properties>
+
+    <Content>
+      <Repeater Source="{Columns}" Layout="{ColumnLayout}">
+        <Content>
+
+          <me:ColumnDivider LayoutInput="{((me:ColumnInfo)RepeatedItem).LayoutInput}"
+                            Columns="{Columns}"
+                            ColumnInfo="{(me:ColumnInfo)RepeatedItem}"
+                            ColumnWidthsChanged="{ColumnWidthsChanged}"
+                            Index="{RepeatedItemIndex}"/>
+
+        </Content>
+      </Repeater>
+    </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="ColumnDivider">
+    <Properties>
+      <List Name="Columns" List="$Required"/>
+      <me:ColumnInfo Name="ColumnInfo" ColumnInfo="$Required"/>
+      <Command Name="ColumnWidthsChanged" Command="$Required"/>
+      <Index Name="Index" Index="$Required"/>
+    </Properties>
+
+    <Scripts>
+      <Script> Line.Visible = [Index.Value] > 0 &amp;&amp; ColumnInfo.ShowDivider; </Script>
+      <Script> Resizer.Visible = [ColumnInfo.Resizable]; </Script>
+    </Scripts>
+
+    <Content>
+      <Panel Name="Root"
+             SharedSizePolicy="SharesWidth" SharedSize="{ColumnInfo.ColumnSize}"
+             Layout="Form">
+        <Children>
+
+          <ColorFill Name="Line" Content="{styles:Styles.ColumnDivider}">
+            <LayoutInput>
+              <AnchorLayoutInput Left="Parent,0" Right="Parent,0,1" Top="Parent,0" Bottom="Parent,1"/>
+            </LayoutInput>
+          </ColorFill>
+
+          <me:ColumnResizer Name="Resizer" ColumnInfo="{ColumnInfo}" ColumnWidthsChanged="{ColumnWidthsChanged}">
+            <LayoutInput>
+              <AnchorLayoutInput Left="Parent,1,-7" Right="Parent,1,7" Top="Parent,0" Bottom="Parent,1"
+                                 ContributesToWidth="false"/>
+            </LayoutInput>
+          </me:ColumnResizer>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+
+  
+  
+  
+  
+  
+  <Class Name="AccessibleDescriptionReference">
+    <Properties>
+      <Boolean Name="Active"/>
+      <String Name="Value" String="{null}"/>
+    </Properties>
+  </Class>
+
+
+  
+  
+  
+  
+  <UI Name="SpreadSheetListItem" Base="core:ListItemBase">
+    <Properties>
+      <me:SpreadSheetListModel Name="ListModel" SpreadSheetListModel="{null}"/>
+      <Object Name="Model" Object="$Required"/>
+      <List Name="Columns" List="$Required"/>
+      <Layout Name="ColumnLayout" Layout="$Required"/>
+      <SelectionManager Name="SelectionManager" SelectionManager="$Required"/>
+      <me:ListEditState Name="EditState" ListEditState="$Required"/>
+
+      <style:Style Name="OverrideStyle" Style="{null}"/>
+      <Boolean Name="CanDrag" Boolean="true"/>
+      <iris:BooleanChoice Name="IsDragging" BooleanChoice="{null}"/>
+      <iris:IntRangedValue Name="DraggingIndex" IntRangedValue="{null}"/>
+      <contentList:NavigateIntoIndexRequest Name="NavigateIntoArgs" NavigateIntoIndexRequest="$Required"/>
+
+      <Boolean Name="DisplayDragFeedback" Boolean="true"/>
+
+      <Size Name="RowSize" Size="$Required"/>
+      <Inset Name="RowPadding" Inset="$Required"/>
+    </Properties>
+
+    <Locals>
+      <style:StatefulCompositeStyle Name="StatefulStyle" Base="{styles:SharedStyles.ListItemStyle}" Override="{OverrideStyle}"/>
+
+      <core:ListItemContext Name="RowContext" Index="{Index}" SelectOnMouseDown="false"/>
+
+      <me:AccessibleDescriptionReference Name="AggregateAccessibleDescription"/>
+
+      <drag:DragFeedback Name="DragFeedback" DragFeedback="{null}"/>
+
+      <Command Name="EditListItem" />
+
+      
+      <zune:BoolDisposeHelper Name="DisposeHelper" Choice="{IsDragging}"/>
+    </Locals>
+
+    <Input>
+      
+
+      <DragSourceHandler Name="DirectDragSource" AllowedDropActions="All" Value="{SelectionManager}" Enabled="{CanDrag}"/>
+      <DragSourceHandler Name="BubbledDragSource" AllowedDropActions="All" Value="{SelectionManager}" HandlerStage="Bubbled" Enabled="{CanDrag}"/>
+    </Input>
+
+    <Scripts>
+      
+      <Script>
+        Context.Value = RowContext;
+        RowContext.Edit = EditListItem;
+      </Script>
+
+      
+      <Script>
+        if (DisplayDragFeedback)
+        {
+          DirectDragSource.MoveCursor = Cursor.Arrow;
+          DirectDragSource.CopyCursor = Cursor.Arrow;
+          DirectDragSource.CancelCursor = Cursor.Arrow;
+          BubbledDragSource.MoveCursor = Cursor.Arrow;
+          BubbledDragSource.CopyCursor = Cursor.Arrow;
+          BubbledDragSource.CancelCursor = Cursor.Arrow;
+        }
+      </Script>
+
+      <Script>StatefulStyle.Override = [OverrideStyle];</Script>
+
+      <Script>StatefulStyle.State.Focused = [UI.DeepKeyFocus];</Script>
+      <Script>StatefulStyle.State.Hovered = [UI.DeepMouseFocus];</Script>
+
+      <Script>
+        if ([StatefulStyle.State.Selected])
+          Background.Content = styles:Styles.ListItemSelectedBackground;
+        else if ([StatefulStyle.State.Hovered])
+          Background.Content = styles:Styles.ListItemHoverBackground;
+        else
+          Background.Content = styles:Styles.ListItemBackground;
+      </Script>
+
+      
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(SelectionManager.SelectedIndices)]
+        if (SelectionManager != null)
+        {
+          bool selected = SelectionManager.IsSelected([Index.Value]);
+          StatefulStyle.State.Selected = selected;
+          DirectDragSource.Enabled = selected &amp;&amp; CanDrag;
+        }
+      </Script>
+
+      <Script>
+        [InitialEvaluate(false)]
+        bool isDragging = [DirectDragSource.Dragging] || [BubbledDragSource.Dragging];
+
+        if (IsDragging != null)
+        {
+          IsDragging.Value = isDragging;
+
+          
+          
+          
+          
+          DisposeHelper.ResetOnDispose = isDragging;
+        }
+
+        
+        
+        if (isDragging)
+        {
+          if (DraggingIndex != null)
+            DraggingIndex.Value = Index.Value;
+          
+          int count = 1;
+
+          if (SelectionManager != null)
+          {
+            if (!SelectionManager.IsSelected(Index.Value))
+              SelectionManager.Select(Index.Value, true);
+
+            count = SelectionManager.Count;
+          }
+
+          if (DisplayDragFeedback)
+          {
+            if (DragFeedback == null)
+              DragFeedback = new drag:DragFeedback();
+
+            DragFeedback.Count = count;
+            DragFeedback.Helper.Show(DragFeedback);
+          }
+        }
+        else if (DragFeedback != null)
+        {
+          DragFeedback.Helper.Hide();
+          UI.DisposeOwnedObject(DragFeedback);
+          DragFeedback = null;
+        }
+
+        drag:DragInfo.IsDraggingInternally = isDragging;
+      </Script>
+
+      <Script>
+        if (DirectDragSource.Dragging &amp;&amp; DragFeedback != null)
+          DragFeedback.DropAction = [DirectDragSource.CurrentDropAction];
+      </Script>
+
+      <Script>
+        if (BubbledDragSource.Dragging &amp;&amp; DragFeedback != null)
+          DragFeedback.DropAction = [BubbledDragSource.CurrentDropAction];
+      </Script>
+
+      <Script>AggregateAccessibleDescription.Active = [Accessible.Enabled];</Script>
+      <Script>AccessibleDescription = [AggregateAccessibleDescription.Value];</Script>
+
+      
+      <Script>
+        [DeclareTrigger(EditListItem.Invoked)]
+        EditState.InEditMode = true;
+        NavigateIntoArgs.Index = Index.Value;
+        NavigateIntoArgs.Select = true;
+      </Script>
+
+      
+      <Script><![CDATA[
+        [InitialEvaluate(false)]
+
+        
+        
+        
+        
+
+        if (UI.DeepKeyFocus && ![EditState.InEditMode])
+        {
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+
+          UI.NavigateInto();
+        }
+      ]]></Script>
+
+      
+      
+      <Script>
+        if ([UI.KeyFocus] &amp;&amp; EditState.InEditMode)
+        {
+          Background.NavigateInto();
+        }
+      </Script>
+
+    </Scripts>
+
+    <Content>
+      <ColorFill Name="Background" MouseInteractive="false" Padding="{RowPadding}">
+        <Children>
+
+          <Repeater Source="{Columns}" Layout="{ColumnLayout}">
+            <Content>
+
+              <me:CellHost
+                Style="{StatefulStyle}" ListModel="{ListModel}" Model="{Model}"
+                EditState="{EditState}"
+                ColumnInfo="{(me:ColumnInfo)RepeatedItem}"
+                LayoutInput="{((me:ColumnInfo)RepeatedItem).LayoutInput}"
+                AggregateAccessibleDescription="{AggregateAccessibleDescription}"
+                RowIndex="{Index}"/>
+
+            </Content>
+          </Repeater>
+
+        </Children>
+      </ColorFill>
+    </Content>
+  </UI>
+
+  
+  
+  
+  
+  
+  
+  <Class Name="ColumnInfoBase">
+    <Properties>
+      <String Name="Header" String="{null}"/>
+      <Image Name="HeaderIcon" Image="{null}"/>
+      <Boolean Name="HighlightHeader" Boolean="true"/>
+
+      <Object Name="SortBy" Object="{null}"/>
+      <Boolean Name="SortAscendingDefault" Boolean="true"/>
+      <Inset Name="CellPadding" Inset="{styles:Styles.CellPadding}"/>
+      <Inset Name="HeaderPadding" Inset="{CellPadding}"/>
+
+      <SharedSize Name="ColumnSize" SharedSize="{null}"/>
+      <Boolean Name="Resizable" Boolean="true"/>
+      <Boolean Name="Visible" Boolean="true"/>
+      <Boolean Name="Removable" Boolean="true"/>
+      <Boolean Name="ShowDivider" Boolean="true"/>
+
+      <LayoutInput Name="LayoutInput">
+        <LayoutInput>
+          <DockLayoutInput Position="Left" Alignment="Near"/>
+        </LayoutInput>
+      </LayoutInput>
+      
+      <List Name="VisibilitiesChanged"/>
+    </Properties>
+    
+    <Scripts>
+      <Script>
+        [DeclareTrigger(Visible)]
+        foreach (Command command in VisibilitiesChanged)
+          command.Invoke();
+      </Script>
+    </Scripts>
+  </Class>
+
+  
+  
+  
+  
+  <Class Name="ColumnInfo" Base="me:ColumnInfoBase">
+    <Properties>
+      <Type Name="CellType" Type="{typeof(me:ToStringCell)}"/>
+      <Type Name="CellEditType" Type="{null}"/>
+
+      <Type Name="HeaderType" Type="{null}"/>
+    </Properties>
+    <Scripts>
+      <Script>
+        if (HeaderType == null)
+        {
+          
+          if (HeaderIcon != null)
+            HeaderType = typeof(me:HeaderIconCell);
+          else
+            HeaderType = typeof(me:HeaderCell);
+        }
+      </Script>
+    </Scripts>
+  </Class>
+
+  
+  
+  
+  
+  <UI Name="ColumnHeaders" Base="core:ReorderableListBase">
+    <Properties>
+      <me:ColumnData Name="ColumnData" ColumnData="$Required"/>
+      <List Name="Content" List="{ColumnData.DisplayedColumns}"/>
+      <Boolean Name="CanReorder" Boolean="{ColumnData.CanReorderColumns}"/>
+
+      <me:SpreadSheetListModel Name="ListModel" SpreadSheetListModel="{null}"/>
+      <Int32 Name="HeaderSpacing" Int32="$Required"/>
+      <Int32 Name="HeaderHeight" Int32="$Required"/>
+      <Boolean Name="HighlightHeaders" Boolean="$Required"/>
+      <style:Style Name="HeaderStyle" Style="{styles:SharedStyles.ColumnHeaderStyleSet}"/>
+      <me:ListEditState Name="EditState" ListEditState="$Required"/>
+    </Properties>
+
+    <Locals>
+      <iris:BooleanChoice Name="MouseOverHeaders"/>
+    </Locals>
+
+    <Input>
+      <ClickHandler Name="ClickDetector" ClickType="Any" HandlerStage="Routed" Handle="false"/>
+    </Input>
+
+    <Scripts>
+
+      
+      
+      <Script>
+        [DeclareTrigger(ClickDetector.Invoked)]
+        [DeclareTrigger(UI.DeepKeyFocus)]
+
+        EditState.InEditMode = false;
+      </Script>
+
+      <Script> MouseOverHeaders.Value = HighlightHeaders &amp;&amp; [UI.DeepMouseFocus]; </Script>
+      <Script>
+        if ([IsDragging.Value])
+        {
+          LastIndicator.Index = Content.Count;
+        }
+      </Script>
+
+      
+      <Script><![CDATA[
+        [DeclareTrigger(Target.Dropped)]
+
+        
+
+        object value = Target.GetValue();
+
+        if (!(value is int))
+        {
+          
+        }
+        else
+        {
+          int oldIndex = (int)value;
+          int insertAt = InsertIndex.Value;
+
+          if (insertAt >= 0 && insertAt <= Content.Count)
+          {
+            int newIndex;
+
+            
+            
+            if (insertAt > oldIndex)
+              newIndex = insertAt - 1;
+            else
+              newIndex = insertAt;
+
+            if (oldIndex != newIndex)
+            {
+              
+              
+              iris:ArrayListDataSet orderedColumns = (iris:ArrayListDataSet)ColumnData.OrderedColumns;
+              
+              iris:ArrayListDataSet displayedColumns = ColumnData.DisplayedColumns;
+              
+              int oldOrderedIndex = orderedColumns.IndexOf(displayedColumns.get_Item(oldIndex));
+              int newOrderedIndex = orderedColumns.IndexOf(displayedColumns.get_Item(newIndex));
+              
+              orderedColumns.Move(oldOrderedIndex, newOrderedIndex);
+              ColumnData.ColumnOrderChanged.Invoke();
+            }
+          }
+        }
+   ]]></Script>
+    </Scripts>
+
+    <Content>
+      <Panel Layout="Anchor">
+        <Children>
+
+          <Repeater Name="Repeater" ContentName="Item" Layout="{ListLayout}" DiscardOffscreenVisuals="true"/>
+
+          <core:Indicator Name="LastIndicator" InsertAtIndex="{InsertIndex}" MinimumSize="1, 0"
+                          Visible="{MouseOverHeaders}" Color="{styles:Styles.ColumnDivider}">
+            <LayoutInput>
+              <AnchorLayoutInput Left="Repeater,1,0" Top="Repeater,0" Bottom="Repeater,1"
+                                 ContributesToWidth="false" ContributesToHeight="false"/>
+            </LayoutInput>
+          </core:Indicator>
+
+          
+          <Graphic Name="SelectionRect"/>
+          <Panel Name="Background"/>
+
+        </Children>
+      </Panel>
+    </Content>
+
+    <Content Name="Item">
+      <Panel Layout="Anchor" LayoutInput="{((me:ColumnInfo)RepeatedItem).LayoutInput}">
+        <Children>
+
+          
+          
+          <core:ItemDropZone Index="{RepeatedItemIndex}" IsVisible="{IsDragging}"
+                             ValidTarget="{RepeatedItemIndex.Value >= ColumnData.FixedColumns}">
+            <LayoutInput>
+              <AnchorLayoutInput Top="Item, 0, -15" Bottom="Item, 1, 15" Left="Item,0" Right="Item,0.5"
+                                 ContributesToWidth="false" ContributesToHeight="false"/>
+            </LayoutInput>
+          </core:ItemDropZone>
+
+          
+          <core:ItemDropZone Index="{RepeatedItemIndex}" IndexModifier="1" IsVisible="{IsDragging}"
+                             ValidTarget="{RepeatedItemIndex.Value + 1 >= ColumnData.FixedColumns}">
+            <LayoutInput>
+              <AnchorLayoutInput Top="Item, 0, -15" Bottom="Item, 1, 15"  Left="Item,0.5" Right="Item,1"
+                                 ContributesToWidth="false" ContributesToHeight="false"/>
+            </LayoutInput>
+          </core:ItemDropZone>
+
+          
+          <core:Indicator Index="{RepeatedItemIndex}" InsertAtIndex="{InsertIndex}" MinimumSize="0, 1"
+                          Visible="{MouseOverHeaders}" Color="{styles:Styles.ColumnDivider}"
+                          ForceHidden="{!((me:ColumnInfo)RepeatedItem).ShowDivider}" HideFirstIndicator="true">
+            <LayoutInput>
+              <AnchorLayoutInput Left="Item, 0" Top="Item, 0" Bottom="Item, 1"
+                                 ContributesToWidth="false" ContributesToHeight="false"/>
+            </LayoutInput>
+          </core:Indicator>
+
+          <me:ColumnHeader Name="Item"
+              ColumnData="{ColumnData}"
+              ColumnInfo="{(me:ColumnInfo)RepeatedItem}"
+              ColumnWidthsChanged="{ColumnData.ColumnWidthsChanged}"
+              ListModel="{ListModel}"
+              HeaderSpacing="{HeaderSpacing}"
+              Index="{RepeatedItemIndex}"
+              CanReorder="{CanReorder &amp;&amp; RepeatedItemIndex.Value >= ColumnData.FixedColumns}"
+              IsDragging="{IsDragging}"
+              MouseOverHeaders="{MouseOverHeaders}"
+              HeaderHeight="{HeaderHeight}"
+              HeaderStyle="{HeaderStyle}"/>
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  
+  <UI Name="ColumnHeader">
+    <Properties>
+      <me:ColumnData Name="ColumnData" ColumnData="$Required"/>
+      <me:ColumnInfo Name="ColumnInfo" ColumnInfo="$Required"/>
+      <Command Name="ColumnWidthsChanged" Command="$Required"/>
+      <me:SpreadSheetListModel Name="ListModel" SpreadSheetListModel="{null}"/>
+      <Int32 Name="HeaderSpacing" Int32="$Required"/>
+      <Index Name="Index" Index="$Required"/>
+      <Boolean Name="CanReorder" Boolean="$Required"/>
+      <iris:BooleanChoice Name="IsDragging" BooleanChoice="$Required"/>
+      <iris:BooleanChoice Name="MouseOverHeaders" BooleanChoice="$Required"/>
+      <style:Style Name="HeaderStyle" Style="$Required"/>
+      <Int32 Name="HeaderHeight" Int32="$Required"/>
+    </Properties>
+
+    <Input>
+      
+      <DragSourceHandler Name="DragSource" Enabled="{CanReorder}" AllowedDropActions="Move"
+                         MoveCursor="Arrow" CancelCursor="Arrow" HandlerStage="Direct,Bubbled"/>
+
+      
+      <ClickHandler Name="SortHandler" ClickType="LeftMouse" Enabled="{ColumnInfo.SortBy != null}" HandlerStage="Direct,Bubbled"/>
+    </Input>
+
+    <Scripts>
+      <Script> Resizer.Visible = [ColumnInfo.Resizable]; </Script>
+
+      <Script> DragSource.Value = [Index.Value]; </Script>
+
+      <Script> IsDragging.Value = [DragSource.Dragging]; </Script>
+
+      <Script>
+        [DeclareTrigger(SortHandler.Invoked)]
+
+        if (ColumnData.SortedColumn == ColumnInfo.SortBy)
+        {
+          
+          ColumnData.SortAscending = !ColumnData.SortAscending;
+        }
+        else
+        {
+          ColumnData.SortedColumn = ColumnInfo.SortBy;
+          ColumnData.SortAscending = ColumnInfo.SortAscendingDefault;
+        }
+      </Script>
+
+      <Script>
+        Header.MouseOverSortArea = [UI.DeepMouseFocus] &amp;&amp;
+                                  ![Resizer.MouseFocus] &amp;&amp;
+                                  ![DragSource.Dragging];
+      </Script>
+
+      <Script>
+        if ([MouseOverHeaders.Value])
+        {
+          if ([UI.DeepMouseFocus] &amp;&amp; ColumnInfo.HighlightHeader)
+          {
+            Content.Content = styles:Styles.ListHeaderActiveHoverBackground;
+          }
+          else
+          {
+            Content.Content = styles:Styles.ListHeaderHoverBackground;
+          }
+        }
+        else
+        {
+          Content.Content = styles:Styles.ListHeaderBackground;
+        }
+      </Script>
+    </Scripts>
+
+    <Content>
+      <ColorFill Name="Content" Layout="Anchor"
+                 SharedSize="{ColumnInfo.ColumnSize}" SharedSizePolicy="SharesWidth"
+                 MinimumSize="{new Size(0,HeaderHeight)}" MaximumSize="{new Size(0,HeaderHeight)}">
+        <Children>
+
+          <me:ColumnResizer Name="Resizer" ColumnInfo="{ColumnInfo}" ColumnWidthsChanged="{ColumnWidthsChanged}">
+            <LayoutInput>
+              <AnchorLayoutInput Left="Parent,1,-7" Right="Parent,1,7" Top="Parent,0" Bottom="Parent,1"
+                                 ContributesToWidth="false"/>
+            </LayoutInput>
+          </me:ColumnResizer>
+
+          
+          <me:Cell Name="Header"
+              Cell="{ColumnInfo.HeaderType}"
+              Model="{ColumnInfo}"
+              ListModel="{ListModel}"
+              Padding="{ColumnInfo.HeaderPadding}"
+              Style="{HeaderStyle}">
+            <LayoutInput>
+              <AnchorLayoutInput Left="Parent,0" Top="Parent,0"/>
+            </LayoutInput>
+          </me:Cell>
+
+        </Children>
+      </ColorFill>
+    </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="ColumnResizer">
+    <Properties>
+      <me:ColumnInfo Name="ColumnInfo" ColumnInfo="$Required"/>
+      <Command Name="ColumnWidthsChanged" Command="$Required"/>
+      <Boolean Name="MouseFocus"/>
+    </Properties>
+    <Locals>
+      <Size Name="InitialSize"/>
+    </Locals>
+
+    <Input>
+      <ClickHandler Name="Clicker" ClickType="LeftMouse" ClickCount="Double"/>
+      <DragHandler Name="Dragger" CancelOnEscape="true"/>
+    </Input>
+
+    <Scripts>
+      <Script>
+        UI.Cursor = Cursor.SizeWE;
+      </Script>
+      <Script>
+        MouseFocus = [UI.MouseFocus];
+      </Script>
+      <Script>
+        [DeclareTrigger(Dragger.Started)]
+        
+        InitialSize = ColumnInfo.ColumnSize.Size;
+      </Script>
+      <Script>
+        [DeclareTrigger(Dragger.AbsoluteDragSize)]
+        ColumnInfo.ColumnSize.Size = new Size(sys:Math.Max(0, InitialSize.Width + Dragger.AbsoluteDragSize.Width), InitialSize.Height);
+      </Script>
+      <Script>
+        [DeclareTrigger(Dragger.Ended)]
+        ColumnWidthsChanged.Invoke();
+      </Script>
+      <Script>
+        [DeclareTrigger(Dragger.Cancelled)]
+        ColumnInfo.ColumnSize.Size = InitialSize;
+      </Script>
+      <Script>
+        [DeclareTrigger(Clicker.Invoked)]
+        ColumnInfo.ColumnSize.AutoSize();
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel/>
+    </Content>
+  </UI>
+
+  
+  
+  
+  
+  <UI Name="CellHost">
+    <Properties>
+      <me:SpreadSheetListModel Name="ListModel" SpreadSheetListModel="{null}"/>
+      <Object Name="Model" Object="$Required"/>
+
+      <me:ColumnInfo Name="ColumnInfo" ColumnInfo="$Required"/>
+      <style:Style Name="Style" Style="$Required"/>
+
+      <me:AccessibleDescriptionReference Name="AggregateAccessibleDescription" AccessibleDescriptionReference="{null}"/>
+      <Index Name="RowIndex" Index="$Required"/>
+      <me:ListEditState Name="EditState" ListEditState="$Required"/>
+    </Properties>
+
+    <Locals>
+      <core:ListItemContext Name="CellContext" Index="{RowIndex}" MainContext="false"/>
+      <Command Name="EditMe" />
+      <iris:BooleanChoice Name="IsEditing" BooleanChoice="{null}"/>
+    </Locals>
+
+    <Input>
+      <EventContext Value="{CellContext}"/>
+      <KeyHandler Name="Escape" Key="Escape" Enabled="false" HandlerStage="Bubbled" />
+    </Input>
+
+    <Scripts>
+
+      
+      <Script>
+        if (ColumnInfo.CellEditType != null)
+        {
+          CellContext.Edit = EditMe;
+        }
+      </Script>
+
+
+      
+      <Script><![CDATA[
+        [DeclareTrigger(IsEditing.Value)]
+
+        Escape.Enabled = (IsEditing != null && IsEditing.Value);
+
+        if (IsEditing != null && !IsEditing.Value)
+        {
+          UI.DisposeOwnedObject(IsEditing);
+          IsEditing = null;
+
+          Content.RequestSource(ColumnInfo.CellType);
+        }
+
+      ]]></Script>
+
+      
+      <Script>
+        [DeclareTrigger(Escape.Invoked)]
+        EditState.InEditMode = false;
+        EditState.Cancelled = true;
+        if (IsEditing != null)
+        {
+          IsEditing.Value = false;
+        }
+      </Script>
+
+      
+      <Script><![CDATA[
+
+        
+        
+        
+
+        bool inEditMode = [EditState.InEditMode];
+        bool canEdit    = ColumnInfo.CellEditType != null;
+
+        if (inEditMode && canEdit)
+        {
+          UI.KeyInteractive = true;
+          Content.Navigation = NavigationPolicies.TabGroup;
+        }
+        else
+        {
+          UI.KeyInteractive = false;
+          Content.Navigation = NavigationPolicies.None;
+        }
+
+        
+        
+        Content.InputEnabled = !inEditMode || canEdit;
+
+      ]]></Script>
+
+      
+      <Script>
+        [DeclareTrigger(EditMe.Invoked)]
+        IsEditing = new iris:BooleanChoice();
+        IsEditing.Value  = true;
+        EditState.InEditMode = true;
+
+        Content.RequestSource(ColumnInfo.CellEditType, "IsEditing", IsEditing);
+        Content.NavigateInto();
+      </Script>
+
+      
+      
+      <Script><![CDATA[
+        [DeclareTrigger(UI.DeepKeyFocus)]
+
+        if (UI.DeepKeyFocus && EditState.InEditMode && IsEditing == null)
+        {
+          if (ColumnInfo.CellEditType != null)
+          {
+            EditMe.Invoke();
+          }
+        }
+      ]]></Script>
+
+    </Scripts>
+
+    <Content>
+      <me:Cell Name="Content" Cell="{ColumnInfo.CellType}"
+          Style="{Style}"
+          ListModel="{ListModel}"
+          ListEditState="{EditState}"
+          Model="{Model}"
+          RowIndex="{RowIndex}"
+          Padding="{ColumnInfo.CellPadding}"
+          SharedSize="{ColumnInfo.ColumnSize}"
+          SharedSizePolicy="ContributesToWidth,SharesWidth"
+          AggregateAccessibleDescription="{AggregateAccessibleDescription}"/>
+    </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="Cell">
+    <Properties>
+      <style:Style Name="Style" Style="$Required"/>
+      <me:SpreadSheetListModel Name="ListModel" SpreadSheetListModel="{null}"/>
+      <Object Name="Model" Object="{null}"/>
+      <Index Name="RowIndex" Index="{null}"/>
+      <String Name="AccessibleDescription" String="{null}"/>
+      <me:AccessibleDescriptionReference Name="AggregateAccessibleDescription" AccessibleDescriptionReference="{null}"/>
+      <me:ListEditState Name="ListEditState" ListEditState="{null}"/>
+      <iris:BooleanChoice Name="IsEditing" BooleanChoice="{null}"/>
+      <Boolean Name="MouseOverSortArea" Boolean="false"/>
+    </Properties>
+
+    <Scripts>
+
+      <Script>
+        <![CDATA[
+        if (AggregateAccessibleDescription != null)
+        {
+          if ([AggregateAccessibleDescription.Active] && ([AccessibleDescription] != null))
+          {
+            
+            if (AggregateAccessibleDescription.Value == null)
+            {
+              AggregateAccessibleDescription.Value = AccessibleDescription;
+            }
+            else
+            {
+              AggregateAccessibleDescription.Value = "{0}, {1}".Format(AggregateAccessibleDescription.Value, AccessibleDescription);
+            }
+          }
+        }
+        ]]>
+      </Script>
+    </Scripts>
+  </UI>
+
+  
+  
+  
+  
+  
+  
+  
+  <UI Name="ToolTipCell" Base="me:Cell">
+    <Properties>
+      <String Name="ToolTipText" String="{null}"/>
+      <PlacementMode Name="ToolTipPlacement" PlacementMode="Origin"/>
+      <style:Style Name="ToolTipStyle" Style="{null}"/>
+    </Properties>
+
+    <Locals>
+      
+      <tooltip:ToolTip Name="ToolTip" ToolTip="{null}"/>
+    </Locals>
+
+    <Scripts>
+      
+      
+      <Script><![CDATA[
+        [DeclareTrigger(UI.DeepMouseFocus)]
+
+        
+        
+        
+        
+        
+        
+        if (ToolTip != null)
+        {
+          UI.DisposeOwnedObject(ToolTip);
+          ToolTip = null;
+        }
+
+        if (UI.DeepMouseFocus)
+        {
+          
+          
+          
+
+          if (!String.IsNullOrEmpty(ToolTipText))
+          {
+            ToolTip = new tooltip:ToolTip();
+            PopupLayoutInput input = new PopupLayoutInput();
+            input.Placement = ToolTipPlacement;
+            input.PlacementTarget = ToolTipOrigin;
+            if (ToolTipPlacement == PlacementMode.Origin) input.Offset = tooltip:ToolTipConstants.InversePadding;
+            ToolTip.LayoutInput = input;
+            ToolTip.Model = ToolTipText;
+            if (ToolTipStyle != null)
+            {
+              ToolTip.Font = ToolTipStyle.Font;
+            }
+            else if (Style != null)
+            {
+              ToolTip.Font = Style.Font;
+            }
+            ToolTip.Helper.ShowToolTip(ToolTip);
+          }
+        }
+   ]]></Script>
+    </Scripts>
+    <Content>
+      <Panel Name="ToolTipOrigin"/>
+    </Content>
+  </UI>
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  <UI Name="EditCell" Base="me:Cell">
+      <Properties>
+
+        
+        <Command Name="ValidateValue"/>
+
+        
+        <Command Name="CommitValue"/>
+
+        
+        <Command Name="ValidateFailed"/>
+      </Properties>
+
+      <Scripts>
+        <Script><![CDATA[
+            [DeclareTrigger(UI.DeepKeyFocus)]
+
+            if (!UI.DeepKeyFocus && !ListEditState.Cancelled)
+            {
+              ValidateValue.Invoke();
+            }
+        ]]></Script>
+
+        <Script>
+          [DeclareTrigger(CommitValue.Invoked)]
+          [DeclareTrigger(ValidateFailed.Invoked)]
+
+          
+          
+
+          IsEditing.Value = false;
+        </Script>
+
+      </Scripts>
+  </UI>
+
+  
+  
+  
+  
+  
+  
+  <UI Name="LabelCell" Base="me:ToolTipCell">
+    <Properties>
+      <String Name="Content" String="{null}"/>
+
+      <Boolean Name="WordWrap" Boolean="false"/>
+      <Int32 Name="MaximumLines" Int32="0"/>
+      <Boolean Name="ShowToolTipWhenClipped" Boolean="true"/>
+
+      
+      <Boolean Name="Clipped"/>
+    </Properties>
+
+    <Locals>
+      <Accessible Name="Accessible"/>
+      <DockLayout Name="DockLayout_LeftNear_SizeToChildren" DefaultLayoutInput="Left,Near" SizeToChildren="true"/>
+    </Locals>
+
+    <Scripts>
+      <Script>private_Label.WordWrap = [WordWrap];</Script>
+      <Script>private_Label.MaximumLines = [MaximumLines];</Script>
+      <Script>private_Label.Color = [Style.Color];</Script>
+      <Script>private_Label.Font = [Style.Font];</Script>
+      <Script>private_Label.Style = [Style.TextStyle];</Script>
+      <Script>private_Label.Margins = [Style.TextMargins];</Script>
+      <Script>Clipped = [private_Label.Clipped];</Script>
+
+      <Script>private_Label.Content = [Content];</Script>
+
+      <Script>
+        private_Label.Content = [Content];
+        AccessibleDescription = Content;
+      </Script>
+
+      <Script>
+        if ([ShowToolTipWhenClipped] &amp;&amp; ([Clipped] || ![private_Label.Visible]))
+          ToolTipText = [private_Label.Content];
+        else
+          ToolTipText = null;
+      </Script>
+    </Scripts>
+
+    <Content>
+      
+
+
+
+
+
+
+
+
+
+
+
+      <Panel Name="ToolTipOrigin" Layout="{DockLayout_LeftNear_SizeToChildren}">
+        <Children>
+          
+          <Text Name="private_Label" MouseInteractive="true"/>
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  
+  <UI Name="LabelEditCell" Base="me:EditCell">
+    <Properties>
+      <EditableTextData Name="EditableText"/>
+    </Properties>
+
+    <Scripts>
+      <Script>
+        [DeclareTrigger(EditableText.Submitted)]
+
+        ValidateValue.Invoke();
+
+        
+        ListEditState.InEditMode = false;
+      </Script>
+
+      <Script>
+        [DeclareTrigger(ValidateValue.Invoked)]
+
+        if (!String.IsNullOrEmpty(EditableText.Value))
+        {
+          CommitValue.Invoke();
+        }
+        else
+        {
+          ValidateFailed.Invoke();
+        }
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel Navigation="ContainHorizontal" Layout="Anchor">
+        <Children>
+
+          <me:LabelEditbox Name="Edit" Style="{Style}" Model="{EditableText}">
+            <LayoutInput>
+              <AnchorLayoutInput Horizontal="Fill"/>
+            </LayoutInput>
+          </me:LabelEditbox>
+
+          <ColorFill Content="{styles:Styles.SearchBoxBackground}">
+            <LayoutInput>
+              <AnchorLayoutInput Top="Edit,0" Bottom="Edit,1" Horizontal="Fill"/>
+            </LayoutInput>
+          </ColorFill>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="NumberTitleCell" Base="me:ToolTipCell">
+    <Properties>
+      <Int32 Name="Number"/>
+      <String Name="Title"/>
+      <Boolean Name="ShowNumber" Boolean="true"/>
+      <Size Name="NumberSize" Size="24,0"/>
+      <style:Style Name="NumberStyle" Style="{Style}"/>
+
+      <AccessibleRole Name="Role" AccessibleRole="StaticText"/>
+    </Properties>
+
+    <Locals>
+      <Accessible Name="Accessible"/>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        if ([ShowNumber])
+        {
+          NumberText.Content = [Number].ToString("D2");
+          NumberText.MinimumSize = NumberSize;
+        }
+        else
+        {
+          NumberText.Content = "";
+          NumberText.MinimumSize = new Size();
+        }
+      </Script>
+      <Script> TitleText.Content = [Title]; </Script>
+
+      <Script> NumberText.Color = [NumberStyle.Color]; </Script>
+      <Script> TitleText.Color  = [Style.Color]; </Script>
+
+      <Script> NumberText.Font = [NumberStyle.Font]; </Script>
+      <Script> TitleText.Font  = [Style.Font]; </Script>
+
+      <Script> NumberText.Style = [NumberStyle.TextStyle]; </Script>
+      <Script> TitleText.Style  = [Style.TextStyle]; </Script>
+
+      <Script> NumberText.Margins = [NumberStyle.TextMargins]; </Script>
+      <Script> TitleText.Margins  = [Style.TextMargins]; </Script>
+
+      <Script>
+        if ([Accessible.Enabled])
+        {
+          if ([ShowNumber])
+            Accessible.Name = "{0} {1}".Format(Number, Title);
+          else
+            Accessible.Name = Title;
+
+          Accessible.Role = Role;
+        }
+      </Script>
+      <Script>
+        if ([TitleText.Clipped])
+        {
+          if ([ShowNumber])
+            ToolTipText = "{0}  {1}".Format(NumberText.Content, TitleText.Content);
+          else
+            ToolTipText = Title;
+        }
+        else
+        {
+          ToolTipText = null;
+        }
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel Name="ToolTipOrigin">
+        <Layout>
+          
+
+
+          <DockLayout DefaultLayoutInput="Left,Near" SizeToChildren="true"/>
+        </Layout>
+        <Children>
+          
+          <Text Name="NumberText" MouseInteractive="true"/>
+          <Text Name="TitleText" MouseInteractive="true"/>
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="NumberTitleEditCell" Base="me:EditCell">
+      <Properties>
+        <Int32 Name="Number"/>
+        <String Name="Title"/>
+        <Boolean Name="ShowNumber" Boolean="true"/>
+        <Size Name="NumberSize" Size="24,0"/>
+        <style:Style Name="NumberStyle" Style="{Style}"/>
+
+        <EditableTextData Name="EditableText"/>
+      </Properties>
+
+
+      <Scripts>
+
+        <Script>
+          [DeclareTrigger(EditableText.Submitted)]
+
+
+          ValidateValue.Invoke();
+
+          
+          ListEditState.InEditMode = false;
+        </Script>
+
+        <Script>
+          [DeclareTrigger(ValidateValue.Invoked)]
+
+          if (!String.IsNullOrEmpty(EditableText.Value))
+          {
+            CommitValue.Invoke();
+          }
+          else
+          {
+            ValidateFailed.Invoke();
+          }
+        </Script>
+
+        <Script>
+          if ([ShowNumber])
+          {
+            NumberText.Content = [Number].ToString("D2");
+            NumberText.MinimumSize = NumberSize;
+          }
+          else
+          {
+            NumberText.Content = "";
+            NumberText.MinimumSize = new Size();
+          }
+        </Script>
+
+        <Script> NumberText.Color = [NumberStyle.Color]; </Script>
+        <Script> NumberText.Font = [NumberStyle.Font]; </Script>
+        <Script> NumberText.Style = [NumberStyle.TextStyle]; </Script>
+
+        <Script> NumberText.Margins = [NumberStyle.TextMargins]; </Script>
+      </Scripts>
+
+
+      <Content>
+          <Panel Navigation="ContainHorizontal" Layout="Anchor">
+            <Children>
+
+              <Text Name="NumberText">
+                <LayoutInput>
+                  <AnchorLayoutInput Left="Parent,0"/>
+                </LayoutInput>
+              </Text>
+
+              <me:LabelEditbox Name="Edit" Style="{Style}" Model="{EditableText}">
+                <LayoutInput>
+                  <AnchorLayoutInput Left="NumberText, 1" Horizontal="Fill"/>
+                </LayoutInput>
+              </me:LabelEditbox>
+
+              <ColorFill Content="{styles:Styles.SearchBoxBackground}">
+                <LayoutInput>
+                  <AnchorLayoutInput Top="Edit,0" Bottom="Edit,1" Left="Edit, 0" Horizontal="Fill"/>
+                </LayoutInput>
+              </ColorFill>
+
+            </Children>
+          </Panel>
+      </Content>
+  </UI>
+
+  
+  
+  
+  
+  <Class Name="Globals" Shared="true">
+    <Properties>
+      <String Name="Unknown" String="{zune:Shell.LoadString(zune:StringId.IDS_TYPE_UNKNOWN)}"/>
+
+      
+      <AnchorLayoutInput Name="LabelIconCellLabelPosition" Left="Parent, 0" Top="Parent, 0" />
+      <AnchorLayoutInput Name="LabelIconCellIconPosition" Left="private_Label, 1, 5" Top="Parent, 0, 5" />
+
+      
+      <AnchorLayoutInput Name="HeaderCellIconPosition" Left="private_Label,1,-10" Top="Parent, 0, 6"/>
+    </Properties>
+  </Class>
+
+
+  
+  
+  
+  
+  <UI Name="FallbackCell" Base="me:LabelCell">
+    <Properties>
+      <String Name="Fallback" String="{me:Globals.Unknown}"/>
+    </Properties>
+    <Scripts>
+      <Script>
+        if (String.IsNullOrEmpty([Content]))
+        {
+          private_Label.Content = Fallback;
+        }
+      </Script>
+    </Scripts>
+  </UI>
+
+  
+  
+  
+  <UI Name="DateCell" Base="me:FallbackCell">
+    <Properties>
+      <sys:DateTime Name="Date"/>
+      <String Name="Format" String="d"/>
+    </Properties>
+
+    <Scripts>
+      <Script>
+        
+        if ([Date].Year == 1)
+        {
+          Content = null;
+        }
+        else
+        {
+          
+          
+          Content = Date.ToLocalTime().ToString(Format);
+        }
+      </Script>
+    </Scripts>
+  </UI>
+
+  
+  
+  
+  <UI Name="LongDateTimeCell" Base="me:DateCell">
+    <Properties>
+      <String Name="Format" String="G"/>
+    </Properties>
+  </UI>
+
+  
+  
+  
+  <UI Name="LengthCell" Base="me:LabelCell">
+    <Properties>
+      <sys:TimeSpan Name="Length"/>
+    </Properties>
+
+    <Scripts>
+      <Script>
+        Content = zune:Shell.TimeSpanToString([Length]);
+     </Script>
+    </Scripts>
+  </UI>
+
+  
+  
+  
+  <UI Name="ButtonCell" Base="me:Cell">
+    <Properties>
+      <iris:Command Name="Command"/>
+      <style:Style Name="DirectHoverStyle" Style="{styles:SharedStyles.HoveredButtonCellStyle}"/>
+    </Properties>
+
+    <Locals>
+      <style:CompositeStyle Name="CompositeStyle" Base="{Style}"/>
+    </Locals>
+
+    <Scripts>
+      <Script>Button.Model = [Command];</Script>
+
+      
+      <Script>
+        if ([UI.DeepMouseFocus])
+          CompositeStyle.Override = DirectHoverStyle;
+        else
+          CompositeStyle.Override = null;
+      </Script>
+    </Scripts>
+
+    <Content>
+      
+      
+      <Panel Layout="Anchor">
+        <Children>
+
+          <core:Button Name="Button" Model="{Command}" OverrideStyle="{CompositeStyle}" MouseInteractive="true"/>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="ActionButtonCell" Base="me:Cell">
+    <Properties>
+      
+      <iris:Command Name="Command" Command="{null}"/>
+      <Image Name="Icon" Image="null"/>
+    </Properties>
+
+    <Scripts>
+      <Script>Button.Model = [Command];</Script>
+      <Script>Button.Icon = [Icon];</Script>
+    </Scripts>
+
+    <Content>
+      <actionprogressbutton:ActionProgressButton Name="Button" Model="{Command}" />
+    </Content>
+  </UI>
+
+
+  
+  
+  
+  <UI Name="LabelIconCell" Base="me:LabelCell">
+    <Properties>
+      <Image Name="Icon" Image="{null}"/>
+      <LayoutInput Name="LabelPosition" LayoutInput="{me:Globals.LabelIconCellLabelPosition}"/>
+      <LayoutInput Name="IconPosition" LayoutInput="{me:Globals.LabelIconCellIconPosition}"/>
+    </Properties>
+
+    <Scripts>
+      <Script>
+          IconGraphic.Content = [Icon];
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel Name="ToolTipOrigin" Layout="Anchor">
+        <Children>
+          <Text Name="private_Label" MouseInteractive="true" LayoutInput="{LabelPosition}"/>
+
+          
+          <Graphic Name="IconGraphic" LayoutInput="{IconPosition}"/>
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="IconCell" Base="me:ToolTipCell">
+    <Properties>
+      <Image Name="Icon" Image="{null}"/>
+      <String Name="ToolTipText" String="{null}"/>
+      <style:Style Name="ToolTipStyle" Style="{styles:SharedStyles.ToolTipStyle}"/>
+      <PlacementMode Name="ToolTipPlacement" PlacementMode="MouseBottom"/>
+    </Properties>
+
+    <Scripts>
+      <Script>
+         IconGraphic.Content = [Icon];
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel Name="ToolTipOrigin" MouseInteractive="true">
+        <Children>
+          <Graphic
+            Name="IconGraphic"
+            Content="{Icon}"
+            SizingPolicy="SizeToContent"
+            StretchingPolicy="None"
+            HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="ToStringCell" Base="me:LabelCell">
+    <Scripts>
+      <Script>
+        if (Model != null)
+          Content = [Model].ToString();
+        else
+          Content = "";
+      </Script>
+    </Scripts>
+  </UI>
+
+  
+  
+  
+  <UI Name="HeaderCell" Base="me:LabelIconCell">
+    <Properties>
+      <me:ColumnInfoBase Name="Model" ColumnInfoBase="$Required"/>
+      <LayoutInput Name="IconPosition" LayoutInput="{me:Globals.HeaderCellIconPosition}"/>
+    </Properties>
+    <Scripts>
+      <Script> Content = [Model.Header]; </Script>
+
+      <Script>
+        Image icon = null;
+        if (Model.SortBy != null)
+        {
+          bool showArrow = false;
+          bool sortAscending;
+
+          if (Model.SortBy == [ListModel.ColumnData.SortedColumn])
+          {
+            showArrow = true;
+            sortAscending = [ListModel.ColumnData.SortAscending];
+          }
+          else if ([MouseOverSortArea])
+          {
+            
+            
+            showArrow = true;
+            sortAscending = Model.SortAscendingDefault;
+          }
+
+          if (showArrow)
+          {
+            if (sortAscending)
+            {
+              icon = styles:Styles.SortArrowUp;
+            }
+            else
+            {
+              icon = styles:Styles.SortArrowDown;
+            }
+          }
+        }
+
+        Icon = icon;
+        if (Icon != null)
+        {
+          private_Label.Margins = new Inset(0,0,18,0);
+        }
+        else
+        {
+          private_Label.Margins = new Inset();
+        }
+      </Script>
+    </Scripts>
+  </UI>
+
+  
+  
+  
+  <UI Name="HeaderIconCell" Base="me:IconCell">
+    <Properties>
+      <me:ColumnInfoBase Name="Model" ColumnInfoBase="$Required"/>
+    </Properties>
+    <Scripts>
+      <Script> Icon = Model.HeaderIcon; </Script>
+      <Script> ToolTipText = Model.Header; </Script>
+    </Scripts>
+  </UI>
+
+  
+  
+  
+  <UI Name="LabelEditbox" Base="core:Editbox">
+    <Properties>
+      <Size Name="TileMinSize" Size="0,0"/>
+      <Size Name="TileMaxSize" Size="0,0"/>
+      <Inset Name="TilePadding" Inset="0,0,0,0"/>
+      <Int32 Name="DefaultHeight" Int32="0"/>
+    </Properties>
+  </UI>
+
+  
+  
+  
+  <UI Name="CommandDescriptionCell" Base="me:LabelCell">
+    <Properties>
+      <iris:Command Name="Model" Command="$Required"/>
+    </Properties>
+
+    <Scripts>
+      <Script>Content = [Model.Description];</Script>
+    </Scripts>
+  </UI>
+
+  
+  
+  
+  <UI Name="MediaStatusCell" Base="me:Cell">
+    <Properties>
+      <zune:StringId Name="ErrorTitle" StringId="{zune:StringId.IDS_PLAYBACK_CANNOT_PLAY}"/>
+      <zune:StringId Name="ErrorTooltip" StringId="{zune:StringId.IDS_PLAYBACK_CANNOT_PLAY_TOOLTIP}"/>
+      <Int32 Name="ErrorCode"/>
+      <Boolean Name="IsNowPlaying"/>
+    </Properties>
+
+    <Locals>
+      <iris:Command Name="ShowErrorDialog"/>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        ShowErrorDialog.Description = zune:Shell.LoadString([ErrorTooltip]);
+      </Script>
+
+      <Script>
+        if ([ErrorCode] &lt; 0)
+        {
+          Icon.Model = ShowErrorDialog;
+          Icon.Style = images:Images.ErrorIcon;
+        }
+        else if ([IsNowPlaying])
+        {
+          Icon.Model = images:Images.NowPlayingIconCommand;
+          Icon.Style = images:Images.NowPlayingIcon;
+        }
+        else
+        {
+          Icon.Model = null;
+          Icon.Style = images:Images.EmptyStyle;
+        }
+      </Script>
+
+      <Script>
+        [DeclareTrigger(ShowErrorDialog.Invoked)]
+        zune:Shell.ShowErrorDialog(ErrorCode, ErrorTitle);
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel>
+        <Children>
+          <images:IconButton
+              KeyInteractiveNStuff="false"
+              Name="Icon"
+              Model="{null}"
+              Style="{images:Images.EmptyStyle}"
+              />
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  <Class Name="SortDescription">
+    <Properties>
+      <String  Name="Attribute"   String="$Required"/>
+      <Boolean Name="SupportsJumpInList" Boolean="false"/>
+    </Properties>
+  </Class>
+
+  
+  
+  
+  <Class Name="ListEditState">
+    <Properties>
+      <Boolean Name="InEditMode"/>
+      <Boolean Name="Cancelled"/>
+    </Properties>
+  </Class>
+
+</UIX>
+

@@ -1,0 +1,43 @@
+﻿<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:lib="res://ZuneShellResources!Library.uix"
+  xmlns:dialogs="res://ZuneShellResources!PodcastDialogs.uix">
+
+  
+  
+  
+  <UI Name="EmptyCollectionPanel" Base="lib:EmptyPage">
+    <Properties>
+      <String Name="Title" String="{zune:Shell.LoadString(zune:StringId.IDS_PODCAST_ABOUT_TITLE)}"/>
+      <iris:Command Name="Link1Command" Description="{zune:Shell.LoadString(zune:StringId.IDS_PODCAST_MARKETPLACE_HUB_BUTTON)}"/>
+      <iris:Command Name="Link2Command" Description="{zune:Shell.LoadString(zune:StringId.IDS_PODCAST_ADD_URL_BUTTON)}"/>
+    </Properties>
+
+    <Locals>
+      <dialogs:SubscribeDialog Name="SubscribeDialog" SubscribeDialog="{null}"/>
+    </Locals>
+
+    <Scripts>
+      
+      <Script>
+        [DeclareTrigger(Link1Command.Invoked)]
+
+        zune:Shell.DefaultInstance.Execute("Marketplace\Podcasts\Home", null);
+      </Script>
+      
+      
+      <Script>
+        [DeclareTrigger(Link2Command.Invoked)]
+
+        if (SubscribeDialog == null)
+        {
+          SubscribeDialog = new dialogs:SubscribeDialog();
+        }
+        SubscribeDialog.Helper.Show(SubscribeDialog);
+      </Script>
+    </Scripts>
+  </UI>
+</UIX>

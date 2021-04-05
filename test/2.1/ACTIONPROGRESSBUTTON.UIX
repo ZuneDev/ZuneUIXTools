@@ -1,0 +1,160 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX 
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:style="res://ZuneShellResources!Style.uix"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:button="res://ZuneShellResources!Button.uix"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:iris="assembly://UIX/Microsoft.Iris">
+
+
+  
+  
+  
+  <UI Name="ActionProgressButton" Base="button:LabelButtonBase">
+    <Properties>
+      <Single Name="Progress" Single="-1.0"/>
+
+      <Image Name="Image"         Image="{styles:Styles.Button}"/>
+      <Image Name="HoverImage"    Image="{styles:Styles.ButtonHover}"/>
+      <Image Name="FocusImage"    Image="{HoverImage}"/>
+      <Image Name="PressedImage"  Image="{styles:Styles.ButtonPressed}"/>
+      <Image Name="DisabledImage" Image="{styles:Styles.ButtonDisabled}"/>
+      <Image Name="ProgressImage" Image="{styles:Styles.ButtonProgress}"/>
+      <Image Name="ProgressBackgroundImage" Image="{styles:Styles.ButtonProgressBackground}"/>
+
+      <style:Style Name="BaseStyle" Style="{styles:SharedStyles.ActionButtonStyle}"/>
+      <style:Style Name="ShadowStyle" Style="{styles:SharedStyles.ActionButtonShadowStyle}"/>
+      <style:Style Name="ProgressStyle" Style="{styles:SharedStyles.ActionButtonProgressStyle}"/>
+      
+      <Inset Name="ButtonInset" Inset="10,1,9,1"/>
+      <Image Name="Icon" Image="{null}"/>
+
+      <iris:Command Name="Model" Command="$Required"/>
+      <button:CommandButtonProvider Name="Provider"/>
+
+      <Size Name="FixedHeight" Size="0,21"/>
+      <Size Name="ButtonFixedSize" Size="99,21" />
+    </Properties>
+
+    <Scripts>
+      <Script>Provider.Model = [Model];</Script>
+      <Script>IconGraphic.Content = [Icon];</Script>
+      <Script>
+        if (Model is zune:ProgressCommand)
+        {
+          Progress = [((zune:ProgressCommand)Model).Progress];
+        }
+      </Script>
+      <Script>
+        if ([Progress] &lt; 0.0 || [Progress] &gt; 1.0 || iris:Application.RenderingType == iris:RenderingType.GDI)
+        {
+          Label.Style = [Style];
+          ShadowLabel.Style = [ShadowStyle];
+          ShadowLabel.Visible = true;
+          
+          
+          if (![UI.FullyEnabled])
+          {
+            Background.Content = DisabledImage;
+          }
+          
+          else
+          {
+            
+            if ([Clicker.Clicking] &amp;&amp; [PressedImage] != null)
+            {
+              Background.Content = PressedImage;
+            }
+            else if ([UI.DeepMouseFocus] &amp;&amp; [HoverImage] != null)
+            {
+              Background.Content = HoverImage;
+            }
+            else if ([UI.DeepKeyFocus] &amp;&amp; [FocusImage] != null)
+            {
+              Background.Content = FocusImage;
+            }
+            else
+            {
+              Background.Content = [Image];
+            }
+          }
+        }
+        else
+        {
+          Background.Content = [ProgressBackgroundImage];
+          Label.Style = [ProgressStyle];
+          ShadowLabel.Visible = false;
+        }
+      </Script>
+      <Script>
+        if (iris:Application.RenderingType != iris:RenderingType.GDI)
+        {
+          float amountToHide = (1.0 - [Progress]) * (Single)(ButtonFixedSize.Width);
+          Clip.FarOffset = amountToHide * -1.0;
+        }
+        else
+        {
+          Clip.FarOffset = (Single)(ButtonFixedSize.Width) * -1.0;
+        }
+      </Script>
+      <Script>
+        ShadowLabel.Content = [Label.Content];
+      </Script>
+    </Scripts>
+    <Content>
+      <Panel MaximumSize="{ButtonFixedSize}">
+        <Children>
+
+          <Graphic Name="Background" 
+                   StretchingPolicy="Fill" SizingPolicy="SizeToChildren" 
+                   MinimumSize="{FixedHeight}" MaximumSize="{FixedHeight}" 
+                   Content="{Image}" ErrorImage="{null}" AcquiringImage="{null}"
+                   Layout="Anchor">
+            <Children>
+
+              <Panel Name="LabelPanel" Layout="Anchor" Padding="{ButtonInset}">
+                <LayoutInput>
+                  <AnchorLayoutInput Horizontal="Center" Vertical="Center"/>
+                </LayoutInput>
+                <Children>
+
+                  <core:Label Name="Label" Style="{Style}">
+                    <LayoutInput>
+                      <AnchorLayoutInput Vertical="Center"/>
+                    </LayoutInput>
+                  </core:Label>
+
+                  <core:Label Name="ShadowLabel" Style="{ShadowStyle}">
+                    <LayoutInput>
+                      <AnchorLayoutInput Left="Label,0,1" Top="Label,0,1"/>
+                    </LayoutInput>
+                  </core:Label>
+
+                  <Graphic Name="IconGraphic" Margins="0,1,0,0">
+                    <LayoutInput>
+                      <AnchorLayoutInput Left="Label,1,2" Vertical="Center"/>
+                    </LayoutInput>
+                  </Graphic>
+
+                </Children>
+              </Panel>
+
+              <Clip Name="Clip" Orientation="Horizontal" ShowFar="true" FadeSize="0.1">
+                <Children>
+
+                  <Graphic Content="{ProgressImage}" SizingPolicy="SizeToConstraint"/>
+
+                </Children>
+              </Clip>
+
+            </Children>
+          </Graphic>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+  
+</UIX>

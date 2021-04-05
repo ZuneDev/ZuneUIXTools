@@ -80,7 +80,7 @@ namespace ZuneUIXTools
                             {
                                 // Highlight the error in the code editor
                                 int offset = textEditor.Document.GetOffset(err.Line, err.Column);
-                                textEditor.SelectionStart = offset + 1;
+                                textEditor.SelectionStart = offset;
                                 textEditor.SelectionLength = 1;
                                 textEditor.ScrollTo(err.Line, err.Column);
                             };

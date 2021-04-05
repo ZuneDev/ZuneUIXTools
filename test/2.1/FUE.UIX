@@ -1,0 +1,931 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:page="res://ZuneShellResources!PageStack.uix"
+  xmlns:animations="res://ZuneShellResources!Animations.uix"
+  xmlns:style="res://ZuneShellResources!Style.uix"
+  xmlns:button="res://ZuneShellResources!Button.uix" 
+  xmlns:zuneutil="assembly://ZuneShell/Microsoft.Zune.Util"
+  xmlns:zuneutilapi="assembly://ZuneDBApi/Microsoft.Zune.Util"  
+  xmlns:me="Me"
+  >
+
+  
+  
+  
+  <UI Name="IntroAnimation" Base="page:PageBase">
+    <Locals>
+      <Timer AutoRepeat="false" Interval="4200" Name="Timer" Enabled="true"/>
+      
+      <Single Name="Gem_Delay"  Single="0.5"/>
+      <Single Name="Z_Delay"    Single="{Gem_Delay + 0.45}"/>
+      <Single Name="U_Delay"    Single="{Z_Delay + 0.05}"/>
+      <Single Name="N_Delay"    Single="{U_Delay + 0.1}"/>
+      <Single Name="E_Delay"    Single="{N_Delay + 0.2}"/>      
+
+      <Image Name="Img_Zune_Z"    Source="res://ZuneShellResources!FUE.Zune.Z.png"/>
+      <Image Name="Img_Zune_U"    Source="res://ZuneShellResources!FUE.Zune.U.png"/>
+      <Image Name="Img_Zune_N"    Source="res://ZuneShellResources!FUE.Zune.N.png"/>
+      <Image Name="Img_Zune_E"    Source="res://ZuneShellResources!FUE.Zune.E.png"/>
+      <Image Name="Img_Zune_Gem0" Source="res://ZuneShellResources!FUE.Gem.0.png"/>
+      <Image Name="Img_Zune_Gem1" Source="res://ZuneShellResources!FUE.Gem.1.png"/>
+      <Image Name="Img_Zune_Gem2" Source="res://ZuneShellResources!FUE.Gem.2.png"/>
+      <Image Name="Img_Zune_Gem3" Source="res://ZuneShellResources!FUE.Gem.3.png"/>
+              
+      
+      <Animation Name="ElementFadeOn" Type="Show" CenterPointPercent="0.5,0.5,1.0">
+        <Keyframes>
+          <AlphaKeyframe Time="0.0" Value="0" Interpolation="EaseIn,1.0,0.9"/>
+          <AlphaKeyframe Time="0.9" Value="0.6" Interpolation="EaseOut,1.0,0.5"/>           
+          <AlphaKeyframe Time="1.8" Value="0"/>
+        </Keyframes>
+      </Animation>
+      
+      <Animation Name="GemFadeIn" Type="Show" CenterPointPercent="0.5,0.5,1.0">
+        <Keyframes>
+          <AlphaKeyframe Time="0.00"  Value="0" Interpolation="EaseIn,1.0,0.9"/>
+          <AlphaKeyframe Time="0.5"   Value="0.7" Interpolation="EaseIn,1.0,0.9"/>
+          <AlphaKeyframe Time="1.0"   Value="0"/>
+        </Keyframes>
+      </Animation>
+   
+      <Animation Name="SpotlightShowFade" Type="Show" CenterPointPercent="0.5,0.5,1.0">
+        <Keyframes>
+          <AlphaKeyframe Time="0.0"   Value="0.0" Interpolation="Bezier,1.0,1.5"/>
+          <AlphaKeyframe Time="0.1"   Value="1.0" Interpolation="EaseOut,1.0,0.9"/>
+          <AlphaKeyframe Time="0.3"  Value="0.0"/>
+         </Keyframes>
+      </Animation>
+      <Animation Name="SpotlightShowScale" Type="Show" CenterPointPercent="0.5,0.5,1.0">
+        <Keyframes>
+          <ScaleKeyframe Time="0.0"   Value="0.7,0.7,1.0" Interpolation="EaseOut,1.0,0.9"/>
+          <ScaleKeyframe Time="0.3"   Value="1.1,1.1,1.0"/>
+        </Keyframes>
+      </Animation>
+
+      <MergeAnimation Name="SpotlightFadeNScale" Type="Show">
+        <Sources>
+          <Animation Animation="{SpotlightShowFade}"/>
+          <Animation Animation="{SpotlightShowScale}"/>
+        </Sources>
+      </MergeAnimation>
+       
+      <TransformAnimation Name="GemXForm0" Delay="{Gem_Delay}" Source="{GemFadeIn}"/>
+      <TransformAnimation Name="GemXForm1" Delay="{Gem_Delay + 0.2}" Source="{GemFadeIn}"/>
+      <TransformAnimation Name="GemXForm2" Delay="{Gem_Delay + 0.3}" Source="{GemFadeIn}"/>
+      <TransformAnimation Name="GemXForm3" Delay="{Gem_Delay + 0.4}" Source="{GemFadeIn}"/>
+      <TransformAnimation Name="GemXForm4" Delay="{Gem_Delay + 0.5}" Source="{GemFadeIn}"/>
+      
+      <TransformAnimation Name="SpotlightXForm2" Delay="{Gem_Delay + 0.1}" Source="{SpotlightFadeNScale}"/>
+      <TransformAnimation Name="SpotlightXForm3" Delay="{Gem_Delay + 0.2}" Source="{SpotlightFadeNScale}"/>
+      <TransformAnimation Name="SpotlightXForm4" Delay="{Gem_Delay + 0.3}" Source="{SpotlightFadeNScale}"/>
+      <TransformAnimation Name="SpotlightXForm5" Delay="{Gem_Delay + 0.4}" Source="{SpotlightFadeNScale}"/>
+      <TransformAnimation Name="SpotlightXForm6" Delay="{Gem_Delay + 0.5}" Source="{SpotlightFadeNScale}"/>
+      <TransformAnimation Name="SpotlightXForm7" Delay="{Gem_Delay + 0.6}" Source="{SpotlightFadeNScale}"/>      
+    </Locals>
+ 
+    <Scripts>      
+      <Script>
+        [DeclareTrigger(Timer.Tick)]
+        zune:Shell.DefaultInstance.NavigateToPage(new zune:SetupLandPage("res://ZuneShellResources!Fue.uix#Welcome"));
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel Margins="0,0,-5,0" Layout="Center">
+        <Children>
+          
+          <Panel Layout="Anchor">
+            <Animations>
+              <Animation Type="Show" CenterPointPercent="0.5,0.5,1.0">
+                <Keyframes>
+                  <ScaleKeyframe Time="0.0" Value="1.3,1.3,1.0" Interpolation="EaseIn,1.0,0.125"/>
+                  <ScaleKeyframe Time="2.0"/>
+                </Keyframes>
+              </Animation>
+            </Animations>
+            <Children>            
+
+              
+              
+              <Graphic Name="Gem0" Content="{Img_Zune_Gem0}" >
+                <LayoutInput>
+                  <AnchorLayoutInput Left="Parent,0" Top="Parent,0"/>
+                </LayoutInput>
+                <Animations>
+                  <TransformAnimation TransformAnimation="{GemXForm0}"/>
+                </Animations>
+              </Graphic>
+
+              <Graphic Content="{Img_Zune_Gem1}" >
+                <LayoutInput>
+                  <AnchorLayoutInput Left="Gem0,0" Top="Gem0,0"/>
+                </LayoutInput>
+                <Animations>
+                  <TransformAnimation TransformAnimation="{GemXForm1}"/>
+                </Animations>
+              </Graphic>
+
+              <Graphic Content="{Img_Zune_Gem2}" >
+                <LayoutInput>
+                  <AnchorLayoutInput Left="Gem0,0" Top="Gem0,0"/>
+                </LayoutInput>
+                <Animations>
+                  <TransformAnimation TransformAnimation="{GemXForm2}"/>
+                </Animations>
+              </Graphic>
+
+              <Graphic Content="{Img_Zune_Gem3}" >
+                <LayoutInput>
+                  <AnchorLayoutInput Left="Gem0,0" Top="Gem0,0"/>
+                </LayoutInput>
+                <Animations>
+                  <TransformAnimation TransformAnimation="{GemXForm3}"/>
+                </Animations>
+              </Graphic>
+
+              <Graphic Content="{styles:Styles.FUEZuneGemFull}" >
+                <LayoutInput>
+                  <AnchorLayoutInput Left="Gem0,0" Top="Gem0,0"/>
+                </LayoutInput>
+                <Animations>
+                  <TransformAnimation TransformAnimation="{GemXForm4}"/>
+                </Animations>
+              </Graphic>
+
+              
+              <Graphic Name="Z" Content="{Img_Zune_Z}" Margins="16,0,0,0">
+                <LayoutInput>
+                  <AnchorLayoutInput Left="Gem0,1" Top="Gem0,0,36"/>
+                </LayoutInput>
+                <Animations>
+                  <TransformAnimation Delay="{Z_Delay}" Source="{ElementFadeOn}"/>
+                </Animations>
+              </Graphic>
+
+              <Graphic Name="U" Content="{Img_Zune_U}" Margins="8,0,0,0">
+                <LayoutInput>
+                  <AnchorLayoutInput Left="Z,1" Top="Z,0"/>
+                </LayoutInput>
+                <Animations>
+                  <TransformAnimation Delay="{U_Delay}" Source="{ElementFadeOn}"/>
+                </Animations>
+              </Graphic>
+
+              <Graphic Name="N" Content="{Img_Zune_N}" Margins="8,0,0,0">
+                <LayoutInput>
+                  <AnchorLayoutInput Left="U,1" Top="Z,0"/>
+                </LayoutInput>
+                <Animations>
+                  <TransformAnimation Delay="{N_Delay}" Source="{ElementFadeOn}"/>
+                </Animations>
+              </Graphic>
+
+              <Graphic Name="E" Content="{Img_Zune_E}" Margins="8,0,0,0">
+                <LayoutInput>
+                  <AnchorLayoutInput Left="N,1" Top="Z,0"/>
+                </LayoutInput>
+                <Animations>
+                  <TransformAnimation Delay="{E_Delay}" Source="{ElementFadeOn}"/>                    
+                </Animations>
+              </Graphic>
+
+              
+              <Graphic Content="{styles:Styles.FUESpotlight}" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <LayoutInput>
+                  <AnchorLayoutInput Left="Gem0,0.4" Top="Gem0,0,-8"/>
+                </LayoutInput>
+                <Animations>
+                  <TransformAnimation Delay="{Gem_Delay}" Source="{SpotlightFadeNScale}"/>                   
+                </Animations>
+              </Graphic>
+
+              <Graphic Content="{styles:Styles.FUESpotlight}" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <LayoutInput>
+                  <AnchorLayoutInput Left="Gem0,0,-8" Top="Gem0,0.19"/>
+                </LayoutInput>
+                <Animations>
+                  <TransformAnimation TransformAnimation="{SpotlightXForm2}"/> 
+                </Animations>
+              </Graphic>
+
+              <Graphic Content="{styles:Styles.FUESpotlight}" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <LayoutInput>                  
+                  <AnchorLayoutInput Left="Gem0,0.4" Top="Gem0,0.4"/>
+                </LayoutInput>
+                <Animations>
+                  <TransformAnimation TransformAnimation="{SpotlightXForm3}"/> 
+                </Animations>
+              </Graphic>
+
+              <Graphic Content="{styles:Styles.FUESpotlight}" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <LayoutInput>
+                  <AnchorLayoutInput Left="Gem0,0,-8" Top="Gem0,0.65"/>
+                </LayoutInput>
+                <Animations>
+                  <TransformAnimation TransformAnimation="{SpotlightXForm4}"/> 
+                </Animations>
+              </Graphic>
+
+              <Graphic Content="{styles:Styles.FUESpotlight}" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <LayoutInput>
+                  <AnchorLayoutInput Left="Gem0,0.4" Top="Gem0,1,-16"/>
+                </LayoutInput>
+                <Animations>
+                  <TransformAnimation TransformAnimation="{SpotlightXForm5}"/> 
+                </Animations>
+              </Graphic>
+
+              <Graphic Content="{styles:Styles.FUESpotlight}" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <LayoutInput>
+                  <AnchorLayoutInput Left="Gem0,0.85" Top="Gem0,0.65"/>
+                </LayoutInput>
+                <Animations>
+                  <TransformAnimation TransformAnimation="{SpotlightXForm6}"/> 
+                </Animations>
+              </Graphic>
+
+              <Graphic Content="{styles:Styles.FUESpotlight}" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <LayoutInput>
+                  <AnchorLayoutInput Left="Gem0,0.85" Top="Gem0,0.19"/>
+                </LayoutInput>
+                <Animations>
+                  <TransformAnimation TransformAnimation="{SpotlightXForm7}"/> 
+                </Animations>
+              </Graphic>
+
+              
+              <Graphic Content="{styles:Styles.FUESpotlight}" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <LayoutInput>
+                  <AnchorLayoutInput Left="Z,0.25" Top="Z,0,-4"/>
+                </LayoutInput>
+                <Animations>
+                  <TransformAnimation Delay="{Z_Delay}" Source="{SpotlightFadeNScale}"/> 
+                </Animations>
+              </Graphic>
+
+              <Graphic Content="{styles:Styles.FUESpotlight}"  HorizontalAlignment="Center" VerticalAlignment="Center">
+                <LayoutInput>
+                  <AnchorLayoutInput Left="U,0" Top="U,0"/>
+                </LayoutInput>
+                <Animations>
+                  <TransformAnimation Delay="{U_Delay}" Source="{SpotlightFadeNScale}"/> 
+                </Animations>
+              </Graphic>
+
+              <Graphic Content="{styles:Styles.FUESpotlight}" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <LayoutInput>
+                  <AnchorLayoutInput Left="N,0.75" Top="N,0.6"/>
+                </LayoutInput>
+                <Animations>
+                  <TransformAnimation Delay="{N_Delay}" Source="{SpotlightFadeNScale}"/> 
+                </Animations>
+              </Graphic>
+
+              <Graphic Content="{styles:Styles.FUESpotlight}" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <LayoutInput>
+                  <AnchorLayoutInput Left="E,0.7" Top="E,0.35"/>
+                </LayoutInput>
+                <Animations>
+                  <TransformAnimation Delay="{E_Delay}" Source="{SpotlightFadeNScale}"/> 
+                </Animations>
+              </Graphic>
+
+            </Children>
+          </Panel>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="GDIWarning" Base="page:PageBase">
+    <Properties>
+      <zune:WebHelpCommand Name="VideoSupportLink"
+        Description="{zune:Shell.LoadString(zune:StringId.IDS_VIDEO_SUPPORT_URL)}"
+        Url="{zune:Shell.LoadString(zune:StringId.IDS_VIDEO_SUPPORT_URL)}"/>
+    </Properties>
+
+    <Locals>
+      <iris:Command Name="ContinueButton" Description="{zune:Shell.LoadString(zune:StringId.IDS_CONTINUE_BUTTON)}"/>
+      
+      
+      <styles:LabelStyle Name="StyleDetail" Color="White" Font="{styles:Styles.SettingsText}"/>      
+      <ScrollingData Name="ScrollData"/>
+    </Locals>
+
+    <Input>
+      <ScrollingHandler Name="ScrollHandler" ScrollingData="{ScrollData}"/>
+    </Input>
+
+    <Scripts>
+      <Script>
+        [DeclareTrigger(ContinueButton.Invoked)]
+        zune:Shell.DefaultInstance.NavigateToPage(new zune:SetupLandPage("res://ZuneShellResources!Fue.uix#Welcome"));
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel Layout="Anchor" Margins="0,0,0,30">
+        <Children>
+
+          <Panel Name="Body" Layout="VerticalFlow">
+            <LayoutInput>
+              <AnchorLayoutInput Top="Parent,0" Left="Parent,0" Bottom="Parent,1"/>
+            </LayoutInput>
+            <Children>
+
+              <me:GreetingPanel Name="Greeting"/>
+              <core:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_GDI_WARNING)}" Style="{StyleDetail}" Padding="2,15,0,5" WordWrap="true"/>
+              <core:Button Model="{VideoSupportLink}" OverrideStyle="{styles:SharedStyles.HyperlinkStyle}" Padding="2,12,0,0"/>
+              <core:BigActionButton Model="{ContinueButton}" Padding="-2,20,0,0"/>
+
+            </Children>
+          </Panel>
+
+          <me:LinksPanel Margins="4,0,0,0">
+            <LayoutInput>
+              <AnchorLayoutInput Bottom="Parent,1,50" Left="Body,0"/>
+            </LayoutInput>
+          </me:LinksPanel>
+
+        </Children>        
+      </Panel>
+    </Content>
+  </UI>
+  
+  
+  
+  
+  <UI Name="Welcome" Base="page:PageBase">
+    <Locals>
+      <iris:Command Name="ZuneMarketplaceButton" Description="{zune:Shell.LoadString(zune:StringId.IDS_GO_TO_APP_HEADER)}"/>
+      <iris:Command Name="ConfigureButton" Description="{zune:Shell.LoadString(zune:StringId.IDS_CONFIGURE_HEADER)}"/>
+
+      
+      <Timer AutoRepeat="false" Name="Timer" Enabled="false"/>
+
+      <Animation Name="ElementShow" Type="Show">
+        <Keyframes>
+          <AlphaKeyframe Time="0.0" Value="0"/>
+          <AlphaKeyframe Time="0.5" Value="1"/>
+          <PositionKeyframe Time="0.0" Value="-10,0,0" Interpolation="{animations:Animations.SlideInterpolation}"/>
+          <PositionKeyframe Time="{animations:Animations.SlideLength}" Value="0,0,0"/>
+        </Keyframes>
+      </Animation>
+
+      <Animation Name="ElementHide" Type="Hide" CenterPointPercent="0.5,0.5,1.0">
+        <Keyframes>
+          <AlphaKeyframe Time="0.0" Value="1" Interpolation="EaseIn,1.0,0.75"/>
+          <AlphaKeyframe Time="0.3" Value="0"/>                     
+          <PositionKeyframe Time="0.0" Value="0,0,0" Interpolation="EaseOut,1.0,0.9"/>
+          <PositionKeyframe Time="0.3" Value="10,0,0"/>
+        </Keyframes>
+      </Animation>
+      <ScrollingData Name="ScrollData"/>
+    </Locals>
+
+    <Input>
+      <ScrollingHandler Name="ScrollHandler" ScrollingData="{ScrollData}"/>
+    </Input>
+
+    <Scripts>
+      <Script>
+        [DeclareTrigger(ZuneMarketplaceButton.Invoked)]
+        zune:Shell.DefaultInstance.NavigateToPage(new zune:SetupLandPage("res://ZuneShellResources!Fue.uix#OutroAnimation"));
+        zuneutil:SQMLog.Log(zuneutilapi:SQMDataId.UserConfiguredSettingsFUE, 0);        
+        
+        
+        zune:Fue.Instance.MigrateLegacyConfiguration(true);
+      </Script>
+      <Script>
+        [DeclareTrigger(ConfigureButton.Invoked)]
+        zune:Fue.Instance.ProxyDefaultPaths();
+        zune:Shell.SettingsFrame.Wizard.FUE.Invoke();
+      </Script>
+      <Script>
+        [DeclareTrigger(Timer.Tick)]
+        Timer.Enabled = false;
+        zune:Fue.Instance.RenderPrompt();
+      </Script>
+      <Script>
+        Timer.Interval = [zune:Fue.Instance.RenderPromptInterval];
+        Timer.Enabled = true;
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel Layout="Anchor" Margins="0,0,0,30">
+        <Children>
+
+          <me:GreetingPanel Name="Greeting" Margins="0,30,0,0">
+            <LayoutInput>
+              <AnchorLayoutInput Left="Parent,0" Top="Parent,0"/>
+            </LayoutInput>
+            <Animations>
+              <Animation Type="Show" CenterPointPercent="0.5,0.5,1.0">
+                <Keyframes>
+                  <AlphaKeyframe Time="0.0" Value="0" Interpolation="EaseIn,1.0,0.75"/>
+                  <AlphaKeyframe Time="0.7" Value="1"/>
+                  <ScaleKeyframe Time="0.0" Value="3,3,1.0" Interpolation="EaseIn,2.0,0.125"/>
+                  <ScaleKeyframe Time="0.7" Value="1.0,1.0,1.0"/>
+                  <PositionKeyframe Time="0.0" Value="0,-20,0" Interpolation="EaseOut,1.0,0.75"/>
+                  <PositionKeyframe Time="0.7" Value="0,0,0"/>
+                </Keyframes>
+              </Animation>
+              <Animation Animation="{ElementHide}"/>
+            </Animations>
+          </me:GreetingPanel>
+
+          <core:ScrollBar Name="ScrollBar" 
+             ScrollData="{ScrollData}" 
+             ThumbColor="{styles:Styles.FUEThumbColor}"
+             BarColor="{styles:Styles.FUEBarColor}"
+             PageColor="{styles:Styles.FUEPageColor}"
+             ScrollPathColor="{styles:Styles.FUEScrollPathColor}">
+            <LayoutInput>
+              <AnchorLayoutInput Left="ScrollingLinks,1,50" Top="ScrollingLinks,0,10"/>
+            </LayoutInput>
+          </core:ScrollBar>
+
+          <Scroller Name="ScrollingLinks" FadeSize="5" Orientation="Vertical" ScrollingData="{ScrollData}">
+            <LayoutInput>
+              <AnchorLayoutInput Top="Greeting,1" Left="Greeting,0"/>
+            </LayoutInput>
+            <Animations>
+              
+              <Animation Type="Move">
+                <Keyframes>
+                  <PositionKeyframe Time="0.00" RelativeTo="Current" Interpolation="Sine"/>
+                  <PositionKeyframe Time="0.025" RelativeTo="Final"/>
+                </Keyframes>
+              </Animation>
+            </Animations>
+            <Children>
+
+              
+              <me:PanelLink Model="{ZuneMarketplaceButton}" LabelString="{zune:Shell.LoadString(zune:StringId.IDS_GO_TO_APP_LABEL)}" DescriptionString="{zune:Shell.LoadString(zune:StringId.IDS_GO_TO_APP_DETAILS)}">
+                <Animations>
+                  <Animation Animation="{animations:Animations.MoveNow}"/>
+                  <TransformAnimation Delay="0.9" Source="{ElementShow}"/>
+                  <Animation Animation="{ElementHide}"/>
+                </Animations>
+              </me:PanelLink>
+
+              
+              <me:PanelLink Model="{ConfigureButton}" LabelString="{zune:Shell.LoadString(zune:StringId.IDS_CONFIGURE_LABEL)}" DescriptionString="{zune:Shell.LoadString(zune:StringId.IDS_CONFIGURE_DETAILS)}" Margins="0,15,0,4">
+                <Animations>
+                  <Animation Animation="{animations:Animations.MoveNow}"/>
+                  <TransformAnimation Delay="1.1" Source="{ElementShow}"/>
+                  <Animation Animation="{ElementHide}"/>
+                </Animations>
+              </me:PanelLink>
+
+            </Children>
+          </Scroller>
+
+          <me:LinksPanel>
+            <LayoutInput>
+              <AnchorLayoutInput Bottom="Parent,1,50" Left="Parent,0"/>
+            </LayoutInput>
+            <Animations>
+              <TransformAnimation Delay="1.0" Source="{animations:Animations.BasicFadeIn}"/>                
+            </Animations>
+          </me:LinksPanel>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="FUEBackground" Base="page:PageBase">   
+    <Content>
+      <Panel>
+        <Animations>
+          <Animation Type="Show">
+            <Keyframes>
+              <AlphaKeyframe Time="0.0" Value="0"/>
+              <AlphaKeyframe Time="0.2" Value="1"/>
+            </Keyframes>
+          </Animation>
+          
+           
+          
+          
+          <Animation Type="Hide">
+            <Keyframes>
+              <AlphaKeyframe Time="0.0" Value="1.0"/>
+              <AlphaKeyframe Time="0.5" Value="0.0"/>
+            </Keyframes>
+          </Animation>
+        </Animations>
+        <Children>
+
+          <Graphic Content="{styles:Styles.FUEBackground}" StretchingPolicy="UniformToFill" SizingPolicy="SizeToConstraint" Layout="Form">
+            <Children>
+
+              
+              <Graphic Content="{styles:Styles.FUESpotlightLarge}" Scale="15,15,1.0" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <LayoutInput>
+                  <FormLayoutInput Left="Parent,-1" Bottom="Parent,0.1"/>
+                </LayoutInput>
+                <Animations>
+                  <Animation Animation="{animations:Animations.MoveNow}"/>
+                  <TransformAnimation>
+                    <Source>
+                      <Animation Type="Show">
+                        <Keyframes>
+                          <AlphaKeyframe Time="0.0"     Value="0.0"       Interpolation="EaseIn,1.0,0.8"/>
+                          <AlphaKeyframe Time="1.0"     Value="0.2"       Interpolation="EaseOut,1.0,0.25"/>
+                          <AlphaKeyframe Time="5.0"     Value="0.0"/>
+                          <PositionKeyframe Time="0.0"  Value="0,-10,0"   Interpolation="EaseIn,1.0,0.25"/>
+                          <PositionKeyframe Time="5.1"  Value="200,10,0"  Interpolation="EaseOut,1.0,0.25"/>
+                        </Keyframes>
+                      </Animation>
+                    </Source>
+                  </TransformAnimation>
+                  <Animation Animation="{animations:Animations.MoveNow}"/>
+                </Animations>
+              </Graphic>
+
+               
+              <Graphic Content="{styles:Styles.FUESpotlightLarge}" Scale="10,10,1.0" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <LayoutInput>
+                  <FormLayoutInput Right="Parent,0.5" Bottom="Parent,0.3"/>
+                </LayoutInput>
+                <Animations>
+                  <Animation Animation="{animations:Animations.MoveNow}"/>
+                  <TransformAnimation Delay="1" >
+                    <Source>
+                      <Animation Type="Show">
+                        <Keyframes>
+                          <AlphaKeyframe Time="0.0"    Value="0.0"       Interpolation="EaseIn,1.0,0.8"/>
+                          <AlphaKeyframe Time="1.0"    Value="0.2"       Interpolation="EaseOut,1.0,0.25"/>
+                          <AlphaKeyframe Time="2.0"    Value="0.0"/>
+                        </Keyframes>
+                      </Animation>
+                    </Source>
+                  </TransformAnimation>
+                  <Animation Animation="{animations:Animations.MoveNow}"/>
+                </Animations>
+              </Graphic>                    
+
+              
+              <Graphic Content="{styles:Styles.FUEPatternBR}" StretchingPolicy="Uniform">
+                <LayoutInput>
+                  <FormLayoutInput Right="Parent,1" Bottom="Parent,1"/>
+                </LayoutInput>
+                <Animations>
+                  <Animation Type="Show" Loop="-1">
+                    <Keyframes>
+                      <AlphaKeyframe Time="0.0" Value="0.0" Interpolation="EaseIn,1.0,0.1"/>
+                      <AlphaKeyframe Time="1.5" Value="0.2" Interpolation="EaseOut,1.0,0.2"/>
+                      <AlphaKeyframe Time="4.0" Value="0.01"/>
+                      <AlphaKeyframe Time="5.5" Value="0.0"/>
+                    </Keyframes>
+                  </Animation>
+                </Animations>                
+              </Graphic>
+
+              
+              <Graphic Content="{styles:Styles.FUEPatternTR}"  StretchingPolicy="Uniform">
+                <LayoutInput>
+                  <FormLayoutInput Right="Parent,1" Top="Parent,0"/>
+                </LayoutInput>
+                <Animations>
+                  <TransformAnimation Delay="4.0">
+                    <Source>
+                      <Animation Type="Show" Loop="-1">
+                        <Keyframes>
+                          <AlphaKeyframe Time="0.0" Value="0.0" Interpolation="EaseIn,1.0,0.5"/>
+                          <AlphaKeyframe Time="3.5" Value="0.2" Interpolation="EaseOut,1.0,0.5"/>
+                          <AlphaKeyframe Time="6.5" Value="0.0"/>
+                        </Keyframes>
+                      </Animation>
+                    </Source>
+                  </TransformAnimation>
+                </Animations>
+              </Graphic>
+
+              
+              <Graphic Content="{styles:Styles.FUEPatternBL}"  StretchingPolicy="Uniform">
+                <LayoutInput>
+                  <FormLayoutInput Left="Parent,0" Bottom="Parent,1"/>
+                </LayoutInput>
+                <Animations>
+                  <TransformAnimation Delay="5.5">
+                    <Source>
+                      <Animation Type="Show" Loop="-1">
+                        <Keyframes>
+                          <AlphaKeyframe Time="0.0" Value="0.0" Interpolation="EaseIn,1.0,0.5"/>
+                          <AlphaKeyframe Time="1.5" Value="0.2" Interpolation="EaseOut,1.0,0.5"/>
+                          <AlphaKeyframe Time="3.5" Value="0.0"/>
+                        </Keyframes>
+                      </Animation>
+                    </Source>
+                  </TransformAnimation>
+                </Animations>
+              </Graphic>
+
+            </Children>
+          </Graphic>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  
+  <UI Name="OutroAnimation" Base="page:PageBase">
+    <Locals>
+      <Timer Name="OutroTimer" Interval="1200" Enabled="true"/>         
+    </Locals>
+
+    <Scripts>
+      <Script>
+        [DeclareTrigger(OutroTimer.Tick)]
+        zune:Fue.Instance.CompleteFUE();
+      </Script>
+    </Scripts>
+
+    <Content>
+      
+
+      <Panel Margins="-40,-27,0,0" Layout="Form">
+        <Animations>
+          <Animation Type="Show">
+            <Keyframes>
+              <AlphaKeyframe Time="0.0" Value="0"/>
+              <AlphaKeyframe Time="0.5" Value="1"/>
+            </Keyframes>
+          </Animation>
+        </Animations>
+        <Children>
+
+          <Graphic Name="Gem" Content="{styles:Styles.ZuneLogo}" StretchingPolicy="None" SizingPolicy="SizeToContent">
+            <LayoutInput>
+              <FormLayoutInput Left="Parent,0" Top="Parent,0"/>
+            </LayoutInput>
+            <Animations>
+              <TransformAnimation Delay="1">
+                <Source>
+                  <Animation Type="Show">
+                    <Keyframes>
+                      <AlphaKeyframe Time="0.0" Value="0"/>
+                      <AlphaKeyframe Time="0.3" Value="1"/>
+                    </Keyframes>
+                  </Animation>
+                </Source>
+              </TransformAnimation>
+            </Animations>
+          </Graphic>
+
+          
+          <Graphic Content="{styles:Styles.FUESpotlight}" Scale="2,2,1.0" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <LayoutInput>
+              <FormLayoutInput Left="Parent,0.3" Top="Parent,0.5"/>
+            </LayoutInput>
+            <Animations>
+              <Animation Animation="{animations:Animations.MoveNow}"/>
+              <TransformAnimation Delay="0.1">
+                <Source>
+                  <Animation Type="Show">
+                    <Keyframes>
+                      <AlphaKeyframe Time="0.0" Value="0.0"  Interpolation="EaseIn,1.0,0.8"/>
+                      <AlphaKeyframe Time="0.2" Value="0.6"  Interpolation="EaseOut,1.0,0.25"/>
+                      <AlphaKeyframe Time="0.4" Value="0.0"/>
+                    </Keyframes>
+                  </Animation>
+                </Source>
+              </TransformAnimation>
+              <Animation Animation="{animations:Animations.MoveNow}"/>
+            </Animations>
+          </Graphic>
+
+          
+          <Graphic Content="{styles:Styles.FUESpotlight}" Scale="1,1,1" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <LayoutInput>
+              <FormLayoutInput Left="Parent,0.15" Top="Parent,0.25"/>
+            </LayoutInput>
+            <Animations>
+              <Animation Animation="{animations:Animations.MoveNow}"/>
+              <TransformAnimation Delay="0.2">
+                <Source>
+                  <Animation Type="Show">
+                    <Keyframes>
+                      <AlphaKeyframe Time="0.0" Value="0.0"  Interpolation="EaseIn,1.0,0.8"/>
+                      <AlphaKeyframe Time="0.2" Value="0.7"  Interpolation="EaseOut,1.0,0.25"/>
+                      <AlphaKeyframe Time="0.4" Value="0.0"/>
+                    </Keyframes>
+                  </Animation>
+                </Source>
+              </TransformAnimation>
+              <Animation Animation="{animations:Animations.MoveNow}"/>
+            </Animations>
+          </Graphic>
+
+          
+          <Graphic Content="{styles:Styles.FUESpotlight}" Scale="0.5,0.5,1.0" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <LayoutInput>
+              <AnchorLayoutInput Left="Gem,0" Top="Gem,0"/>
+            </LayoutInput>
+            <Animations>
+              <TransformAnimation Delay="0.3">
+                <Source>
+                  <Animation Animation="{animations:Animations.SpotlightFade}"/>
+                </Source>
+              </TransformAnimation>
+            </Animations>
+          </Graphic>
+
+          <Graphic Content="{styles:Styles.FUESpotlight}" Scale="0.5,0.5,1.0" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <LayoutInput>
+              <AnchorLayoutInput Left="Gem,0.25" Top="Gem,0"/>
+            </LayoutInput>
+            <Animations>
+              <TransformAnimation Delay="0.4">
+                <Source>
+                  <Animation Animation="{animations:Animations.SpotlightFade}"/>
+                </Source>
+              </TransformAnimation>
+            </Animations>
+           </Graphic>
+
+          <Graphic Content="{styles:Styles.FUESpotlight}" Scale="0.5,0.5,1.0" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <LayoutInput>
+              <AnchorLayoutInput Left="Gem,0.5" Top="Gem,0"/>
+            </LayoutInput>
+            <Animations>
+              <TransformAnimation Delay="0.45">
+                <Source>
+                  <Animation Animation="{animations:Animations.SpotlightFade}"/>
+                </Source>
+              </TransformAnimation>
+            </Animations>
+          </Graphic>
+
+          <Graphic Content="{styles:Styles.FUESpotlight}" Scale="0.5,0.5,1.0" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <LayoutInput>
+              <AnchorLayoutInput Left="Gem,0.5" Top="Gem,0.5"/>
+            </LayoutInput>
+            <Animations>
+              <TransformAnimation Delay="0.5">
+                <Source>
+                  <Animation Animation="{animations:Animations.SpotlightFade}"/>
+                </Source>
+              </TransformAnimation>
+            </Animations>
+          </Graphic>
+
+          <Graphic Content="{styles:Styles.FUESpotlight}" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <LayoutInput>
+              <AnchorLayoutInput Left="Gem,0.25" Top="Gem,0.25"/>
+            </LayoutInput>
+            <Animations>
+              <TransformAnimation Delay="0.55" Magnitude="2">
+                <Source>
+                  <Animation Type="Show" CenterPointPercent="0.5,0.5,1.0">
+                    <Keyframes>
+                      <AlphaKeyframe Time="0.0"   Value="0.0" Interpolation="Bezier,1.0,1.5"/>
+                      <AlphaKeyframe Time="0.2"   Value="1.0" Interpolation="EaseOut,1.0,0.9"/>
+                      <AlphaKeyframe Time="0.75"  Value="0.0"/>
+                      <ScaleKeyframe Time="0.0" Value="0.7,0.7,0.7"/>
+                      <ScaleKeyframe Time="0.5" Value="1.5,1.5,1.0"/>                          
+                     </Keyframes>
+                  </Animation>    
+                </Source>
+              </TransformAnimation>
+            </Animations>
+          </Graphic>
+
+          
+          <Graphic Content="{styles:Styles.FUESpotlightLarge}" Scale="10,10,1.0" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <LayoutInput>
+              <FormLayoutInput Left="Parent,-0.5" Top="Parent,-0.5"/>
+            </LayoutInput>
+            <Animations>                  
+              <TransformAnimation>
+                <Source>
+                  <Animation Type="Show">
+                    <Keyframes>
+                      <AlphaKeyframe Time="0.0" Value="0.0"  Interpolation="EaseIn,1.0,0.8"/>
+                      <AlphaKeyframe Time="0.8" Value="0.4"  Interpolation="EaseOut,1.0,0.25"/>
+                      <AlphaKeyframe Time="1.5" Value="0.0"/>
+                    </Keyframes>
+                  </Animation>
+                </Source>
+              </TransformAnimation>
+              <Animation Animation="{animations:Animations.MoveNow}"/>
+            </Animations>
+          </Graphic>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  <UI Name="LinksPanel">
+    <Locals>
+      <zune:WebHelpCommand Name="CustomerExperienceLink" 
+        Description="{zune:Shell.LoadString(zune:StringId.IDS_CUSTOMER_EXPERIENCE_BUTTON)}"
+        Url="{zune:Shell.LoadString(zune:StringId.IDS_CUSTOMER_EXPERIENCE_URL)}"
+        />
+      <zune:WebHelpCommand Name="ReadOnlineLink" 
+        Description="{zune:Shell.LoadString(zune:StringId.IDS_PRIVACY_STATEMENT_BUTTON)}"
+        Url="{zune:Shell.LoadString(zune:StringId.IDS_PRIVACY_STATEMENT_URL)}"
+        />
+    </Locals>
+
+    <Content>
+      <Panel Layout="HorizontalFlow" Padding="0,0,10,0">
+        <Children>
+
+          <core:Button Model="{CustomerExperienceLink}" OverrideStyle="{styles:SharedStyles.FUEHyperlinkStyle}"/>
+          <Text Content="|" Font="{styles:Styles.HyperlinkFont}" Color="{styles:Styles.HyperlinkColor}" Margins="10,0,10,0"/>
+          <core:Button Model="{ReadOnlineLink}" OverrideStyle="{styles:SharedStyles.FUEHyperlinkStyle}"/>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  <UI Name="GreetingPanel">
+    <Properties>
+      
+      <styles:LabelStyle Name="StyleGreet" Color="{styles:Styles.FUEWelcomeTextColor}" Font="{styles:Styles.SettingsTextHeader}"/>
+    </Properties>
+
+    <Content>
+      <core:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_FIRSTRUN_GREETING)}" Style="{StyleGreet}"/>           
+    </Content>
+  </UI>
+
+  <UI Name="PanelLink" Base="button:Button">
+    <Properties>
+      <String Name="LabelString"/>
+      <String Name="DescriptionString"/>
+    </Properties>
+
+    <Locals>
+      <style:Style Name="LabelStyle" Style="{styles:SharedStyles.FUELabelStyle}"/>
+      <style:StatefulCompositeStyle Name="SecondaryStyle" Base="{LabelStyle}"/>
+      <style:StatefulCompositeStyle Name="DescriptionStyle" Base="{styles:SharedStyles.FUEDescriptionStyle}"/>
+    </Locals>
+
+    <Scripts>
+      <Script>OverrideStyle = styles:SharedStyles.FUEHeaderStyle;</Script>
+
+       
+      <Script>SecondaryStyle.State = [Style.State];</Script>
+      <Script>DescriptionStyle.State = [Style.State];</Script>
+
+      
+      
+      
+      
+      <Script>UI.KeyFocusOnMouseDown = false;</Script>
+    </Scripts>
+
+    <Content>
+      <ColorFill Name="Background" MouseInteractive="true" Layout="VerticalFlow" Margins="4,26,0,0">
+        <Children>
+
+          <Panel>
+            <Layout>
+              <FlowLayout Orientation="Horizontal" ItemAlignment="Center"/>
+            </Layout>
+            <Children>
+
+              
+              <core:Label Name="Label" Style="{Style}"/>
+
+              
+              <Graphic Name="IconGraphic" Content="res://ZuneShellResources!Arrow.More.png" Margins="4,0,0,0" Visible="true"/>
+
+            </Children>
+          </Panel>
+
+          <core:Label Name="SecondaryLabel" Content="{LabelString}" Style="{SecondaryStyle}" WordWrap="true" Margins="0,2,0,9"/>
+
+          <core:Label Name="DescriptionLabel" Content="{DescriptionString}" Style="{DescriptionStyle}" WordWrap="true"/>
+        </Children>
+      </ColorFill>
+    </Content>
+  </UI>
+
+</UIX>

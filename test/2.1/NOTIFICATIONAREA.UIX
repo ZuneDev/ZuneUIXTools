@@ -1,0 +1,295 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX xmlns="http://schemas.microsoft.com/2007/uix"
+     xmlns:styles="res://ZuneShellResources!Styles.uix"
+     xmlns:animations="res://ZuneShellResources!Animations.uix" 
+     xmlns:zune="assembly://ZuneShell/ZuneUI"
+     xmlns:images="res://ZuneShellResources!ImageStyle.uix"
+     xmlns:iris="assembly://UIX/Microsoft.Iris"
+     xmlns:core="res://ZuneShellResources!Controls.uix" 
+     xmlns:me="Me">
+
+  <UI Name="NotificationArea">
+    <Locals>
+      <zune:NotificationArea Name="Model" NotificationArea="{zune:NotificationArea.Instance}"/>
+      <iris:Command Name="AdvanceButton" Description="{zune:Shell.LoadString(zune:StringId.IDS_NEXT_MESSAGE)}" />
+    </Locals>
+    <Scripts>
+      <Script>
+        
+        zune:Notification currentNotification = [Model.CurrentNotification];
+        
+        if (currentNotification != null)
+        {
+          if (currentNotification is zune:SyncNewRuleAddedNotification)
+          {
+            Display.RequestSource("res://ZuneShellResources!SyncNotification.uix#RuleAddedNotification", "Model", currentNotification);
+          }
+          else if (currentNotification is zune:ProgressNotification)
+          {
+            Display.RequestSource("res://ZuneShellResources!NotificationArea.uix#ProgressNotification", "Model", currentNotification);
+          }
+          else if (currentNotification is zune:MessageNotification)
+          {
+            Display.RequestSource("res://ZuneShellResources!NotificationArea.uix#MessageNotification", "Model", currentNotification);
+          }
+          else if (currentNotification is zune:NowPlayingNotification)
+          {
+            Display.RequestSource("res://ZuneShellResources!NowPlayingNotification.uix#NowPlayingNotification", "Model", currentNotification);
+          }
+          else
+          {
+            Display.RequestSource(null);
+          }
+        }
+        else
+        {
+          Display.RequestSource(null);
+        }
+        
+      </Script>
+
+      <Script>
+        [DeclareTrigger(AdvanceButton.Invoked)]
+        Model.IncrementNotification();
+      </Script>
+      <Script>
+        [InitialEvaluate(false)]
+        float alpha = 0.0;
+        bool paused = ([UI.DeepMouseFocus] || [UI.DeepKeyFocus]);
+        zune:NotificationArea.Instance.Paused = paused;
+        if (paused &amp;&amp; ([zune:NotificationArea.Instance.NotificationCount] > 1))
+        {
+          alpha = 1.0;
+        }
+          
+        PlayButton.Alpha = alpha;
+      </Script>
+    </Scripts>
+    <Content>
+      <Panel Layout="Anchor" Padding="0,10,0,10">
+        <Children>
+
+          <Host Name="Display" MouseInteractive="true" MaximumSize="226,0" MinimumSize="226,0">
+            <LayoutInput>
+              <AnchorLayoutInput Top="Parent,0" Bottom="Parent,1" Left="Parent,0"/>
+            </LayoutInput>
+            <Animations>
+              
+              <Animation Animation="{animations:Animations.MoveNow}"/>
+              <Animation Type="Show">
+                <Keyframes>
+                  <AlphaKeyframe Time="0" Value="0"/>
+                  <PositionKeyframe Time="0" Value="-10,0,0" Interpolation="EaseIn,1.0,.25"/>              
+                  <AlphaKeyframe Time=".33" Value="1"/>
+                  <PositionKeyframe Time=".33" Value="0,0,0"/>
+                </Keyframes>
+              </Animation>
+              
+              <Animation Type="ContentChangeShow">
+                <Keyframes>
+                  <AlphaKeyframe Time="0" Value="0"/>
+                  <PositionKeyframe Time="0" Value="-40,0,0" Interpolation="EaseIn,1.0,.25"/>              
+                  <AlphaKeyframe Time=".33" Value="1"/>
+                  <PositionKeyframe Time=".33" Value="0,0,0"/>
+                </Keyframes>
+              </Animation>
+
+              <Animation Type="ContentChangeHide">
+                <Keyframes>
+                  <AlphaKeyframe Time="0" Value="1"/>
+                  <PositionKeyframe Time="0" Value="0,0,0" Interpolation="EaseIn,1.0,.25"/>              
+                  <AlphaKeyframe Time=".33" Value="0"/>
+                  <PositionKeyframe Time=".33" Value="40,0,0"/>
+                </Keyframes>
+              </Animation>
+            </Animations>
+          </Host>
+
+          <core:IconButton Name="PlayButton" Alpha="0.0" Model="{AdvanceButton}"
+              TileMaxSize="12,12"
+              StretchingPolicy="Uniform"
+              KeyInteractiveNStuff="false"
+              Image="res://ZuneShellResources!Page.Next.png"
+              HoverImage="res://ZuneShellResources!Page.Next.Hover.png"
+              PressedImage="res://ZuneShellResources!Page.Next.Pressed.png"
+              DisabledImage="res://ZuneShellResources!Page.Next.Disabled.png">
+            <LayoutInput>
+              <AnchorLayoutInput Top="Parent,0" Left="Display,1"/>
+            </LayoutInput>
+          </core:IconButton>            
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  <UI Name="StandaloneProgressArea">
+    <Properties>
+      <zune:ProgressNotification Name="Model" ProgressNotification="$Required"/>
+    </Properties>
+    <Locals>
+      <iris:Timer Name="ClearNotification" AutoRepeat="false" Enabled="false" Interval="10000" />
+    </Locals>
+    <Scripts>
+      <Script>
+        if ([Model] == null)
+        {
+          ClearNotification.Start();
+        }
+        else
+        {
+          ClearNotification.Stop();
+          Notification.Model = Model;
+        }
+      </Script>
+      <Script>
+        [DeclareTrigger(ClearNotification.Tick)]
+        Notification.Model = null;
+      </Script>
+    </Scripts>
+    <Content>
+      <me:ProgressNotification Name="Notification" Model="{null}" />
+    </Content>
+  </UI>
+  
+  <UI Name="MessageNotification">
+    <Properties>
+      <zune:MessageNotification Name="Model" MessageNotification="$Required"/>
+    </Properties>
+    <Scripts>
+
+      
+      
+      
+      
+      <Script>
+        if ([images:Images.InNowPlaying.Value])
+        {
+          Message.Color = styles:Styles.SlideshowSyncHeaderColor;
+          SubMessage.Color = styles:Styles.SlideshowSyncInformation;
+        }
+        else
+        {
+          Message.Color = styles:Styles.SyncHeaderColor;
+          SubMessage.Color = styles:Styles.SyncInformation;
+        }
+      </Script>
+      
+      <Script>
+        Message.Content = [Model.Message];
+      </Script>
+
+      <Script>
+        string subMessage = [Model.SubMessage];
+        if ((subMessage == null) || (subMessage.Length == 0))
+        {
+          
+          SubMessage.Content = " ";        
+        }
+        else
+        {
+          SubMessage.Content = subMessage;        
+        }
+      </Script>
+      
+    </Scripts>
+    <Content>
+        <Panel MaximumSize="295,0" Layout="VerticalFlow" Padding="0,8,0,0">
+          <Children>
+
+            <Text Name="Message" MaximumSize="295,0" Font="{styles:Styles.SyncHeaderFont}"/>    
+
+            <Text Name="SubMessage" Font="{styles:Styles.SyncInfoFont}"/>
+
+          </Children>
+        </Panel>          
+    </Content>
+  </UI>  
+
+  <UI Name="ProgressNotification">
+    <Properties>
+      <zune:ProgressNotification Name="Model" ProgressNotification="$Required"/>
+    </Properties>
+    <Scripts>
+      
+      <Script>
+        if (Model != null)
+        {
+          Message.Content = [Model.Message];
+        }
+        else
+        {
+          Message.Content = null;
+        }
+      </Script>
+
+      <Script>
+        string subMessage = null;
+        if (Model != null)
+        {
+          subMessage = [Model.SubMessage];
+        }
+        
+        if (String.IsNullOrEmpty(subMessage))
+        {
+          
+          SubMessage.Content = " ";        
+        }
+        else
+        {
+          SubMessage.Content = subMessage;        
+        }
+      </Script>
+      
+      <Script>
+        if (Model != null)
+        {
+          PercentComplete.Content = me:Strings.Percentage.Format([Model.Percentage]);
+        }
+        else        
+        {
+          PercentComplete.Content = "";
+        }
+      </Script>
+
+    </Scripts>
+    <Content>
+      <Panel Layout="Anchor">
+        <Children>
+
+          
+          <Text Name="Spacer" Content="{me:Strings.Percentage.Format(100)}" Alpha="0.0" Font="{styles:Styles.SyncPercentComplete}">
+            <LayoutInput>
+              <FormLayoutInput Left="Parent,0" />
+            </LayoutInput>
+          </Text>
+          
+          <Text Name="PercentComplete" Color="{styles:Styles.SyncPercentColor}" Font="{styles:Styles.SyncPercentComplete}" HorizontalAlignment="Far">
+            <LayoutInput>
+              <FormLayoutInput Right="Spacer,1" Top="Spacer,0" />
+            </LayoutInput>
+          </Text>
+
+          <Panel MaximumSize="295,0" Layout="VerticalFlow">
+            <LayoutInput>
+              <FormLayoutInput Left="PercentComplete,1,8" Top="PercentComplete,0,4"/>
+            </LayoutInput>
+            <Children>
+
+              <Text Name="Message" MaximumSize="295,0" Color="{styles:Styles.SyncHeaderColor}" Font="{styles:Styles.SyncHeaderFont}"/>    
+
+              <Text Name="SubMessage" Color="{styles:Styles.SyncInformation}" Font="{styles:Styles.SyncInfoFont}"/>
+
+            </Children>
+          </Panel>
+          
+        </Children>
+      </Panel>
+    </Content>
+  </UI>  
+  
+  <Class Name="Strings" Shared="true">
+    <Properties>
+      <string Name="Percentage" string="{zune:Shell.LoadString(zune:StringId.IDS_SYNC_PERCENTAGE)}"/>
+    </Properties>
+  </Class>
+</UIX>

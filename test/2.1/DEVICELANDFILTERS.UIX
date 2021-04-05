@@ -1,0 +1,121 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:data="res://ZuneShellResources!LibraryData.schema.xml"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:me="Me">
+
+  <UI Name="DevicelandFilterList">
+    <Properties>
+      <data:LibrarySyncItemQuery Name="Query" LibrarySyncItemQuery="$Required"/>
+    </Properties>
+    <Scripts>
+      <Script>
+        Repeater.Source = [Query.Result.Items];
+      </Script>
+    </Scripts>
+    <Content>
+      <Repeater Name="Repeater" Layout="VerticalFlow" Source="{Query.Result.Items}" ContentName="Item"/>
+    </Content>
+    <Content Name="Item">
+      <Text Content="BASE DevicelandFilterList ITEM CONTENT NOT OVERRIDDEN"
+            Color="Pink" Font="{styles:Styles.StandardHeaderText}"/>
+    </Content>
+  </UI>
+
+  <UI Name="MusicFilterList" Base="me:DevicelandFilterList">
+    <Content Name="Item">
+      <me:MusicFilterListItem Model="{(data:SyncItem)RepeatedItem}"/>
+    </Content>
+  </UI>
+
+  <UI Name="VideoFilterList" Base="me:DevicelandFilterList">
+    <Content Name="Item">
+      <me:VideoFilterListItem Model="{(data:SyncItem)RepeatedItem}"/>
+    </Content>
+  </UI>
+
+  <UI Name="PhotoFilterList" Base="me:DevicelandFilterList">
+    <Content Name="Item">
+      <me:PhotoFilterListItem Model="{(data:SyncItem)RepeatedItem}"/>
+    </Content>
+  </UI>
+
+  <UI Name="PodcastFilterList" Base="me:DevicelandFilterList">
+    <Content Name="Item">
+      <me:PodcastFilterListItem Model="{(data:SyncItem)RepeatedItem}"/>
+    </Content>
+  </UI>
+
+  <UI Name="DevicelandFilterListItem">
+    <Properties>
+      <data:SyncItem Name="Model" SyncItem="$Required"/>
+    </Properties>
+    <Content>
+      <Text Name="Item" Content="DevicelandFilterListItem Content Not Overridden!"
+            Color="{styles:Styles.TextActive}" Font="{styles:Styles.PrimaryText}"/>
+    </Content>
+  </UI>
+
+  <UI Name="MusicFilterListItem" Base="me:DevicelandFilterListItem">
+    <Scripts>
+      <Script>
+        if (Model.MediaType != zune:SyncControls.ConvertSyncTypeToInt(zune:MediaType.Track))
+        {
+          Item.Visible = false;
+        }
+        else
+        {
+          Item.Content = "{0} / {1}, {2}".Format(Model.Title, Model.ArtistName, Model.AlbumName);
+        }
+      </Script>
+    </Scripts>
+  </UI>
+
+  <UI Name="VideoFilterListItem" Base="me:DevicelandFilterListItem">
+    <Scripts>
+      <Script>
+        if (Model.MediaType != zune:SyncControls.ConvertSyncTypeToInt(zune:MediaType.Video))
+        {
+          Item.Visible = false;
+        }
+        else
+        {
+          Item.Content = "{0} / {1}, {2}".Format(Model.Title, Model.Series, Model.DateAdded);
+        }
+      </Script>
+    </Scripts>
+  </UI>
+
+  <UI Name="PhotoFilterListItem" Base="me:DevicelandFilterListItem">
+    <Scripts>
+      <Script>
+        if (Model.MediaType != zune:SyncControls.ConvertSyncTypeToInt(zune:MediaType.Photo))
+        {
+          Item.Visible = false;
+        }
+        else
+        {
+          Item.Content = "{0} / {1}".Format(Model.Title, Model.DateTaken);
+        }
+      </Script>
+    </Scripts>
+  </UI>
+
+  <UI Name="PodcastFilterListItem" Base="me:DevicelandFilterListItem">
+    <Scripts>
+      <Script>
+        if (Model.MediaType != zune:SyncControls.ConvertSyncTypeToInt(zune:MediaType.PodcastEpisode))
+        {
+          Item.Visible = false;
+        }
+        else
+        {
+          Item.Content = "{0} / {1}".Format(Model.Series, Model.Title);
+        }
+      </Script>
+    </Scripts>
+  </UI>
+  
+</UIX>

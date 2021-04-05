@@ -1,0 +1,592 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX 
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:sys="assembly://mscorlib/System"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:images="res://ZuneShellResources!ImageStyle.uix"
+  xmlns:animations="res://ZuneShellResources!Animations.uix"
+  xmlns:me="Me">
+
+  
+  
+  
+  <UI Name="TransportControls">
+    <Properties>
+      <zune:TransportControlStyle Name="Style"/>
+    </Properties>
+
+    <Locals>
+      <zune:ZunePage Name="Page" ZunePage="{null}"/>
+
+      <zune:TransportControls Name="Controls" TransportControls="{zune:TransportControls.Instance}"/>
+      <iris:Command Name="EnterNowPlaying" Description="{zune:Shell.LoadString(zune:StringId.IDS_NOW_PLAYING_TOOLTIP)}"/>
+      <iris:Command Name="ExitNowPlaying" Description="{zune:Shell.LoadString(zune:StringId.IDS_EXIT_NOW_PLAYING_BUTTON)}"/>
+      <iris:BooleanChoice Name="ShowAudioVideoControls">
+        <Options>
+          <String String="{zune:Shell.LoadString(zune:StringId.IDS_TRANSPORT_MUSIC_SELECTOR)}"/>
+          <String String="{zune:Shell.LoadString(zune:StringId.IDS_TRANSPORT_SLIDESHOW_SELECTOR)}"/>
+        </Options>
+      </iris:BooleanChoice>
+      <Boolean Name="ShowShuffle"/>
+      <Boolean Name="ShowRepeating"/>
+    </Locals>
+
+    <Scripts>
+      <Script>Page = [zune:Shell.DefaultInstance.CurrentPage];</Script>
+
+      <Script>
+        
+        
+        
+        
+        
+        if ([Style] == zune:TransportControlStyle.Music)
+        {
+           ShowAudioVideoControls.Value = true;
+           ModeSwitch.Visible           = false;
+           ShowShuffle                  = true;
+           ShowRepeating                = true;
+        }
+        else if (Style == zune:TransportControlStyle.Video)
+        {
+           ShowAudioVideoControls.Value = true;
+           ModeSwitch.Visible           = false;
+           ShowShuffle                  = false;
+           ShowRepeating                = true;
+        }
+        else if (Style == zune:TransportControlStyle.Photo)
+        {
+           ShowAudioVideoControls.Value = false;
+           ModeSwitch.Visible           = Controls.HasPlaylist &amp;&amp; !Controls.PlayingVideo;
+           ShowShuffle                  = false;
+           ShowRepeating                = false;
+        }
+      </Script>
+
+      <Script>
+        zune:TransportControlStyle active;
+
+        
+        
+        
+        
+        
+        
+        
+        
+        if ([ShowAudioVideoControls.Value])
+        {
+          PrimaryAudioVideoControls.Visible  = true;
+          PrimaryPhotoControls.Visible       = false;
+          Shuffle.Visible                    = [ShowShuffle];
+          Repeating.Visible                  = [ShowRepeating];
+          VolumeControls.Visible             = true;
+          ShowAudioVideoControls.Description = zune:Shell.LoadString(zune:StringId.IDS_PHOTO_TRANSPORT_SHOWPHOTO_TOOLTIP);
+
+          
+          if (Style == zune:TransportControlStyle.Video)
+            active = Style;
+          else
+            active = zune:TransportControlStyle.Music;
+        }
+        else
+        {
+          PrimaryPhotoControls.Visible       = true;
+          PrimaryAudioVideoControls.Visible  = false;
+          Shuffle.Visible                    = false;
+          Repeating.Visible                  = false;
+          VolumeControls.Visible             = false;
+          ShowAudioVideoControls.Description = zune:Shell.LoadString(zune:StringId.IDS_PHOTO_TRANSPORT_SHOWMUSIC_TOOLTIP);
+          
+          
+          active = zune:TransportControlStyle.Photo;
+        }
+        
+        if ([Page] is zune:NowPlayingLand)
+          ((zune:NowPlayingLand)Page).ActiveTransportControlStyle = active;
+      </Script>
+
+      <Script>
+        Shuffle.Description = [Controls.Shuffling.Description];
+      </Script>
+
+      <Script>
+        Repeating.Description = [Controls.Repeating.Description];
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(EnterNowPlaying.Invoked)]
+        zune:NowPlayingLand.NavigateToLand();
+      </Script>
+
+      <Script>
+        [DeclareTrigger(ExitNowPlaying.Invoked)]
+        zune:Shell.DefaultInstance.NavigateBackCommand.Invoke();
+      </Script>
+      
+      
+      <Script>
+        
+        
+        
+        
+        
+        
+        
+
+        NowPlayingButton.Visible = [ShowAudioVideoControls.Value] &amp;&amp;
+                                   [Controls.HasPlaylist] &amp;&amp;
+                                   ![images:Images.InNowPlaying.Value] &amp;&amp;
+                                   ![zune:Shell.DefaultInstance.CurrentPage.ShowNowPlayingX];
+      </Script>
+
+      <Script>
+        ExitNowPlayingButton.Visible = [zune:Shell.DefaultInstance.CurrentPage.ShowNowPlayingX];
+      </Script>
+      <Script>
+        if ([images:Images.InNowPlaying.Value])
+        {
+          ModeSwitch.OverrideStyle      = styles:SharedStyles.NowPlayingButtonStyle;
+        }
+        else
+        {
+          ModeSwitch.OverrideStyle      = styles:SharedStyles.TransportButtonStyle;
+        }
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel Margins="0,8,20,0" Layout="Anchor">       
+        <Children>
+
+          <Panel Name="SecondaryControls" Layout="HorizontalFlow">
+            <LayoutInput>
+              <AnchorLayoutInput Right="PrimaryControls,0,-4" Top="Parent,0,5"/>
+            </LayoutInput>
+            <Children>
+
+               <images:ToggleIconButton Name="Repeating"
+                  Model="{Controls.Repeating}"
+                  OnStyle="{images:Images.ContextualTransportRepeatingOn}" 
+                  OffStyle="{images:Images.ContextualTransportRepeatingOff}"
+                  Margins="0,1,0,0"/>
+
+              <images:ToggleIconButton Name="Shuffle"
+                  Model="{Controls.Shuffling}"
+                  OnStyle="{images:Images.ContextualTransportShuffleOn}" 
+                  OffStyle="{images:Images.ContextualTransportShuffleOff}"
+                  Margins="0,1,0,0"/>
+
+              <images:ToggleActionButton Name="ModeSwitch" 
+                  Margins="0,0,3,0" 
+                  ImageStyle="{images:Images.ContextualTransportActionButton}" 
+                  Model="{ShowAudioVideoControls}"
+                  FixedHeight="0,24"
+                  ShowShadowLabel="false"
+                  ButtonInset="10,4,10,0"
+                  TileMinSize="0,0"/>
+
+            </Children>
+          </Panel>
+
+          <Panel Name="PrimaryControls">
+            <LayoutInput>
+              <AnchorLayoutInput Right="NowPlayingContainer,0" Top="Parent,0"/>
+            </LayoutInput>
+            <Children>
+
+              <me:PrimaryAudioVideoControls Name="PrimaryAudioVideoControls" Margins="0,0,5,0"/>
+
+              <me:PrimaryPhotoControls Name="PrimaryPhotoControls" Margins="0,5,0,0"/>
+
+            </Children>
+          </Panel>
+
+          <Panel Name="NowPlayingContainer" MinimumSize="68,0" MaximumSize="68,0" Layout="HorizontalFlow">
+            <LayoutInput>
+              <AnchorLayoutInput Left="Parent,1,-68" Top="Parent,0,5" Horizontal="Near"/>
+            </LayoutInput>
+            <Children>
+
+              <images:IconButton Name="NowPlayingButton"
+                  Model="{EnterNowPlaying}"
+                  Style="{images:Images.EnterNowPlaying}"
+                  Margins="4,4,0,0">
+
+                <Animations>
+                  <Animation Animation="{animations:Animations.BasicShowSlide}"/>
+                </Animations>
+              </images:IconButton>
+              
+              <images:ActionButton Name="ExitNowPlayingButton"
+                  Model="{ExitNowPlaying}"
+                  ImageStyle="{images:Images.ContextualTransportActionButton}" 
+                  OverrideStyle="{styles:SharedStyles.NowPlayingButtonStyle}" 
+                  FixedHeight="0,24"
+                  ShowShadowLabel="false"
+                  ButtonInset="10,4,10,0"
+                  TileMinSize="0,0"/>
+
+            </Children>
+          </Panel>
+
+          <me:VolumeControls Name="VolumeControls">
+            <LayoutInput>
+              <AnchorLayoutInput Left="PrimaryControls,0,-25" Right="NowPlayingContainer,0,25" Top="PrimaryControls,1"/>
+            </LayoutInput>
+          </me:VolumeControls>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="PrimaryAudioVideoControls">
+    <Locals>
+      <zune:TransportControls Name="Controls" TransportControls="{zune:TransportControls.Instance}"/>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(Controls.Playing)]
+        [DeclareTrigger(Controls.IsPlaybackContextCompatible)]
+
+        if (!Controls.Playing)
+        {
+           BigButton.Model                 = Controls.Play;
+           BigButton.AccessibleDescription = Controls.Play.Description;
+           BigButton.Style                 = images:Images.ContextualTransportPlay;
+        }
+        else
+        {
+           
+           
+           
+           
+           
+           
+           
+           
+           
+
+           if (Controls.IsPlaybackContextCompatible)
+           {
+              BigButton.Model                 = Controls.Pause;
+              BigButton.AccessibleDescription = Controls.Pause.Description;
+              BigButton.Style                 = images:Images.ContextualTransportPause;
+           }
+           else
+           {
+              BigButton.Model                 = Controls.Stop;
+              BigButton.AccessibleDescription = Controls.Stop.Description;
+              BigButton.Style                 = images:Images.ContextualTransportStop;
+           }
+        }
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel>
+        <Layout>
+          <FlowLayout Orientation="Horizontal" ItemAlignment="Center"/>
+        </Layout>
+        <Children>
+
+          <images:PressAndHoldIconButton
+              ClickCommand="{Controls.Back}"
+              Holding="{Controls.Rewinding}"
+              AccessibleDescription="{Controls.Back.Description}"
+              AllowDoubleClicks="false"
+              Style="{images:Images.ContextualTransportBack}"/>
+
+          <images:IconButton Name="BigButton" Model="{null}"/>
+
+          <images:PressAndHoldIconButton
+              ClickCommand="{Controls.Forward}"
+              Holding="{Controls.Fastforwarding}"
+              AccessibleDescription="{Controls.Forward.Description}"
+              AllowDoubleClicks="false"
+              Style="{images:Images.ContextualTransportForward}"/>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="VolumeControls">
+    <Locals>
+      <zune:TransportControls Name="Controls" TransportControls="{zune:TransportControls.Instance}"/>
+      <iris:Command Name="ShowControls"/>
+      <Timer Name="HideTimer" Interval="1000" Enabled="false" AutoRepeat="false"/>
+      <Single Name="HideLength" Single="0.4"/>
+
+      <iris:Choice Name="ControlsShowHide">
+        <Options>
+          <String String="Dynamic"/>
+          <String String="Static"/>
+        </Options>
+      </iris:Choice>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        Muted.Description = [Controls.Muted.Description];
+      </Script>
+
+      <Script>
+        if([UI.DeepMouseFocus] || [UI.DeepKeyFocus])
+        {
+          ControlsShowHide.Chosen = "Dynamic";
+          StaticControls.Alpha = 0.0;
+          DynamicControls.Alpha = 1.0;
+        }
+      </Script>
+
+      <Script>
+        VolumeValue.Content = ((int)[Controls.Volume.Value]).ToString("00");
+      </Script>
+
+      <Script>
+        if ([Controls.Muted.Value])
+        {
+           VolumeLabel.Content = zune:Shell.LoadString(zune:StringId.IDS_VOLUME_LABEL_MUTED);
+        }
+        else
+        {
+           VolumeLabel.Content = sys:String.Format(
+               zune:Shell.LoadString(zune:StringId.IDS_VOLUME_LABEL),
+               (int)[Controls.Volume.Value]);
+        }
+
+        Slider.AccessibleValue = ((int)Controls.Volume.Value).ToString();
+      </Script>
+
+      <Script>
+        HideTimer.Enabled = ![UI.DeepMouseFocus] &amp;&amp; ![UI.DeepKeyFocus];
+      </Script>
+
+      <Script>
+        [DeclareTrigger(HideTimer.Tick)]
+        ControlsShowHide.Chosen = "Static";
+        DynamicControls.Alpha = 0.0;
+        StaticControls.Alpha = 1.0;
+      </Script>
+
+      
+      
+      
+      
+      
+      <Script>
+        if ([images:Images.InNowPlaying.Value])
+        {
+          Slider.BackgroundImage        = styles:Styles.SlideshowSliderBackground;
+          Slider.ThumbImage             = styles:Styles.SlideshowSliderThumb;
+          Slider.ThumbImageFocus        = styles:Styles.SlideshowSliderHoverThumb;
+          Slider.FilledBackgroundImage  = styles:Styles.SlideshowSliderFill;
+
+          VolumeValue.Style = styles:SharedStyles.SlideshowTransportVolumeValue;
+          VolumeLabel.Style = styles:SharedStyles.SlideshowTransportVolumeLabel;
+        }
+        else
+        {
+          Slider.BackgroundImage        = styles:Styles.SliderBackground;
+          Slider.ThumbImage             = styles:Styles.SliderThumb;
+          Slider.ThumbImageFocus        = styles:Styles.SliderHoverThumb;
+          Slider.FilledBackgroundImage  = styles:Styles.SliderFill;
+
+          VolumeValue.Style = styles:SharedStyles.TransportVolumeValue;
+          VolumeLabel.Style = styles:SharedStyles.TransportVolumeLabel;
+        }
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel MouseInteractive="true" Layout="Dock" MaximumSize="0,16">
+        <Children>
+
+          <Panel Name="DynamicControls" Alpha="0">
+            <Layout>
+              <FlowLayout Orientation="Horizontal" ItemAlignment="Center" Spacing="3,0"/>
+            </Layout>
+            <LayoutInput>
+              <DockLayoutInput Alignment="Center"/>
+            </LayoutInput>
+            <Animations>
+              <SwitchAnimation Expression="{ControlsShowHide}" Type="Alpha">
+                <Options>
+                  <TransformAnimation Name="Dynamic" TransformAnimation="{animations:Animations.TextIconToggleShow}"/>
+                  <Animation Name="Static" Animation="{animations:Animations.TextIconToggleHide}"/>
+                </Options>
+              </SwitchAnimation>
+            </Animations>
+            <Children>
+
+              <images:ToggleIconButton Name="Muted"
+                  Model="{Controls.Muted}"
+                  KeyFocusOnMouseDown="false"
+                  OnStyle="{images:Images.ContextualTransportMuteOn}"
+                  OffStyle="{images:Images.ContextualTransportMuteOff}"/>
+
+              <core:Slider Name="Slider" 
+                  Model="{Controls.Volume}"
+                  KeyFocusOnMouseDown="false"
+                  KeyDelta="5.0"
+                  KeyDeltaShift="1.0"
+                  KeyDeltaCtrl="10.0"
+                  KeyDeltaPage="20.0"
+                  MaximumSize="61,0"
+                  AccessibleDescription="{zune:Shell.LoadString(zune:StringId.IDS_VOLUME_TOOLTIP)}"/>
+
+              <core:Label Name="VolumeValue" Alignment="Far" MinimumSize="20,0" Margins="0,-1,0,0"/>
+
+            </Children>
+          </Panel>
+
+          <Panel Name="StaticControls">
+            <LayoutInput>
+              <DockLayoutInput Alignment="Center"/>
+            </LayoutInput>
+            <Animations>
+              <SwitchAnimation Expression="{ControlsShowHide}" Type="Alpha">
+                <Options>
+                  <TransformAnimation Name="Static" TransformAnimation="{animations:Animations.TextIconToggleShow}"/>
+                  <Animation Name="Dynamic" Animation="{animations:Animations.TextIconToggleHide}"/>
+                </Options>
+              </SwitchAnimation>
+            </Animations>
+            <Children>
+
+              <core:Label Name="VolumeLabel" Style="{styles:SharedStyles.TransportVolumeLabel}"/>
+
+            </Children>
+          </Panel>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="PrimaryPhotoControls">
+    <Locals>
+      <zune:ZunePage Name="Page" ZunePage="{null}"/>
+
+      <iris:Command Name="PlayButtonCommand" Description="{zune:Shell.LoadString(zune:StringId.IDS_PHOTO_PLAY_TOOLTIP)}"/>
+      <iris:Command Name="ContinueButtonCommand" Description="{zune:Shell.LoadString(zune:StringId.IDS_PHOTO_CONTINUE_TOOLTIP)}"/>
+      <iris:Command Name="PauseButtonCommand" Description="{zune:Shell.LoadString(zune:StringId.IDS_PHOTO_PAUSE_TOOLTIP)}"/>
+      <iris:Command Name="NextButtonCommand" Description="{zune:Shell.LoadString(zune:StringId.IDS_PHOTO_NEXT_TOOLTIP)}"/>
+      <iris:Command Name="BackButtonCommand" Description="{zune:Shell.LoadString(zune:StringId.IDS_PHOTO_PREVIOUS_TOOLTIP)}"/>
+
+      <zune:SlideShowState Name="State" SlideShowState="{null}"/>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        Page = [zune:Shell.DefaultInstance.CurrentPage];
+      </Script>
+
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(((zune:ISlideShowStateOwner)Page).SlideShowState)]
+
+        
+        if (Page is zune:ISlideShowStateOwner)
+        {
+          State = ((zune:ISlideShowStateOwner)Page).SlideShowState;
+        }
+        else
+        {
+          State = null;
+        }
+
+        
+        
+        bool inProgress = ((State != null) &amp;&amp; (Page is zune:SlideshowLand));
+
+        if (inProgress)
+          PlayButton.Model = ContinueButtonCommand;
+        else
+          PlayButton.Model = PlayButtonCommand;
+
+        NextButtonCommand.Available = inProgress;
+        BackButtonCommand.Available = inProgress;
+      </Script>
+
+      <Script>
+        PlayButtonCommand.Available = (State != null) &amp;&amp; [State.CanPlay];
+      </Script>
+
+      <Script>
+        if (State == null)
+        {
+          PlayButton.Visible = true;
+          PauseButton.Visible = false;
+        }
+        else
+        {
+          PlayButton.Visible = ![State.Play];
+          PauseButton.Visible = State.Play;
+        }
+      </Script>
+
+      <Script>
+        [DeclareTrigger(PlayButtonCommand.Invoked)]
+        State.Navigate.Invoke();
+      </Script>
+
+      <Script>
+        [DeclareTrigger(ContinueButtonCommand.Invoked)]
+        State.Play = true;
+      </Script>
+
+      <Script>
+        [DeclareTrigger(PauseButtonCommand.Invoked)]
+        State.Play = false;
+      </Script>
+
+      <Script>
+        [DeclareTrigger(NextButtonCommand.Invoked)]
+        State.Index = State.Index + 1;
+      </Script>
+
+      <Script>
+        [DeclareTrigger(BackButtonCommand.Invoked)]
+        State.Index = State.Index - 1;
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel Margins="0,0,6,21">
+        <Layout>
+          <FlowLayout Orientation="Horizontal" ItemAlignment="Center"/>
+        </Layout>
+        <Children>
+
+          <images:IconButton Model="{BackButtonCommand}" Style="{images:Images.ContextualSlideshowBack}" Margins="0,0,5,0"/>
+
+          <images:IconButton Model="{PlayButtonCommand}" Name="PlayButton" Style="{images:Images.ContextualSlideshowPlay}"/>
+
+          <images:IconButton Model="{PauseButtonCommand}" Name="PauseButton" Style="{images:Images.ContextualSlideshowPause}"/>
+
+          <images:IconButton Model="{NextButtonCommand}" Style="{images:Images.ContextualSlideshowNext}" Margins="6,0,0,0"/>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+</UIX>

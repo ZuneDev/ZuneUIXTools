@@ -1,0 +1,86 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:signin="res://ZuneShellResources!SignInDialog.uix"
+  xmlns:styles="res://ZuneShellResources!Styles.uix" 
+  xmlns:core="res://ZuneShellResources!Controls.uix">
+
+  
+
+
+
+
+
+  <UI Name="SignInStatus">
+    <Properties>
+      <zune:Shell Name="Shell" Shell="$Required"/>
+    </Properties>
+
+    <Locals>
+      
+      <iris:Command Name="SignInCommand" Description="{zune:Shell.LoadString(zune:StringId.IDS_LOG_ON_BUTTON)}"/>
+      <iris:Command Name="SigningInCommand" Description="{zune:Shell.LoadString(zune:StringId.IDS_LOGON_STATUS_BUTTON)}"/>
+      <iris:Command Name="SignedInUserCommand"/>
+
+      
+      <zune:SignIn Name="SignIn" SignIn="{zune:SignIn.Instance}"/>
+   
+      
+      <Boolean Name="ServiceEndpointsInitialized"/>
+
+      <signin:SignInDialog Name="SignInDlg" SignInDialog="{null}"/>
+    </Locals>
+
+    <Scripts>
+      
+      <Script>
+        <![CDATA[
+        bool signedIn = [SignIn.SignedIn];
+        bool signingIn = [SignIn.SigningIn];
+        SignedInUserButton.Visible = signedIn;
+        SignInButton.Visible = (!signedIn && !signingIn);
+        SigningInButton.Visible = signingIn;
+        ]]>
+      </Script>
+
+      
+      <Script> 
+        SignedInUserCommand.Description = [SignIn.ZuneTag]; 
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(SignedInUserCommand.Invoked)]
+        zune:Shell.SettingsFrame.Settings.Account.Invoke(zune:SettingCategories.Account);
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(SignInCommand.Invoked)]
+        [DeclareTrigger(SigningInCommand.Invoked)]
+        SignIn.CancelSignIn();
+        if (SignInDlg == null) SignInDlg = new signin:SignInDialog();
+        SignInDlg.Helper.Show( SignInDlg );
+      </Script>
+
+    </Scripts>
+
+    <Content>
+      <Panel>
+        <Layout>
+          <FlowLayout Orientation="Horizontal" Spacing="6,0"/>
+        </Layout>
+        <Children>
+
+          
+          <core:Button Name="SigningInButton" OverrideStyle="{styles:SharedStyles.SignInButtonStyle}" Model="{SigningInCommand}" />
+          <core:Button Name="SignedInUserButton" OverrideStyle="{styles:SharedStyles.SignInButtonStyle}" Model="{SignedInUserCommand}" />
+          <core:Button Name="SignInButton" OverrideStyle="{styles:SharedStyles.SignInButtonStyle}" Model="{SignInCommand}" />
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+</UIX>

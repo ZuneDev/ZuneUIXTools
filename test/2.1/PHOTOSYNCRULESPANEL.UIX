@@ -1,0 +1,86 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:data="res://ZuneShellResources!LibraryData.schema.xml"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:rules="res://ZuneShellResources!SyncRules.uix">
+
+  <UI Name="SyncRulesPanel" Base="rules:SyncRulesPanelBase">
+    <Properties>
+      <zune:PhotoLibraryPage Name="Page" PhotoLibraryPage="$Required"/>
+      <Int32 Name="MinimumWidth" Int32="186"/>
+      <Single Name="MinimumPercent" Single="0.0"/>
+      <List Name="AllItemsText">
+        <Source>
+          <String String="{zune:Shell.LoadString(zune:StringId.IDS_ALL_PICTURE_ITEMS)}"/>
+        </Source>
+      </List>
+    </Properties>    
+    <Locals>
+      <data:LibraryMediaFolderQuery Name="FolderQuery" FolderMediaType="MediaFolder"
+                                    DeviceId="{Page.DeviceId}"
+                                    ShowDeviceContents="true" RulesOnly="true"/>
+      
+      <data:LibraryPhotoQuery Name="PhotoQuery"
+                              DeviceId="{Page.DeviceId}"
+                              ShowDeviceContents="true" RulesOnly="true"/>      
+      <List Name="PhotoQueryWrapper">
+        <Source>
+          <data:LibraryPhotoQuery LibraryPhotoQuery="{PhotoQuery}"/>
+        </Source>
+      </List>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        <![CDATA[
+        int deviceID = [Page.DeviceId];
+        
+        FolderQuery.DeviceId = deviceID;
+        PhotoQuery.DeviceId = deviceID;
+        ]]>
+      </Script>
+      <Script>
+        <![CDATA[
+        [DeclareTrigger(FolderQuery.Result.Items)]
+        [DeclareTrigger(PhotoQuery.Result.Items.Count)]
+        [InitialEvaluate(true)]
+        
+        bool devicePresent = zune:SyncControls.Instance.CurrentDeviceExists;
+        bool syncAll = zune:SyncControls.Instance.GetSyncAll(zune:MediaType.Photo);
+        iris:AggregateList newList = null;
+        
+        if (Source != null)
+        {
+          UI.DisposeOwnedObject(Source);
+          Source = null;
+        }
+        
+        if (!devicePresent)
+        {
+          newList = new iris:AggregateList();
+        }
+        else if (syncAll)
+        {
+          newList = new iris:AggregateList(AllItemsText);
+        }
+        else if (PhotoQuery.Result.Items.Count <= 0)
+        {
+          newList = new iris:AggregateList(AllItemsText,
+                                           FolderQuery.Result.Items);
+        }
+        else
+        {
+          newList = new iris:AggregateList(AllItemsText,
+                                           FolderQuery.Result.Items,
+                                           PhotoQueryWrapper);
+        }
+
+        Source = newList;
+        ]]>
+      </Script>
+    </Scripts>
+  </UI>
+
+</UIX>

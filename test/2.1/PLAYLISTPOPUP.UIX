@@ -1,0 +1,291 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:iris="assembly://UIX/Microsoft.Iris" 
+  xmlns:zune="assembly://ZuneShell/ZuneUI" 
+  xmlns:menu="res://ZuneShellResources!ContextMenu.uix"
+  xmlns:button="res://ZuneShellResources!Button.uix"
+  xmlns:dialog="res://ZuneShellResources!PlaylistDialog.uix"
+  xmlns:data="res://ZuneShellResources!LibraryData.schema.xml"
+  xmlns:me="Me"
+  >
+
+  
+
+
+  <Class Name="PlaylistPopup" Base="menu:ContextMenu">
+    <Properties>
+      <PopupLayoutInput Name="LayoutInput" Placement="Top" Offset="0,6"/>
+      <String Name="PopupUI" String="res://ZuneShellResources!PlaylistPopup.uix#PlaylistPopupUI"/>      
+      <Boolean Name="HideIfAllDisabled" Boolean="false"/>
+      <Boolean Name="InDrag" Boolean="false"/>
+      <Boolean Name="DraggingOverIcon" Boolean="false"/>
+      <Boolean Name="MousingOverIcon" Boolean="false"/>
+
+      <List Name="DragItems" List="{null}"/>
+
+      <iris:Command Name="MorePlaylists" Description="{zune:Shell.LoadString(zune:StringId.IDS_ADDITIONAL_PLAYLISTS)}"/>
+      <iris:Command Name="CreatePlaylist" Description="{zune:Shell.LoadString(zune:StringId.IDS_PLAYLIST_CREATE)}"/>
+
+      <dialog:AddToPlaylistDialog Name="AddToPlaylistDialog"/>
+      <dialog:CreatePlaylistDialog Name="CreatePlaylistDialog"/>
+    </Properties>
+
+    <Scripts>
+      <Script>
+        
+        
+        Helper.IsModal = false;
+      </Script>
+
+      
+      <Script>
+        if (![Helper.IsVisible])
+        {
+          DragItems = null;
+          DraggingOverIcon = false;
+          InDrag = false;
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(MorePlaylists.Invoked)]
+
+        AddToPlaylistDialog.DragItems = DragItems;
+        AddToPlaylistDialog.Helper.Show(AddToPlaylistDialog);
+        Helper.Hide();
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(CreatePlaylist.Invoked)]
+        
+        CreatePlaylistDialog.DragItems = DragItems;
+        CreatePlaylistDialog.Helper.Show(CreatePlaylistDialog);
+        Helper.Hide();
+      </Script>
+    </Scripts>
+  </Class>
+  
+  
+
+
+  <UI Name="PlaylistPopupUI" Base="menu:ContextMenuUI">
+    <Properties>
+      <me:PlaylistPopup Name="Popup" PlaylistPopup="{null}" />
+
+      <Boolean Name="StealFocusOnOpen" Boolean="false"/>
+    </Properties>
+    
+    <Locals>
+      <data:Playlist Name="NowPlaying" LibraryId="-1" Title="{zune:Shell.LoadString(zune:StringId.IDS_NOW_PLAYING)}"/>
+      <List Name="Options" />
+      
+      <data:LibraryPlaylistQuery Name="PlaylistQuery" Sort="+DateModified" AutoRefresh="false"/>
+
+      <TypeSelector Name="PlaylistSelector" ContentName="Playlist" Type="{typeof(data:Playlist)}"/>
+
+      
+
+
+
+
+
+      <Timer Name="DismissTimer" Interval="1000" AutoRepeat="false" Enabled="false"/>
+
+      <Int32 Name="MaxPlaylistsToShow" Int32="7"/>
+    </Locals>
+
+    <Input>
+      <DropTargetHandler Name="Target" AllowedDropActions="None" HandlerStage="Bubbled,Direct"/>
+    </Input>
+
+    <Scripts>
+      <Script>SharedSize.MaximumSize = new Size(400,0);</Script>
+      
+      
+      <Script>
+        Repeater.ContentSelectors.Add(PlaylistSelector);
+      </Script>
+      
+      
+      
+      <Script>
+        Options.Add(Popup.CreatePlaylist);
+        Options.Add(NowPlaying);
+
+        List playlists = PlaylistQuery.Result.Items;
+        if (!List.IsNullOrEmpty(playlists))
+        {          
+          Options.Add(new menu:MenuDivider());
+          
+          int numberToSkip = playlists.Count - MaxPlaylistsToShow;
+          if (numberToSkip > 0)
+          {
+            Options.Add(Popup.MorePlaylists);
+          }
+          else
+          {
+            numberToSkip = 0;
+          }
+          
+          
+          
+          
+          
+          
+          foreach (data:Playlist playlist in playlists)
+          {
+            
+            if (numberToSkip > 0)
+            {
+              numberToSkip = numberToSkip - 1;
+            }
+            else
+            {
+              Options.Add(playlist);
+            }
+          }
+        }
+        
+        Repeater.Source = Options;
+      </Script>
+
+      
+      <Script>
+        if (Popup.InDrag)
+        {
+          DismissTimer.Enabled = ([Popup.SelectedItem] == null) 
+                      &amp;&amp; ![Target.Dragging] 
+                      &amp;&amp; ![Popup.DraggingOverIcon];
+        }
+        else
+        {
+          DismissTimer.Enabled = ![UI.DeepMouseFocus]
+                      &amp;&amp; ![Popup.MousingOverIcon];              
+        }
+        if (DismissTimer.Enabled)
+        {
+          
+
+        }
+      </Script>
+
+      
+      <Script>
+        if ([UI.DeepMouseFocus] &amp;&amp; [Popup.InDrag])
+        {
+          
+          Popup.Helper.Hide();
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(DismissTimer.Tick)]
+        
+        Popup.Helper.Hide();
+      </Script>
+    </Scripts>
+    
+    <Content Name="CommandItem">
+      <me:CommandPlaylistMenuItem 
+          Model="{(iris:Command)RepeatedItem}" 
+          ContextMenu="{Popup}" 
+          SharedSize="{SharedSize}" 
+          SharedSizePolicy="SharesWidth,ContributesToWidth" 
+          MinimumSize="{MinimumItemSize}"/>
+    </Content>
+    
+    <Content Name="Playlist">
+      <me:PlaylistMenuItem 
+          Model="{(data:Playlist)RepeatedItem}" 
+          ContextMenu="{Popup}" 
+          SharedSize="{SharedSize}" 
+          SharedSizePolicy="SharesWidth,ContributesToWidth" 
+          MinimumSize="{MinimumItemSize}"/>
+    </Content>
+  </UI>
+  
+  
+
+
+
+  <UI Name="PlaylistMenuItemBase" Base="menu:ContextMenuItemBase">
+    <Properties>
+      <me:PlaylistPopup Name="ContextMenu" PlaylistPopup="$Required"/>
+    </Properties>
+
+    <Input>
+      <DropTargetHandler Name="Target" AllowedDropActions="Copy" HandlerStage="Bubbled,Direct"/>
+    </Input>
+
+    <Scripts>
+      
+      <Script> UI.KeyFocusOnMouseEnter = false; </Script>
+
+      
+      <Script>
+        [DeclareTrigger(Target.DragEnter)]
+        ContextMenu.SelectedItem = Model;
+      </Script>
+
+      <Script>
+        [DeclareTrigger(Target.DragLeave)]
+        
+        
+        if (!Target.Dragging)
+          ContextMenu.SelectedItem = null;
+      </Script>
+    </Scripts>
+  </UI>
+
+  
+
+
+
+  <UI Name="PlaylistMenuItem" Base="me:PlaylistMenuItemBase">
+    <Properties>
+      <data:Playlist Name="Model" Playlist="$Required"/>
+      <button:ButtonProvider Name="Provider" PrimaryLabel="{Model.Title}"/>
+      
+      <Int32 Name="PlaylistId" Int32="{Model.LibraryId}"/>
+    </Properties>
+    
+    <Scripts>
+      
+      <Script>
+        [DeclareTrigger(Target.Dropped)]
+        [DeclareTrigger(Clicker.Invoked)]
+
+        ContextMenu.AddToPlaylistDialog.AddToPlaylist.PlaylistId = PlaylistId;
+        ContextMenu.AddToPlaylistDialog.AddToPlaylist.Items = ContextMenu.DragItems;
+        ContextMenu.AddToPlaylistDialog.AddToPlaylist.Start.Invoke();
+        ContextMenu.Helper.Hide();
+      </Script>
+    </Scripts>
+  </UI>
+
+  
+
+
+
+  <UI Name="CommandPlaylistMenuItem" Base="me:PlaylistMenuItemBase">
+    <Properties>
+      <iris:Command Name="Model" Command="$Required"/>
+      <button:CommandButtonProvider Name="Provider" Model="{Model}"/>      
+    </Properties>
+
+    <Scripts>
+      <Script>Clicker.Command = Model;</Script>
+      
+      
+      <Script>
+        [DeclareTrigger(Target.Dropped)]
+
+        Model.Invoke();
+      </Script>
+    </Scripts>
+  </UI>
+  
+</UIX>

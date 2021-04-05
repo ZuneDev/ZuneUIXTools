@@ -1,0 +1,536 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:sys="assembly://mscorlib/System"
+  xmlns:system="assembly://System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL/System"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:zunedbapi="assembly://ZuneDBApi"
+  xmlns:zcfg="assembly://ZuneDBApi/Microsoft.Zune.Configuration"
+  xmlns:subscription="assembly://ZuneDBApi/Microsoft.Zune.Subscription"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:dialog="res://ZuneShellResources!Dialog.uix"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:data="res://ZuneShellResources!LibraryData.schema.xml"
+  xmlns:zmpdata="res://ZuneMarketplaceResources!PodcastData.schema.xml"
+  xmlns:podcast="res://ZuneShellResources!ManagementPodcast.uix"
+  xmlns:me="Me"
+  >
+
+  
+  
+  
+  
+  
+
+  
+  
+  
+  <Class Name="UnsubscribeDialog" Base="dialog:Dialog">
+    <Properties>
+      
+      <zune:PodcastLibraryPage Name="Page" PodcastLibraryPage="{null}"/>
+      <Int32 Name="SeriesId" Int32="-1"/>
+
+      <String Name="ContentUI" String="res://ZuneShellResources!PodcastDialogs.uix#UnsubscribeDialogContentUI"/>
+      <iris:Command Name="Save" Description="{zune:Shell.LoadString(zune:StringId.IDS_PODCAST_UNSUBSCRIBE_SAVE)}"/>
+      <iris:Command Name="Delete" Description="{zune:Shell.LoadString(zune:StringId.IDS_PODCAST_UNSUBSCRIBE_DELETE)}"/>
+      <iris:BooleanChoice Name="Remember" Description="{zune:Shell.LoadString(zune:StringId.IDS_PODCAST_UNSUBSCRIBE_REMEMBER)}"/>
+
+      <String Name="AccessibleDescription" String="{zune:Shell.LoadString(zune:StringId.IDS_PODCAST_UNSUBSCRIBE_QUESTION)}"/>
+      <Command Name="Unsubscribe"/>
+    </Properties>
+
+    <Locals>
+      <Boolean Name="DeleteEpisodes" Boolean="False"/>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        [DeclareTrigger(Save.Invoked)]
+        DeleteEpisodes = false;
+
+        
+        if (Remember.Value)
+        {
+          zcfg:ClientConfiguration.Series.PodcastDefaultUnsubscribeChoice = 1; 
+        }
+
+        Unsubscribe.Invoke();
+      </Script>
+
+      <Script>
+        [DeclareTrigger(Delete.Invoked)]
+        DeleteEpisodes = true;
+
+
+        
+        if (Remember.Value)
+        {
+          zcfg:ClientConfiguration.Series.PodcastDefaultUnsubscribeChoice = 2; 
+        }
+
+        Unsubscribe.Invoke();
+      </Script>
+
+      
+      <Script>
+        if ([Helper.IsVisible])
+        {
+          int unsubscribeChoice = zcfg:ClientConfiguration.Series.PodcastDefaultUnsubscribeChoice;
+          if (unsubscribeChoice != 0)
+          {
+            DeleteEpisodes = false;
+            if (unsubscribeChoice == 2)
+            {
+              DeleteEpisodes = true;
+            }
+
+            
+            Unsubscribe.Invoke();
+          }
+        }
+      </Script>
+
+      <Script>
+        [DeclareTrigger(Unsubscribe.Invoked)]
+
+        if (Page != null)
+        {
+          Page.Unsubscribe(SeriesId, DeleteEpisodes);
+
+          
+          SeriesId = -1;
+          DeleteEpisodes = false;
+        }
+        else
+        {
+          
+          subscription:SubscriptionManager.Instance.Unsubscribe(SeriesId, DeleteEpisodes);
+        }
+
+        
+        Helper.Hide();
+      </Script>
+    </Scripts>
+  </Class>
+
+
+  
+  
+  
+  <UI Name="UnsubscribeDialogContentUI" Base="dialog:DialogContentUI">
+    <Properties>
+      <me:UnsubscribeDialog Name="Dialog" UnsubscribeDialog="$Required"/>
+    </Properties>
+    <Content>
+      <Panel Navigation="ContainAll,WrapAll" MaximumSize="300,0" Margins="10">
+        <Layout>
+          <FlowLayout ItemAlignment="Near" Orientation="Vertical"/>
+        </Layout>
+        <Children>
+
+          <Text Content="{zune:Shell.LoadString(zune:StringId.IDS_UNSUBSCRIBE_BUTTON)}"
+                Color="{styles:Styles.TextActive}" Font="{styles:Styles.DialogHeaderText}"
+                WordWrap="true" HorizontalAlignment="Near" Margins="0,0,0,3"/>          
+          
+          <Text Content="{zune:Shell.LoadString(zune:StringId.IDS_PODCAST_UNSUBSCRIBE_QUESTION)}"
+                Font="{styles:Styles.DialogText}" Color="{styles:Styles.DialogTextColor}"
+                WordWrap="true" HorizontalAlignment="Near"/>
+
+          
+          <core:CheckBox Model="{Dialog.Remember}" Margins="0,10,0,0" LabelFont="{styles:Styles.DialogText}"/>
+          
+          <Panel Margins="-2,10,0,0">
+            <Layout>
+              <DockLayout SizeToChildren="true" DefaultLayoutInput="Left,Near"/>
+            </Layout>
+            <Children>
+
+              <core:BigActionButton Model="{Dialog.Save}" Margins="0,0,10,0"/>
+              <core:BigActionButton Model="{Dialog.Delete}" Margins="0,0,10,0"/>
+              <core:BigActionButton Model="{Dialog.Cancel}" Margins="0,0,10,0" FocusOrder="0"/>
+
+            </Children>
+          </Panel>
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+
+  
+  
+  
+  <Class Name="InputDialog" Base="dialog:Dialog">
+    <Properties>
+      <String Name="ContentUI" String="res://ZuneShellResources!PodcastDialogs.uix#InputDialogContentUI"/>
+      <String Name="Title" String="$Required"/>
+      <String Name="Message" String="$Required"/>
+      <iris:Command Name="AcceptCommand" Command="$Required"/>
+      <EditableTextData Name="EditData" EditableTextData="$Required"/>
+    </Properties>
+    <Scripts>
+      
+      
+      <Script>
+        AccessibleDescription = Title;
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(Cancel.Invoked)]
+        EditData.Value = "";
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(EditData.Submitted)]
+        if ( EditData.Value.Length > 0 )
+        {
+          AcceptCommand.Invoke();
+        }
+      </Script>
+
+    </Scripts>
+  </Class>
+
+
+  
+  
+  
+  <UI Name="InputDialogContentUI" Base="dialog:DialogContentUI">
+    <Properties>
+      <me:InputDialog Name="Dialog" InputDialog="$Required"/>
+
+      <Color Name="TextFocusedColor" Color="{styles:Styles.TextFocusedForeground}"/>
+      <Color Name="TextHighlightColor" Color="{styles:Styles.TextFocusedBackground}"/>
+
+      
+      <Size Name="TileMinSize" Size="400,0"/>
+      <Size Name="TileMaxSize" Size="400,0"/>
+    </Properties>
+
+    <Scripts>
+      <Script>
+        Dialog.AcceptCommand.Available = [Dialog.EditData.Value].Length > 0;
+      </Script>
+    </Scripts>
+    
+    <Content>
+      <Panel Navigation="ContainAll,WrapAll" Margins="10" MaximumSize="400,0">
+        <Layout>
+          <FlowLayout ItemAlignment="Near" Orientation="Vertical"/>
+        </Layout>
+        <Children>
+
+          
+          <Text Content="{Dialog.Title}"
+                Color="{styles:Styles.TextActive}" Font="{styles:Styles.DialogHeaderText}"
+                WordWrap="true" HorizontalAlignment="Near" Margins="0,0,0,3"/>
+
+          
+          <Text Content="{Dialog.Message}"
+                Font="{styles:Styles.DialogText}" Color="{styles:Styles.DialogTextColor}"
+                WordWrap="true" HorizontalAlignment="Near"/>
+
+          
+          <Panel Layout="Anchor" Margins="0,10,0,10">
+            <LayoutInput>
+              <AnchorLayoutInput Left="Parent,0" Right="Parent,1"/>
+            </LayoutInput>
+            <Children>
+              <core:Editbox Name="EditTextBox" 
+                            Model="{Dialog.EditData}" 
+                            AccessibleDescription="{Dialog.Message}" 
+                            FocusOrder="0"
+                            TileMinSize="{TileMinSize}" 
+                            TileMaxSize="{TileMaxSize}"/>
+
+              <ColorFill Content="{styles:Styles.EditTextBorder}">
+                <LayoutInput>
+                  <AnchorLayoutInput Left="EditTextBox,0" Top="EditTextBox,0" Right="EditTextBox,1" Bottom="EditTextBox,1"/>
+                </LayoutInput>
+                <Children>
+
+                  <ColorFill Content="{styles:Styles.EditTextBackground}" Margins="1,1,1,1"/>
+
+                </Children>
+              </ColorFill>
+              
+            </Children>
+          </Panel>
+
+          
+          <Panel Margins="0,10,0,0">
+            <Layout>
+              <DockLayout SizeToChildren="true" DefaultLayoutInput="Right,Near"/>
+            </Layout>
+            <Children>
+              <core:BigActionButton Model="{Dialog.Cancel}"/>
+              <core:BigActionButton Model="{Dialog.AcceptCommand}" FocusOrder="0"/>
+            </Children>
+          </Panel>
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+  
+  
+  
+  
+  <Class Name="SubscribeDialog" Base="me:InputDialog">
+    <Properties>
+      <String Name="Title" String="{zune:Shell.LoadString(zune:StringId.IDS_SUBSCRIBE_BUTTON)}"/>
+      <String Name="Message" String="{zune:Shell.LoadString(zune:StringId.IDS_PODCAST_SUBSCRIBE_TITLE)}"/>
+
+      <iris:Command Name="AcceptCommand" Description="{zune:Shell.LoadString(zune:StringId.IDS_SUBSCRIBE_BUTTON)}"/>
+
+      <EditableTextData Name="EditData" MaxLength="1024"/> 
+    </Properties>
+
+    
+    <Locals>
+      <zmpdata:NameValueUriResourceSubmitPodcastQuery Name="SubmitQuery" Enabled="false"/>
+    </Locals>
+
+    <Scripts>
+
+      
+      <Script>
+        [DeclareTrigger(AcceptCommand.Invoked)]
+        
+        string urlString = EditData.Value;
+
+        zune:SubscriptionState result = zune:Management.Instance.SubscribeToPodcastFeed(
+          urlString,
+          urlString,
+          zunedbapi:ESubscriptionSource.eSubscriptionSourceUrl );
+
+        
+        if ( result != null )
+        {
+          
+          EditData.Value = null;
+          Helper.Hide();
+          
+          
+          if ( !String.IsNullOrEmpty(urlString) &amp;&amp; 
+               urlString.Length &lt; 32766 /* Max valid Uri length */ )
+          {
+            sys:String url = system:Uri.EscapeDataString(urlString);
+            
+            SubmitQuery.PodcastUrl = url;
+            SubmitQuery.Enabled = true;
+          }
+        }
+      </Script>
+
+    </Scripts>
+      
+  </Class>
+
+
+  
+  
+  
+  
+  <Class Name="EnterUrlDialog" Base="me:InputDialog">
+    <Properties>
+      <zune:PodcastLibraryPage Name="Page" PodcastLibraryPage="{null}"/>
+      <Boolean Name="IsUnkownSeries" Boolean="false"/>
+
+      
+      <String Name="Title" String="{zune:Shell.LoadString(zune:StringId.IDS_ENTER_URL_BUTTON)}"/>
+      <String Name="Message" String="{zune:Shell.LoadString(zune:StringId.IDS_ENTER_URL_DIALOG_TEXT)}"/>
+      <iris:Command Name="AcceptCommand" Description="{zune:Shell.LoadString(zune:StringId.IDS_ENTER_URL_BUTTON)}"/>
+      <EditableTextData Name="EditData" MaxLength="1024"/> 
+    </Properties>
+
+    <Scripts>
+      
+      <Script>
+        [DeclareTrigger(AcceptCommand.Invoked)]
+        
+        int hr;
+
+        if ( !IsUnkownSeries )
+        {
+          hr = subscription:SubscriptionManager.Instance.SetSeriesUrl( 
+            Page.SelectedSeriesId, EditData.Value );
+        }
+        else
+        {
+          hr = subscription:SubscriptionManager.Instance.SetEpisodeSeriesUrl( 
+            Page.EpisodePanel.SelectedLibraryIds, EditData.Value );
+        }
+  
+        if ( hr >= 0 )
+        {
+          EditData.Value = null;
+          Helper.Hide();
+        }
+        else
+        {
+          zune:Shell.ShowErrorDialog(hr, zune:StringId.IDS_PODCAST_SUBSCRIPTION_ERROR);
+        }
+      </Script>
+    </Scripts>
+  </Class>
+  
+
+  
+  
+  
+  <Class Name="SettingsDialog" Base="dialog:Dialog">
+    <Properties>
+      
+      <zune:PodcastLibraryPage Name="Page" PodcastLibraryPage="{null}"/>
+      <Int32 Name="SeriesId" Int32="-1"/>
+
+      <String Name="ContentUI" String="res://ZuneShellResources!PodcastDialogs.uix#SettingsDialogContentUI"/>
+      <iris:Command Name="OK" Description="{zune:Shell.LoadString(zune:StringId.IDS_DIALOG_OK)}"/>
+
+      <zune:SeriesSettings Name="SeriesSettings" SeriesSettings="{null}"/>
+
+      <String Name="AccessibleDescription" String="{zune:Shell.LoadString(zune:StringId.IDS_PODCAST_SETTINGS_TITLE)}"/>
+    </Properties>
+
+    <Scripts>
+      
+      <Script>
+        if ([Helper.IsVisible])
+        {
+          SeriesSettings = Page.GetSeriesSettings(SeriesId);
+        }
+        else
+        {
+          SeriesSettings = null;
+        }
+      </Script>
+
+      <Script>
+        [DeclareTrigger(OK.Invoked)]
+
+        SeriesSettings.Apply();
+
+        
+        Helper.Hide();
+      </Script>
+    </Scripts>
+  </Class>
+
+
+  
+  
+  
+  <UI Name="SettingsDialogContentUI" Base="dialog:DialogContentUI">
+    <Properties>
+      <me:SettingsDialog Name="Dialog" SettingsDialog="$Required"/>
+    </Properties>
+    <Scripts>
+      <Script>
+        zune:SeriesSettings settings = [Dialog.SeriesSettings];
+        if (settings != null)
+        {
+          KeepEpisodes.Model = settings.KeepEpisodesChoice;
+          Playback.Model = settings.PlaybackChoice;
+          Sync.Model = settings.SyncChoice;
+          if (!zune:SyncControls.Instance.CurrentDeviceExists)
+          {
+              Sync.Available = false;
+          }
+          else
+          {
+            SyncDescription.Content =
+            sys:String.Format(
+              zune:Shell.LoadString(zune:StringId.IDS_SYNC_PROMPT_PER_DEVICE),
+              zune:SyncControls.Instance.CurrentDeviceName);
+            Sync.AccessibleDescription = SyncDescription.Content;
+          }
+        }
+      </Script>
+
+      <Script>
+        data:PodcastSeries selectedSeries = (data:PodcastSeries)Dialog.Page.SeriesPanel.SelectedItem;
+        SeriesTitle.Content = selectedSeries.Title;
+      </Script>
+
+      <Script>
+        if (Dialog.SeriesSettings != null)
+        {
+          String feed = ((iris:Command) [Dialog.SeriesSettings.KeepEpisodesChoice.Chosen]).Description;
+          FeedValue.Content = podcast:Strings.KeepSeriesDescription.Format(feed);
+        }
+      </Script>
+    </Scripts>
+    <Content>
+      <Panel Navigation="ContainAll,WrapAll" Margins="10">
+        <Layout>
+          <FlowLayout Orientation="Vertical" ItemAlignment="Far" StripAlignment="Near"/>
+        </Layout>
+        <Children>
+          
+          <Panel>
+            <Layout>
+              <FlowLayout ItemAlignment="Fill" StripAlignment="Near" Orientation="Vertical"/>
+            </Layout>
+            <Children>
+
+              <Text Content="{zune:Shell.LoadString(zune:StringId.IDS_PODCAST_SETTINGS_TITLE)}"
+                    Font="{styles:Styles.DialogHeaderText}" Color="{styles:Styles.DialogTextColor}"/>
+
+              <Text Name="SeriesTitle" Font="{styles:Styles.DialogSubHeaderText}" Color="{styles:Styles.DialogTextColor}"/>
+
+              <Text Content="{podcast:Strings.KeepCount}" Margins="0,15,0,0"
+                    Font="{styles:Styles.DialogSubHeaderText}" Color="{styles:Styles.DialogTextColor}"/>
+
+              <core:LabeledChoiceSlider
+                    AccessibleDescription="{podcast:Strings.KeepCount}"
+                    Name="KeepEpisodes"
+                    Model="{null}"
+                    MinValueString="{podcast:Strings.Few}"
+                    MaxValueString="{podcast:Strings.Many}"/>
+
+              <Text Name="FeedValue" Color="{styles:Styles.TextActive}" Font="{styles:Styles.SettingsText}" WordWrap="false"/>
+
+              <Text Content="{zune:Shell.LoadString(zune:StringId.IDS_KEEP_COUNT_NOTE)}"
+                    Font="{styles:Styles.DialogText}" Color="{styles:Styles.DialogTextColor}" Margins="0,5,0,0"/>
+
+              <Text Content="{zune:Shell.LoadString(zune:StringId.IDS_PLAYBACK_ORDER_HEADER)}" Margins="0,15,0,0"
+                    Font="{styles:Styles.DialogSubHeaderText}" Color="{styles:Styles.DialogTextColor}"/>
+
+              <core:RadioGroup Name="Playback" Model="{null}" AccessibleDescription="{zune:Shell.LoadString(zune:StringId.IDS_PLAYBACK_ORDER_HEADER)}"/>
+
+              <Text Name="SyncHeader" Content="{zune:Shell.LoadString(zune:StringId.IDS_SYNC_HEADER)}" Margins="0,15,0,0"
+                    Font="{styles:Styles.DialogSubHeaderText}" Color="{styles:Styles.DialogTextColor}"/>
+              <Text Name="SyncDescription" Content="{zune:Shell.LoadString(zune:StringId.IDS_SYNC_PROMPT)}"
+                    Font="{styles:Styles.DialogText}" Color="{styles:Styles.DialogTextColor}">
+                <NamedStyles>
+                  <TextStyle Name="B" Bold="true"/>
+                </NamedStyles>
+              </Text>
+
+              <core:RadioGroup Name="Sync" Model="{null}" AccessibleDescription="{zune:Shell.LoadString(zune:StringId.IDS_SYNC_HEADER)}"/>
+
+            </Children>
+          </Panel>
+          
+          <Panel Margins="0,15,0,0" Layout="HorizontalFlow">
+            <Children>
+
+              <core:BigActionButton Model="{Dialog.OK}" Margins="10,0,0,0"/>
+
+              <core:BigActionButton Model="{Dialog.Cancel}" Margins="10,0,0,0" FocusOrder="0"/>
+
+            </Children>
+          </Panel>
+          
+        </Children>
+      </Panel>
+      
+    </Content>
+  </UI>
+
+
+</UIX>

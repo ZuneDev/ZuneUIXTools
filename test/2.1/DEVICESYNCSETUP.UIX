@@ -1,0 +1,1873 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:sys="assembly://mscorlib/System"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:style="res://ZuneShellResources!Style.uix"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"
+  xmlns:signindialog="res://ZuneShellResources!SignInDialog.uix"
+  xmlns:dialog="res://ZuneShellResources!Dialog.uix"
+  xmlns:mgmt="res://ZuneShellResources!Management.uix"
+  xmlns:spreadsheet="res://ZuneShellResources!SpreadSheetViewBase.uix"
+  xmlns:me="Me">
+
+  <UI Name="Default"/>
+
+  <UI Name="NameDevice">
+    <Properties>
+      <zune:CategoryPage Name="Page" CategoryPage="$Required" />
+    </Properties>
+    <Locals>
+      <iris:Command Name="AnotherButton" Description="{zune:Shell.LoadString(zune:StringId.IDS_CHANGE_TAG_BUTTON)}"/>
+      <iris:Command Name="RemoveAssociationModel" Description="{zune:Shell.LoadString(zune:StringId.IDS_ASSOCIATE_REMOVE)}"/>
+      <Boolean Name="ShowPartneredItems" Boolean="{(zune:SyncSetupManager.Instance.DevicePartnership == zune:SyncPartnership.SyncWithThisMachine)}"/>
+      <EditableTextData Name="FriendlyNameEditBox" MaxLength="32"/>
+      <zune:SyncSetupManager Name="Model" SyncSetupManager="{zune:SyncSetupManager.Instance}"/>
+      
+      <signindialog:SignInDialog Name="SignInDlg" SignInDialog="{null}"/>      
+    </Locals>
+
+    <Scripts>
+      <Script>
+        [DeclareTrigger(AnotherButton.Invoked)]
+        
+        
+        zune:SignIn.Instance.SignOut();
+        zune:SignIn.Instance.CancelSignIn();
+        if (SignInDlg == null) SignInDlg = new signindialog:SignInDialog();
+        SignInDlg.Helper.Show(SignInDlg);
+      </Script>
+
+      <Script>
+        
+        
+        if ((zune:SignIn.Instance.ZuneTag == null) &amp;&amp; (zune:SignIn.Instance.SigningIn == false))
+        {
+          Model.AssociationChoice.ChosenIndex = 1;
+        }
+      </Script>
+
+      <Script>
+        if (([zune:SignIn.Instance.ZuneTag] == null) &amp;&amp; ([zune:SignIn.Instance.SigningIn == false]))
+        {
+          AnotherButton.Description = zune:Shell.LoadString(zune:StringId.IDS_LOGON_BUTTON);
+          Model.AssociateOption.Description = zune:Shell.LoadString(zune:StringId.IDS_ASSOCIATE_ZUNE_OFFER_ANOTHER);
+        }
+        else
+        {
+          AnotherButton.Description = zune:Shell.LoadString(zune:StringId.IDS_CHANGE_TAG_BUTTON);
+          Model.AssociateOption.Description = 
+                  sys:String.Format(zune:Shell.LoadString(zune:StringId.IDS_ASSOCIATE_ZUNE_OFFER_LOGGEDIN_YES), zune:SignIn.Instance.ZuneTag);
+          
+          Model.AllowAdvanceOnAssociate = true;
+        }
+        Model.AssociateZuneTagWithSelection();
+      </Script>
+      <Script>
+        Page.AllowAdvance = [Model.AllowAdvanceOnAssociate];
+      </Script>
+      <Script>
+        Model.FriendlyNameOnDevice = [FriendlyNameEditBox.Value];
+      </Script>
+      <Script>
+        if( [Model.ErrorMessage] != null )
+        {
+          ErrorText.Content = Model.ErrorMessage;
+          ErrorText.Visible = true;
+          Page.AllowAdvance = false;
+        }
+        else
+        {
+          ErrorText.Visible = false;
+          Page.AllowAdvance = Model.AllowAdvanceOnAssociate;
+        }
+      </Script>
+      <Script>
+        bool currentDeviceConnected = true;
+        if (!Page.IsWizard)
+        {
+          currentDeviceConnected = [zune:SyncControls.Instance.CurrentDeviceConnected];
+        }
+        
+        if (currentDeviceConnected)
+        {
+          OptionsAvailable.Visible = [ShowPartneredItems];
+          OptionsNotAvailable.Visible = !ShowPartneredItems;
+          FriendlyNameEditBox.Value = zune:SyncSetupManager.Instance.FriendlyNameOnDevice;
+        }
+        else
+        {
+          OptionsAvailable.Visible = false;
+          OptionsNotAvailable.Visible = false;
+          FriendlyNameEditBox.Value = "";
+        }
+        NoDeviceExists.Visible = !currentDeviceConnected;
+      </Script>
+      <Script>
+        bool deviceIsAssociated = [Model.DeviceIsAssociated] &amp;&amp; !Page.IsWizard;
+        AssociationOptions.Visible = !deviceIsAssociated;
+        RemoveAssociationButton.Visible = deviceIsAssociated;
+      </Script>
+      <Script>
+        [DeclareTrigger(RemoveAssociationModel.Invoked)]
+        Model.RemoveDeviceAssociation();
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel>
+        <Children>
+
+          <Panel Name="OptionsAvailable" Visible="false">
+            <Layout>
+              <FlowLayout Orientation="Vertical" Spacing="4,0" StripAlignment="Near"/>
+            </Layout>
+            <Children>
+
+              <Text Content="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_ON_NOTE)}" Color="{styles:Styles.SettingsTextActive}" Font="{styles:Styles.SettingsText}" WordWrap="true"/>
+              <Text Content="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_OFF_NOTE)}" Color="{styles:Styles.SettingsTextActive}" Font="{styles:Styles.SettingsText}" WordWrap="true" Padding="0,0,0,5"/>
+
+              <Panel Name="NameBox" Padding="0,0,0,15" Layout="Anchor">
+                <LayoutInput>
+                  <AnchorLayoutInput Left="Parent,0" Right="Parent,1"/>
+                </LayoutInput>
+                <Children>
+
+                  <core:Editbox Name="NameText" Model="{FriendlyNameEditBox}" FocusOrder="0" TileMaxSize="120,0" TileMinSize="120,0" />
+
+                  <ColorFill Content="{styles:Styles.EditTextBorder}" MinimumSize="120,22">
+                    <LayoutInput>
+                      <AnchorLayoutInput Left="NameText,0" Top="NameText,0"/>
+                    </LayoutInput>
+                    <Children>
+                      <ColorFill Content="White" MinimumSize="120,22" Margins="1,1,1,1"/>
+                    </Children>
+                  </ColorFill>
+
+                </Children>
+              </Panel>
+
+              <Text Content="{zune:Shell.LoadString(zune:StringId.IDS_ASSOCIATE_YOUR_ZUNE)}" Color="{styles:Styles.SettingsTextActive}" Font="{styles:Styles.SettingsTextSubHeader}" WordWrap="true" Padding="0,0,0,5"/>
+              
+              <Text Content="{zune:Shell.LoadString(zune:StringId.IDS_ASSOCIATE_YOUR_ZUNE_DESCRIPTION1)}" Color="{styles:Styles.SettingsTextActive}" Font="{styles:Styles.SettingsText}" WordWrap="true" Padding="0,0,0,5"/>
+              <Text Content="{zune:Shell.LoadString(zune:StringId.IDS_ASSOCIATE_YOUR_ZUNE_DESCRIPTION2)}" Color="{styles:Styles.SettingsTextActive}" Font="{styles:Styles.SettingsText}" WordWrap="true" Padding="0,0,0,5"/>
+                            
+              <Text Name="Offer" Color="{styles:Styles.SettingsTextActive}" Font="{styles:Styles.SettingsText}" WordWrap="true" Padding="0,0,0,15"/>
+
+              <Panel Name="AssociationOptions">
+                <Layout>
+                  <FlowLayout Orientation="Horizontal" Spacing="4,0" StripAlignment="Near"/>
+                </Layout>
+                <Children>
+            
+                  <core:RadioGroup Model="{Model.AssociationChoice}" Padding="0,0,0,5"/>
+                  <core:ActionButton Model="{AnotherButton}"/>
+                  
+                </Children>
+              </Panel>
+
+              <core:ActionButton Name="RemoveAssociationButton" Model="{RemoveAssociationModel}"/>
+
+              
+              <Text Color="Red" Name="ErrorText" Visible="false" Font="{styles:Styles.SettingsText}" WordWrap="true" Padding="0,15,0,0"/>
+
+            </Children>
+          </Panel>
+
+          <Panel Name="OptionsNotAvailable" Visible="false">
+            <Children>
+              
+              <Text Content="{zune:Shell.LoadString(zune:StringId.IDS_OPTION_FOR_PARTNERS_ONLY)}" Color="{styles:Styles.SettingsTextActive}" Font="{styles:Styles.SettingsText}" WordWrap="true"/>
+              
+            </Children>
+          </Panel>
+
+          <me:NoDeviceExists Name="NoDeviceExists" Visible="false"/>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  <UI Name="SyncOptions">
+    <Properties>
+      <zune:CategoryPage Name="Page" CategoryPage="$Required" />
+    </Properties>
+    <Locals>
+      <iris:Command Name="FormatButtonModel" Description="{zune:Shell.LoadString(zune:StringId.IDS_FORMAT_DEVICE_BUTTON)}"/>
+      <iris:Command Name="ForgetButtonModel" Description="{zune:Shell.LoadString(zune:StringId.IDS_DELETE_DEVICE_BUTTON)}"/>
+      <iris:Command Name="ChangePartnershipButtonModel" Description="{zune:Shell.LoadString(zune:StringId.IDS_CHANGE_PARTNERSHIP_DEVICE_BUTTON)}"/>
+      
+      <me:FormatDialog Name="FormatDialog"/>
+
+      <iris:BooleanChoice Name="AutolaunchCheckboxModel"
+                          Description="{zune:Shell.LoadString(zune:StringId.IDS_LAUNCH_ON_ZUNE_CONNECT)}"
+                          Value="{zune:SyncSetupManager.Instance.Autolaunch}"/>
+
+      <iris:Command Name="Back" Description="{zune:Shell.LoadString(zune:StringId.IDS_BACK_BUTTON)}"/>
+      <iris:Command Name="CompleteSetup" Description="{zune:Shell.LoadString(zune:StringId.IDS_DONE_BUTTON)}"/>
+
+      <Boolean Name="InitiallySyncAllMusic"/>
+      <Boolean Name="InitiallySyncAllVideo"/>
+      <Boolean Name="InitiallySyncAllPhoto"/>
+      <Boolean Name="InitiallySyncAllPodcast"/>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        InitiallySyncAllMusic = zune:SyncControls.Instance.GetSyncAll(zune:MediaType.Track);
+        InitiallySyncAllVideo = zune:SyncControls.Instance.GetSyncAll(zune:MediaType.Video);
+        InitiallySyncAllPhoto = zune:SyncControls.Instance.GetSyncAll(zune:MediaType.Photo);
+        InitiallySyncAllPodcast = zune:SyncControls.Instance.GetSyncAll(zune:MediaType.PodcastEpisode);
+      </Script>
+      
+      <Script>
+        
+        
+        if(Page.IsWizard)
+        {
+          Page.DoneButton = CompleteSetup;
+          Page.BackButton = Back;
+        }
+      </Script>
+
+      <Script>
+        [DeclareTrigger(CompleteSetup.Invoked)]
+        zune:Management.Instance.CommitListSave();
+        zune:SyncSetupManager.Instance.Complete();
+        Page.DoneButton = null;
+        Page.DoneButton.Invoke();
+      </Script>
+
+      <Script>
+        [DeclareTrigger(Back.Invoked)]
+        Page.DoneButton = null;
+        Page.BackButton = null;
+
+        Page.BackButton.Invoke();
+      </Script>
+
+      <Script>
+        [DeclareTrigger(FormatButtonModel.Invoked)]
+        zune:SyncSetupManager.Instance.FormatCurrentDevice();
+      </Script>
+
+      <Script>
+        [DeclareTrigger(zune:SyncSetupManager.Instance.FormatBegun.Invoked)]
+
+        FormatDialog.Helper.Show(FormatDialog);
+      </Script>
+
+      <Script>
+        [DeclareTrigger(ForgetButtonModel.Invoked)]
+        zune:SyncControls.Instance.DeleteCurrentDevice();
+      </Script>
+      
+      <Script>
+        [DeclareTrigger(ChangePartnershipButtonModel.Invoked)]
+        zune:SyncSetupManager.Instance.NavigateToWizardMode(zune:Shell.SettingsFrame.Wizard.PartneredDeviceChangeSetup);
+      </Script>
+
+      <Script>
+        zune:SyncSetupManager.Instance.Autolaunch = [AutolaunchCheckboxModel.Value];
+      </Script>
+
+      <Script>
+        zune:SyncPartnership partnership = [zune:SyncSetupManager.Instance.DevicePartnership];
+
+        bool isPartnered = partnership == zune:SyncPartnership.SyncWithThisMachine;
+
+        
+        bool hasRelationship = isPartnered || partnership == zune:SyncPartnership.SyncWithOtherMachine;
+
+        bool currentDeviceConnected = true;
+        if (!Page.IsWizard)
+        {
+          currentDeviceConnected = [zune:SyncControls.Instance.CurrentDeviceConnected];
+        }
+
+        
+        SyncChoices.Visible = isPartnered &amp;&amp; currentDeviceConnected;
+        
+        ForgetButton.Visible = hasRelationship &amp;&amp; [zune:SyncControls.Instance.CurrentDeviceExists];
+        
+        FormatButton.Visible = currentDeviceConnected;
+        
+        bool showChangePartnership = currentDeviceConnected &amp;&amp; !isPartnered;
+        ChangePartnershipButton.Visible = showChangePartnership;
+        OptionsNotAvailable.Visible = showChangePartnership;
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel>
+        <Children>
+
+          <Panel>
+            <Layout>
+              <FlowLayout Orientation="Vertical" Spacing="4,0" StripAlignment="Near"/>
+            </Layout>
+            <Children>
+
+              <Panel Name="SyncChoices" Visible="false">
+                <Layout>
+                  <FlowLayout Orientation="Vertical" Spacing="4,0" StripAlignment="Near"/>
+                </Layout>
+                <Children>
+
+                  <core:RadioGroup Model="{zune:SyncSetupManager.Instance.MusicSyncChoice}" Padding="0,0,0,15"/>
+                  <core:RadioGroup Model="{zune:SyncSetupManager.Instance.VideoSyncChoice}" Padding="0,0,0,15"/>
+                  <core:RadioGroup Model="{zune:SyncSetupManager.Instance.PhotoSyncChoice}" Padding="0,0,0,15"/>
+                  <core:RadioGroup Model="{zune:SyncSetupManager.Instance.PodcastSyncChoice}" Padding="0,0,0,15"/>
+
+                  <core:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_SYNC_OPTIONS_INFO)}"
+                              Style="{styles:SharedStyles.SettingsBodyStyle}" WordWrap="true"/>
+
+                  <core:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_SYNC_GROUP_EXPLANATION)}"
+                              Style="{styles:SharedStyles.SettingsBodyStyle}" WordWrap="true"
+                              Margins="0,8,0,0">
+                    <NamedStyles>
+                      <TextStyle Name="i" TextStyle="{styles:SharedStyles.SettingsBoldItalicBodyStyle}"/>
+                    </NamedStyles>
+                  </core:Label>
+                  
+                </Children>
+              </Panel>
+
+              <Panel Name="OptionsNotAvailable" Visible="false">
+                <Children>
+                  <Text Content="{zune:Shell.LoadString(zune:StringId.IDS_NO_SYNC_OPTIONS_INFO)}" Color="{styles:Styles.SettingsTextActive}" Font="{styles:Styles.SettingsText}" WordWrap="true"/>
+                  
+                </Children>
+              </Panel>
+
+              <Panel Name="DeviceManagementButtons" Visible="{!zune:Shell.SettingsFrame.Wizard.IsCurrent}" Padding="0,15,0,15">
+                <Layout>
+                  <FlowLayout Orientation="Horizontal" Spacing="4,0" StripAlignment="Near"/>
+                </Layout>
+                <Children>
+
+                  <core:ActionButton Name="FormatButton" Model="{FormatButtonModel}" Visible="false"/>
+                  <core:ActionButton Name="ForgetButton" Model="{ForgetButtonModel}" Visible="false"/>
+                  <core:ActionButton Name="ChangePartnershipButton" Model="{ChangePartnershipButtonModel}" Visible="false"/>
+                  
+                </Children>
+              </Panel>
+
+              <mgmt:CheckBox Name="AutolaunchCheckbox" Model="{AutolaunchCheckboxModel}" Visible="{zune:SyncControls.Instance.CurrentSetupDevice == null}" Margins="15,0,0,0"/>
+              
+            </Children>
+          </Panel>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  
+  
+  <UI Name="WirelessSyncAvailable">
+    <Properties>
+      <zune:CategoryPage Name="Page" CategoryPage="$Required" />
+    </Properties>
+    
+    <Scripts>
+      <Script>
+        
+        bool currentDeviceConnected = [zune:SyncControls.Instance.CurrentDeviceConnected];
+        bool isPartnered = [zune:SyncSetupManager.Instance.DevicePartnership] == zune:SyncPartnership.SyncWithThisMachine;
+        bool connectedViaUSB = zune:SyncSetupManager.Instance.ConnectedViaUSB;
+
+        if (currentDeviceConnected &amp;&amp; isPartnered &amp;&amp; connectedViaUSB)
+        {
+          zune:Management.NavigateToCategory(zune:SettingCategories.WirelessSetupCurrentConfig);
+        }
+        NoDeviceExists.Visible = !currentDeviceConnected;
+        PartnersOnly.Visible = currentDeviceConnected &amp;&amp; !isPartnered;
+        NoUSBConnection.Visible = currentDeviceConnected &amp;&amp; isPartnered &amp;&amp; !connectedViaUSB;
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel>
+        <Layout>
+          <FlowLayout Orientation="Vertical" Spacing="10,0"/>
+        </Layout>
+        <Children>
+
+          <Panel Name="NoUSBConnection" Visible="false">
+            <Children>
+
+              <Text Content="{zune:Shell.LoadString(zune:StringId.IDS_NOT_CONNECTED_VIA_USB)}" Color="{styles:Styles.SettingsTextActive}" Font="{styles:Styles.SettingsText}" WordWrap="true"/>
+
+            </Children>
+          </Panel>
+
+          <me:PartnersOnly Name="PartnersOnly"  Visible="false"/>
+          
+          <me:NoDeviceExists Name="NoDeviceExists" Visible="false"/>
+          
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  
+  
+  
+  <UI Name="WirelessSyncDeviceBusy">
+    <Properties>
+      <zune:CategoryPage Name="Page" CategoryPage="$Required" />
+    </Properties>    
+    <Content>
+      <core:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_DEVICE_BUSY)}"
+                  Style="{styles:SharedStyles.PodcastText}"
+                  WordWrap="true"/>
+    </Content>
+  </UI>
+
+  
+  
+  
+  
+  
+  
+  
+  <UI Name="WirelessSyncCurrentConfig">
+    <Properties>
+      <zune:CategoryPage Name="Page" CategoryPage="$Required" />
+    </Properties>    
+    <Locals>
+      <iris:Command Name="ChangeNetworkButton" Description="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_CHANGE_NETWORK_BUTTON)}"/>
+      <iris:Command Name="TurnOffButton" Description="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_TURN_OFF_BUTTON)}"/>
+      <iris:Command Name="ConfigureNowButton" Description="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_SYNC_START_CONFIG)}"/>
+      <zune:WebHelpCommand Name="HelpLinkWireless"
+                           Description="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_SYNC_FAILED_MORE_INFO_LINK)}"
+                           Url="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_SYNC_FAILED_MORE_INFO_LINK)}"/>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        zune:SyncSetupManager.Instance.RequestDeviceWirelessProfile();
+      </Script>
+      <Script>
+          [DeclareTrigger(zune:SyncSetupManager.Instance.WirelessDeviceProfile)]
+          if(zune:SyncSetupManager.Instance.WirelessDeviceShowError)
+          {
+          zune:SyncSetupManager.Instance.WirelessDeviceShowErrorDialog();
+          zune:Management.NavigateToCategory(zune:SettingCategories.WirelessSetupNotConfigured);
+          }
+          else if(string.IsNullOrEmpty(zune:SyncSetupManager.Instance.WirelessDeviceProfile.SSID))
+          {
+          Loading.Visible = false;
+          Configured.Visible = false;
+          NotConfigured.Visible = true;
+          }
+          else
+          {
+          NetworkName.Content = zune:SyncSetupManager.Instance.WirelessDeviceProfile.SSID;
+          NetworkType.Content = zune:SyncSetupManager.Instance.GetWirelessDeviceNetworkType();
+          Loading.Visible = false;
+          NotConfigured.Visible = false;
+          Configured.Visible = true;
+          }
+      </Script>
+            
+      <Script>
+        [DeclareTrigger(ChangeNetworkButton.Invoked)]
+        [DeclareTrigger(ConfigureNowButton.Invoked)]
+        zune:SyncSetupManager.Instance.NavigateToWizardMode(zune:Shell.SettingsFrame.Wizard.WirelessSetup);
+      </Script>
+      <Script>
+        [DeclareTrigger(TurnOffButton.Invoked)]
+        zune:SyncSetupManager.Instance.ClearWirelessOnDevice();
+        Configured.Visible = false;
+        NotConfigured.Visible = false;
+        Result.Visible = true;
+      </Script>
+      <Script>
+        bool currentDeviceConnected = [zune:SyncControls.Instance.CurrentDeviceConnected];
+        DeviceExists.Visible = currentDeviceConnected;
+        NoDeviceExists.Visible = !currentDeviceConnected;
+      </Script>
+    </Scripts>
+    <Content>
+      <Panel>
+        <Layout>
+          <FlowLayout Orientation="Vertical" Spacing="5,0"/>
+        </Layout>
+        <Children>
+
+          <Panel Name="DeviceExists" Visible="false">
+            <Children>
+                
+              <Panel Name="Loading" Visible="true">
+                <Children>
+
+                  <core:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_RETRIEVING_PROFILE)}"
+                              Style="{styles:SharedStyles.PodcastText}"/>
+
+                </Children>
+              </Panel>
+
+              <Panel Name="NotConfigured" Visible="false">
+                <Layout>
+                  <FlowLayout Orientation="Vertical" Spacing="15,0"/>
+                </Layout>
+                <Children>
+
+                  <core:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_SYNC_DESCRIPTION)}"
+                              Style="{styles:SharedStyles.SettingsBodyStyle}"
+                              WordWrap="true"/>
+
+                  <core:ActionButton Model="{ConfigureNowButton}"/>
+
+                  <Panel Layout="HorizontalFlow">
+                    <Children>
+
+                      <core:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_SYNC_MORE_INFO)}"
+                                  Style="{styles:SharedStyles.SettingsBodyStyle}"
+                                  WordWrap="true"/>
+                      <mgmt:Link Model="{HelpLinkWireless}"/>
+                      
+                    </Children>
+                  </Panel>
+
+                </Children>
+              </Panel>
+              
+              <Panel Name="Configured" Visible="false">
+                <Layout>
+                  <FlowLayout Orientation="Vertical" Spacing="15,0"/>
+                </Layout>
+                <Children>
+
+                  <core:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_ALREADY_CONFIGURED)}"
+                              Style="{styles:SharedStyles.PodcastText}"
+                              WordWrap="true"/>
+
+                  <Panel MinimumSize="300,0" MaximumSize="300,0">
+                    <Layout>
+                      <GridLayout Orientation="Horizontal" AllowWrap="true" Columns="2" Spacing="3,3"/>
+                    </Layout>
+                    <Children>
+
+                      <core:Label Content="Network name:"
+                                  Style="{styles:SharedStyles.SettingsBodyStyle}"/>
+
+                      <core:Label Name="NetworkName"
+                                  Content="{null}"
+                                  Style="{styles:SharedStyles.SettingsBodyStyle}"/>
+
+                      <core:Label Content="Network type:"
+                                  Style="{styles:SharedStyles.SettingsBodyStyle}"/>
+
+                      <core:Label Name="NetworkType"
+                                  Content="{null}"
+                                  Style="{styles:SharedStyles.SettingsBodyStyle}"/>
+                      
+                    </Children>
+                  </Panel>
+
+                  <Panel>
+                    <Layout>
+                      <FlowLayout Orientation="Horizontal" Spacing="5,0"/>
+                    </Layout>
+                    <Children>
+
+                      <core:ActionButton Model="{ChangeNetworkButton}"/>
+                      <core:ActionButton Model="{TurnOffButton}"/>
+
+                    </Children>
+                  </Panel>
+
+                </Children>
+              </Panel>
+
+              <core:Label Name="Result" 
+                          Content="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_SYNC_DISABLED)}"
+                          Style="{styles:SharedStyles.SettingsBodyStyle}"
+                          WordWrap="true" 
+                          Visible="false"/>
+              </Children>
+          </Panel>
+          
+          <me:NoDeviceExists Name="NoDeviceExists" Visible="false"/>
+          
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  
+  
+  
+  <UI Name="WirelessSyncDetectingConnected">
+    <Properties>
+      <zune:CategoryPage Name="Page" CategoryPage="$Required" />
+    </Properties>
+    <Scripts>
+      <Script>
+        
+        zune:SyncSetupManager.Instance.RequestConnectedWirelessNetwork();
+      </Script>
+      <Script>
+          [DeclareTrigger(zune:SyncSetupManager.Instance.ConnectedWirelessNetwork)]
+          if(zune:SyncSetupManager.Instance.WirelessDeviceShowError)
+          {
+          zune:SyncSetupManager.Instance.WirelessDeviceShowErrorDialog();
+          zune:Management.NavigateToCategory(zune:SettingCategories.WirelessSetupNotConfigured);
+          }
+          else if( !String.IsNullOrEmpty(zune:SyncSetupManager.Instance.ConnectedWirelessNetwork) )
+          {
+          zune:Management.NavigateToCategory(zune:SettingCategories.WirelessSetupUseConnected);
+          }
+          else
+          {
+          zune:Management.NavigateToCategory(zune:SettingCategories.WirelessSetupManual);
+          }
+      </Script>
+      <Script>
+        Page.DoneButton.Available = false;
+      </Script>
+    </Scripts>
+    <Content>
+      <Panel>
+        <Layout>
+          <FlowLayout Orientation="Vertical" Spacing="10,0"/>
+        </Layout>
+        <Children>
+
+          <core:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_DETECTING_CONNECTED)}"
+                      Style="{styles:SharedStyles.PodcastText}"
+                      WordWrap="true"/>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  
+  
+  
+  
+  
+  <UI Name="WirelessSyncUseConnectedNetwork">
+    <Properties>
+      <zune:CategoryPage Name="Page" CategoryPage="$Required" />
+    </Properties>
+    <Locals>
+      <iris:Command Name="DoneButton" Description="{zune:Shell.LoadString(zune:StringId.IDS_DONE_BUTTON)}"/>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        [DeclareTrigger(DoneButton.Invoked)]
+        if( UseConnectedNetwork.Model.ChosenIndex == 0 )
+        {
+          
+          bool success = zune:SyncSetupManager.Instance.SetConnectedNetwork();
+
+          if( success )
+          {
+            zune:Management.NavigateToCategory(zune:SettingCategories.WirelessSetupSaving);
+          }
+          else
+          {
+            zune:Management.NavigateToCategory(zune:SettingCategories.WirelessSetupNotConfigured);
+          }
+        }
+        else
+        {
+          
+          zune:Management.NavigateToCategory(zune:SettingCategories.WirelessSetupManual);
+        }
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel>
+        <Layout>
+          <FlowLayout Orientation="Vertical" Spacing="10,0" StripAlignment="Near"/>
+        </Layout>
+        <Children>
+
+          <core:Label Content="{sys:String.Format(zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_USE_CONNECTED), zune:SyncSetupManager.Instance.ConnectedWirelessNetwork)}"
+                      Style="{styles:SharedStyles.PodcastText}"/>
+          <core:RadioGroup Name="UseConnectedNetwork"
+                           Padding="10,0,0,5"
+                           Orientation="Vertical">
+            <Model>
+              <iris:Choice>
+                <Options>
+                  <String String="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_USE_CONNECTED_YES)}"/>
+                  <String String="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_USE_CONNECTED_NO)}"/>
+                </Options>
+              </iris:Choice>
+            </Model>
+          </core:RadioGroup>
+          <core:ActionButton Model="{DoneButton}"/>
+          
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  
+  
+  <Class Name="WirelessSyncNetworkKeyDialog" Base="dialog:Dialog">
+    <Properties>
+      <String Name="ContentUI" String="res://ZuneShellResources!DeviceSyncSetup.uix#WirelessSyncNetworkKeyDialogUI"/>
+      <zune:WlanCommand Name="ProfileCommand" WlanCommand="$Required"/>
+      <iris:Command Name="CommitWirelessSettings" Command="$Required"/>
+    </Properties>
+  </Class>
+
+  
+  
+  
+  
+  
+  <UI Name="WirelessSyncNetworkKeyDialogUI" Base="dialog:DialogContentUI">
+    <Properties>
+      <me:WirelessSyncNetworkKeyDialog Name="Dialog" WirelessSyncNetworkKeyDialog="$Required"/>
+    </Properties>
+
+    <Locals>
+      <EditableTextData Name="KeyEditBox"/>
+      <iris:Command Name="SubmitButton" Description="{zune:Shell.LoadString(zune:StringId.IDS_DIALOG_OK)}"/>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        [DeclareTrigger(SubmitButton.Invoked)]
+        [DeclareTrigger(KeyEditBox.Submitted)]
+        Dialog.ProfileCommand.Profile.Key = KeyEditBox.Value;
+        Dialog.CommitWirelessSettings.Invoke();
+        Dialog.Helper.Hide();
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel Layout="Anchor">        
+        <Children>
+
+          <Panel Name="Content" MaximumSize="350,0">
+            <Layout>
+              <FlowLayout Orientation="Vertical" Spacing="10,0"/>
+            </Layout>
+            
+            <LayoutInput>
+              <AnchorLayoutInput Left="Parent,0,10" Top="Parent,0,10"/>
+            </LayoutInput>
+              
+            <Children>
+
+              <core:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_NETWORK_PROTECTED)}"
+                          Style="{styles:SharedStyles.PodcastText}"
+                          Padding="0,0,0,5"
+                          WordWrap="true"/>
+              <core:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_ENTER_NETWORK_KEY)}"
+                          Style="{styles:SharedStyles.PodcastText}"/>
+              <me:PasswordTextBox KeyEditBox="{KeyEditBox}" />
+
+            </Children>
+          </Panel>
+
+          <core:BigActionButton Name="Submit"
+                             Model="{SubmitButton}"
+                             ToolTipEnabled="false">
+
+            <LayoutInput>
+              <AnchorLayoutInput Right="Content,1,10"  Top="Content,1"/>
+            </LayoutInput>
+          </core:BigActionButton>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  
+  
+  <UI Name="WirelessSyncComplete">
+    <Properties>
+      <zune:CategoryPage Name="Page" CategoryPage="$Required" />
+    </Properties>
+
+    <Scripts>
+      <Script>
+        Page.DoneButton.Available = true;
+        Page.CancelButton.Available = false;
+      </Script>
+    </Scripts>
+    <Content>
+      <Panel>
+        <Layout>
+          <FlowLayout Orientation="Vertical" Spacing="5,0"/>
+        </Layout>
+        <Children>
+
+          <core:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_SYNC_SETUP_COMPLETE)}"
+                      Style="{styles:SharedStyles.PodcastText}"
+                      Padding="0,0,0,10"
+                      WordWrap="true"/>
+          <core:Label Content="{sys:String.Format(zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_SYNC_DEVICE), zune:SyncSetupManager.Instance.DeviceName)}"
+                      Style="{styles:SharedStyles.PodcastText}" />
+          <core:Label Content="{sys:String.Format(zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_SYNC_NETWORK), zune:SyncSetupManager.Instance.WirelessDeviceProfile.SSID)}"
+                      Style="{styles:SharedStyles.PodcastText}" />
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  
+  
+  
+  <UI Name="WirelessSyncAuto">
+    <Properties>
+      <SelectionManager Name="WirelessNetworkSM" SelectionManager="$Required"/>
+    </Properties>
+    <Locals>
+      <iris:Command Name="ScanButton" Description="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_SETTINGS_SCAN)}"/>
+      <iris:Command Name="SetWirelessSettings" Description="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_SETTINGS_SELECT_NETWORK)}"/>
+      <iris:Command Name="CommitWirelessSettings"/>
+      <me:WirelessSyncNetworkKeyDialog Name="WirelessSyncNetworkKeyDialog"
+                                       CommitWirelessSettings="{CommitWirelessSettings}"
+                                       ProfileCommand="{null}"/>
+
+      <spreadsheet:ColumnData Name="ListColumns">
+        <Columns>
+
+          <spreadsheet:ColumnInfo CellType="{typeof(me:SSIDCell)}" CellPadding="9,0,5,0">
+            <ColumnSize>
+              <SharedSize Size="300,0" MinimumSize="310,0" MaximumSize="310,0"/>
+            </ColumnSize>
+          </spreadsheet:ColumnInfo>
+
+        </Columns>
+      </spreadsheet:ColumnData>      
+    </Locals>
+
+    <Scripts>
+      
+      <Script>
+        [DeclareTrigger(zune:SyncSetupManager.Instance.WirelessNetworksList)]
+        if(zune:SyncSetupManager.Instance.WirelessDeviceShowError)
+        {
+          zune:SyncSetupManager.Instance.WirelessDeviceShowErrorDialog();
+          zune:Management.NavigateToCategory(zune:SettingCategories.WirelessSetup);
+        }
+        else
+        {
+          WirelessList.Content = zune:SyncSetupManager.Instance.WirelessNetworksList;
+          if( WirelessList.Content.Count > 0 )
+          {
+            DetectingNetworksLabel.Visible = false;
+            WirelessList.Visible = true;
+          }
+          else
+          {
+            DetectingNetworksLabel.Content = zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_NO_NETWORKS);
+            DetectingNetworksLabel.Visible = true;
+            WirelessList.Visible = false;
+          }
+          ScanButton.Available = true;
+          }
+      </Script>
+      
+      <Script>
+        [DeclareTrigger(WirelessNetworkSM.SelectedIndex)]
+        if( WirelessNetworkSM.SelectedItem != null )
+        {
+          SetWirelessSettings.Available = true;
+        }
+        else
+        {
+          SetWirelessSettings.Available = false;
+        }
+      </Script>
+      
+      <Script>
+        [InitialEvaluate(true)]
+        [DeclareTrigger(ScanButton.Invoked)]
+
+        ScanButton.Available = false;
+        SetWirelessSettings.Available = false;
+
+        zune:WirelessStateResults result = zune:SyncSetupManager.Instance.RequestWirelessNetworksList();
+        
+        if( result == zune:WirelessStateResults.Success )
+        {
+          DetectingNetworksLabel.Content = zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_DETECTING_NETWORKS);
+        }
+        else
+        {
+          DetectingNetworksLabel.Content = zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_NO_NETWORKS);
+          ScanButton.Available = true;
+        }
+        DetectingNetworksLabel.Visible = true;
+        WirelessList.Visible = false;
+      </Script>
+      
+      <Script>
+        [DeclareTrigger(SetWirelessSettings.Invoked)]
+        if (WirelessNetworkSM.Count != 0)
+        {
+          
+          
+          
+          zune:WlanCommand wirelessCommand = (zune:WlanCommand)WirelessNetworkSM.SelectedItem;
+          if( wirelessCommand.NeedsKey )
+          {
+            WirelessSyncNetworkKeyDialog.ProfileCommand = wirelessCommand;
+            WirelessSyncNetworkKeyDialog.Helper.Show(WirelessSyncNetworkKeyDialog);
+          }
+          else
+          {
+            CommitWirelessSettings.Invoke();
+          }
+        }
+      </Script>
+      
+      <Script>
+        [DeclareTrigger(CommitWirelessSettings.Invoked)]
+        zune:WlanCommand wirelessCommand = (zune:WlanCommand)WirelessNetworkSM.SelectedItem;
+
+        if (wirelessCommand != null)
+        {
+          bool success = zune:SyncSetupManager.Instance.SetWirelessSettings(wirelessCommand);
+
+          if( success )
+          {
+            zune:Management.NavigateToCategory(zune:SettingCategories.WirelessSetupSaving);
+          }
+          else
+          {
+            zune:Management.NavigateToCategory(zune:SettingCategories.WirelessSetupNotConfigured);
+          }
+        }
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel>
+        <Children>
+          
+          <Panel>
+            <Layout>
+              <FlowLayout Orientation="Vertical" Spacing="5,0" StripAlignment="Near"/>
+            </Layout>
+            <Children>
+
+                <core:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_SETTINGS_AUTO_CONFIG_DESCRIPTION)}"
+                            Style="{styles:SharedStyles.PodcastText}"
+                            WordWrap="true"/>
+                <ColorFill Content="{styles:Styles.EditTextBackground}">
+                  <Children>
+
+                    <Panel Layout="Anchor">
+                      <Children>
+
+                        <Panel Name="WirelessNetworks" MaximumSize="325,115" Layout="Center" Padding="0,4,0,4">
+                          <Children>
+
+                            <spreadsheet:SpreadSheet Name="WirelessList"
+                                                     SelectionManager="{WirelessNetworkSM}"
+                                                     Content="{null}"
+                                                     ExecuteCommand="{SetWirelessSettings}"
+                                                     ColumnData="{ListColumns}"
+                                                     AllowHorizontalScrolling="false"
+                                                     AllowVerticalScrolling="true"
+                                                     ShowHeaders="false"
+                                                     AnimateItems="false"
+                                                     CanDrag="false" 
+                                                     RowPadding="{styles:Styles.ListBoxItemPadding}">
+                              <OverrideStyle>
+                                  <style:Style Font="{styles:Styles.ZegoeSemiBold10}" Color="{styles:Styles.SettingsTextActive}"/>
+                              </OverrideStyle>
+                            </spreadsheet:SpreadSheet>
+                            <core:Label Name="DetectingNetworksLabel"
+                                        Content="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_DETECTING_NETWORKS)}"
+                                        Style="{styles:SharedStyles.PodcastText}"/>
+
+                          </Children>
+                        </Panel>
+
+
+                        <ColorFill Content="{styles:Styles.EditTextBorder}">
+                          <LayoutInput>
+                            <AnchorLayoutInput Left="WirelessNetworks,0" Top="WirelessNetworks,0" Right="WirelessNetworks,1" Bottom="WirelessNetworks,1"/>
+                          </LayoutInput>
+                          <Children>
+                            <ColorFill Content="{styles:Styles.EditTextBackground}" Margins="1,1,1,1"/>
+                          </Children>
+                        </ColorFill>
+
+                      </Children>
+                    </Panel>
+
+                  </Children>
+                </ColorFill>
+                <Panel MinimumSize="325,0" MaximumSize="325,0">
+                  <Layout>
+                    <DockLayout SizeToChildren="true"/>
+                  </Layout>
+                  <Children>
+
+                    <core:ActionButton Model="{ScanButton}">
+                      <LayoutInput>
+                        <DockLayoutInput Position="Left" Alignment="Near"/>
+                      </LayoutInput>
+                    </core:ActionButton>
+                    <core:ActionButton Model="{SetWirelessSettings}">
+                      <LayoutInput>
+                        <DockLayoutInput Position="Right" Alignment="Near"/>
+                      </LayoutInput>
+                    </core:ActionButton>
+
+                  </Children>
+                </Panel>
+
+              </Children>
+            </Panel>
+            
+          </Children>
+        </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  
+  
+  <UI Name="SSIDCell" Base="spreadsheet:LabelCell">
+    <Properties>
+      <Command Name="Model" Command="$Required"/>
+    </Properties>
+
+    <Scripts>
+      <Script>
+        zune:WlanCommand wlanCommand = (zune:WlanCommand)(Model);
+        Content = wlanCommand.Profile.SSID;
+      </Script>
+    </Scripts>
+  </UI>
+  
+  
+  
+  
+  
+  
+  
+  <UI Name="WirelessSyncManual">
+    <Properties>
+      <zune:CategoryPage Name="Page" CategoryPage="$Required" />
+    </Properties>
+    <Locals>
+      <zune:WebHelpCommand Name="HelpLinkWireless"
+                           Description="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_SYNC_FAILED_MORE_INFO_LINK)}"
+                           Url="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_SYNC_FAILED_MORE_INFO_LINK)}"/>
+      <iris:Command Name="SaveButton"  Available="false" Description="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_SAVE_SETTINGS)}"/>
+      <iris:Command Name="ShowAdvancedSettings" Description="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_SYNC_SHOW_ADVANCED_SETTINGS)}"/>
+      <iris:Command Name="CommitWirelessSettings"/>
+      <iris:Command Name="UpdateAdvancedSettings"/>
+      <EditableTextData Name="SSIDEditBox"/>
+      <EditableTextData Name="KeyEditBox"/>
+      <SelectionManager Name="WirelessNetworkSM" SingleSelect="true" />
+      <Object Name="wirelessCommandObj" Object="{null}"/>
+      <me:WirelessSyncNetworkKeyDialog Name="WirelessSyncNetworkKeyDialog"
+                                       CommitWirelessSettings="{CommitWirelessSettings}"
+                                       ProfileCommand="{null}"/>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        wirelessCommandObj = new zune:WlanCommand(zune:SyncSetupManager.Instance.WirelessDeviceProfile);
+        UpdateAdvancedSettings.Invoke();
+      </Script>
+      
+      <Script>
+        [DeclareTrigger(SaveButton.Invoked)]
+        zune:WlanCommand wirelessCommand = zune:SyncSetupManager.Instance.CreateWlanCommand(SSIDEditBox.Value, WirelessNetworkTypes.Model.Chosen, KeyEditBox.Value);
+
+        if(wirelessCommand != null )
+        {
+          wirelessCommandObj = wirelessCommand;
+          if(wirelessCommand.NeedsKey )
+          {
+            WirelessSyncNetworkKeyDialog.ProfileCommand = wirelessCommand;
+            WirelessSyncNetworkKeyDialog.Helper.Show(WirelessSyncNetworkKeyDialog);
+          }
+          else
+          {
+            CommitWirelessSettings.Invoke();
+          }
+        }
+        else
+        {
+          zune:Management.NavigateToCategory(zune:SettingCategories.WirelessSetupNotConfigured);
+        }
+      </Script>
+      <Script>
+          [DeclareTrigger(CommitWirelessSettings.Invoked)]
+          zune:WlanCommand wirelessCommand = (zune:WlanCommand)wirelessCommandObj;
+
+          bool success = zune:SyncSetupManager.Instance.SetWirelessSettings(wirelessCommand);
+
+          if( success )
+          {
+            zune:Management.NavigateToCategory(zune:SettingCategories.WirelessSetupSaving);
+          }
+          else
+          {
+            zune:Management.NavigateToCategory(zune:SettingCategories.WirelessSetupNotConfigured);
+          }
+      </Script>
+      <Script>
+        [DeclareTrigger(WirelessNetworkSM.SelectedItem)]
+        if(WirelessNetworkSM.SelectedItem != null)
+        {
+          wirelessCommandObj = WirelessNetworkSM.SelectedItem;
+          UpdateAdvancedSettings.Invoke();
+        }
+      </Script>
+      
+      <Script>
+        [DeclareTrigger(UpdateAdvancedSettings.Invoked)]
+        zune:WlanCommand command = (zune:WlanCommand)wirelessCommandObj;
+
+        if( command != null )
+        {
+          KeyEdit.ShowClearTextModel.Value = false;
+          SSIDEditBox.Value = command.Profile.SSID;
+          WirelessNetworkTypes.Model.ChosenIndex = (int)zune:SyncSetupManager.Instance.GetNetworkTypeIndex(command.Profile.Auth, command.Profile.Cipher);
+        }
+      </Script>
+      <Script>
+        [DeclareTrigger(WirelessNetworkTypes.Model.ChosenIndex)]
+        if( WirelessNetworkTypes.Model.ChosenIndex > 0 )
+        {
+          PasskeyLabel.Visible = true;
+          KeyEdit.Visible = true;
+        }
+        else
+        {
+          PasskeyLabel.Visible = false;
+          KeyEdit.Visible = false;
+        }
+      </Script>
+      <Script>
+        [DeclareTrigger(ShowAdvancedSettings.Invoked)]
+        if( ManuallyEnterSettings.Visible )
+        {
+          ManuallyEnterSettings.Visible = false;
+          ShowAdvancedSettings.Description = zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_SYNC_SHOW_ADVANCED_SETTINGS);
+        }
+        else
+        {
+          ManuallyEnterSettings.Visible = true;
+          ShowAdvancedSettings.Description = zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_SYNC_HIDE_ADVANCED_SETTINGS);
+        }
+      </Script>
+      <Script>
+        [DeclareTrigger(SSIDEditBox.Value)]
+        if(((sys:String)SSIDEditBox.Value).Length > 0)
+        {
+          SaveButton.Available = true;
+        }
+        else
+        {
+          SaveButton.Available = false;
+        }
+      </Script>
+      <Script>
+        bool currentDeviceConnected = [zune:SyncControls.Instance.CurrentDeviceConnected];
+        DeviceExists.Visible = currentDeviceConnected;
+        NoDeviceExists.Visible = !currentDeviceConnected;
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel>
+        <Children>
+          <Panel Name="DeviceExists" Visible="false">
+            <Layout>
+              <FlowLayout Orientation="Vertical" Spacing="5,0" StripAlignment="Near"/>
+            </Layout> 
+            <Children>
+              
+              <me:WirelessSyncAuto WirelessNetworkSM="{WirelessNetworkSM}" Padding="0,0,0,5"/>
+
+              <core:ActionButton Model="{ShowAdvancedSettings}"/>
+
+              <Panel Name="ManuallyEnterSettings" Visible="false">
+                <Layout>
+                  <FlowLayout Orientation="Vertical" Spacing="3,0"/>
+                </Layout>
+                <Children>
+
+                  <Panel>
+                    <Layout>
+                      <FlowLayout Orientation="Horizontal"/>
+                    </Layout>
+                    <Children>
+
+                      <core:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_HELP)}"
+                                  Style="{styles:SharedStyles.PodcastText}"/>
+                      <mgmt:Link Model="{HelpLinkWireless}"/>
+
+                    </Children>
+                  </Panel>
+
+                  <core:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_NAME_HEADER)}">
+                    <Style>
+                      <styles:LabelStyle Color="{styles:Styles.SettingsTextActive}" Font="{styles:Styles.SettingsTextSubHeader}"/>
+                    </Style>
+                  </core:Label>
+
+                  <Panel Layout="Anchor">
+                    <Children>
+
+                      <core:Editbox Name="SSIDEdit"
+                                    Model="{SSIDEditBox}"
+                                    TileMinSize="325,18"
+                                    TileMaxSize="325,18"
+                                    TilePadding="4,0,4,0"/>
+                      <ColorFill Content="{styles:Styles.EditTextBorder}">
+                        <LayoutInput>
+                          <AnchorLayoutInput Left="SSIDEdit,0" Top="SSIDEdit,0" Right="SSIDEdit,1" Bottom="SSIDEdit,1"/>
+                        </LayoutInput>
+                        <Children>
+                          <ColorFill Content="{styles:Styles.EditTextBackground}" Margins="1,1,1,1"/>
+                        </Children>
+                      </ColorFill>
+
+                    </Children>
+                  </Panel>
+
+                  <core:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_NETWORK_TYPE)}">
+                    <Style>
+                      <styles:LabelStyle Color="{styles:Styles.SettingsTextActive}" Font="{styles:Styles.SettingsTextSubHeader}"/>
+                    </Style>
+                  </core:Label>
+
+                  <Panel MinimumSize="360,0" MaximumSize="360,0">
+                    <Children>
+
+                      <core:MCRadioGroup Name="WirelessNetworkTypes"
+                                         Model="{zune:SyncSetupManager.Instance.WirelessNetworkTypes}"
+                                         Padding="10,0,0,0"
+                                         Orientation="Horizontal" 
+                                         ColumnSize="175,0"
+                                         ColumnCount="2"
+                                         GridSpacing="3,3"/>
+                      
+                    </Children>
+                  </Panel>
+
+                  
+                  <core:Label Name="PasskeyLabel" 
+                              Content="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_KEY_HEADER)}"
+                              Visible="false">
+                    <Style>
+                      <styles:LabelStyle Color="{styles:Styles.SettingsTextActive}" Font="{styles:Styles.SettingsTextSubHeader}"/>
+                    </Style>
+                  </core:Label>
+
+                  <me:PasswordTextBox Name="KeyEdit" KeyEditBox="{KeyEditBox}" Visible="false"/>
+                  <core:ActionButton Model="{SaveButton}" Padding="0,5,0,0"/>
+
+                </Children>
+              </Panel>
+
+              <core:Label Content="{sys:String.Format(zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_SYNC_GET_CONNECTED_FAILED), zune:SyncSetupManager.Instance.WirelessGetConnectedProfileResult)}" 
+                          Visible="{zune:SyncSetupManager.Instance.WirelessGetConnectedProfileFailed}" 
+                          WordWrap="true">
+                <Style>
+                  <styles:LabelStyle Color="{styles:Styles.SettingsTextActive}" Font="{styles:Styles.SettingsTextMini}"/>
+                </Style>
+              </core:Label>
+          
+            </Children>
+          </Panel>
+          
+          <me:NoDeviceExists Name="NoDeviceExists" Visible="false"/>
+          
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  
+  
+  
+  <UI Name="WirelessSyncNotConfigured">
+    <Properties>
+      <zune:CategoryPage Name="Page" CategoryPage="$Required" />
+    </Properties>
+    <Locals>
+      <zune:WebHelpCommand Name="HelpLink"
+                           Description="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_SYNC_FAILED_MORE_INFO_LINK)}"
+                           Url="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_SYNC_FAILED_MORE_INFO_LINK)}"/>
+      <iris:Command Name="TryAgainButton" Description="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_TRY_AGAIN_BUTTON)}"/>
+      <iris:Command Name="ShowDetailsButton" Description="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_ERROR_DETAILS_BUTTON)}"/>
+      <Boolean Name="HaveError" Boolean="{!String.IsNullOrEmpty(zune:SyncSetupManager.Instance.WirelessDeviceErrorDescription)}"/>
+      <Boolean Name="ShowError" Boolean="{zune:SyncSetupManager.Instance.WirelessDeviceShowError}"/>
+      <Boolean Name="ShowErrorNow" Boolean="{zune:SyncSetupManager.Instance.WirelessDeviceShowErrorNow}"/>
+      <Boolean Name="Canceled" Boolean="{zune:SyncSetupManager.Instance.WirelessDeviceCanceled}"/>
+    </Locals>
+    <Scripts>
+      <Script>
+        [DeclareTrigger(TryAgainButton.Invoked)]
+        
+        
+        
+        Page.DoneButton.Available = false;
+        zune:Management.NavigateToCategory(zune:SettingCategories.WirelessSetupDetectingConnected);
+      </Script>
+      <Script>
+        
+        
+        
+        if(ShowErrorNow)
+        {
+          
+          
+          Page.CancelButton = null;
+          zune:SyncSetupManager.Instance.WirelessDeviceShowErrorDialog();
+        }
+      </Script>
+      <Script>
+        [DeclareTrigger(ShowDetailsButton.Invoked)]
+        zune:SyncSetupManager.Instance.WirelessDeviceShowErrorDialog();
+      </Script>
+      <Script>
+        
+        
+        
+        Page.DoneButton.Available = true;
+      </Script>
+      <Script>
+        bool currentDeviceConnected = [zune:SyncControls.Instance.CurrentDeviceConnected];
+        DeviceExists.Visible = currentDeviceConnected;
+        NoDeviceExists.Visible = !currentDeviceConnected;
+      </Script>
+
+    </Scripts>
+
+    <Content>
+      <Panel>
+        <Children>
+
+          <Panel Name="DeviceExists">
+            <Layout>
+              <FlowLayout Orientation="Vertical" Spacing="15,0"/>
+            </Layout>
+            <Children>
+              
+                
+              <core:Label Name="NotConfigured"
+                          Content="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_SYNC_NOT_CONFIGURED)}"
+                          Style="{styles:SharedStyles.PodcastText}"
+                          Visible="{!HaveError}"
+                          WordWrap="true"/>
+              <core:Label Name="ErrorDescription"
+                          Content="{zune:SyncSetupManager.Instance.WirelessDeviceErrorDescription}"
+                          Style="{styles:SharedStyles.PodcastText}"
+                          Visible="{HaveError}"
+                          WordWrap="true"/>
+
+              <Panel Visible="{!Canceled}">
+                <Layout>
+                  <FlowLayout Orientation="Vertical" Spacing="2,0"/>
+                </Layout>
+                <Children>
+
+                  <core:Label Name="CommonReasons"
+                              Content="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_COMMON_REASONS)}"
+                              Style="{styles:SharedStyles.PodcastText}"
+                              WordWrap="true"/>
+
+                  <Panel Padding="10,0,0,0">
+                    <Layout>
+                      <FlowLayout Orientation="Horizontal"/>
+                    </Layout>
+                    <Children>
+
+                      <core:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_SUGG_LIST_DASH)}"
+                                  Style="{styles:SharedStyles.PodcastText}"/>
+                      <core:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_SUGG_BAD_KEY)}"
+                                  Style="{styles:SharedStyles.PodcastText}"
+                                  WordWrap="true"/>
+
+                    </Children>
+                  </Panel>
+
+                  <Panel Padding="10,0,0,0">
+                    <Layout>
+                      <FlowLayout Orientation="Horizontal"/>
+                    </Layout>
+                    <Children>
+
+                      <core:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_SUGG_LIST_DASH)}"
+                                  Style="{styles:SharedStyles.PodcastText}"/>
+                      <core:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_SUGG_OUT_OF_RANGE)}"
+                                  Style="{styles:SharedStyles.PodcastText}"
+                                  WordWrap="true"/>
+
+                    </Children>
+                  </Panel>
+
+                  <Panel Padding="10,0,0,0">
+                    <Layout>
+                      <FlowLayout Orientation="Horizontal"/>
+                    </Layout>
+                    <Children>
+
+                      <core:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_SUGG_LIST_DASH)}"
+                                  Style="{styles:SharedStyles.PodcastText}"/>
+                      <core:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_SUGG_MAC_FILTERING)}"
+                                  Style="{styles:SharedStyles.PodcastText}"
+                                  WordWrap="true"/>
+
+                    </Children>
+                  </Panel>
+
+                </Children>
+              </Panel>
+
+              <core:Label Name="MoreInfo"
+                          Content="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_SYNC_FAILED_MORE_INFO)}"
+                          Style="{styles:SharedStyles.PodcastText}"
+                          Visible="{HaveError}"
+                          WordWrap="true"/>
+              <mgmt:Link Name="WirelessHelpLink"
+                         Model="{HelpLink}"
+                         Padding="5,0,0,0"
+                         Visible="{HaveError}"/>
+
+              <Panel>
+                <Layout>
+                  <FlowLayout Orientation="Horizontal"/>
+                </Layout>
+                <Children>
+
+                  <core:ActionButton Name="TryAgain" Model="{TryAgainButton}" Visible="{HaveError}"/>
+                  <core:ActionButton Name="ShowDetails" Model="{ShowDetailsButton}" Visible="{ShowError}"/>
+
+                </Children>
+              </Panel>
+            </Children>
+          </Panel>
+          
+          <me:NoDeviceExists Name="NoDeviceExists" Visible="false"/>
+          
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  
+  
+  
+  <UI Name="WirelessSyncSaving">
+    <Properties>
+      <zune:CategoryPage Name="Page" CategoryPage="$Required" />
+    </Properties>
+    <Locals>
+      <iris:Command Name="LocalCancelButton" Description="{zune:Shell.LoadString(zune:StringId.IDS_DIALOG_CANCEL)}"/>
+    </Locals>
+    
+    
+    
+    <Scripts>
+      <Script>
+        zune:SyncSetupManager.Instance.SetWirelessSettings();
+        Description.Content = sys:String.Format(zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_SETTINGS_ATTEMPTING), zune:SyncSetupManager.Instance.SavingProfileName);
+        
+        
+        
+        
+        Page.CancelButton = LocalCancelButton;
+      </Script>
+      <Script>
+        [DeclareTrigger(LocalCancelButton.Invoked)]
+        zune:SyncSetupManager.Instance.CancelSetWirelessSettings();
+        Canceling.Visible = true;
+        
+        
+        
+      </Script>
+    </Scripts>
+    <Content>
+      <Panel>
+        <Layout>
+          <FlowLayout Orientation="Vertical" Spacing="10,0"/>
+        </Layout>
+        <Children>
+
+          <core:Label Name="Description" 
+                      Content="{null}"
+                      Style="{styles:SharedStyles.PodcastText}"
+                      WordWrap="true"/>
+          <core:Label Name="Canceling"
+                      Content="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_CANCELING)}"
+                      Style="{styles:SharedStyles.PodcastText}"
+                      Visible="false"/>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  
+  
+  
+  
+  
+  
+  <UI Name="PasswordTextBox">
+    <Properties>
+      <EditableTextData Name="KeyEditBox" EditableTextData="$Required"/>
+      <iris:BooleanChoice Name="ShowClearTextModel"
+                          Description="{zune:Shell.LoadString(zune:StringId.IDS_WIRELESS_SHOW_CLEAR_TEXT)}"
+                          Value="false"/>
+    </Properties>
+
+    <Scripts>
+      <Script>
+        [DeclareTrigger(ShowClearTextModel.Value)]
+        KeyEdit.PasswordMasked = !ShowClearTextModel.Value;
+      </Script>
+    </Scripts>
+    <Content>
+      <Panel>
+        <Layout>
+          <FlowLayout Orientation="Vertical" Spacing="5,0"/>
+        </Layout>
+        <Children>
+
+          <Panel Layout="Anchor">
+            <Children>
+
+              <core:Editbox Name="KeyEdit"
+                            Model="{KeyEditBox}"
+                            TileMinSize="325,18"
+                            TileMaxSize="325,18"
+                            TilePadding="4,0,4,0"
+                            PasswordMasked="{!ShowClearTextModel.Value}"/>
+              <ColorFill Content="{styles:Styles.EditTextBorder}">
+                <LayoutInput>
+                  <AnchorLayoutInput Left="KeyEdit,0" Top="KeyEdit,0" Right="KeyEdit,1" Bottom="KeyEdit,1"/>
+                </LayoutInput>
+                <Children>
+                  <ColorFill Content="{styles:Styles.EditTextBackground}" Margins="1,1,1,1"/>
+                </Children>
+              </ColorFill>
+
+            </Children>
+          </Panel>
+          <mgmt:CheckBox Name="ShowClearText"
+                         Model="{ShowClearTextModel}"
+                         Available="true"/>
+
+        </Children>
+      </Panel>
+
+    </Content>
+  </UI>
+
+  <Class Name="FormatDialog" Base="dialog:Dialog">
+    <Properties>
+      <zune:FormatCompletionListener Name="Listener"/>
+
+      <String Name="ContentUI" String="res://ZuneShellResources!DeviceSyncSetup.uix#FormatDialogContent"/>
+
+      <zune:DialogHelper Name="Helper"/>
+    </Properties>
+    <Scripts>
+      <Script>
+        if ([Helper.IsVisible] &amp;&amp;
+            !Listener.IsFormatting)
+        {
+          Helper.Hide();
+        }
+      </Script>
+      <Script>
+        [DeclareTrigger(Listener.Completed.Invoked)]
+        if (Helper.IsVisible)
+        {
+          Helper.Hide();
+        }
+      </Script>
+    </Scripts>
+  </Class>
+
+  <UI Name="FormatDialogContent" Base="dialog:DialogContentUI">
+    <Properties>
+      <me:FormatDialog Name="Dialog" FormatDialog="$Required"/>
+    </Properties>
+    <Content>
+
+      <Panel>
+        <Layout>
+          <FlowLayout Orientation="Vertical" Spacing="4,0" StripAlignment="Near"/>
+        </Layout>
+        <Children>
+
+          <core:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_FORMAT_IN_PROGRESS_HEADER)}" Style="{styles:SharedStyles.DialogHeaderStyle}"/>
+
+          <core:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_FORMAT_IN_PROGRESS)}" Style="{styles:SharedStyles.DialogTextStyle}" Margins="0,10,0,0"/>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  <UI Name="ConversionSettings">
+    <Properties>
+      <zune:CategoryPage Name="Page" CategoryPage="$Required" />
+    </Properties>
+    <Locals>
+      <iris:Command Name="ChangeButtonModel" Description="{zune:Shell.LoadString(zune:StringId.IDS_CACHE_LOCATION_BUTTON)}"/>
+      <iris:Command Name="ClearButtonModel" Description="{zune:Shell.LoadString(zune:StringId.IDS_CACHE_CLEAR_BUTTON)}"/>
+
+      <iris:BooleanChoice Name="TranscodeCheckboxModel"
+                          Description="{zune:Shell.LoadString(zune:StringId.IDS_CACHE_TRANSCODE_IN_BACKGROUND)}"
+                          Value="{zune:SyncSetupManager.Instance.TranscodeInBG}"/>
+
+      <EditableTextData Name="DiskSpaceEditBox" MaxLength="6"/>
+
+      <Boolean Name="ShowAnyItems" Boolean="{zune:SyncControls.Instance.CurrentDeviceExists}"/>
+    </Locals>
+    <Scripts>
+      <Script>
+        DiskSpaceEditBox.Value = [zune:SyncSetupManager.Instance.TranscodeSizeLimit];
+      </Script>
+      <Script>
+        CacheDirectoryText.Content = [zune:SyncSetupManager.Instance.TranscodeCacheLocation];
+      </Script>
+      <Script>
+        [DeclareTrigger(ChangeButtonModel.Invoked)]
+        zune:SyncSetupManager.Instance.ChangeTranscodeFolder();
+      </Script>
+      <Script>
+        [DeclareTrigger(ClearButtonModel.Invoked)]
+        zune:SyncSetupManager.Instance.ClearTranscodeFolder();
+      </Script>
+      <Script>
+        zune:SyncSetupManager.Instance.TranscodeSizeLimit = [DiskSpaceEditBox.Value];
+      </Script>
+      <Script>
+        zune:SyncSetupManager.Instance.TranscodeInBG = [TranscodeCheckboxModel.Value];
+      </Script>
+    </Scripts>
+    <Content>
+      <Panel>
+        <Children>
+
+          <Panel Visible="{ShowAnyItems}">
+            <Layout>
+              <FlowLayout Orientation="Vertical" Spacing="4,0" StripAlignment="Near"/>
+            </Layout>
+            <Children>
+
+              <mgmt:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_CACHE_LOCATION_HEADER)}"/>
+              <core:Label Name="CacheDirectoryText">
+                <Style>
+                  <styles:LabelStyle Font="{styles:Styles.SettingsText}" Color="{styles:Styles.SettingsTextActive}"/>
+                </Style>
+              </core:Label>
+
+              <Panel Padding="0,0,0,15">
+                <Layout>
+                  <FlowLayout Orientation="Horizontal" Spacing="4,0" StripAlignment="Near"/>
+                </Layout>
+                <Children>
+
+                  <core:ActionButton Name="ChangeButton" Model="{ChangeButtonModel}" TileMinSize="90,0"/>
+
+                  <core:ActionButton Name="ClearButton" Model="{ClearButtonModel}" TileMinSize="90,0"/>
+
+                </Children>
+              </Panel>
+
+
+              <mgmt:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_CACHE_SIZE_HEADER)}"/>
+
+              <Panel Padding="0,0,0,15">
+                <Layout>
+                  <FlowLayout Orientation="Horizontal" Spacing="4,0" StripAlignment="Near" ItemAlignment="Center"/>
+                </Layout>
+                <Children>
+
+                  <Text Name="CacheSizePrefix" Color="{styles:Styles.SettingsTextActive}" Font="{styles:Styles.SettingsText}" WordWrap="false"
+                        Content="{zune:Shell.LoadString(zune:StringId.IDS_CACHE_SIZE_PREFIX)}"/>
+
+                  <Panel Layout="Anchor">
+                    <Children>
+
+                      <core:Editbox Name="SpaceText" Model="{DiskSpaceEditBox}" TileMaxSize="120,0" TileMinSize="120,0" />
+
+                      <ColorFill Content="{styles:Styles.EditTextBorder}" MinimumSize="120,22">
+                        <LayoutInput>
+                          <AnchorLayoutInput Left="SpaceText,0" Top="SpaceText,0"/>
+                        </LayoutInput>
+                        <Children>
+                          <ColorFill Content="White" MinimumSize="120,22" Margins="1,1,1,1"/>
+                        </Children>
+                      </ColorFill>
+
+                    </Children>
+                  </Panel>
+                  
+                  <Text Name="CacheSizePostfix" Color="{styles:Styles.SettingsTextActive}" Font="{styles:Styles.SettingsText}" WordWrap="false"
+                        Content="{zune:Shell.LoadString(zune:StringId.IDS_CACHE_SIZE_POSTFIX)}"/>
+
+                </Children>
+              </Panel>
+
+              <mgmt:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_CACHE_USE_HEADER)}"/>
+
+              <mgmt:CheckBox Name="TranscodeCheckbox" Model="{TranscodeCheckboxModel}" Margins="15,0,0,0"/>
+
+            </Children>
+          </Panel>
+
+          <me:NoDeviceExists Visible="{!ShowAnyItems}"/>
+
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  <UI Name="SpaceReservation">
+    <Properties>
+      <zune:CategoryPage Name="Page" CategoryPage="$Required" />
+    </Properties>
+    <Locals>
+      <iris:RangedValue Name="SliderModel" MinValue="0.0" MaxValue="100.0" Value="{zune:SyncSetupManager.Instance.ReservedSpaceOnDevice}"/>
+      <String Name="ReadoutBase" String="{zune:Shell.LoadString(zune:StringId.IDS_SPACE_RESERVATION_READOUT)}"/>
+    </Locals>
+    <Scripts>
+      <Script>
+        [DeclareTrigger(SliderModel.Value)]
+        zune:SyncSetupManager.Instance.ReservedSpaceOnDevice = SliderModel.Value;
+      </Script>
+      <Script>
+        if ([Slider.Dragging])
+        {
+          Readout.Content = ReadoutBase.Format((Int32)[Slider.UpdateValue]);
+        }
+        else
+        {
+          Readout.Content = ReadoutBase.Format((Int32)[SliderModel.Value]);
+        }
+      </Script>
+      <Script>
+        
+        bool currentDeviceConnected = [zune:SyncControls.Instance.CurrentDeviceConnected];
+        bool isPartnered = [zune:SyncSetupManager.Instance.DevicePartnership] == zune:SyncPartnership.SyncWithThisMachine;
+
+        SpaceReservationOptions.Visible = currentDeviceConnected &amp;&amp; isPartnered;
+        PartnersOnly.Visible = currentDeviceConnected &amp;&amp; !isPartnered;
+        NoDeviceExists.Visible = !currentDeviceConnected;
+      </Script>
+    </Scripts>
+    <Content>
+      <Panel>
+        <Children>
+
+          <Panel Name="SpaceReservationOptions" Visible="false">
+            <Layout>
+              <FlowLayout Orientation="Vertical" Spacing="4,0" StripAlignment="Near"/>
+            </Layout>
+            <Children>
+
+              <mgmt:Label Content="{zune:Shell.LoadString(zune:StringId.IDS_SPACE_RESERVATION_HEADER)}" Padding="0,0,0,5"/>
+              
+              <Text Content="{zune:Shell.LoadString(zune:StringId.IDS_SPACE_RESERVATION_DESCRIPTION)}" Color="{styles:Styles.SettingsTextActive}" Font="{styles:Styles.SettingsText}" WordWrap="true" Padding="0,0,0,5"/>
+
+              <Panel>
+                <Layout>
+                  <FlowLayout Orientation="Horizontal" Spacing="8,0" StripAlignment="Near"/>
+                </Layout>
+                <Children>
+
+                  <core:Slider
+                      Name="Slider"
+                      Model="{SliderModel}"
+                      FilledBackgroundImage="{styles:Styles.SliderFill}"
+                      KeyDelta="5.0"
+                      KeyDeltaShift="1.0"
+                      KeyDeltaCtrl="10.0"
+                      KeyDeltaPage="20.0"
+                      MaximumSize="300,0"
+                      DiscreteValues="true"
+                      AutoUpdateDuringDrag="false">
+                  </core:Slider>
+
+                  <mgmt:Label Name="Readout" Content=""/>
+
+                </Children>
+              </Panel>
+
+            </Children>
+          </Panel>
+
+          <me:PartnersOnly Name="PartnersOnly"  Visible="false"/>
+          
+          <me:NoDeviceExists Name="NoDeviceExists" Visible="false"/>
+          
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+  <UI Name="NoDeviceExists">
+    <Content>
+      <Text Content="{zune:Shell.LoadString(zune:StringId.IDS_OPTION_FOR_EXISTING_ONLY)}" 
+            Color="{styles:Styles.SettingsTextActive}" Font="{styles:Styles.SettingsText}" WordWrap="true"/>
+    </Content>
+  </UI>
+  
+  <UI Name="PartnersOnly">
+    <Content>
+      <Text Content="{zune:Shell.LoadString(zune:StringId.IDS_OPTION_FOR_PARTNERS_ONLY)}" 
+            Color="{styles:Styles.SettingsTextActive}" Font="{styles:Styles.SettingsText}" WordWrap="true"/>
+    </Content>
+  </UI>
+  
+</UIX>

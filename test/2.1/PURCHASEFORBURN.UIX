@@ -1,0 +1,90 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:data="res://ZuneShellResources!LibraryData.schema.xml"
+  xmlns:buy="res://ZuneMarketplaceResources!PurchaseDialog.uix"
+  >
+
+  
+
+
+
+
+
+  <Class Name="PurchaseForBurn">
+    <Properties>
+      
+      <List Name="Items" List="{null}"/>
+
+      
+      <Command Name="Start"/>
+
+      <Command Name="OnSuccess"/>
+      <Command Name="OnCancel"/>
+    </Properties>
+
+    <Locals>
+      
+      <buy:PurchaseDialog Name="PurchaseDialog" PurchaseDialog="{null}"/>
+
+      <zune:CDAccess Name="CDAccess" CDAccess="{zune:CDAccess.Instance}"/>
+
+      <iris:ArrayListDataSet Name="TrackServiceIds"/>
+    </Locals>
+
+    <Scripts>
+
+      
+      <Script>
+        [DeclareTrigger(Start.Invoked)]
+        
+        
+        
+        TrackServiceIds.Clear();
+
+        
+        foreach (data:PlaylistContentItem item in Items)
+        {
+          
+          
+          if (String.IsNullOrEmpty(item.FilePath) || 
+              !CDAccess.CanBurnFile(item.FilePath))
+          {
+            
+            
+            TrackServiceIds.Add(item.ServiceId);
+          }
+        }
+
+        
+        
+        if (!List.IsNullOrEmpty(TrackServiceIds))
+        {
+          if (PurchaseDialog != null) Class.DisposeOwnedObject(PurchaseDialog);
+          PurchaseDialog = new buy:PurchaseDialog();
+          PurchaseDialog.Instance = PurchaseDialog;
+          
+          PurchaseDialog.TrackIds = TrackServiceIds;
+          PurchaseDialog.OnSuccess = OnSuccess;
+          PurchaseDialog.OnCancel = OnCancel;
+          
+          PurchaseDialog.Helper.Show(PurchaseDialog);
+        }
+        else
+        {
+          
+          OnSuccess.Invoke();
+        }
+      </Script>
+    </Scripts>
+  </Class>
+
+</UIX>
+
+
+
+
+
+
