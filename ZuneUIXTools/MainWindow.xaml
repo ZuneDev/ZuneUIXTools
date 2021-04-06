@@ -20,22 +20,32 @@
         <syncfusion:MenuAdv>
             <syncfusion:MenuItemAdv Header="File">
                 <syncfusion:MenuItemAdv Header="Open..." Click="Open_Click">
-                    <Image Source="Images/OpenProject_16x.png"/>
+                    <syncfusion:MenuItemAdv.Icon>
+                        <Image Source="Images/OpenProject_16x.png" Height="16" Width="16"/>
+                    </syncfusion:MenuItemAdv.Icon>
                 </syncfusion:MenuItemAdv>
                 <syncfusion:MenuItemAdv Header="Save" Click="Save_Click">
-                    <Image Source="Images/Save_16x.png"/>
+                    <syncfusion:MenuItemAdv.Icon>
+                        <Image Source="Images/Save_16x.png" Height="16" Width="16"/>
+                    </syncfusion:MenuItemAdv.Icon>
                 </syncfusion:MenuItemAdv>
                 <syncfusion:MenuItemAdv Header="Save As..." Click="SaveAs_Click">
-                    <Image Source="Images/SaveAs_16x.png"/>
+                    <syncfusion:MenuItemAdv.Icon>
+                        <Image Source="Images/SaveAs_16x.png" Height="16" Width="16"/>
+                    </syncfusion:MenuItemAdv.Icon>
                 </syncfusion:MenuItemAdv>
             </syncfusion:MenuItemAdv>
             <syncfusion:MenuItemAdv Header="Edit" />
             <syncfusion:MenuItemAdv Header="Build">
                 <syncfusion:MenuItemAdv Header="Build" Click="Build_Click">
-                    <Image Source="Images/BuildSolution_16x.png"/>
+                    <syncfusion:MenuItemAdv.Icon>
+                        <Image Source="Images/BuildSolution_16x.png" Height="16" Width="16"/>
+                    </syncfusion:MenuItemAdv.Icon>
                 </syncfusion:MenuItemAdv>
                 <syncfusion:MenuItemAdv Header="Build and Run" Click="BuildAndRun_Click">
-                    <Image Source="Images/StartWithoutDebug_16x.png"/>
+                    <syncfusion:MenuItemAdv.Icon>
+                        <Image Source="Images/StartWithoutDebug_16x.png" Height="16" Width="16"/>
+                    </syncfusion:MenuItemAdv.Icon>
                 </syncfusion:MenuItemAdv>
             </syncfusion:MenuItemAdv>
         </syncfusion:MenuAdv>
@@ -48,27 +58,6 @@
                 <TextBox Name="UIRootBox" ToolTip="The UI element to load and display" MinWidth="150"/>
             </StackPanel>
         </syncfusion:ToolBarAdv>
-
-        <!--<Ribbon Title="Microsoft Iris IDE">
-            <Ribbon.ApplicationMenu>
-                <RibbonApplicationMenu SmallImageSource="Images/ZuneShell.ico" Background="Black" BorderBrush="Black">
-                    <RibbonApplicationMenuItem Header="Open..." ImageSource="Images/OpenProject_16x.png"
-                                               KeyTip="O" Click="Open_Click" />
-                    <RibbonApplicationMenuItem Header="Save" ImageSource="Images/Save_16x.png"
-                                               KeyTip="S" Click="Save_Click" />
-                    <RibbonApplicationSplitMenuItem Header="Save As..." ImageSource="Images/SaveAs_16x.png"
-                                                    KeyTip="Shift+S" Click="SaveAs_Click"/>
-                </RibbonApplicationMenu>
-            </Ribbon.ApplicationMenu>
-
-            <RibbonTab Header="Home">
-                <RibbonGroup Header="Build">
-                    <RibbonButton Label="Build" SmallImageSource="Images/BuildSolution_16x.png" Click="Build_Click"/>
-                    <RibbonButton Label="Start Without Debugging" SmallImageSource="Images/StartWithoutDebug_16x.png"/>
-                    <RibbonTextBox Name="UIRootBox" Label="UI Root" ToolTip="The UI element to load and display"/>
-                </RibbonGroup>
-            </RibbonTab>
-        </Ribbon>-->
 
         <syncfusion:DockingManager x:Name="DockingManager" Grid.Row="2" ContainerMode="TDI">
             <ContentControl x:Name="SolutionExplorer" syncfusion:DockingManager.Header="Solution Explorer"

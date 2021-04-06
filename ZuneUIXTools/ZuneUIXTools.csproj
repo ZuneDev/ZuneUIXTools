@@ -4,12 +4,17 @@
         <OutputType>WinExe</OutputType>
         <TargetFramework>netcoreapp3.1</TargetFramework>
         <UseWPF>true</UseWPF>
+        <ApplicationIcon>Images\VCSIrisProject.ico</ApplicationIcon>
     </PropertyGroup>
 
     <ItemGroup>
         <Content Include="Images\*.*">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="Images\VCSIrisProject.png" />
     </ItemGroup>
 
     <ItemGroup>
