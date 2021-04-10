@@ -2,19 +2,22 @@
 
     <PropertyGroup>
         <OutputType>WinExe</OutputType>
-        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <TargetFramework>net48</TargetFramework>
         <UseWPF>true</UseWPF>
         <ApplicationIcon>Images\VCSIrisProject.ico</ApplicationIcon>
+        <SignAssembly>true</SignAssembly>
+        <AssemblyOriginatorKeyFile>uixtools.pfx</AssemblyOriginatorKeyFile>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+      <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+      <PlatformTarget>x64</PlatformTarget>
     </PropertyGroup>
 
     <ItemGroup>
         <Content Include="Images\*.*">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
-    </ItemGroup>
-
-    <ItemGroup>
-      <None Remove="Images\VCSIrisProject.png" />
     </ItemGroup>
 
     <ItemGroup>
@@ -35,21 +38,14 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Reference Include="UIX.RenderApi">
-            <HintPath>..\lib\UIX.renderapi.dll</HintPath>
-        </Reference>
+        <LibFiles Include="lib\**\*.*" />
+        <None Update="lib\UIX.renderapi.dll" />
+        <None Update="lib\UIXrender.dll" />
+        <None Update="lib\UIXsup.dll" />
     </ItemGroup>
 
-    <ItemGroup>
-        <None Update="lib\UIX.renderapi.dll">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="lib\UIXrender.dll">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="lib\UIXsup.dll">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-    </ItemGroup>
+    <Target Name="CopyCustomContent" AfterTargets="AfterBuild">
+        <Copy SourceFiles="@(LibFiles)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
+    </Target>
 
 </Project>

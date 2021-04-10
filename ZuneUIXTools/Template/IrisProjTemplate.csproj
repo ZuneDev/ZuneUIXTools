@@ -1,0 +1,51 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <UseWPF>true</UseWPF>
+    </PropertyGroup>
+
+    <UsingTask AssemblyFile="lib\UIXBuildTask.dll" TaskName="UIXBuild" />
+    
+    <ItemGroup>
+        <UIXSources Include="**\*.uix" />
+    </ItemGroup>
+    
+    <ItemGroup>
+      <None Remove="UIX.renderapi.dll" />
+      <None Remove="UIXrender.dll" />
+      <None Remove="UIXsup.dll" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ContentWithTargetPath Include="lib\UIX.dll">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <TargetPath>UIX.dll</TargetPath>
+        </ContentWithTargetPath>
+        <ContentWithTargetPath Include="lib\UIX.renderapi.dll">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <TargetPath>UIX.renderapi.dll</TargetPath>
+        </ContentWithTargetPath>
+        <ContentWithTargetPath Include="lib\UIXrender.dll">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <TargetPath>UIXrender.dll</TargetPath>
+        </ContentWithTargetPath>
+        <ContentWithTargetPath Include="lib\UIXsup.dll">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <TargetPath>UIXsup.dll</TargetPath>
+        </ContentWithTargetPath>
+        
+        <Reference Include="UIX">
+            <HintPath>lib\UIX.dll</HintPath>
+        </Reference>
+        <Reference Include="UIX.RenderApi">
+            <HintPath>lib\UIX.renderapi.dll</HintPath>
+        </Reference>
+    </ItemGroup>
+
+    <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="true">
+        <UIXBuild SourceFiles="@(UIXSources)" CompiledOutputDir="$(TargetDir)Resources" MSBuildArchitecture="x64" />
+    </Target>
+
+</Project>

@@ -1,23 +1,24 @@
-﻿using Microsoft.Toolkit.Mvvm.ComponentModel;
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Text;
 
 namespace ZuneUIXTools.ViewModels
 {
-    public class UIXDocumentViewModel : DocumentViewModelBase
+    public class CompiledUIXDocumentViewModel : DocumentViewModelBase
     {
-        public UIXDocumentViewModel(string fileName) : base(fileName)
+        public CompiledUIXDocumentViewModel(string fileName) : base(fileName)
         {
-            Content = File.ReadAllText(fileName);
+            Content = File.ReadAllBytes(fileName);
         }
 
-        private string _content = null;
-        public string Content
+        private byte[] _content = null;
+        public byte[] Content
         {
             get
             {
                 if (FileName != null)
-                    _content = File.ReadAllText(FileName);
+                    _content = File.ReadAllBytes(FileName);
                 return _content;
             }
             set => SetProperty(ref _content, value);

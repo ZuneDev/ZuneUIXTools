@@ -8,8 +8,8 @@ namespace ZuneUIXTools.ViewModels
 {
     public class IrisProjectViewModel : ObservableObject
     {
-        private ObservableCollection<UIXDocumentViewModel> _uixDocuments;
-        public ObservableCollection<UIXDocumentViewModel> UIXDocuments
+        private ObservableCollection<DocumentViewModelBase> _uixDocuments;
+        public ObservableCollection<DocumentViewModelBase> UIXDocuments
         {
             get => _uixDocuments;
             set => SetProperty(ref _uixDocuments, value);
@@ -22,8 +22,8 @@ namespace ZuneUIXTools.ViewModels
             set => SetProperty(ref _name, value);
         }
 
-        private UIXDocumentViewModel _selectedDocument;
-        public UIXDocumentViewModel SelectedDocument
+        private DocumentViewModelBase _selectedDocument;
+        public DocumentViewModelBase SelectedDocument
         {
             get => _selectedDocument;
             set => SetProperty(ref _selectedDocument, value);

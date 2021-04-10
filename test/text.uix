@@ -1,8 +1,8 @@
 <UIX xmlns="http://schemas.microsoft.com/2007/uix"
   xmlns:me="Me">
 
-    <UI Name="TextDisplay">
-        <!-- This UI displays the other UIs. -->
+    <UI Name="Default">
+        <!-- This UI displays the other UIs. TextDisplay -->
         <Locals>
 
             <Font Name="SmallFont" Font="Bahnschrift,10" />
@@ -28,7 +28,7 @@
         <Content>
             <Panel Layout="VerticalFlow" MaximumSize="140,0">
                 <Children>
-                    <Text HighlightColor="Gold" Font="{me:BigFont}" MaximumLines="3" WordWrap="true" Content="This large text will wrap.  This sentence won't be displayed because it exceeds the 3 line maximum." />
+                    <Text HighlightColor="Gold" Font="Bahnschrift" MaximumLines="3" WordWrap="true" Content="This large text will wrap.  This sentence won't be displayed because it exceeds the 3 line maximum." />
                 </Children>
             </Panel>
         </Content>
@@ -39,8 +39,8 @@
         <Content>
             <Panel Layout="VerticalFlow">
                 <Children>
-                    <Text Color="Aquamarine" Font="{me:SmallFont}" Content="You can use margins to create space between text items:" />
-                    <Text Margins="0,20,0,0" Color="SkyBlue" Font="{me:SmallFont}" Content="This sentence has a top margin of 20 pixels." />
+                    <Text Color="Aquamarine" Font="Bahnschrift" Content="You can use margins to create space between text items:" />
+                    <Text Margins="0,20,0,0" Color="SkyBlue" Font="Bahnschrift" Content="This sentence has a top margin of 20 pixels." />
                 </Children>
             </Panel>
         </Content>
@@ -51,7 +51,7 @@
         <Content>
             <Panel Layout="VerticalFlow" MinimumSize="500,40">
                 <Children>
-                    <Text LineAlignment="Center" Color="Maroon" Font="{me:SmallFont}" Content="This text is placed in a ColorFill view item." />
+                    <Text LineAlignment="Center" Color="Maroon" Font="Bahnschrift" Content="Gig em, Ags!" />
                 </Children>
             </Panel>
         </Content>

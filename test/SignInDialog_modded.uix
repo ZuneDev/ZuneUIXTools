@@ -1,0 +1,510 @@
+﻿<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:sys="assembly://mscorlib/System"
+  xmlns:iris="assembly://UIX/Microsoft.Iris"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:svc="assembly://ZuneDBApi/Microsoft.Zune.Service"
+  xmlns:col="assembly://mscorlib/System.Collections"
+  xmlns:dialog="res://ZuneShellResources!Dialog.uix"
+  xmlns:core="res://ZuneShellResources!Controls.uix"
+  xmlns:styles="res://ZuneShellResources!Styles.uix"  
+  xmlns:linkButtons="res://ZuneShellResources!LinkButtons.uix" 
+  xmlns:me="Me">
+
+  
+  
+  
+  
+
+  
+  
+  
+  <Class Name="SignInDialog" Base="dialog:Dialog">
+    <Properties>
+      
+      <Command Name="OnSuccess"/>
+      <Command Name="OnCancel" Command="{null}"/>
+
+      
+      <String Name="ContentUI" String="res://ZuneShellResources!SignInDialog.uix#SignInDialogContentUI"/>
+
+      
+      <iris:Command Name="SignInCommand" Description="{zune:Shell.LoadString(zune:StringId.IDS_LOGON_BUTTON)}"/>
+      <iris:Command Name="NewCommand" Description="custom button"/>
+      <iris:Command Name="CreateAccountCommand" Description="{zune:Shell.LoadString(zune:StringId.IDS_CREATE_ACCOUNT_BUTTON)}"/>
+      <iris:Command Name="ViewTermsOfServiceCommand" Description="{zune:Shell.LoadString(zune:StringId.IDS_VIEW_TERMS_OF_SERVICE)}"/>
+
+      <EditableTextData Name="Username" MaxLength="255" />
+      <EditableTextData Name="Password" MaxLength="255" />
+
+      <iris:BooleanChoice Name="RememberUsername" Description="{zune:Shell.LoadString(zune:StringId.IDS_REMEMBER_USERNAME)}" Value="true"/>
+      <iris:BooleanChoice Name="RememberPassword" Description="{zune:Shell.LoadString(zune:StringId.IDS_REMEMBER_PASSWORD)}" Value="true"/>
+      <iris:BooleanChoice Name="SignInAtStartup" Description="{zune:Shell.LoadString(zune:StringId.IDS_AUTO_LOGON)}" Value="false"/>
+      <iris:BooleanChoice Name="BogusOption" Description="Howdy, welcome to the social!" Value="true"/>
+
+      <iris:Command Name="SelectUsernameCommand"/>
+      <EditableTextData Name="SelectUsernameText"/>
+
+      <String Name="StatusText"/>
+      <String Name="WebHelpUrl"/>
+      <col:IList Name="PersistedUsernames" IList="{null}"/>
+
+      <String Name="AccessibleDescription" String="{zune:Shell.LoadString(zune:StringId.IDS_LOGON_HEADER)}"/>
+    </Properties>
+
+    <Locals>
+      <zune:SignIn Name="SignIn" SignIn="{zune:SignIn.Instance}"/>
+    </Locals>
+
+    <Scripts>
+      
+      <Script>
+        if (!Helper.IsVisible)
+        {
+          StatusText = "";
+          WebHelpUrl = "";
+        }
+      </Script>
+      
+      
+      <Script>
+        PersistedUsernames = SignIn.PersistedUsernames;
+
+        
+        if (PersistedUsernames != null &amp;&amp; PersistedUsernames.Count > 0)
+        {
+          String username = (String)PersistedUsernames.get_Item( 0 );
+          Username.Value = username;
+          RememberUsername.Value = true;
+          SignInAtStartup.Value = SignIn.SignInAtStartup(username);
+          RememberPassword.Value = !SignIn.PasswordRequired(username);
+          if ( RememberPassword.Value )
+          {
+            Password.Value = SignIn.PseudoPassword;
+          }
+          else
+          {
+            Password.Value = "";
+          }
+        }
+      </Script>
+      
+      
+      <Script>
+        [DeclareTrigger(SelectUsernameCommand.Invoked)]
+        Username.Value = SelectUsernameText.Value;
+        RememberUsername.Value = true;
+        SignInAtStartup.Value = SignIn.SignInAtStartup(SelectUsernameText.Value);
+        RememberPassword.Value = !SignIn.PasswordRequired(SelectUsernameText.Value);
+        if ( RememberPassword.Value )
+        {
+          Password.Value = SignIn.PseudoPassword;
+        }
+        else
+        {
+          Password.Value = "";
+        }
+      </Script>
+
+      
+      <Script>
+        if (!RememberUsername.Value)
+        {
+          RememberPassword.Value = false;
+          SignInAtStartup.Value = false;
+          Password.Value = "";
+        }
+      </Script>
+
+      <Script> 
+        if (!RememberPassword.Value)
+        {
+          SignInAtStartup.Value = false;
+          Password.Value = "";
+        }
+      </Script>
+
+      <Script> if (RememberPassword.Value) RememberUsername.Value = true; </Script>
+
+      <Script>
+        if (SignInAtStartup.Value)
+        {
+          RememberPassword.Value = true;
+          RememberUsername.Value = true;
+        }
+      </Script>
+
+      
+      <Script>
+        SignInCommand.Available = !SignIn.SigningIn &amp;&amp; (Username.Value != "") &amp;&amp; (Password.Value != "");
+        CreateAccountCommand.Available = !SignIn.SigningIn;
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(SignInCommand.Invoked)]
+        [DeclareTrigger(Username.Submitted)]
+        [DeclareTrigger(Password.Submitted)]
+        StatusText = zune:Shell.LoadString(zune:StringId.IDS_LOGON_STATUS);
+        SignInCommand.Available = false;
+        CreateAccountCommand.Available = false;
+        SignIn.SignInUser(Username.Value, Password.Value, RememberUsername.Value, RememberPassword.Value, SignInAtStartup.Value);
+      </Script>
+
+      
+      <Script>
+        ViewTermsOfServiceCommand.Available = SignIn.SignInTermsOfServiceError;
+      </Script>
+
+      
+      <Script>
+        if (SignIn.SignInErrorMessage != null)
+        {
+          SignInCommand.Available = true;
+          StatusText = SignIn.SignInErrorMessage;
+          WebHelpUrl = SignIn.SignInErrorWebHelpUrl;
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(Cancel.Invoked)]
+        SignIn.CancelSignIn();
+        Helper.Hide();
+        
+        if (OnCancel != null)
+        {
+          OnCancel.Invoke();
+        }
+      </Script>
+
+      
+      <Script>
+        if (SignIn.SignedIn)
+        {
+          Helper.Hide();
+          OnSuccess.Invoke();
+        }
+      </Script>
+
+      
+      <Script>
+        <![CDATA[
+        [DeclareTrigger(CreateAccountCommand.Invoked)]
+
+        String endpoint = svc:Service.GetEndPointUri(svc:EServiceEndpointId.SEID_AccountManagement);
+        String netendpoint = svc:Service.GetEndPointUri(svc:EServiceEndpointId.SEID_ZuneNet);
+        String returnurl = "/social/articles/backtosoftware.htm";
+        String createAcctUrl = endpoint + "/en-US/client/CreateAccount.ashx?ru=" + netendpoint + returnurl + "&aru=" + netendpoint + returnurl;
+
+        col:Hashtable args = new col:Hashtable();
+        args.Add("DoTransferAuthState", false);
+        zune:Shell.DefaultInstance.Execute("Web\" + createAcctUrl, args);
+        ]]>
+      </Script>
+
+      
+      <Script>
+        <![CDATA[
+        [DeclareTrigger(SignIn.SignInServiceNotProvisioned)]
+        if (SignIn.SignInServiceNotProvisioned)
+        {
+          String endpoint = svc:Service.GetEndPointUri(svc:EServiceEndpointId.SEID_AccountManagement);
+          String netendpoint = svc:Service.GetEndPointUri(svc:EServiceEndpointId.SEID_ZuneNet);
+          String returnurl = "/social/articles/backtosoftware.htm";
+          String createAcctUrl = endpoint + "/en-US/client/CreateAccount.ashx?ru=" + netendpoint + returnurl + "&aru=" + netendpoint + returnurl;
+
+          col:Hashtable args = new col:Hashtable();
+          args.Add("DoTransferAuthState", true);
+          zune:Shell.DefaultInstance.Execute("Web\" + createAcctUrl, args);
+        }
+        ]]>
+      </Script>
+
+      
+      <Script>
+        <![CDATA[
+        [DeclareTrigger(ViewTermsOfServiceCommand.Invoked)]
+
+        String endpoint = svc:Service.GetEndPointUri(svc:EServiceEndpointId.SEID_AccountManagement);
+        String netendpoint = svc:Service.GetEndPointUri(svc:EServiceEndpointId.SEID_ZuneNet);
+        String returnurl = "/social/articles/backtosoftware.htm";
+        String viewTermsOfServiceUrl = endpoint + "/en-US/client/CreateAccount.ashx?ru=" + netendpoint + returnurl + "&aru=" + netendpoint + returnurl;
+
+        col:Hashtable args = new col:Hashtable();
+        args.Add("DoTransferAuthState", false);
+        zune:Shell.DefaultInstance.Execute("Web\" + viewTermsOfServiceUrl, args);
+        ]]>
+      </Script>
+      
+      <Script>
+        [DeclareTrigger(Username.Value)]
+        if(((sys:String)Username.Value).Length == 1)
+        {
+          Password.Value = "";
+        }
+      </Script>
+
+    </Scripts>
+
+  </Class>
+
+  
+  
+  
+  <UI Name="SignInDialogContentUI" Base="dialog:DialogContentUI">
+    <Properties>
+      <me:SignInDialog Name="Dialog" SignInDialog="$Required"/>
+    </Properties>
+
+    <Locals>
+      <zune:WebHelpCommand Name="WebHelp" Description="{zune:Shell.LoadString(zune:StringId.IDS_DIALOG_WEBHELP)}"/>
+    </Locals>
+
+    <Input>
+      <KeyHandler Name="Enter" Key="Enter" HandlerStage="Bubbled"/>
+    </Input>
+
+    <Scripts>
+      <Script> PersistedUsers.Visible = Dialog.PersistedUsernames != null; </Script>
+      <Script> PersistedUsernamesList.Source = Dialog.PersistedUsernames; </Script>
+      <Script> UsernameEditbox.Model = Dialog.Username; </Script>
+      <Script> PasswordEditbox.Model = Dialog.Password; </Script>
+      <Script> WebHelp.Url = Dialog.WebHelpUrl; </Script>
+      <Script> WebHelpLink.Visible = !String.IsNullOrEmpty( Dialog.WebHelpUrl ); </Script>
+      <Script> ViewTermsOfService.Visible = Dialog.ViewTermsOfServiceCommand.Available; </Script>
+      <Script> Title.Content = zune:Shell.LoadString(zune:StringId.IDS_LOGON_HEADER);</Script>
+      <Script> UsernameTitle.Content = zune:Shell.LoadString(zune:StringId.IDS_USERNAME_HEADER);</Script>
+      <Script> PasswordTitle.Content = zune:Shell.LoadString(zune:StringId.IDS_PASSWORD_HEADER);</Script>
+
+      <Script> 
+        StatusText.Content = Dialog.StatusText; 
+        
+        
+        
+        if (String.IsNullOrEmpty(StatusText.Content))
+        {
+          StatusText.Content = " ";
+        }
+      </Script>
+      
+      <Script>
+        if (Dialog.SignInCommand.Available)
+        {
+          Enter.Command = Dialog.SignInCommand;
+        }
+        else
+        {
+          Enter.Command = null;
+        }
+      </Script>
+
+    </Scripts>
+
+    <Content>
+      <Panel Navigation="ContainAll,WrapAll" MaximumSize="394,0" Padding="10,-3,0,10">
+        <Layout>
+          <FlowLayout ItemAlignment="Near" Orientation="Vertical"/>
+        </Layout>
+        <Children>
+
+          
+          <core:Label Name="Title" WordWrap="false" Style="{styles:SharedStyles.DialogLargeHeaderStyle}"/>
+
+          
+          <Panel Margins="0,-3,0,0">
+            <Layout>
+              <FlowLayout ItemAlignment="Near" Orientation="Vertical"/>
+            </Layout>
+            <Children>
+
+              <Panel Layout="HorizontalFlow">
+                <Children>
+
+                  <Panel Margins="0,0,18,0" Layout="VerticalFlow">
+                    <Children>
+
+                      <Text Name="UsernameTitle" Color="{styles:Styles.DialogHeaderColor}" Font="{styles:Styles.ButtonText}" WordWrap="false"  Margins="0,10,0,3" />
+
+                      <Panel Name="UsernameBox" Layout="Anchor">
+                        <Children>
+
+                          <core:Editbox Name="UsernameEditbox" Model="{Dialog.Username}" AccessibleDescription="{zune:Shell.LoadString(zune:StringId.IDS_USERNAME_HEADER)}" FocusOrder="0"/>
+
+                          <ColorFill Content="{styles:Styles.EditTextBorder}">
+                            <LayoutInput>
+                              <AnchorLayoutInput Left="UsernameEditbox,0" Top="UsernameEditbox,0" Right="UsernameEditbox,1" Bottom="UsernameEditbox,1"/>
+                            </LayoutInput>
+                            <Children>
+
+                              <ColorFill Content="{styles:Styles.EditTextBackground}" Margins="1,1,1,1"/>
+
+                            </Children>
+                          </ColorFill>
+
+                        </Children>
+                      </Panel>
+
+                    </Children>
+                  </Panel>
+
+                  <Panel Margins="0,0,7,0" Layout="VerticalFlow">
+                    <Children>
+
+                      <Text Name="PasswordTitle" Color="{styles:Styles.DialogHeaderColor}" Font="{styles:Styles.ButtonText}"
+                            WordWrap="false" Margins="0,10,0,3" />
+
+                      <Panel Name="PasswordBox" Layout="Anchor">
+                        <Children>
+
+                          <core:Editbox Name="PasswordEditbox" AccessibleDescription="{zune:Shell.LoadString(zune:StringId.IDS_PASSWORD_HEADER)}"
+                                        PasswordMasked="true" Model="{Dialog.Password}" FocusOrder="1"/>
+
+                          <ColorFill Content="{styles:Styles.EditTextBorder}">
+                            <LayoutInput>
+                              <AnchorLayoutInput Left="PasswordEditbox,0" Top="PasswordEditbox,0" Right="PasswordEditbox,1" Bottom="PasswordEditbox,1"/>
+                            </LayoutInput>
+                            <Children>
+
+                              <ColorFill Content="{styles:Styles.EditTextBackground}" Margins="1,1,1,1"/>
+
+                            </Children>
+                          </ColorFill>
+
+                        </Children>
+                      </Panel>
+
+                    </Children>
+                  </Panel>
+
+                </Children>
+              </Panel>
+
+              <Panel Name="PersistedUsers"  FocusOrder="2">
+                <Layout>
+                  <FlowLayout ItemAlignment="Near" Orientation="Vertical"/>
+                </Layout>
+                <Children>
+                  
+                  <Text Name="PersistedUsernamesTitle" Margins="0,11,0,0" Content="{zune:Shell.LoadString(zune:StringId.IDS_PERSISTED_USERS_HEADER)}" 
+                        Color="{styles:Styles.DialogHeaderColor}" Font="{styles:Styles.DialogListItem}" WordWrap="false"/>
+
+                  <Repeater Name="PersistedUsernamesList" Layout="VerticalFlow" Source="{Dialog.PersistedUsernames}">
+                    <Content>
+                      <me:SignInPersistedUsernameUI Margins="10,4,0,0" Description="{(String)RepeatedItem}" 
+                                                    SelectUsernameCommand="{Dialog.SelectUsernameCommand}" 
+                                                    SelectUsernameText="{Dialog.SelectUsernameText}"/>
+                    </Content>
+                  </Repeater>
+
+                  <ColorFill Name="Line" Content="{styles:Styles.EditTextBorder}" Margins="0,10,0,0" MaximumSize="370,1" MinimumSize="370,1"/>
+                  
+                </Children>
+              </Panel>
+
+              <core:CheckBox Model="{Dialog.RememberUsername}"  LabelFont="{styles:Styles.DialogText}" Margins="-2,10,0,0"  FocusOrder="3"/>
+              
+              <core:CheckBox Model="{Dialog.RememberPassword}"  LabelFont="{styles:Styles.DialogText}" Margins="-2,4,0,0"   FocusOrder="4"/>
+              
+              <core:CheckBox Model="{Dialog.SignInAtStartup}"   LabelFont="{styles:Styles.DialogText}" Margins="-2,4,0,0"   FocusOrder="5"/>
+              
+              <core:CheckBox Model="{Dialog.BogusOption}"   LabelFont="{styles:Styles.DialogText}" Margins="-2,4,0,0"   FocusOrder="11"/>
+
+            </Children>
+          </Panel>
+
+          
+          <Text Name="StatusText" Color="{styles:Styles.TextActive}" Font="{styles:Styles.SettingsText}" WordWrap="true" Margins="0,10,0,0" MaximumSize="370,0" />
+
+          
+          <linkButtons:ExternalLink Name="WebHelpLink" Model="{WebHelp}" Margins="0,10,0,0" ToolTipEnabled="false" FocusOrder="6"/>
+
+          
+          <linkButtons:ExternalLink Name="ViewTermsOfService" Model="{Dialog.ViewTermsOfServiceCommand}" Margins="0,10,0,0" ToolTipEnabled="false" FocusOrder="7"/>
+          
+          <linkButtons:ExternalLink Model="{Dialog.CreateAccountCommand}" FocusOrder="8" Margins="0,10,0,0">
+              <LayoutInput>
+                <DockLayoutInput Alignment="Near" Position="Left"/>
+              </LayoutInput>
+          </linkButtons:ExternalLink>
+
+          
+          <Panel Margins="0,10,0,0">
+            <Layout>
+              <DockLayout SizeToChildren="true" DefaultLayoutInput="Right,Near"/>
+            </Layout>
+            <Children>
+                            
+              <core:BigActionButton Name="Cancel" Model="{Dialog.Cancel}" Margins="0,0,10,0" ToolTipEnabled="false" FocusOrder="10"/>
+
+              <core:BigActionButton Name="SignInButton" Model="{Dialog.SignInCommand}" Margins="0,0,10,0" ToolTipEnabled="false" FocusOrder="9"/>
+
+              <core:BigActionButton Name="NewButton" Model="{Dialog.NewCommand}" Margins="0,0,10,0" ToolTipEnabled="false" FocusOrder="12"/>
+
+            </Children>
+          </Panel>
+
+        </Children>
+      </Panel>
+      
+    </Content>
+  </UI>
+
+  
+  
+  
+  <UI Name="SignInPersistedUsernameUI">
+    <Properties>
+      <iris:Command Name="SelectUsernameCommand" Command="$Required"/>
+      <EditableTextData Name="SelectUsernameText" EditableTextData="$Required"/>
+      <String Name="Description" String="$Required"/>
+    </Properties>
+
+    <Locals>
+      <iris:Command Name="SelectCommand"/>
+      <iris:Command Name="RemoveCommand" Description="{zune:Shell.LoadString(zune:StringId.IDS_REMOVE_PERSISTED_USER)}"/>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        if (UI.DeepMouseFocus || UI.DeepKeyFocus)
+        {
+          Remove.Alpha = 1.0;
+        }
+        else
+        {
+          Remove.Alpha = 0.0;
+        }
+      </Script>
+
+      <Script> 
+        SelectCommand.Description = Description; 
+      </Script>
+      
+      <Script>
+        [DeclareTrigger(SelectCommand.Invoked)]
+        SelectUsernameText.Value = Description;
+        SelectUsernameCommand.Invoke();
+      </Script>
+
+      <Script>
+        [DeclareTrigger(RemoveCommand.Invoked)]
+        zune:SignIn.Instance.RemovePersistedUsername(Description);
+      </Script>
+    </Scripts>
+
+    <Content>
+      <Panel MouseInteractive="true">
+        <Layout>
+          <FlowLayout Orientation="Horizontal" Spacing="6,0"/>
+        </Layout>
+        <Children>
+          <core:Button OverrideStyle="{styles:SharedStyles.DialogButtonStyle}" Model="{SelectCommand}"/>
+          <core:Button OverrideStyle="{styles:SharedStyles.DialogButtonStyle}" Name="Remove" Model="{RemoveCommand}"/>
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+
+</UIX>

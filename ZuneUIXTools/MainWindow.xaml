@@ -34,6 +34,11 @@
                         <Image Source="Images/SaveAs_16x.png" Height="16" Width="16"/>
                     </syncfusion:MenuItemAdv.Icon>
                 </syncfusion:MenuItemAdv>
+                <syncfusion:MenuItemAdv Header="Decompile..." Click="Decompile_Click">
+                    <syncfusion:MenuItemAdv.Icon>
+                        <Image Source="Images/SaveAs_16x.png" Height="16" Width="16"/>
+                    </syncfusion:MenuItemAdv.Icon>
+                </syncfusion:MenuItemAdv>
             </syncfusion:MenuItemAdv>
             <syncfusion:MenuItemAdv Header="Edit" />
             <syncfusion:MenuItemAdv Header="Build">
@@ -61,26 +66,31 @@
 
         <syncfusion:DockingManager x:Name="DockingManager" Grid.Row="2" ContainerMode="TDI">
             <ContentControl x:Name="SolutionExplorer" syncfusion:DockingManager.Header="Solution Explorer"
-                            syncfusion:DockingManager.State="Dock" syncfusion:DockingManager.SideInDockedMode="Right"/>
+                            syncfusion:DockingManager.State="Dock" syncfusion:DockingManager.SideInDockedMode="Right"
+                            syncfusion:DockingManager.DesiredWidthInDockedMode="200">
+                <syncfusion:TreeViewAdv>
+                    <syncfusion:TreeViewItemAdv Header="Hello">
+                        <syncfusion:TreeViewItemAdv Header="Subhello"/>
+                    </syncfusion:TreeViewItemAdv>
+                </syncfusion:TreeViewAdv>
+            </ContentControl>
+            
             <ContentControl x:Name="ToolBox" syncfusion:DockingManager.Header="Toolbox"
                             syncfusion:DockingManager.State="AutoHidden"/>
-            <ContentControl x:Name="Properties" syncfusion:DockingManager.Header="Properties"
-                            syncfusion:DockingManager.State="AutoHidden"/>
-            <ContentControl x:Name="ErrorList" syncfusion:DockingManager.Header="Error List"
+            
+            <ContentControl x:Name="Properties" syncfusion:DockingManager.Header="Properties" syncfusion:DockingManager.State="AutoHidden">
+                <StackPanel>
+                    <CheckBox x:Name="IncludeInProject" Content="Include in project"/>
+                </StackPanel>
+            </ContentControl>
+            
+            <ContentControl x:Name="ErrorList" syncfusion:DockingManager.Header="Error List" syncfusion:DockingManager.DesiredHeightInDockedMode="200"
                             syncfusion:DockingManager.State="Dock" syncfusion:DockingManager.SideInDockedMode="Bottom">
                 <ScrollViewer Grid.Row="3">
                     <StackPanel Name="ErrorPanel" Margin="4,4,4,0"/>
                 </ScrollViewer>
             </ContentControl>
         </syncfusion:DockingManager>
-
-
-        <!--<GridSplitter Grid.Row="2"
-                      HorizontalAlignment="Stretch"
-                      VerticalAlignment="Center"
-                      Background="LightGray" 
-                      ShowsPreview="True"
-                      Height="5" />-->
 
     </Grid>
 </Window>
