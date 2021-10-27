@@ -5,8 +5,8 @@
         <TargetFramework>net48</TargetFramework>
         <UseWPF>true</UseWPF>
         <ApplicationIcon>Images\VCSIrisProject.ico</ApplicationIcon>
-        <SignAssembly>true</SignAssembly>
-        <AssemblyOriginatorKeyFile>uixtools.pfx</AssemblyOriginatorKeyFile>
+        <!--<SignAssembly>true</SignAssembly>
+        <AssemblyOriginatorKeyFile>uixtools.pfx</AssemblyOriginatorKeyFile>-->
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

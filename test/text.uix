@@ -4,7 +4,6 @@
     <UI Name="Default">
         <!-- This UI displays the other UIs. TextDisplay -->
         <Locals>
-
             <Font Name="SmallFont" Font="Bahnschrift,10" />
             <Font Name="BigFont" FontName="JetBrains Mono" FontSize="18" FontStyle="Bold,Italic"/>
         </Locals>
@@ -51,7 +50,13 @@
         <Content>
             <Panel Layout="VerticalFlow" MinimumSize="500,40">
                 <Children>
-                    <Text LineAlignment="Center" Color="Maroon" Font="Bahnschrift" Content="Gig em, Ags!" />
+                    <Text LineAlignment="Center" Color="Maroon" Font="Bahnschrift" Content="&lt;b&gt;Gig em&lt;b/&gt;, Ags!">
+                    	<NamedStyles>
+                    		<TextStyle Name="StyleA">
+                    			<FontSize>24</FontSize>
+                    		</TextStyle>
+                    	</NamedStyles>
+                    </Text>
                 </Children>
             </Panel>
         </Content>

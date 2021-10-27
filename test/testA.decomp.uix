@@ -1,1 +1,11 @@
-<UI Name="Default"><Content><Text Color="A=255, R=255, G=0, B=0" Content="Howdy from Microsoft.Iris!" /></Content></UI>
+<UIX xmlns="http://schemas.microsoft.com/2007/uix">
+    <UI Name="Default">
+        <Content>
+            <Text Content="Howdy from Microsoft.Iris!">
+                <Color>
+                    <Color R="255" A="255" />
+                </Color>
+            </Text>
+        </Content>
+    </UI>
+</UIX>

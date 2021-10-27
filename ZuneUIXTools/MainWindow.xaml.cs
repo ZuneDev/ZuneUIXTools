@@ -266,7 +266,7 @@ namespace ZuneUIXTools
                 Application.Run();
                 InterpreterContext.UseDecompile = false;
 
-                File.WriteAllText(System.IO.Path.ChangeExtension(compiledFile, ".decomp.uix"), InterpreterContext.DecompileResult.InnerXml);
+                File.WriteAllText(System.IO.Path.ChangeExtension(compiledFile, $".decomp.uix"), InterpreterContext.DecompileResults.Last().InnerXml);
             }
             catch (Exception ex)
             {
@@ -276,6 +276,14 @@ namespace ZuneUIXTools
                         $"Failed to decompile '{compiledFile}'",
                         "Zune UIX Tools", MessageBoxButton.OK, MessageBoxImage.Error
                     );
+                    System.Diagnostics.Debug.WriteLine(ex.ToString());
+
+                    TextBlock errBlock = new TextBlock
+                    {
+                        Text = ex.ToString(),
+                        Margin = new Thickness(0, 0, 0, 4)
+                    };
+                    ErrorPanel.Children.Add(errBlock);
                 });
             }
         }

@@ -1,1 +1,101 @@
-<UI Name="Default" />
+<UIX xmlns="http://schemas.microsoft.com/2007/uix">
+    <UI Name="Default">
+        <Locals>
+            <Font FontSize="10" AltFontSize="10" FontName="Bahnschrift" Name="SmallFont" />
+            <Font FontName="JetBrains Mono" FontSize="18" FontStyle="Bold, Italic" Name="BigFont" />
+        </Locals>
+        <Content>
+            <Panel>
+                <Layout>
+                    <FlowLayout Orientation="Vertical">
+                        <Spacing>
+                            <MajorMinor Major="50" />
+                        </Spacing>
+                    </FlowLayout>
+                </Layout>
+                <Children>
+                    <Host Name="TextSettings" />
+                    <Host Name="UsingMargins" />
+                    <Host Name="UsingColorfillWithText" />
+                </Children>
+            </Panel>
+        </Content>
+    </UI>
+    <UI Name="TextSettings">
+        <Content>
+            <Panel>
+                <Layout>
+                    <FlowLayout Orientation="Vertical" MinimumSampleSize="3" />
+                </Layout>
+                <MaximumSize>
+                    <Size Width="140" />
+                </MaximumSize>
+                <Children>
+                    <Text MaximumLines="3" WordWrap="True" Content="This large text will wrap.  This sentence won't be displayed because it exceeds the 3 line maximum.">
+                        <HighlightColor>
+                            <Color R="255" G="215" A="255" />
+                        </HighlightColor>
+                        <Font>
+                            <Font FontSize="12" AltFontSize="12" FontName="Bahnschrift" />
+                        </Font>
+                    </Text>
+                </Children>
+            </Panel>
+        </Content>
+    </UI>
+    <UI Name="UsingMargins">
+        <Content>
+            <Panel>
+                <Layout>
+                    <FlowLayout Orientation="Vertical" MinimumSampleSize="3" />
+                </Layout>
+                <Children>
+                    <Text Content="You can use margins to create space between text items:">
+                        <Color>
+                            <Color R="127" G="255" B="212" A="255" />
+                        </Color>
+                        <Font>
+                            <Font FontSize="12" AltFontSize="12" FontName="Bahnschrift" />
+                        </Font>
+                    </Text>
+                    <Text Content="This sentence has a top margin of 20 pixels.">
+                        <Margins>
+                            <Inset Top="20" />
+                        </Margins>
+                        <Color>
+                            <Color R="135" G="206" B="235" A="255" />
+                        </Color>
+                        <Font>
+                            <Font FontSize="12" AltFontSize="12" FontName="Bahnschrift" />
+                        </Font>
+                    </Text>
+                </Children>
+            </Panel>
+        </Content>
+    </UI>
+    <UI Name="UsingColorfillWithText">
+        <Content>
+            <Panel>
+                <Layout>
+                    <FlowLayout Orientation="Vertical" MinimumSampleSize="3" />
+                </Layout>
+                <MinimumSize>
+                    <Size Width="500" Height="40" />
+                </MinimumSize>
+                <Children>
+                    <Text LineAlignment="Center" Content="&lt;b&gt;Gig em&lt;b/&gt;, Ags!">
+                        <Color>
+                            <Color R="128" A="255" />
+                        </Color>
+                        <Font>
+                            <Font FontSize="12" AltFontSize="12" FontName="Bahnschrift" />
+                        </Font>
+                        <NamedStyles>
+                            <Dictionary />
+                        </NamedStyles>
+                    </Text>
+                </Children>
+            </Panel>
+        </Content>
+    </UI>
+</UIX>
