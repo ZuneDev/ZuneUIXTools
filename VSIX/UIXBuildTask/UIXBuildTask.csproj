@@ -50,11 +50,5 @@
     <Compile Include="UIXBuild.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\ZuneShell\UIX\UIX.csproj">
-      <Project>{5681a1bd-b3ec-450b-bf6e-38187204b6be}</Project>
-      <Name>UIX</Name>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
