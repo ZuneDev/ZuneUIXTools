@@ -1,0 +1,20 @@
+<UIX xmlns="http://schemas.microsoft.com/2007/uix"
+     xmlns:me="Me">
+    <Class Name="Styles" Shared="True">
+        <Properties>
+
+            <Color Name="LightOnDarkText" Color="255,255,255" />
+            <Color Name="LightOnDarkAltText" Color="128,255,255,255" />
+            <Color Name="LightOnDarkSubText" Color="179,154,156" />
+            <Color Name="CrazyColor" Color="18,52,86,120" />
+            <Color Name="ZuneMagenta" Color="{Magenta}"/>
+
+        </Properties>
+    </Class>
+    
+    <UI Name="Default">
+    	<Content>
+            <Panel Background="{me:Styles.ZuneMagenta}"/>
+        </Content>
+    </UI>
+</UIX>

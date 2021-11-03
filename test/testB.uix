@@ -1,0 +1,41 @@
+<UIX xmlns="http://schemas.microsoft.com/2007/uix" xmlns:me="Me">
+    <UI Name="Default">
+        <Properties>
+            <InputHandlerTransition Name="HandlerTransition" InputHandlerTransition="Up"/>
+        </Properties>
+
+        <Content>
+	        <Panel>
+	            <Layout>
+	                <FlowLayout Orientation="Vertical" Spacing="50,0" />
+	            </Layout>
+	            <Children>
+	                <Text Name="MainBlock" Color="Red"
+	                	  Content="Howdy from Microsoft.Iris!"/>
+	                	  <me:Alt/>
+	            </Children>
+            </Panel>
+        </Content>
+        
+        <Input>
+            <ClickHandler Name="Clicker" ClickType="LeftMouse, Key" HandlerStage="Direct, Bubbled" 
+                          HandlerTransition="{HandlerTransition}" Handle="false"/>
+        </Input>
+
+        <Scripts>
+            <Script>
+                [DeclareTrigger(Clicker.Invoked)]
+
+                MainBlock.Content = "Clicked";
+            </Script>
+        </Scripts>
+    </UI>
+    
+    <UI Name="Alt">
+    	<Content>
+    		<Text Color="Blue" Font="JetBrains Mono">
+                <Content>This is some blue text</Content>
+            </Text>
+    	</Content>
+    </UI>
+</UIX>
