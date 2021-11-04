@@ -36,8 +36,8 @@ namespace ZuneUIXTools
     /// </summary>
     public partial class MainWindow : Window
     {
-        private const string SOURCE_FILE_FORMAT_FILTER = "Microsoft Iris UI (*.uix)|*.uix|XML files (*.xml)|*.xml";
-        private const string COMPILED_FILE_FORMAT_FILTER = "Microsoft Iris Compiled UI (*.uib)|*.uib";
+        private const string SOURCE_FILE_FORMAT_FILTER = "Microsoft Iris UI (*.uix)|*.uix|XML files (*.xml)|*.xml|All Files|*.*";
+        private const string COMPILED_FILE_FORMAT_FILTER = "Microsoft Iris Compiled UI (*.uib)|*.uib|All Files|*.*";
         private readonly FontFamily CODE_FONT = new FontFamily("JetBrains Mono");
 
         public IrisProjectViewModel IrisProject { get; } = new IrisProjectViewModel
