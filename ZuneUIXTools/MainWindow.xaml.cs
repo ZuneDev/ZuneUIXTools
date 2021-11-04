@@ -36,8 +36,7 @@ namespace ZuneUIXTools
     /// </summary>
     public partial class MainWindow : Window
     {
-        private const string SOURCE_FILE_FORMAT_FILTER = "Microsoft Iris UI (*.uix)|*.uix|XML files (*.xml)|*.xml|All Files|*.*";
-        private const string COMPILED_FILE_FORMAT_FILTER = "Microsoft Iris Compiled UI (*.uib)|*.uib|All Files|*.*";
+        private const string FILE_FORMAT_FILTER = "Microsoft Iris UI (*.uix)|*.uix|Microsoft Iris Compiled UI (*.uib)|*.uib|XML files (*.xml)|*.xml|All Files|*.*";
         private readonly FontFamily CODE_FONT = new FontFamily("JetBrains Mono");
 
         public IrisProjectViewModel IrisProject { get; } = new IrisProjectViewModel
@@ -53,28 +52,15 @@ namespace ZuneUIXTools
             Loaded += MainWindow_Loaded;
         }
 
-        private void RemoveDocument(string fileName, bool removeFromProject = true, bool removeFromUI = true)
+        private void RemoveDocument(string fileName)
         {
-            if (removeFromProject)
-                IrisProject.UIXDocuments.Remove(IrisProject.UIXDocuments.First(doc => doc.FileName == fileName));
-
-            if (!removeFromUI)
-                return;
             FrameworkElement elem = GetDocumentUI(fileName);
             if (elem != null)
                 DockingManager.Children.Remove(elem);
         }
 
-        private void AddDocument(string fileName, bool addToProject = true, bool addToUI = true)
-            => AddDocument(new UIXDocumentViewModel(fileName), addToProject, addToUI);
-
-        private void AddDocument(DocumentViewModelBase doc, bool addToProject = true, bool addToUI = true)
+        private void AddDocument(DocumentViewModelBase doc)
         {
-            if (addToProject && !IrisProject.UIXDocuments.Any(oldDoc => doc.FileName == oldDoc.FileName))
-                IrisProject.UIXDocuments.Add(doc);
-
-            if (!addToUI)
-                return;
             // <avalonEdit:TextEditor Name="textEditor" Grid.Row="1" Padding="4" ShowLineNumbers="True"
             //                        SyntaxHighlighting="XML" FontFamily="JetBrains Mono" FontSize="10pt" />
             var editor = new TextEditor()
@@ -169,12 +155,12 @@ namespace ZuneUIXTools
         private void UIXDocuments_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
             if (e.OldItems != null)
-                foreach (UIXDocumentViewModel doc in e.OldItems)
-                    RemoveDocument(doc.FileName, removeFromProject: false);
+                foreach (DocumentViewModelBase doc in e.OldItems)
+                    RemoveDocument(doc.FileName);
 
             if (e.NewItems != null)
-                foreach (UIXDocumentViewModel doc in e.NewItems)
-                    AddDocument(doc.FileName, addToProject: false);
+                foreach (DocumentViewModelBase doc in e.NewItems)
+                    AddDocument(doc);
         }
 
         private void BuildAndRun()
@@ -252,6 +238,7 @@ namespace ZuneUIXTools
         private void Decompile()
         {
             string compiledFile = IrisProject.SelectedDocument.FileName;
+            string uiRoot = (IrisProject.SelectedDocument as CompiledUIXDocumentViewModel)?.UIRoot;
 
             try
             {
@@ -261,7 +248,7 @@ namespace ZuneUIXTools
 
             try
             {
-                Application.Window.RequestLoad("file://" + compiledFile);// + (string.IsNullOrEmpty(uiRoot) ? string.Empty : "#" + uiRoot));
+                Application.Window.RequestLoad("file://" + compiledFile + (string.IsNullOrEmpty(uiRoot) ? string.Empty : "#" + uiRoot));
                 InterpreterContext.UseDecompile = true;
                 Application.Run();
                 InterpreterContext.UseDecompile = false;
@@ -324,12 +311,12 @@ namespace ZuneUIXTools
         {
             OpenFileDialog openFileDialog = new OpenFileDialog
             {
-                Filter = SOURCE_FILE_FORMAT_FILTER
+                Filter = FILE_FORMAT_FILTER
             };
             if (openFileDialog.ShowDialog() != System.Windows.Forms.DialogResult.OK)
                 return;
 
-            AddDocument(openFileDialog.FileName, addToUI: false);
+            IrisProject.LoadDocument(openFileDialog.FileName);
         }
 
         private void Save_Click(object sender, RoutedEventArgs e)
@@ -348,7 +335,7 @@ namespace ZuneUIXTools
 
             SaveFileDialog saveFileDialog = new SaveFileDialog
             {
-                Filter = SOURCE_FILE_FORMAT_FILTER,
+                Filter = FILE_FORMAT_FILTER,
                 FileName = IrisProject.SelectedDocument.FileName
             };
             if (saveFileDialog.ShowDialog() != System.Windows.Forms.DialogResult.OK)
@@ -356,21 +343,19 @@ namespace ZuneUIXTools
 
             var editor = GetDocumentUI(IrisProject.SelectedDocument.FileName) as TextEditor;
             editor.Save(saveFileDialog.FileName);
-            AddDocument(saveFileDialog.FileName);
+            IrisProject.LoadDocument(saveFileDialog.FileName);
         }
 
         private void Decompile_Click(object sender, RoutedEventArgs e)
         {
-            OpenFileDialog openFileDialog = new OpenFileDialog
-            {
-                Filter = COMPILED_FILE_FORMAT_FILTER
-            };
-            if (openFileDialog.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+            if (!(IrisProject.SelectedDocument is CompiledUIXDocumentViewModel doc))
                 return;
 
-            AddDocument(openFileDialog.FileName, addToUI: false);
+            // Set UI root
+            doc.UIRoot = UIRootBox.Text;
 
-            IrisProject.SelectedDocument = new CompiledUIXDocumentViewModel(openFileDialog.FileName);
+            // Clear error list
+            ErrorPanel.Children.Clear();
 
             var _decompThread = new Thread(new ThreadStart(Decompile));
             _decompThread.SetApartmentState(ApartmentState.STA);

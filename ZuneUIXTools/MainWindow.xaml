@@ -34,11 +34,6 @@
                         <Image Source="Images/SaveAs_16x.png" Height="16" Width="16"/>
                     </syncfusion:MenuItemAdv.Icon>
                 </syncfusion:MenuItemAdv>
-                <syncfusion:MenuItemAdv Header="Decompile..." Click="Decompile_Click">
-                    <syncfusion:MenuItemAdv.Icon>
-                        <Image Source="Images/SaveAs_16x.png" Height="16" Width="16"/>
-                    </syncfusion:MenuItemAdv.Icon>
-                </syncfusion:MenuItemAdv>
             </syncfusion:MenuItemAdv>
             <syncfusion:MenuItemAdv Header="Edit" />
             <syncfusion:MenuItemAdv Header="Build">
@@ -58,6 +53,8 @@
         <syncfusion:ToolBarAdv Name="ToolBar" Grid.Row="1">
             <syncfusion:SplitButton ToolTip="Build and Run" SmallIcon="Images/StartWithoutDebug_16x.png" Label="Build and Run"
                                     Click="BuildAndRun_Click"/>
+            <syncfusion:ButtonAdv ToolTip="Decompile" SmallIcon="Images/SaveAs_16x.png" Label="Decompile"
+                                  Click="Decompile_Click"/>
             <StackPanel Orientation="Horizontal">
                 <TextBlock Text="UI Root" VerticalAlignment="Center" Margin="8,0,4,0"/>
                 <TextBox Name="UIRootBox" ToolTip="The UI element to load and display" MinWidth="150"/>
