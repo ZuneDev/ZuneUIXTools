@@ -265,7 +265,7 @@ namespace ZuneUIXTools
             finally
             {
                 // Even if there were errors, save the decomp results.
-                var results = InterpreterContext.DecompileResults;
+                var results = Application.DebugSettings.DecompileResults;
                 if (results != null && results.Count > 0)
                 {
                     for (int i = 0; i < results.Count; i++)
