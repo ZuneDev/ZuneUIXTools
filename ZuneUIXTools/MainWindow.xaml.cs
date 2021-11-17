@@ -1,30 +1,19 @@
 ﻿using ICSharpCode.AvalonEdit;
-using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Highlighting;
-using ICSharpCode.AvalonEdit.Highlighting.Xshd;
-using ICSharpCode.AvalonEdit.Rendering;
 using Microsoft.Iris;
-using Microsoft.Iris.Data;
 using Microsoft.Iris.Markup;
-using Microsoft.Iris.OS;
 using Microsoft.Iris.Session;
 using System;
 using System.Collections;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using ZuneUIXTools.ViewModels;
 using Application = Microsoft.Iris.Application;
 using Window = System.Windows.Window;
@@ -124,7 +113,7 @@ namespace ZuneUIXTools
                     {
                         TextBlock errBlock = new TextBlock
                         {
-                            Text = $"Ln {err.Line}, Col {err.Column}: {err.Message}",
+                            Text = $"{err.Context}, Ln {err.Line}, Col {err.Column}: {err.Message}",
                             Margin = new Thickness(0, 0, 0, 4)
                         };
 
@@ -272,6 +261,19 @@ namespace ZuneUIXTools
                     };
                     ErrorPanel.Children.Add(errBlock);
                 });
+            }
+            finally
+            {
+                // Even if there were errors, save the decomp results.
+                var results = InterpreterContext.DecompileResults;
+                if (results != null && results.Count > 0)
+                {
+                    for (int i = 0; i < results.Count; i++)
+                    {
+                        var result = results[i];
+                        File.WriteAllText(Path.ChangeExtension(compiledFile, $"{i}.decomp.uix"), result.InnerXml);
+                    }
+                }
             }
         }
 
