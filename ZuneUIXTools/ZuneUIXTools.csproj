@@ -21,21 +21,20 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="AvalonEdit" Version="6.1.1" />
-        <PackageReference Include="Syncfusion.SfSkinManager.WPF" Version="19.1.0.54" />
-        <PackageReference Include="Syncfusion.Themes.Blend.WPF" Version="19.1.0.54" />
-        <PackageReference Include="Syncfusion.Themes.FluentDark.WPF" Version="19.1.0.54" />
-        <PackageReference Include="Syncfusion.Themes.MaterialLight.WPF" Version="19.1.0.54" />
-        <PackageReference Include="Syncfusion.Themes.Metro.WPF" Version="19.1.0.54" />
-        <PackageReference Include="Syncfusion.Themes.Office2019Colorful.WPF" Version="19.1.0.54" />
-        <PackageReference Include="Syncfusion.Themes.VisualStudio2015.WPF" Version="19.1.0.54" />
-        <PackageReference Include="Syncfusion.Tools.WPF" Version="19.1.0.54" />
+		<PackageReference Include="GeminiWpf" Version="1.0.44-beta" />
+		<PackageReference Include="Gemini.Modules.Output" Version="1.0.44-beta" />
+		<PackageReference Include="Gemini.Modules.ErrorList" Version="1.0.44-beta" />
+		<PackageReference Include="Gemini.Modules.CodeEditor" Version="1.0.44-beta" />
+		<PackageReference Include="WPFHexaEditor" Version="2.1.7" />
         <ProjectReference Include="..\..\..\ZuneDev\ZuneShell.dll\UIX\UIX.csproj" />
-        <ProjectReference Include="..\ZuneUIXTools.ViewModels\ZuneUIXTools.ViewModels.csproj" />
     </ItemGroup>
 
     <ItemGroup>
         <LibFiles Include="lib\**\*.*" />
+        <Compile Remove="MainWindow.xaml.cs" />
+        <Page Remove="MainWindow.xaml" />
+        <None Include="MainWindow.xaml" />
+        <None Include="MainWindow.xaml.cs" />
         <None Update="lib\UIX.renderapi.dll" />
         <None Update="lib\UIXrender.dll" />
         <None Update="lib\UIXsup.dll" />

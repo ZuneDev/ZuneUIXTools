@@ -1,0 +1,18 @@
+<UIX xmlns="http://schemas.microsoft.com/2007/uix"
+     xmlns:dialog="res://ZuneShellResources!Dialog.uix"
+     xmlns:ctrDialog="res://UIXControls!Dialog.uix"
+     xmlns:zune="assembly://ZuneShell/ZuneUI">
+    <UI Name="Default">
+        <Content>
+            <zune:ZuneShell>
+	            <Content>
+	                <dialog:DarkDialogUI Model="{zune:StringId.IDS_PLAYLIST_EMPTY}">
+	                    <Popup>
+	                        <ctrDialog:Dialog/>	
+	                    </Popup>
+	                </dialog:DarkDialogUI>
+                </Content>
+            </zune:ZuneShell>
+        </Content>
+    </UI>
+</UIX>

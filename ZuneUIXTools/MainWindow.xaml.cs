@@ -231,18 +231,19 @@ namespace ZuneUIXTools
 
             try
             {
+                Microsoft.Iris.Debug.Trace.EnableAllCategories(true);
                 Application.Initialize();
             }
             catch { }
 
             try
             {
-                Application.Window.RequestLoad("file://" + compiledFile + (string.IsNullOrEmpty(uiRoot) ? string.Empty : "#" + uiRoot));
-                InterpreterContext.UseDecompile = true;
-                Application.Run();
-                InterpreterContext.UseDecompile = false;
+                Application.Window.RequestLoad("res://ZuneShellResources!Frame.uix#Frame");
 
-                File.WriteAllText(System.IO.Path.ChangeExtension(compiledFile, $".decomp.uix"), InterpreterContext.DecompileResults.Last().InnerXml);
+                //Application.Window.RequestLoad("file://" + compiledFile + (string.IsNullOrEmpty(uiRoot) ? string.Empty : "#" + uiRoot));
+                Application.DebugSettings.UseDecompiler = true;
+                Application.Run();
+                Application.DebugSettings.UseDecompiler = false;
             }
             catch (Exception ex)
             {
