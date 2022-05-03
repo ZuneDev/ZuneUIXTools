@@ -18,7 +18,7 @@ namespace ZuneUIXTools.Modules.Shell
 		public static ToolBarItemGroupDefinition StandardOpenSaveToolBarGroup = new(StandardToolBar, 8);
 
 		[Export]
-		public static ToolBarItemDefinition OpenFileToolBarItem = new CommandToolBarItemDefinition<BuildAndRunCommandDefinition>(
+		public static ToolBarItemDefinition BuildAndRunToolBarItem = new CommandToolBarItemDefinition<BuildAndRunCommandDefinition>(
 			StandardOpenSaveToolBarGroup, 0);
 	}
 }
