@@ -17,7 +17,7 @@ namespace ZuneUIXTools.Modules.UIXSource
 {
     [Export(typeof(UIXSourceEditorViewModel))]
 #pragma warning disable 659
-    public class UIXSourceEditorViewModel : PersistedDocument, ICommandHandler<BuildAndRunCommandDefinition>
+    public class UIXSourceEditorViewModel : UIX.UIXEditorViewModelBase, ICommandHandler<BuildAndRunCommandDefinition>
 #pragma warning restore 659
     {
         private UIXSourceEditorView _view;
