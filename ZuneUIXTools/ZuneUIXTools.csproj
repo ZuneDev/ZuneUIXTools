@@ -27,7 +27,7 @@
 		<PackageReference Include="Gemini.Modules.ErrorList" Version="1.0.44-beta" />
 		<PackageReference Include="Gemini.Modules.CodeEditor" Version="1.0.44-beta" />
 		<PackageReference Include="WPFHexaEditor" Version="2.1.7" />
-        <ProjectReference Include="..\..\..\ZuneDev\ZuneShell.dll\UIX\UIX.csproj" />
+        <ProjectReference Include="..\libs\MicrosoftIris\UIX.Debug\UIX.Debug.csproj" />
         <ProjectReference Include="..\libs\MicrosoftIris\UIX\UIX.csproj" />
     </ItemGroup>
 
