@@ -1,10 +1,5 @@
 ﻿using Gemini.Framework.ToolBars;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using ZuneUIXTools.Modules.Shell.Commands;
 
 namespace ZuneUIXTools.Modules.Shell
@@ -18,11 +13,15 @@ namespace ZuneUIXTools.Modules.Shell
 		public static ToolBarItemGroupDefinition UIXFileToolBarGroup = new(UIXToolBar, 8);
 
 		[Export]
-		public static ToolBarItemDefinition BuildAndRunToolBarItem = new CommandToolBarItemDefinition<BuildAndRunCommandDefinition>(
+		public static ToolBarItemDefinition BuildAndDebugToolBarItem = new CommandToolBarItemDefinition<BuildAndDebugCommandDefinition>(
 			UIXFileToolBarGroup, 0, ToolBarItemDisplay.IconAndText);
 
 		[Export]
-		public static ToolBarItemDefinition DecompileToolBarItem = new CommandToolBarItemDefinition<DecompileCommandDefinition>(
+		public static ToolBarItemDefinition BuildAndRunToolBarItem = new CommandToolBarItemDefinition<BuildAndRunCommandDefinition>(
 			UIXFileToolBarGroup, 1);
+
+		[Export]
+		public static ToolBarItemDefinition DecompileToolBarItem = new CommandToolBarItemDefinition<DecompileCommandDefinition>(
+			UIXFileToolBarGroup, 2);
 	}
 }

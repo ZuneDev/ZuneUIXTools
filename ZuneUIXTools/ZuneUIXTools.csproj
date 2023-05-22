@@ -28,7 +28,6 @@
         <PackageReference Include="Gemini.Modules.CodeEditor" Version="1.0.60-beta" />
         <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="7.0.0" />
         <PackageReference Include="WPFHexaEditor" Version="2.1.7" />
-        <ProjectReference Include="..\libs\MicrosoftIris\UIX.Debug\UIX.Debug.csproj" />
         <ProjectReference Include="..\libs\MicrosoftIris\UIX\UIX.csproj" />
     </ItemGroup>
 

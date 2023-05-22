@@ -40,7 +40,7 @@ namespace ZuneUIXTools.Modules.UIX
 
         Task ICommandHandler<DecompileCommandDefinition>.Run(Command command)
         {
-            Thread _buildThread = new(new ThreadStart(Decompile));
+            Thread _buildThread = new(new ThreadStart(DecompileCode));
             _buildThread.SetApartmentState(ApartmentState.STA);
             _buildThread.IsBackground = true;
             _buildThread.Start();
@@ -48,7 +48,7 @@ namespace ZuneUIXTools.Modules.UIX
             return TaskUtility.Completed;
         }
 
-        private void Decompile()
+        private void DecompileCode()
         {
             try
             {
@@ -59,7 +59,7 @@ namespace ZuneUIXTools.Modules.UIX
 
             try
             {
-                Microsoft.Iris.Debug.Bridge bridge = new();
+                Microsoft.Iris.Debug.BridgeServer bridge = new();
                 bridge.InterpreterStep += (ctx, entry) => System.Diagnostics.Debug.WriteLine($"[UIXT] [Interpreter] [{ctx}] {entry}");
 
                 //IrisApp.Window.RequestLoad("res://ZuneShellResources!Frame.uix#Frame");

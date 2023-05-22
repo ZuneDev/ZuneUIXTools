@@ -4,6 +4,8 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using CoreRemoting.Serialization.Binary;
+using CoreRemoting;
 using Gemini.Framework;
 using Gemini.Framework.Commands;
 using Gemini.Framework.Threading;
@@ -17,11 +19,13 @@ namespace ZuneUIXTools.Modules.UIXSource
 {
     [Export(typeof(UIXSourceEditorViewModel))]
 #pragma warning disable 659
-    public class UIXSourceEditorViewModel : UIX.UIXEditorViewModelBase, ICommandHandler<BuildAndRunCommandDefinition>
+    public class UIXSourceEditorViewModel : UIX.UIXEditorViewModelBase, ICommandHandler<BuildAndRunCommandDefinition>, ICommandHandler<BuildAndDebugCommandDefinition>
 #pragma warning restore 659
     {
         private UIXSourceEditorView _view;
         private string _originalText;
+
+        public bool CanBuild => !string.IsNullOrWhiteSpace(_view.CodeEditor.Text);
 
         protected override Task DoNew()
         {
@@ -67,23 +71,43 @@ namespace ZuneUIXTools.Modules.UIXSource
                 && string.Equals(FileName, other.FileName, StringComparison.InvariantCultureIgnoreCase);
         }
 
-        void ICommandHandler<BuildAndRunCommandDefinition>.Update(Command command)
+        private void StartBuildAndRun(bool attachDebugger)
         {
-            command.Enabled = !string.IsNullOrWhiteSpace(_view.CodeEditor.Text);
+            var buildThread = new Thread(BuildAndRun);
+            buildThread.SetApartmentState(ApartmentState.STA);
+            buildThread.IsBackground = true;
+
+            var debuggerThread = new Thread(() =>
+            {
+                // Create and configure new CoreRemoting client 
+                using var client = new RemotingClient(new ClientConfig()
+                {
+                    ServerHostName = "localhost",
+                    Serializer = new BinarySerializerAdapter(),
+                    MessageEncryption = false,
+                    ServerPort = 9090
+                });
+
+                // Establish connection to server
+                client.Connect();
+
+                // Creates proxy for remote service
+                var bridge = client.CreateProxy<Microsoft.Iris.Debug.IBridge>();
+
+                // Subscribe to debugger events
+                bridge.DispatcherStep += message =>
+                    Console.WriteLine($"[UIX] [Dispatcher] {message}");
+            });
+            debuggerThread.IsBackground = true;
+
+            debuggerThread.Start();
+            buildThread.Start(attachDebugger);
         }
 
-        Task ICommandHandler<BuildAndRunCommandDefinition>.Run(Command command)
+        private void BuildAndRun(object parameter)
         {
-            var _buildThread = new Thread(new ThreadStart(BuildAndRun));
-            _buildThread.SetApartmentState(ApartmentState.STA);
-            _buildThread.IsBackground = true;
-            _buildThread.Start();
+            bool attachDebugger = (bool)parameter;
 
-            return TaskUtility.Completed;
-        }
-
-        private void BuildAndRun()
-        {
             string sourceFile = FilePath;
             string compiledFile = Path.ChangeExtension(sourceFile, "uib");
             bool isSuccess = false;
@@ -152,6 +176,22 @@ namespace ZuneUIXTools.Modules.UIXSource
                 //    });
                 //});
             }
+        }
+
+        void ICommandHandler<BuildAndRunCommandDefinition>.Update(Command command) => command.Enabled = CanBuild;
+
+        Task ICommandHandler<BuildAndRunCommandDefinition>.Run(Command command)
+        {
+            StartBuildAndRun(false);
+            return TaskUtility.Completed;
+        }
+
+        void ICommandHandler<BuildAndDebugCommandDefinition>.Update(Command command) => command.Enabled = CanBuild;
+
+        Task ICommandHandler<BuildAndDebugCommandDefinition>.Run(Command command)
+        {
+            StartBuildAndRun(true);
+            return TaskUtility.Completed;
         }
     }
 }
