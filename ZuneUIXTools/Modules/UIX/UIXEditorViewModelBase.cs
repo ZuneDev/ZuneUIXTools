@@ -59,6 +59,9 @@ namespace ZuneUIXTools.Modules.UIX
 
             try
             {
+                Microsoft.Iris.Debug.Bridge bridge = new();
+                bridge.InterpreterStep += (ctx, entry) => System.Diagnostics.Debug.WriteLine($"[UIXT] [Interpreter] [{ctx}] {entry}");
+
                 //IrisApp.Window.RequestLoad("res://ZuneShellResources!Frame.uix#Frame");
 
                 AppDomain.CurrentDomain.AssemblyResolve += (sender, e) =>
@@ -101,7 +104,7 @@ namespace ZuneUIXTools.Modules.UIX
                     for (int i = 0; i < results.Count; i++)
                     {
                         var result = results[i];
-                        File.WriteAllText(Path.ChangeExtension(FilePath, $"{i}.decomp.uix"), result.InnerXml);
+                        File.WriteAllText(Path.ChangeExtension(FilePath, $"{i}.decomp.uix"), result.Doc.InnerXml);
                     }
                 }
             }

@@ -8,10 +8,10 @@
         <SignAssembly>True</SignAssembly>
         <AssemblyOriginatorKeyFile>..\libs\MicrosoftIris\36MSApp1024.snk</AssemblyOriginatorKeyFile>
         <DelaySign>True</DelaySign>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks> 
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <PlatformTarget>x64</PlatformTarget>
     </PropertyGroup>
 
@@ -26,7 +26,7 @@
 		<PackageReference Include="Gemini.Modules.Output" Version="1.0.44-beta" />
 		<PackageReference Include="Gemini.Modules.ErrorList" Version="1.0.44-beta" />
 		<PackageReference Include="Gemini.Modules.CodeEditor" Version="1.0.44-beta" />
-		<PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="6.0.0" />
+		<PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="7.0.0" />
 		<PackageReference Include="WPFHexaEditor" Version="2.1.7" />
         <ProjectReference Include="..\libs\MicrosoftIris\UIX.Debug\UIX.Debug.csproj" />
         <ProjectReference Include="..\libs\MicrosoftIris\UIX\UIX.csproj" />
