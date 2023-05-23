@@ -33,10 +33,6 @@
 
     <ItemGroup>
         <LibFiles Include="lib\**\*.*" />
-        <Compile Remove="MainWindow.xaml.cs" />
-        <Page Remove="MainWindow.xaml" />
-        <None Include="MainWindow.xaml" />
-        <None Include="MainWindow.xaml.cs" />
         <None Update="lib\UIX.renderapi.dll" />
         <None Update="lib\UIXrender.dll" />
         <None Update="lib\UIXsup.dll" />
