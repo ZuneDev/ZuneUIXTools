@@ -5,11 +5,7 @@ using Microsoft.Iris.Markup;
 using Microsoft.Iris.Session;
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media.Imaging;
 

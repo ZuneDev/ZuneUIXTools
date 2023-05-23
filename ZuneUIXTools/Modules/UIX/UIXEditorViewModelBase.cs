@@ -59,8 +59,8 @@ namespace ZuneUIXTools.Modules.UIX
 
             try
             {
-                Microsoft.Iris.Debug.BridgeServer bridge = new();
-                bridge.InterpreterStep += (ctx, entry) => System.Diagnostics.Debug.WriteLine($"[UIXT] [Interpreter] [{ctx}] {entry}");
+                //Microsoft.Iris.Debug.ZmqDebuggerClient debugger = new();
+                //debugger.InterpreterStep += (ctx, entry) => System.Diagnostics.Debug.WriteLine($"[UIXT] [Interpreter] [{ctx}] {entry}");
 
                 //IrisApp.Window.RequestLoad("res://ZuneShellResources!Frame.uix#Frame");
 

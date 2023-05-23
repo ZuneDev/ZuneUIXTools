@@ -4,8 +4,6 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
-using CoreRemoting.Serialization.Binary;
-using CoreRemoting;
 using Gemini.Framework;
 using Gemini.Framework.Commands;
 using Gemini.Framework.Threading;
@@ -14,6 +12,9 @@ using Microsoft.Iris.Markup;
 using ZuneUIXTools.Modules.Shell.Commands;
 using Application = Microsoft.Iris.Application;
 using Command = Gemini.Framework.Commands.Command;
+using Microsoft.Iris.Debug;
+using Gemini.Modules.Output;
+using Caliburn.Micro;
 
 namespace ZuneUIXTools.Modules.UIXSource
 {
@@ -22,8 +23,10 @@ namespace ZuneUIXTools.Modules.UIXSource
     public class UIXSourceEditorViewModel : UIX.UIXEditorViewModelBase, ICommandHandler<BuildAndRunCommandDefinition>, ICommandHandler<BuildAndDebugCommandDefinition>
 #pragma warning restore 659
     {
+        private readonly IOutput _output = IoC.Get<IOutput>();
         private UIXSourceEditorView _view;
         private string _originalText;
+        private string _debuggerConnectionUri = "tcp://127.0.0.1:5556";
 
         public bool CanBuild => !string.IsNullOrWhiteSpace(_view.CodeEditor.Text);
 
@@ -76,37 +79,17 @@ namespace ZuneUIXTools.Modules.UIXSource
             var buildThread = new Thread(BuildAndRun);
             buildThread.SetApartmentState(ApartmentState.STA);
             buildThread.IsBackground = true;
-
-            var debuggerThread = new Thread(() =>
-            {
-                // Create and configure new CoreRemoting client 
-                using var client = new RemotingClient(new ClientConfig()
-                {
-                    ServerHostName = "localhost",
-                    Serializer = new BinarySerializerAdapter(),
-                    MessageEncryption = false,
-                    ServerPort = 9090
-                });
-
-                // Establish connection to server
-                client.Connect();
-
-                // Creates proxy for remote service
-                var bridge = client.CreateProxy<Microsoft.Iris.Debug.IBridge>();
-
-                // Subscribe to debugger events
-                bridge.DispatcherStep += message =>
-                    Console.WriteLine($"[UIX] [Dispatcher] {message}");
-            });
-            debuggerThread.IsBackground = true;
-
-            debuggerThread.Start();
             buildThread.Start(attachDebugger);
         }
 
         private void BuildAndRun(object parameter)
         {
             bool attachDebugger = (bool)parameter;
+            if (attachDebugger)
+            {
+                Application.DebugSettings.DebugConnectionUri = _debuggerConnectionUri;
+                Application.DebuggerServerReady += OnDebuggerServerReady;
+            }
 
             string sourceFile = FilePath;
             string compiledFile = Path.ChangeExtension(sourceFile, "uib");
@@ -176,6 +159,16 @@ namespace ZuneUIXTools.Modules.UIXSource
                 //    });
                 //});
             }
+        }
+
+        private void OnDebuggerServerReady(object sender, EventArgs e)
+        {
+            // Set up the debugger client
+            ZmqDebuggerClient debuggerClient = new(_debuggerConnectionUri);
+            debuggerClient.DispatcherStep += message =>
+            {
+                _output.AppendLine($"[{DisplayName}] [Dispatcher] {message}");
+            };
         }
 
         void ICommandHandler<BuildAndRunCommandDefinition>.Update(Command command) => command.Enabled = CanBuild;
