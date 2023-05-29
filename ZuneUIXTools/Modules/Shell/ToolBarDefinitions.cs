@@ -23,5 +23,12 @@ namespace ZuneUIXTools.Modules.Shell
 		[Export]
 		public static ToolBarItemDefinition DecompileToolBarItem = new CommandToolBarItemDefinition<DecompileCommandDefinition>(
 			UIXFileToolBarGroup, 2);
-	}
+
+        [Export]
+        public static ToolBarItemGroupDefinition UIXDebuggerToolBarGroup = new(UIXToolBar, 9);
+
+        [Export]
+        public static ToolBarItemDefinition StopDebuggerToolBarItem = new CommandToolBarItemDefinition<StopDebuggerCommandDefinition>(
+            UIXDebuggerToolBarGroup, 0, ToolBarItemDisplay.IconOnly);
+    }
 }

@@ -26,7 +26,7 @@ namespace ZuneUIXTools.Modules.UIXSource
         private readonly IOutput _output = IoC.Get<IOutput>();
         private UIXSourceEditorView _view;
         private string _originalText;
-        private string _debuggerConnectionUri = "tcp://127.0.0.1:5556";
+        private string _debuggerConnectionUri = App.DEFAULT_DEBUG_URI;
 
         public bool CanBuild => !string.IsNullOrWhiteSpace(_view.CodeEditor.Text);
 
