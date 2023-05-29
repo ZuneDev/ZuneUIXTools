@@ -25,11 +25,13 @@ public class DebuggerService
 
         _client = new ZmqDebuggerClient(connectionUri);
         _client.DispatcherStep += Client_DispatcherStep;
+
+        _output.AppendLine($"Debugger connected to {_client.ConnectionUri}");
     }
 
     private void Client_DispatcherStep(string obj)
     {
-        _output?.AppendLine($"[Dispatcher] {obj}");
+        //_output?.AppendLine($"[Dispatcher] {obj}");
     }
 
     public void Stop()
@@ -42,5 +44,6 @@ public class DebuggerService
 
         _client.DispatcherStep -= Client_DispatcherStep;
         _client = null;
+        _output.AppendLine($"Debugger disconnected");
     }
 }
