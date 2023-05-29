@@ -19,6 +19,8 @@ public class DebuggerService
 
     public bool IsRunning => _client != null;
 
+    public IDebuggerClient Client => _client;
+
     public void Start(string connectionUri)
     {
         Stop();
