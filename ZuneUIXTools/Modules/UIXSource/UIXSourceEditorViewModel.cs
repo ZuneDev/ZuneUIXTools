@@ -1,20 +1,19 @@
-﻿using System;
+﻿using Caliburn.Micro;
+using Gemini.Framework.Commands;
+using Gemini.Framework.Threading;
+using Gemini.Modules.Output;
+using Microsoft.Iris;
+using Microsoft.Iris.Debug.SystemNet;
+using Microsoft.Iris.Markup;
+using System;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
-using Gemini.Framework;
-using Gemini.Framework.Commands;
-using Gemini.Framework.Threading;
-using Microsoft.Iris;
-using Microsoft.Iris.Markup;
 using ZuneUIXTools.Modules.Shell.Commands;
 using Application = Microsoft.Iris.Application;
 using Command = Gemini.Framework.Commands.Command;
-using Microsoft.Iris.Debug;
-using Gemini.Modules.Output;
-using Caliburn.Micro;
 
 namespace ZuneUIXTools.Modules.UIXSource
 {
@@ -164,7 +163,7 @@ namespace ZuneUIXTools.Modules.UIXSource
         private void OnDebuggerServerReady(object sender, EventArgs e)
         {
             // Set up the debugger client
-            ZmqDebuggerClient debuggerClient = new(_debuggerConnectionUri);
+            NetDebuggerClient debuggerClient = new(_debuggerConnectionUri);
             debuggerClient.DispatcherStep += message =>
             {
                 _output.AppendLine($"[{DisplayName}] [Dispatcher] {message}");

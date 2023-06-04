@@ -1,5 +1,6 @@
 ﻿using Gemini.Modules.Output;
 using Microsoft.Iris.Debug;
+using Microsoft.Iris.Debug.SystemNet;
 using System;
 using System.ComponentModel.Composition;
 
@@ -11,6 +12,8 @@ public class DebuggerService
     private readonly IOutput _output;
     private IDebuggerClient _client;
 
+    public event Action Stopped;
+
     [ImportingConstructor]
     public DebuggerService(IOutput output)
     {
@@ -21,19 +24,13 @@ public class DebuggerService
 
     public IDebuggerClient Client => _client;
 
-    public void Start(string connectionUri)
+    public void Start(string connectionUri = null)
     {
         Stop();
 
-        _client = new ZmqDebuggerClient(connectionUri);
-        _client.DispatcherStep += Client_DispatcherStep;
+        _client = new NetDebuggerClient(connectionUri);
 
         _output.AppendLine($"Debugger connected to {_client.ConnectionUri}");
-    }
-
-    private void Client_DispatcherStep(string obj)
-    {
-        //_output?.AppendLine($"[Dispatcher] {obj}");
     }
 
     public void Stop()
@@ -44,8 +41,8 @@ public class DebuggerService
         if (_client is IDisposable disposable)
             disposable.Dispose();
 
-        _client.DispatcherStep -= Client_DispatcherStep;
+        Stopped?.Invoke();
         _client = null;
-        _output.AppendLine($"Debugger disconnected");
+        _output.AppendLine("Debugger disconnected");
     }
 }
