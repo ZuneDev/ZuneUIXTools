@@ -10,8 +10,4 @@ public static class MenuDefinitions
 
     [Export]
     public static readonly MenuItemGroupDefinition DebuggerMenuGroup = new(DebugMenu, 0);
-
-    [Export]
-    public static readonly MenuItemDefinition StartDebuggerMenuItem
-        = new CommandMenuItemDefinition<Commands.StartDebuggerCommandDefinition>(DebuggerMenuGroup, 0);
 }
