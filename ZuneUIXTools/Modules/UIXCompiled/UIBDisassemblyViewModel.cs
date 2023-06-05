@@ -93,20 +93,24 @@ public class UIBDisassemblyViewModel : Document
         InspectableObjectBuilder builder = new InspectableObjectBuilder()
             .WithObjectProperties(instance, filter);
 
-        var valueProperty = TypeDescriptor.CreateProperty(typeof(InterpreterObject), "Value", instance.Value?.GetType());
-        IEditor editor = DefaultPropertyInspectors.CreateEditor(valueProperty);
-        if (editor is null)
+        var valueType = instance.Value?.GetType() ?? instance.Type;
+        if (valueType is not null)
         {
-            builder = builder.WithCollapsibleGroup(nameof(instance.Value), b =>
-                b.WithObjectProperties(instance.Value, _ => true));
-        }
-        else
-        {
-            var converterProp = editor.GetType().GetProperty("Converter");
-            converterProp?.SetValue(editor, new CastValueConverter());
+            PropertyDescriptor valueProperty = TypeDescriptor.CreateProperty(typeof(InterpreterObject), "Value", valueType);
+            IEditor editor = DefaultPropertyInspectors.CreateEditor(valueProperty);
+            if (editor is null)
+            {
+                builder = builder.WithCollapsibleGroup(nameof(instance.Value), b =>
+                    b.WithObjectProperties(instance.Value, _ => true));
+            }
+            else
+            {
+                var converterProp = editor.GetType().GetProperty("Converter");
+                converterProp?.SetValue(editor, new CastValueConverter());
 
-            editor.BoundPropertyDescriptor = new BoundPropertyDescriptor(instance, valueProperty);
-            builder = builder.WithEditor(instance, i => i.Value, editor);
+                editor.BoundPropertyDescriptor = new BoundPropertyDescriptor(instance, valueProperty);
+                builder = builder.WithEditor(instance, i => i.Value, editor);
+            }
         }
 
         return builder.ToInspectableObject();
