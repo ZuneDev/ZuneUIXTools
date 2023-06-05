@@ -21,9 +21,10 @@ public class EnumerableEditorViewModel : EditorBase<IEnumerable>, ILabelledInspe
 
     public override bool IsReadOnly => Value is IList collection && collection.IsReadOnly;
 
-    public IEnumerable<InspectorViewModel> Inspectables => Value
+    public IEnumerable<InspectorViewModel> Inspectables => Value?
         .Cast<object>()
-        .Select(inst => new InspectorViewModel() { SelectedObject = Builder(inst) });
+        .Select(inst => new InspectorViewModel() { SelectedObject = Builder(inst) })
+        ?? Array.Empty<InspectorViewModel>();
 
     private static InspectableObject DefaultBuilder(object instance)
     {

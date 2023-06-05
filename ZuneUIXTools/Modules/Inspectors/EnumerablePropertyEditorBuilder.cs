@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using Newtonsoft.Json.Linq;
+using System.Collections;
 using System.ComponentModel;
 
 namespace ZuneUIXTools.Modules.Inspectors;
@@ -7,6 +8,8 @@ public class EnumerablePropertyEditorBuilder : InheritablePropertyEditorBuilder<
 {
     public override bool IsApplicable(PropertyDescriptor propertyDescriptor)
     {
-        return base.IsApplicable(propertyDescriptor) && propertyDescriptor.PropertyType != typeof(string);
+        return base.IsApplicable(propertyDescriptor)
+            && propertyDescriptor.PropertyType != typeof(string)
+            && !propertyDescriptor.PropertyType.IsAssignableTo(typeof(JToken));
     }
 }
