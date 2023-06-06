@@ -8,26 +8,35 @@
              d:DesignHeight="450" d:DesignWidth="800"
              d:DataContext="{d:DesignInstance local:UIBDisassemblyViewModel}">
 
-    <DataGrid x:Name="InstructionListView" x:FieldModifier="public" IsReadOnly="True" AutoGenerateColumns="False"
-              ItemsSource="{Binding Instructions}" SelectionChanged="InstructionListView_SelectionChanged">
-        <DataGrid.Columns>
-            <DataGridTextColumn Header="Source" Binding="{Binding LoadUri}"/>
-            <DataGridTextColumn Header="Offset" Binding="{Binding Path=Offset, StringFormat=0x{0:X}}"/>
-            <DataGridTextColumn Header="OpCode" Binding="{Binding OpCode}"/>
-        </DataGrid.Columns>
-        <DataGrid.RowDetailsTemplate>
-            <DataTemplate DataType="uixDebugData:InterpreterEntry">
-                <Border Padding="8">
-                    <StackPanel Orientation="Vertical">
-                        <TextBlock Text="Parameters:"/>
-                        <ItemsControl ItemsSource="{Binding Parameters}"/>
-                        <Border Height="1" Background="Gray" Margin="0,8"/>
-                        <TextBlock Text="Return values:"/>
-                        <ItemsControl ItemsSource="{Binding ReturnValues}"/>
-                    </StackPanel>
-                </Border>
-            </DataTemplate>
-        </DataGrid.RowDetailsTemplate>
-    </DataGrid>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <CheckBox Content="Auto-scroll" IsChecked="{Binding AutoScroll}" Padding="4"/>
+
+        <DataGrid x:Name="InstructionListView" IsReadOnly="True" AutoGenerateColumns="False"
+                  ItemsSource="{Binding Instructions}" SelectionChanged="InstructionListView_SelectionChanged"
+                  Grid.Row="1">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Source" Binding="{Binding LoadUri}"/>
+                <DataGridTextColumn Header="Instruction" Binding="{Binding InstructionString}"/>
+            </DataGrid.Columns>
+            <DataGrid.RowDetailsTemplate>
+                <DataTemplate DataType="uixDebugData:InterpreterEntry">
+                    <Border Padding="8">
+                        <StackPanel Orientation="Vertical">
+                            <TextBlock Text="Parameters:"/>
+                            <ItemsControl ItemsSource="{Binding Parameters}"/>
+                            <Border Height="1" Background="Gray" Margin="0,8"/>
+                            <TextBlock Text="Return values:"/>
+                            <ItemsControl ItemsSource="{Binding ReturnValues}"/>
+                        </StackPanel>
+                    </Border>
+                </DataTemplate>
+            </DataGrid.RowDetailsTemplate>
+        </DataGrid>
+    </Grid>
 
 </UserControl>

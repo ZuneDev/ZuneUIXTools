@@ -6,16 +6,10 @@ using Gemini.Modules.Inspector.Conventions;
 using Gemini.Modules.Inspector.Inspectors;
 using Microsoft.Iris.Debug.Data;
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.ComponentModel.Composition;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Windows.Threading;
-using WpfHexaEditor.Core.MethodExtention;
 using ZuneUIXTools.Converters;
 using ZuneUIXTools.Modules.Inspectors;
 using ZuneUIXTools.Modules.UIX;
@@ -28,8 +22,15 @@ public class UIBDisassemblyViewModel : Document
     readonly DebuggerService _debuggerService;
     readonly IShell _shell;
     UIBDisassemblyView _view;
+    bool _autoScroll;
 
     public ObservableCollection<InterpreterEntry> Instructions { get; } = new();
+
+    public bool AutoScroll
+    {
+        get => _autoScroll;
+        set => Set(ref _autoScroll, value);
+    }
 
     [ImportingConstructor]
     public UIBDisassemblyViewModel(DebuggerService debuggerService, IShell shell)

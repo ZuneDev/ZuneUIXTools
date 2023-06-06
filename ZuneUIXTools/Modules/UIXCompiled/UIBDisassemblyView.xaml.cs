@@ -1,4 +1,6 @@
-﻿using Microsoft.Iris.Debug.Data;
+﻿using MahApps.Metro.Controls;
+using Microsoft.Iris.Debug.Data;
+using System.Windows;
 using System.Windows.Controls;
 
 namespace ZuneUIXTools.Modules.UIXCompiled
@@ -13,6 +15,20 @@ namespace ZuneUIXTools.Modules.UIXCompiled
         public UIBDisassemblyView()
         {
             InitializeComponent();
+
+            InstructionListView.Loaded += InstructionListView_Loaded;
+        }
+
+        private void InstructionListView_Loaded(object sender, RoutedEventArgs e)
+        {
+            InstructionListView.Loaded -= InstructionListView_Loaded;
+            InstructionListView.FindChild<ScrollViewer>().ScrollChanged += InstructionListView_ScrollChanged;
+        }
+
+        private void InstructionListView_ScrollChanged(object sender, ScrollChangedEventArgs e)
+        {
+            if (ViewModel.AutoScroll && e.ExtentHeightChange != 0)
+                ((ScrollViewer)sender).ScrollToBottom();
         }
 
         private void InstructionListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
