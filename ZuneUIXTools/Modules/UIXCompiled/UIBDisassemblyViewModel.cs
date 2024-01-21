@@ -36,14 +36,14 @@ public class UIBDisassemblyViewModel : Document
     public UIBDisassemblyViewModel(DebuggerService debuggerService, IShell shell)
     {
         _debuggerService = debuggerService;
-        _debuggerService.Client.InterpreterStep += Client_InterpreterStep;
+        _debuggerService.Client.InterpreterExecute += ClientInterpreterExecute;
 
         _shell = shell;
 
         DisplayName = $"UIB Disassembler ('{_debuggerService.Client.ConnectionUri}')";
     }
 
-    private void Client_InterpreterStep(object sender, InterpreterEntry entry)
+    private void ClientInterpreterExecute(object sender, InterpreterEntry entry)
     {
         _view?.Dispatcher.Invoke(() =>
         {

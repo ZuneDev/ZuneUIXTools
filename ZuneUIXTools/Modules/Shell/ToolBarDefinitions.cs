@@ -30,5 +30,13 @@ namespace ZuneUIXTools.Modules.Shell
         [Export]
         public static ToolBarItemDefinition StartStopDebuggerToolBarItem = new CommandToolBarItemDefinition<StartStopDebuggerCommandDefinition>(
             UIXDebuggerToolBarGroup, 0, ToolBarItemDisplay.IconOnly);
+
+        [Export]
+        public static ToolBarItemDefinition StepOverDebuggerToolBarItem = new CommandToolBarItemDefinition<StepOverDebuggerCommandDefinition>(
+            UIXDebuggerToolBarGroup, 4, ToolBarItemDisplay.IconOnly);
+
+        [Export]
+        public static ToolBarItemDefinition ContinueDebuggerToolBarItem = new CommandToolBarItemDefinition<ContinueDebuggerCommandDefinition>(
+            UIXDebuggerToolBarGroup, 1, ToolBarItemDisplay.IconOnly);
     }
 }

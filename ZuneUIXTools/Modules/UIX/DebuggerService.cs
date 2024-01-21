@@ -16,8 +16,7 @@ namespace ZuneUIXTools.Modules.UIX;
 public class DebuggerService
 {
     private readonly IOutput _output;
-    private readonly ConcurrentDictionary<string, ConcurrentBag<InterpreterEntry>> _entriesByFile = new();
-    private IDebuggerClient _client;
+    private readonly ConcurrentDictionary<string, ConcurrentBag<InterpreterInstruction>> _entriesByFile = new();
 
     public event Action Stopped;
 
@@ -27,33 +26,37 @@ public class DebuggerService
         _output = output;
     }
 
-    public bool IsRunning => _client != null;
+    public bool IsRunning => Client != null;
 
-    public IDebuggerClient Client => _client;
+    public IDebuggerClient Client { get; private set; }
 
-    public IReadOnlyDictionary<string, ConcurrentBag<InterpreterEntry>> ConstructedFiles => _entriesByFile;
+    public IReadOnlyDictionary<string, ConcurrentBag<InterpreterInstruction>> ConstructedFiles => _entriesByFile;
+
+    public bool IsInBreakMode { get; private set; }
 
     public void Start(string connectionUri = null)
     {
         Stop();
 
-        _client = new NetDebuggerClient(connectionUri);
-        _client.InterpreterStep += Client_InterpreterStep;
+        Client = new NetDebuggerClient(connectionUri);
+        Client.InterpreterDecode += ClientInterpreterDecode;
+        Client.InterpreterExecute += ClientInterpreterExecute;
 
-        _output.AppendLine($"Debugger connected to {_client.ConnectionUri}");
+        _output.AppendLine($"Debugger listening on {Client.ConnectionUri}");
     }
 
     public void Stop()
     {
         _entriesByFile.Clear();
 
-        if (_client is null)
+        if (Client is null)
             return;
-        else if (_client is IDisposable disposable)
+        else if (Client is IDisposable disposable)
             disposable.Dispose();
 
-        _client.InterpreterStep -= Client_InterpreterStep;
-        _client = null;
+        Client.InterpreterDecode -= ClientInterpreterDecode;
+        Client.InterpreterExecute -= ClientInterpreterExecute;
+        Client = null;
 
         Stopped?.Invoke();
         _output.AppendLine("Debugger disconnected");
@@ -67,16 +70,23 @@ public class DebuggerService
         var sortedEntries = entries.ToImmutableSortedSet();
 
         StringBuilder sb = new();
-        sb.AppendJoin(Environment.NewLine, sortedEntries.Select(e => e.ToInstructionString()));
+        sb.AppendJoin(Environment.NewLine, sortedEntries.Select(e => e.ToString()));
         return sb.ToString();
     }
 
-    private void Client_InterpreterStep(object sender, InterpreterEntry currentEntry)
+    private void ClientInterpreterDecode(object sender, InterpreterInstruction currentInstruction)
     {
-        var entries = _entriesByFile.GetOrAdd(currentEntry.LoadUri, _ => new ConcurrentBag<InterpreterEntry>());
+        _output.AppendLine("[UIX Dec] " + currentInstruction.ToString());
 
-        if (entries.Any(e => e.Offset == currentEntry.Offset))
+        var entries = _entriesByFile.GetOrAdd(currentInstruction.LoadUri, _ => new());
+
+        if (entries.Any(e => e.Offset == currentInstruction.Offset))
             return;
-        entries.Add(currentEntry);
+        entries.Add(currentInstruction);
+    }
+
+    private void ClientInterpreterExecute(object sender, InterpreterEntry entry)
+    {
+        _output.AppendLine("[UIX Exe] " + entry.ToString());
     }
 }
