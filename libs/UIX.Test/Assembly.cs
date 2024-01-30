@@ -1,9 +1,10 @@
 using Sprache;
 using Microsoft.Iris.Asm;
+using Xunit.Abstractions;
 
 namespace UIX.Test;
 
-public class Assembly
+public class Assembly(ITestOutputHelper output)
 {
     [Fact]
     public void Test1()
@@ -25,6 +26,8 @@ main:
 """;
 
         var ast = Lexer.Program.Parse(code);
+        output.WriteLine(ast.ToString());
+
         Assert.NotNull(ast);
         Assert.Equal(2, ast.Imports.Count());
         Assert.Equal(9, ast.Body.Count());
