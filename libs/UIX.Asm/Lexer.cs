@@ -20,23 +20,6 @@ public static class Lexer
         from end in StatementEnd
         select new Import(uri, name);
 
-    public static readonly Parser<string> Mnemonic = Parse.Letter.AtLeastOnce().Text().Token();
-
-    public static readonly Parser<Label> Label =
-        from label in AlphanumericText
-        from _ in Parse.Char(':')
-        select new Label(label);
-
-    public static readonly Parser<Operand> Operand =
-        from op in AlphanumericText
-        select new Operand(op);
-
-    public static readonly Parser<Instruction> Instruction2 = 
-        from mnemonic in Mnemonic
-        from operands in Parse.Ref(() => Operand).DelimitedBy(Parse.Char(',').Token())
-        from end in StatementEnd
-        select new Instruction(mnemonic, operands);
-
     public static readonly Parser<IBodyItem> BodyItem = ParseBodyItem;
 
     public static readonly Parser<Program> Program =
