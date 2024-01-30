@@ -1,5 +1,5 @@
 using Sprache;
-using UIX.Asm;
+using Microsoft.Iris.Asm;
 
 namespace UIX.Test;
 

@@ -1,7 +1,7 @@
 ﻿using Microsoft.Iris.Markup;
 using System.Collections.Generic;
 
-namespace UIX.Asm;
+namespace Microsoft.Iris.Asm;
 
 internal static class LexerMaps
 {

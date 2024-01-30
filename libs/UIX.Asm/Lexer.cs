@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace UIX.Asm;
+namespace Microsoft.Iris.Asm;
 
 public static class Lexer
 {
