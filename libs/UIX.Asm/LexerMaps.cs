@@ -12,7 +12,15 @@ internal static class LexerMaps
             ? type : null;
     }
 
-    public static OpCode MnemonicToOpCode(string mnemonic) => MnemonicMap[mnemonic.ToUpperInvariant()];
+    public static OpCode MnemonicToOpCode(string mnemonic)
+    {
+        if (MnemonicMap.TryGetValue(mnemonic, out var opCode))
+            return opCode;
+        else if (OperationMnemonicMap.TryGetValue(mnemonic, out _))
+            return OpCode.Operation;
+
+        throw new System.ArgumentException($"'{mnemonic}' is not a known UIXA instruction.", nameof(mnemonic));
+    }
 
     internal static readonly IDictionary<string, OperationType> OperationMnemonicMap = new Dictionary<string, OperationType>
     {
@@ -66,24 +74,6 @@ internal static class LexerMaps
         ["VTC"] = OpCode.VerifyTypeCast,
         ["CON"] = OpCode.ConvertType,
         ["OPR"] = OpCode.Operation,                             // Generic operation, allow dynamic invocations of operators
-        ["ADD"] = OpCode.Operation,
-        ["SUB"] = OpCode.Operation,
-        ["MUL"] = OpCode.Operation,
-        ["DIV"] = OpCode.Operation,
-        ["MOD"] = OpCode.Operation,
-        ["NEG"] = OpCode.Operation,
-        ["AND"] = OpCode.Operation,
-        ["ORR"] = OpCode.Operation,
-        ["NOT"] = OpCode.Operation,
-        ["REQ"] = OpCode.Operation,
-        ["RNE"] = OpCode.Operation,
-        ["RLT"] = OpCode.Operation,
-        ["RGT"] = OpCode.Operation,
-        ["RLE"] = OpCode.Operation,
-        ["RGE"] = OpCode.Operation,
-        ["RIS"] = OpCode.Operation,
-        ["INC"] = OpCode.Operation,
-        ["DEC"] = OpCode.Operation,
         ["ISC"] = OpCode.IsCheck,
         ["ASC"] = OpCode.As,
         ["TYP"] = OpCode.TypeOf,
