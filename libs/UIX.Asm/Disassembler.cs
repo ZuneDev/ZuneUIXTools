@@ -64,22 +64,22 @@ public class Disassembler
             {
                 case OpCode.ConstructObject:
                     // COBJ <typeIndex>
-                    yield return new Instruction("COBJ", [new(reader.ReadUInt16())]);
+                    yield return new Instruction(opCode, [new(reader.ReadUInt16())]);
                     break;
 
                 case OpCode.ConstructObjectIndirect:
                     // COBI <assignmentTypeIndex>
-                    yield return new Instruction("COBI", [new(reader.ReadUInt16())]);
+                    yield return new Instruction(opCode, [new(reader.ReadUInt16())]);
                     break;
 
                 case OpCode.ConstructObjectParam:
                     // COBP <targetTypeIndex> <constructorIndex>
-                    yield return new Instruction("COBP", [new(reader.ReadUInt16()), new(reader.ReadUInt16())]);
+                    yield return new Instruction(opCode, [new(reader.ReadUInt16()), new(reader.ReadUInt16())]);
                     break;
 
                 case OpCode.ConstructFromString:
                     // CSTR <typeIndex> <stringIndex>
-                    yield return new Instruction("CSTR", [new(reader.ReadUInt16()), new(reader.ReadUInt16())]);
+                    yield return new Instruction(opCode, [new(reader.ReadUInt16()), new(reader.ReadUInt16())]);
                     break;
 
                 case OpCode.ConstructFromBinary:
@@ -88,38 +88,38 @@ public class Disassembler
                     TypeSchema cbinTypeSchema = _loadResult.ImportTables.TypeImports[cbinTypeIndex];
                     object cbinObject = cbinTypeSchema.DecodeBinary(reader);
 
-                    yield return new Instruction("CBIN", [new(cbinTypeIndex), new(cbinObject)]);
+                    yield return new Instruction(opCode, [new(cbinTypeIndex), new(cbinObject)]);
                     break;
 
                 // TODO
 
                 case OpCode.PropertyInitialize:
                     // PINI <propertyIndex>
-                    yield return new Instruction("PINI", [new(reader.ReadUInt16())]);
+                    yield return new Instruction(opCode, [new(reader.ReadUInt16())]);
                     break;
 
                 case OpCode.PropertyInitializeIndirect:
                     // PINII <propertyIndex>
-                    yield return new Instruction("PINII", [new(reader.ReadUInt16())]);
+                    yield return new Instruction(opCode, [new(reader.ReadUInt16())]);
                     break;
 
                 // TODO
 
                 case OpCode.PushConstant:
                     // PSHC <constantIndex>
-                    yield return new Instruction("PSHC", [new(reader.ReadUInt16())]);
+                    yield return new Instruction(opCode, [new(reader.ReadUInt16())]);
                     break;
 
                 // TODO
 
                 case OpCode.ReturnValue:
                     // RET
-                    yield return new Instruction("RET", []);
+                    yield return new Instruction(opCode, []);
                     break;
 
                 case OpCode.ReturnVoid:
                     // RETV
-                    yield return new Instruction("RETV", []);
+                    yield return new Instruction(opCode, []);
                     break;
             }
         }
