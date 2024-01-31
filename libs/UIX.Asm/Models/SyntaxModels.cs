@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Microsoft.Iris.Asm;
+namespace Microsoft.Iris.Asm.Models;
 
 public interface IBodyItem { }
 public interface IImport { }
@@ -20,14 +20,9 @@ public record Label(string Name) : IBodyItem
     public override string ToString() => $"{Name}:";
 }
 
-public record Operand(object Value, string? Content = null)
+public record Operand(object Value, string Content = null)
 {
     public override string ToString() => Content ?? Value.ToString();
-}
-
-public record NamespaceImport(string Uri, string Name) : IImport
-{
-    public override string ToString() => $".import-ns {Uri} as {Name}";
 }
 
 public record Program(IEnumerable<IImport> Imports, IEnumerable<IBodyItem> Body)
