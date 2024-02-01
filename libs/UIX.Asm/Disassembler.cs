@@ -54,6 +54,10 @@ public class Disassembler
     {
         var reader = _loadResult.ObjectSection;
 
+        // Insert a label to mark the start of the object section.
+        // In the future, this might use a special directive like `.section object`
+        yield return new Label("code");
+
         while (reader.CurrentOffset < reader.Size)
         {
             var opCode = (OpCode)reader.ReadByte();
