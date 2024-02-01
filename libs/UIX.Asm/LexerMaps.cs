@@ -56,15 +56,15 @@ internal static class LexerMaps
     internal static readonly DoubleDictionary<string, OpCode> MnemonicMap =
     [
         ("COBJ", OpCode.ConstructObject),
-        ("COBI", OpCode.ConstructObjectIndirect),
+        ("COBJI", OpCode.ConstructObjectIndirect),
         ("COBP", OpCode.ConstructObjectParam),
         ("CSTR", OpCode.ConstructFromString),
         ("CBIN", OpCode.ConstructFromBinary),
         ("INIT", OpCode.InitializeInstance),
-        ("INID", OpCode.InitializeInstanceIndirect),
+        ("INITI", OpCode.InitializeInstanceIndirect),
         ("LSYM", OpCode.LookupSymbol),
         ("WSYM", OpCode.WriteSymbol),
-        ("WSYP", OpCode.WriteSymbolPeek),
+        ("WSYMP", OpCode.WriteSymbolPeek),
         ("CSYM", OpCode.ClearSymbol),
         ("PINI", OpCode.PropertyInitialize),
         ("PINII", OpCode.PropertyInitializeIndirect),
@@ -100,7 +100,7 @@ internal static class LexerMaps
         ("JMP", OpCode.Jump),
         ("CLIS", OpCode.ConstructListenerStorage),
         ("LIS", OpCode.Listen),
-        ("DLS", OpCode.DestructiveListen),
+        ("LISD", OpCode.DestructiveListen),
         ("DBG", OpCode.EnterDebugState),
     ];
 }
