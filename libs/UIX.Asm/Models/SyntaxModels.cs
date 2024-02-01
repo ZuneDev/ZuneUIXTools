@@ -39,10 +39,22 @@ public record Program(IEnumerable<IImport> Imports, IEnumerable<IBodyItem> Body)
 {
     public override string ToString()
     {
+        const string lineEnding = "\r\n";
+        const string indent = "    ";
         StringBuilder sb = new();
 
-        sb.AppendJoin("\r\n", Imports.Select(i => i.ToString()));
-        sb.AppendJoin("\r\n", Body.Select(b => b.ToString()));
+        sb.AppendJoin(lineEnding, Imports.Select(i => i.ToString()));
+        sb.Append(lineEnding);
+        sb.Append(lineEnding);
+
+        foreach (var bodyItem in Body)
+        {
+            if (bodyItem is Instruction)
+                sb.Append(indent);
+
+            sb.Append(bodyItem.ToString());
+            sb.Append(lineEnding);
+        }
 
         return sb.ToString();
     }
