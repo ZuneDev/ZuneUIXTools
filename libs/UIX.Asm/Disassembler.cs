@@ -3,9 +3,6 @@ using Microsoft.Iris.Asm.Models;
 using Microsoft.Iris.Markup;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Microsoft.Iris.Asm;
 
@@ -62,28 +59,73 @@ public class Disassembler
             
             switch (opCode)
             {
-                case OpCode.ConstructObject:
-                    // COBJ <typeIndex>
+                // CMD (No operands)
+                case OpCode.InitializeInstanceIndirect:         // INITI
+                case OpCode.PushNull:                           // PSHN
+                case OpCode.PushThis:                           // PSHT
+                case OpCode.DiscardValue:                       // DIS
+                case OpCode.ReturnValue:                        // RET
+                case OpCode.ReturnVoid:                         // RETV
+                    yield return new Instruction(opCode, []);
+                    break;
+
+                // CMD <UInt16>
+                case OpCode.ConstructObject:                    // COBJ <typeIndex>
+                case OpCode.ConstructObjectIndirect:            // COBJI <assignmentTypeIndex>
+                case OpCode.InitializeInstance:                 // INIT <typeIndex>
+                case OpCode.LookupSymbol:                       // LSYM <symbolRefIndex>
+                case OpCode.WriteSymbol:                        // WSYM <symbolRefIndex>
+                case OpCode.WriteSymbolPeek:                    // WSYMP <symbolRefIndex>
+                case OpCode.ClearSymbol:                        // CSYM <symbolRefIndex>
+                case OpCode.PropertyInitialize:                 // PINI <propertyIndex>
+                case OpCode.PropertyInitializeIndirect:         // PINII <propertyIndex>
+                case OpCode.PropertyListAdd:                    // PLAD <propertyIndex>
+                case OpCode.PropertyAssign:                     // PASS <propertyIndex>
+                case OpCode.PropertyAssignStatic:               // PASST <propertyIndex>
+                case OpCode.PropertyGet:                        // PGET <propertyIndex>
+                case OpCode.PropertyGetPeek:                    // PGETP <propertyIndex>
+                case OpCode.PropertyGetStatic:                  // PGETT <propertyIndex>
+                case OpCode.MethodInvoke:                       // MINV <methodIndex>
+                case OpCode.MethodInvokePeek:                   // MINVP <methodIndex>
+                case OpCode.MethodInvokeStatic:                 // MINVT <methodIndex>
+                case OpCode.MethodInvokePushLastParam:          // MINVA <methodIndex>
+                case OpCode.MethodInvokeStaticPushLastParam:    // MINVAT <methodIndex>
+                case OpCode.VerifyTypeCast:                     // VTC <typeIndex>
+                case OpCode.IsCheck:                            // ISC <targetTypeIndex>
+                case OpCode.As:                                 // ASC <targetTypeIndex>
+                case OpCode.TypeOf:                             // TYP <typeIndex>
+                case OpCode.PushConstant:                       // PSHC <constantIndex>
+                case OpCode.ConstructListenerStorage:           // CLIS <listenerCount>
                     yield return new Instruction(opCode, [new(reader.ReadUInt16())]);
                     break;
 
-                case OpCode.ConstructObjectIndirect:
-                    // COBI <assignmentTypeIndex>
-                    yield return new Instruction(opCode, [new(reader.ReadUInt16())]);
+                // CMD <UInt32>
+                case OpCode.JumpIfFalse:                        // JMPF <jumpTo>
+                case OpCode.JumpIfFalsePeek:                    // JMPFP <jumpTo>
+                case OpCode.JumpIfTruePeek:                     // JMPT <jumpTo>
+                case OpCode.JumpIfNullPeek:                     // JMPNP <jumpTo>
+                case OpCode.Jump:                               // JMP <jumpTo>
+                    yield return new Instruction(opCode, [new(reader.ReadUInt32())]);
                     break;
 
-                case OpCode.ConstructObjectParam:
-                    // COBP <targetTypeIndex> <constructorIndex>
+                // CMD <Int32>
+                case OpCode.EnterDebugState:                    // DBG <breakpointIndex>
+                    yield return new Instruction(opCode, [new(reader.ReadInt32())]);
+                    break;
+
+                // CMD <UInt16> <UInt16>
+                case OpCode.ConstructObjectParam:               // COBP <targetTypeIndex> <constructorIndex>
+                case OpCode.ConstructFromString:                // CSTR <typeIndex> <stringIndex>
+                case OpCode.PropertyDictionaryAdd:              // PDAD <propertyIndex> <keyIndex>
+                case OpCode.ConvertType:                        // CON <toTypeIndex> <fromTypeIndex>
                     yield return new Instruction(opCode, [new(reader.ReadUInt16()), new(reader.ReadUInt16())]);
                     break;
 
-                case OpCode.ConstructFromString:
-                    // CSTR <typeIndex> <stringIndex>
-                    yield return new Instruction(opCode, [new(reader.ReadUInt16()), new(reader.ReadUInt16())]);
+                case OpCode.JumpIfDictionaryContains:           // JMPD <propertyIndex> <keyIndex> <jumpTo>
+                    yield return new Instruction(opCode, [new(reader.ReadUInt16()), new(reader.ReadUInt16()), new(reader.ReadUInt32())]);
                     break;
 
-                case OpCode.ConstructFromBinary:
-                    // CBIN <typeIndex> <object:X>
+                case OpCode.ConstructFromBinary:                // CBIN <typeIndex> <object>
                     var cbinTypeIndex = reader.ReadUInt16();
                     TypeSchema cbinTypeSchema = _loadResult.ImportTables.TypeImports[cbinTypeIndex];
                     object cbinObject = cbinTypeSchema.DecodeBinary(reader);
@@ -91,36 +133,26 @@ public class Disassembler
                     yield return new Instruction(opCode, [new(cbinTypeIndex), new(cbinObject)]);
                     break;
 
-                // TODO
+                case OpCode.Operation:                          // OPR <opHostIndex> <operation>
+                    var opHostIndex = reader.ReadUInt16();
+                    var op = (OperationType)reader.ReadByte();
 
-                case OpCode.PropertyInitialize:
-                    // PINI <propertyIndex>
-                    yield return new Instruction(opCode, [new(reader.ReadUInt16())]);
+                    yield return new Instruction(opCode, op, [new(opHostIndex)]);
                     break;
 
-                case OpCode.PropertyInitializeIndirect:
-                    // PINII <propertyIndex>
-                    yield return new Instruction(opCode, [new(reader.ReadUInt16())]);
+                case OpCode.Listen:                             // LIS <listenerIndex> <listenerType> <watchIndex> <handlerOffset>
+                case OpCode.DestructiveListen:                  // LISD <listenerIndex> <listenerType> <watchIndex> <handlerOffset> <refreshOffset>
+                    List<Operand> lisOperands = [new(reader.ReadUInt16()), new(reader.ReadByte()),
+                        new(reader.ReadUInt16()), new(reader.ReadUInt32())];
+
+                    if (opCode == OpCode.DestructiveListen)
+                        lisOperands.Add(new(reader.ReadUInt32()));
+
+                    yield return new Instruction(opCode, lisOperands);
                     break;
 
-                // TODO
-
-                case OpCode.PushConstant:
-                    // PSHC <constantIndex>
-                    yield return new Instruction(opCode, [new(reader.ReadUInt16())]);
-                    break;
-
-                // TODO
-
-                case OpCode.ReturnValue:
-                    // RET
-                    yield return new Instruction(opCode, []);
-                    break;
-
-                case OpCode.ReturnVoid:
-                    // RETV
-                    yield return new Instruction(opCode, []);
-                    break;
+                default:
+                    throw new NotImplementedException($"The {opCode} instruction has not been implemented yet.");
             }
         }
 
