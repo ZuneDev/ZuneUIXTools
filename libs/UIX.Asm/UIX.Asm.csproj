@@ -3,7 +3,22 @@
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net6.0</TargetFrameworks>
         <LangVersion>12</LangVersion>
-        <RootNamespace>Microsoft.Iris.Asm</RootNamespace>
+        <DefaultNamespace>Microsoft.Iris.Asm</DefaultNamespace>
+        <Version>0.0.1-beta</Version>
+        
+        <Title>$(DefaultNamespace)</Title>
+        <Authors>Joshua Askharoun</Authors>
+        <Company>Joshua Askharoun</Company>
+        <Description>An Assembly-like language for the compiled Microsoft Iris UI format.</Description>
+        <PackageProjectUrl>$(PublishRepositoryUrl)</PackageProjectUrl>
+        <PackageTags>Zune, Iris, UIX, UIB</PackageTags>
+        <Copyright>2024</Copyright>
+
+        <!-- SourceLink and NuGet symbols -->
+        <PublishRepositoryUrl>https://github.com/ZuneDev/ZuneUIXTools</PublishRepositoryUrl>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     </PropertyGroup>
 
     <ItemGroup>
