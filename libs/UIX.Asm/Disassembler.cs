@@ -28,6 +28,9 @@ public class Disassembler
                 continue;
 
             // Skip self
+            if (uri == _loadResult.Uri)
+                continue;
+
             string name = uri;
             var schemeLength = uri.IndexOf("://");
             if (schemeLength > 0)
