@@ -41,22 +41,17 @@ main:
     [InlineData("text.uix")]
     [InlineData("testA.uix")]
     [InlineData("testB.uix")]
-    public async Task Disassemble(string fileName)
+    public async Task Disassemble(string testResourceName)
     {
-        string tempFilePath = Path.GetTempFileName();
-        string uri = "file://" + tempFilePath;
+        using TempFile tempFile = new(testResourceName);
+        await tempFile.InitAsync();
 
-        // Copy the test data to a temporary file because Iris can only load from a URI.
-        var testFileBytes = (byte[])TestResources.ResourceManager.GetObject(fileName)!;
-        await File.WriteAllBytesAsync(tempFilePath, testFileBytes);
+        string uri = "file://" + tempFile.Path;
 
         var sourceLoadResult = MarkupSystem.ResolveLoadResult(uri, MarkupSystem.RootIslandId);
         var dis = Disassembler.Load(sourceLoadResult as MarkupLoadResult);
 
         var disText = dis.Write();
         output.WriteLine(disText);
-
-        // Clean up temporary file
-        File.Delete(tempFilePath);
     }
 }
