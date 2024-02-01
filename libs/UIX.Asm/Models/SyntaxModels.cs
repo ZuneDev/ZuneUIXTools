@@ -22,7 +22,9 @@ public record Instruction(string Mnemonic, IEnumerable<Operand> Operands) : IBod
     public OpCode OpCode => LexerMaps.MnemonicToOpCode(Mnemonic);
     public OperationType? OperationType => LexerMaps.TryOperationMnemonicToType(Mnemonic);
 
-    public override string ToString() => $"{Mnemonic} {string.Join(", ", Operands)}";
+    public override string ToString() => Operands.Any()
+        ? $"{Mnemonic} {string.Join(", ", Operands)}"
+        : Mnemonic;
 }
 
 public record Label(string Name) : IBodyItem
