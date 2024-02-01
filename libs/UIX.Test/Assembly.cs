@@ -2,9 +2,11 @@ using Sprache;
 using Microsoft.Iris.Asm;
 using Xunit.Abstractions;
 using Microsoft.Iris.Markup;
+using UIX.Test.Fixtures;
 
 namespace UIX.Test;
 
+[Collection(MarkupSystemCollection.Name)]
 public class Assembly(ITestOutputHelper output)
 {
     [Fact]
@@ -34,22 +36,27 @@ main:
         Assert.Equal(9, ast.Body.Count());
     }
 
-    [Fact]
-    public async Task Disassemble()
+    [Theory]
+    [InlineData("text.uib")]
+    [InlineData("text.uix")]
+    [InlineData("testA.uix")]
+    [InlineData("testB.uix")]
+    public async Task Disassemble(string fileName)
     {
-        const string path = @"D:\Repos\yoshiask\ZuneUIXTools\test\testA.uix";
-        string uri = @"file://" + path;
+        string tempFilePath = Path.GetTempFileName();
+        string uri = "file://" + tempFilePath;
 
-        //FileResource resource = new(uri, path, true);
-        //resource.Acquire();
+        // Copy the test data to a temporary file because Iris can only load from a URI.
+        var testFileBytes = (byte[])TestResources.ResourceManager.GetObject(fileName)!;
+        await File.WriteAllBytesAsync(tempFilePath, testFileBytes);
 
-        MarkupSystem.Startup(true);
         var sourceLoadResult = MarkupSystem.ResolveLoadResult(uri, MarkupSystem.RootIslandId);
         var dis = Disassembler.Load(sourceLoadResult as MarkupLoadResult);
 
-        var newPath = Path.ChangeExtension(path, ".uixa");
-        File.WriteAllText(newPath, dis.Write());
+        var disText = dis.Write();
+        output.WriteLine(disText);
 
-        MarkupSystem.Shutdown();
+        // Clean up temporary file
+        File.Delete(tempFilePath);
     }
 }
