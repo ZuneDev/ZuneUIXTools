@@ -27,6 +27,7 @@ public class Disassembler
             if (uri == "http://schemas.microsoft.com/2007/uix")
                 continue;
 
+            // Skip self
             string name = uri;
             var schemeLength = uri.IndexOf("://");
             if (schemeLength > 0)
