@@ -10,7 +10,7 @@ namespace UIX.Test;
 public class Assembly(ITestOutputHelper output)
 {
     [Fact]
-    public void Test1()
+    public void Parse()
     {
         const string code =
 """
