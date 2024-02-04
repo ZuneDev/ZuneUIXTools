@@ -3,6 +3,7 @@ using Microsoft.Iris.Asm;
 using Xunit.Abstractions;
 using Microsoft.Iris.Markup;
 using UIX.Test.Fixtures;
+using Microsoft.Iris;
 
 namespace UIX.Test;
 
@@ -34,6 +35,26 @@ main:
         Assert.NotNull(ast);
         Assert.Equal(2, ast.Imports.Count());
         Assert.Equal(9, ast.Body.Count());
+    }
+
+    [Fact]
+    public async Task Assemble()
+    {
+        using TempFile tempFile = new("testA.uixa", ".uixa");
+        await tempFile.InitAsync();
+
+        CompilerInput[] compilerInputs = [
+            new()
+            {
+                SourceFileName = tempFile.Path,
+                OutputFileName = Path.ChangeExtension(tempFile.Path, ".uib")
+            }
+        ];
+
+        foreach (var compilerInput in compilerInputs)
+            output.WriteLine(compilerInput.OutputFileName);
+
+        MarkupCompiler.Compile(compilerInputs, default);
     }
 
     [Theory]

@@ -73,6 +73,16 @@ namespace UIX.Test {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
+        internal static byte[] testA_uixa {
+            get {
+                object obj = ResourceManager.GetObject("testA.uixa", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
         internal static byte[] testB_uix {
             get {
                 object obj = ResourceManager.GetObject("testB.uix", resourceCulture);

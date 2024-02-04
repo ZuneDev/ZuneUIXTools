@@ -1,0 +1,12 @@
+﻿.import-ns Me as me
+.import-ns assembly://UIX/Microsoft.Iris as iris
+
+main:
+    COBJ 2
+    PSHC 0
+    PINI 1
+    PSHC 1
+    PINI 2
+    PINI 0
+    RETV
+    RETV

@@ -121,6 +121,9 @@
   <data name="testA.uix" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\testA.uix;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
+  <data name="testA.uixa" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\testA.uixa;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
   <data name="testB.uix" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\testB.uix;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>

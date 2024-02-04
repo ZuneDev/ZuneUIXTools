@@ -1,4 +1,5 @@
-﻿using Microsoft.Iris.Markup;
+﻿using Microsoft.Iris.Asm;
+using Microsoft.Iris.Markup;
 
 namespace UIX.Test.Fixtures;
 
@@ -7,6 +8,7 @@ public class MarkupSystemFixture : IDisposable
     public MarkupSystemFixture()
     {
         MarkupSystem.Startup(true);
+        Assembler.RegisterLoader();
     }
 
     public void Dispose() => MarkupSystem.Shutdown();
