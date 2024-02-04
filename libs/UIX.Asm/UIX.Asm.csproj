@@ -3,6 +3,7 @@
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net6.0</TargetFrameworks>
         <LangVersion>12</LangVersion>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <DefaultNamespace>Microsoft.Iris.Asm</DefaultNamespace>
         <Version>0.0.1-beta</Version>
         

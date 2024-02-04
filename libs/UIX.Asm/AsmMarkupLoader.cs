@@ -20,20 +20,25 @@ internal class AsmMarkupLoader
     private readonly AsmMarkupLoadResult _loadResult;
     private bool _usingSharedBinaryDataTable;
     private SourceMarkupImportTables _importTables;
-    private Dictionary<object, object> _importedNamespaces = new();
+    private Dictionary<string, LoadResult> _importedNamespaces = new();
 
     protected AsmMarkupLoader(AsmMarkupLoadResult loadResult) => _loadResult = loadResult;
 
-    internal static AsmMarkupLoader Load(AsmMarkupLoadResult loadResult, Resource resource)
+    internal static unsafe AsmMarkupLoader Load(AsmMarkupLoadResult loadResult, Resource resource)
     {
         AsmMarkupLoader owner = new(loadResult);
 
         if (resource.Status != ResourceStatus.Available)
             throw new InvalidOperationException("Resource must be available for reading");
 
-        var data = new byte[resource.Length];
-        Marshal.Copy(resource.Buffer, data, 0, (int)resource.Length);
-        owner._asmSource = Encoding.UTF8.GetString(data);
+        var data = (byte*)resource.Buffer;
+
+        // Check for BOM (byte order mark)
+        int sourceStartOffset = 0;
+        if (resource.Length >= 4 && *data == 0xEF && *(data + 1) == 0xBB && *(data + 2) == 0xBF)
+            sourceStartOffset = 3;
+
+        owner._asmSource = Encoding.UTF8.GetString(data + sourceStartOffset, (int)(resource.Length - sourceStartOffset));
 
         var parseResult = Lexer.Program.TryParse(owner._asmSource);
         if (parseResult.WasSuccessful)
@@ -101,6 +106,7 @@ internal class AsmMarkupLoader
                 }
             }
         }
+
         foreach (LoadResult loadResult in _importedNamespaces.Values)
         {
             if (loadResult != _loadResult && loadResult != MarkupSystem.UIXGlobal)
@@ -110,25 +116,29 @@ internal class AsmMarkupLoader
                     MarkHasErrors();
             }
         }
+
         if (_program != null && currentPass != LoadPass.Done)
         {
-            foreach (ValidateClass validateClass in _program.ClassList)
-                validateClass.Validate(_currentValidationPass);
-            foreach (ValidateDataMapping dataMapping in _program.DataMappingList)
-                dataMapping.Validate(_currentValidationPass);
-            foreach (ValidateAlias alias in _program.AliasList)
-                alias.Validate(_currentValidationPass);
-            if (_currentValidationPass == LoadPass.Full)
-            {
-                for (ValidateNamespace validateNamespace = _program.XmlnsList; validateNamespace != null; validateNamespace = validateNamespace.Next)
-                {
-                    if (!_referencedNamespaces.ContainsKey(validateNamespace.Prefix))
-                        ErrorManager.ReportWarning(validateNamespace.Line, validateNamespace.Column, "Unreferenced namespace {0}", validateNamespace.Prefix);
-                }
-            }
+            //foreach (ValidateClass validateClass in _program.ClassList)
+            //    validateClass.Validate(_currentValidationPass);
+
+            //foreach (ValidateDataMapping dataMapping in _program.DataMappingList)
+            //    dataMapping.Validate(_currentValidationPass);
+            
+            //foreach (ValidateAlias alias in _program.AliasList)
+            //    alias.Validate(_currentValidationPass);
+            
+            //if (_currentValidationPass == LoadPass.Full)
+            //{
+            //    for (ValidateNamespace validateNamespace = _program.XmlnsList; validateNamespace != null; validateNamespace = validateNamespace.Next)
+            //    {
+            //        if (!_referencedNamespaces.ContainsKey(validateNamespace.Prefix))
+            //            ErrorManager.ReportWarning(validateNamespace.Line, validateNamespace.Column, "Unreferenced namespace {0}", validateNamespace.Prefix);
+            //    }
+            //}
         }
 
-        CompleteValidationPass();
+        //CompleteValidationPass();
     }
 
     public void ReportError(string error, int line, int column)
