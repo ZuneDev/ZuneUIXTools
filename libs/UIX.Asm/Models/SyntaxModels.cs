@@ -5,10 +5,7 @@ using System.Text;
 
 namespace Microsoft.Iris.Asm.Models;
 
-public interface IBodyItem { }
-public interface IImport { }
-
-public record Instruction(string Mnemonic, IEnumerable<Operand> Operands) : IBodyItem
+public record Instruction(string Mnemonic, IEnumerable<Operand> Operands) : BodyItem
 {
     public Instruction(OpCode opCode, OperationType? operationType, IEnumerable<Operand> Operands)
         : this(LexerMaps.GetMnemonic(opCode, operationType), Operands)
@@ -27,12 +24,12 @@ public record Instruction(string Mnemonic, IEnumerable<Operand> Operands) : IBod
         : Mnemonic;
 }
 
-public record Label(string Name) : IBodyItem
+public record Label(string Name) : BodyItem
 {
     public override string ToString() => $"{Name}:";
 }
 
-public record Operand(object Value, string Content = null)
+public record Operand(object Value, string Content = null) : AsmItem
 {
     public override string ToString() => Content ?? Value.ToString();
 }
