@@ -1,6 +1,6 @@
 ﻿namespace Microsoft.Iris.Asm.Models;
 
-public record NamespaceImport(string Uri, string Name) : IImport
+public record NamespaceImport(string Uri, string Name) : Import
 {
     public override string ToString() => $".import-ns {Uri} as {Name}";
 }

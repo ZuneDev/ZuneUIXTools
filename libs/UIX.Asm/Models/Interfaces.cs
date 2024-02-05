@@ -16,7 +16,7 @@ public interface IDirective : IAsmItem;
 public abstract record Directive : AsmItem, IDirective;
 
 public interface IImport : IDirective;
-public abstract record Import : Directive;
+public abstract record Import : Directive, IImport;
 
 public interface IBodyItem : IAsmItem;
 public abstract record BodyItem : AsmItem, IBodyItem;
