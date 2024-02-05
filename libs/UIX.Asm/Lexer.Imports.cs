@@ -5,8 +5,6 @@ namespace Microsoft.Iris.Asm;
 
 partial class Lexer
 {
-    public static readonly Parser<IImport> Import = ParseImport;
-
     private static IResult<IImport> ParseImport(IInput input)
     {
         input = ConsumeWhitespace(input);

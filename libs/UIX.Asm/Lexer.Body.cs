@@ -7,11 +7,11 @@ namespace Microsoft.Iris.Asm;
 
 partial class Lexer
 {
-    public static readonly Parser<IBodyItem> BodyItem = ParseBodyItem;
-
     private static IResult<IBodyItem> ParseBodyItem(IInput input)
     {
         input = ConsumeWhitespace(input);
+        var line = input.Line;
+        var column = input.Column;
 
         var identifierResult = Parse.Letter.AtLeastOnce().Text().Invoke(input);
         if (!identifierResult.WasSuccessful)
@@ -24,7 +24,10 @@ partial class Lexer
         if (!input.AtEnd && input.Current == ':')
         {
             input = input.Advance();
-            bodyItem = new Label(identifier);
+            bodyItem = new Label(identifier)
+            {
+                Line = line, Column = column,
+            };
             input = StatementEnd(input).Remainder;
         }
         else
@@ -38,11 +41,15 @@ partial class Lexer
                 input = ConsumeWhitespace(input);
 
                 var operandsResult = Parse.Ref(() => AlphanumericText).DelimitedBy(Parse.Char(',').Token())(input);
-                operands.AddRange(operandsResult.Value.Select(s => new Operand(s)));
+                operands.AddRange(operandsResult.Value.Select(s => new Operand(s) { Line = line }));
                 input = operandsResult.Remainder;
             }
 
-            bodyItem = new Instruction(identifier, operands);
+            bodyItem = new Instruction(identifier, operands)
+            {
+                Line = line,
+                Column = column,
+            };
         }
 
         return Result.Success(bodyItem, input);

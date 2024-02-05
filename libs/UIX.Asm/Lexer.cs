@@ -17,6 +17,10 @@ public static partial class Lexer
         from sectionId in Parse.Letter.AtLeastOnce().Text()
         select sectionId;
 
+    public static readonly Parser<IImport> Import = ParseImport;
+
+    public static readonly Parser<IBodyItem> BodyItem = ParseBodyItem;
+
     public static readonly Parser<Program> Program =
         from imports in Import.Token().Many()
         from body in BodyItem.Many()

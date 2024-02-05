@@ -10,6 +10,8 @@ public abstract record AsmItem : IAsmItem
 {
     public int Line { get; set; } = -1;
     public int Column { get; set; } = -1;
+
+    internal const string DebuggerDisplay = "({Line}, {Column})";
 }
 
 public interface IDirective : IAsmItem;
