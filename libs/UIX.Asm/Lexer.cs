@@ -12,12 +12,9 @@ public static partial class Lexer
 
     public static readonly Parser<string> StatementEnd = Parse.Char(';').Return(";").Or(Parse.LineTerminator);
 
-    public static readonly Parser<string> SectionDirective =
-        from _ in Parse.String(".section").Token()
-        from sectionId in Parse.Letter.AtLeastOnce().Text()
-        select sectionId;
-
     public static readonly Parser<IImport> Import = ParseImport;
+
+    public static readonly Parser<IDirective> Directive = ParseDirective;
 
     public static readonly Parser<IBodyItem> BodyItem = ParseBodyItem;
 

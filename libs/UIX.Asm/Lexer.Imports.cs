@@ -9,10 +9,19 @@ partial class Lexer
     {
         input = ConsumeWhitespace(input);
 
-        var importDirectiveResult = Parse.String(".import-")(input);
+        var importDirectiveResult = Parse.String(".import")(input);
         input = importDirectiveResult.Remainder;
         if (!importDirectiveResult.WasSuccessful)
             return Result.Failure<IImport>(input, "Invalid import directive", ["Expected '.import'"]);
+
+        return ParseImportAsDirective(input);
+    }
+
+    private static IResult<IImport> ParseImportAsDirective(IInput input)
+    {
+        if (input.Current != '-' || input.AtEnd)
+            return Result.Failure<IImport>(input, "Invalid import type", ["An import type must be specified"]);
+        input = input.Advance();
 
         var importTypeResult = Parse.Letter.AtLeastOnce().Text()(input);
         input = importTypeResult.Remainder;

@@ -13,9 +13,22 @@ partial class Lexer
         var line = input.Line;
         var column = input.Column;
 
+        var directiveResult = ParseDirective(input);
+        if (directiveResult.WasSuccessful)
+        {
+            input = directiveResult.Remainder;
+            var directive = directiveResult.Value;
+            if (directive is not IBodyItem directiveBodyItem)
+                return Result.Failure<IBodyItem>(input, "Invalid code", [$"The {directive.Identifier} directive cannot be placed in the body of a program"]);
+
+            directive.Line = line;
+            directive.Column = column;
+            return Result.Success(directiveBodyItem, input);
+        }
+
         var identifierResult = Parse.Letter.AtLeastOnce().Text().Invoke(input);
         if (!identifierResult.WasSuccessful)
-            return Result.Failure<Instruction>(input, "Invalid code", []);
+            return Result.Failure<IBodyItem>(input, "Invalid code", []);
 
         input = identifierResult.Remainder;
         var identifier = identifierResult.Value;
@@ -54,5 +67,4 @@ partial class Lexer
 
         return Result.Success(bodyItem, input);
     }
-
 }

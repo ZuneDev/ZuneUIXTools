@@ -39,7 +39,7 @@ public class Disassembler
                 if (scheme == "assembly")
                 {
                     // Assume the URI represents a C# namespace
-                    name = uri.Split('.', '/', '\\')[^1];
+                    name = uri.Split('.', '/', '\\', '!')[^1];
 
                     // Remove the extra assembly info
                     uri = uri.Split(',')[0];
@@ -48,7 +48,7 @@ public class Disassembler
                 {
                     // Assume the URI represents a file,
                     // skip the extension
-                    name = uri.Split('.', '/', '\\')[^2];
+                    name = uri.Split('.', '/', '\\', '!')[^2];
                 }
             }
 

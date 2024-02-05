@@ -1,12 +1,12 @@
 ﻿using Microsoft.Iris.Asm.Models;
 using Microsoft.Iris.Data;
+using Microsoft.Iris.Library;
 using Microsoft.Iris.Markup;
 using Microsoft.Iris.Session;
 using Sprache;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Microsoft.Iris.Asm;
@@ -15,14 +15,17 @@ internal class AsmMarkupLoader
 {
     private string _asmSource;
     private Program _program;
-    private bool _hasErrors;
     private LoadPass _currentValidationPass;
     private readonly AsmMarkupLoadResult _loadResult;
     private bool _usingSharedBinaryDataTable;
     private SourceMarkupImportTables _importTables;
-    private Dictionary<string, LoadResult> _importedNamespaces = new();
+
+    private readonly Dictionary<string, LoadResult> _importedNamespaces = new();
+    private readonly HashSet<string> _referencedNamespaces = new();
 
     protected AsmMarkupLoader(AsmMarkupLoadResult loadResult) => _loadResult = loadResult;
+
+    public bool HasErrors { get; protected set; }
 
     internal static unsafe AsmMarkupLoader Load(AsmMarkupLoadResult loadResult, Resource resource)
     {
@@ -50,9 +53,10 @@ internal class AsmMarkupLoader
 
     public void MarkHasErrors()
     {
-        if (_hasErrors)
+        if (HasErrors)
             return;
-        _hasErrors = true;
+
+        HasErrors = true;
         _loadResult.MarkLoadFailed();
     }
 
@@ -124,26 +128,101 @@ internal class AsmMarkupLoader
 
             //foreach (ValidateDataMapping dataMapping in _program.DataMappingList)
             //    dataMapping.Validate(_currentValidationPass);
-            
+
             //foreach (ValidateAlias alias in _program.AliasList)
             //    alias.Validate(_currentValidationPass);
-            
-            //if (_currentValidationPass == LoadPass.Full)
-            //{
-            //    for (ValidateNamespace validateNamespace = _program.XmlnsList; validateNamespace != null; validateNamespace = validateNamespace.Next)
-            //    {
-            //        if (!_referencedNamespaces.ContainsKey(validateNamespace.Prefix))
-            //            ErrorManager.ReportWarning(validateNamespace.Line, validateNamespace.Column, "Unreferenced namespace {0}", validateNamespace.Prefix);
-            //    }
-            //}
+
+            if (_currentValidationPass == LoadPass.Full)
+            {
+                foreach (var nsImport in _program.Imports.OfType<NamespaceImport>())
+                {
+                    if (!_referencedNamespaces.Contains(nsImport.Name))
+                        ErrorManager.ReportWarning(nsImport.Line, nsImport.Column, $"Unreferenced namespace '{nsImport.Name}'");
+                }
+            }
         }
 
-        //CompleteValidationPass();
+        if (_currentValidationPass == LoadPass.DeclareTypes)
+        {
+            //_loadResult.SetExportTable(PrepareExportTable());
+            //_loadResult.SetAliasTable(PrepareAliasTable());
+        }
+        else if (_currentValidationPass == LoadPass.PopulatePublicModel)
+        {
+            if (_program == null)
+                return;
+
+            //foreach (ValidateClass validateClass in _parseResult.ClassList)
+            //    validateClass.TypeExport?.BuildProperties();
+        }
+        else
+        {
+            if (_currentValidationPass != LoadPass.Full)
+                return;
+
+            if (HasErrors)
+                _loadResult.MarkLoadFailed();
+
+            MarkupImportTables importTables = null;
+            if (_importTables != null)
+            {
+                importTables = _importTables.PrepareImportTables();
+                _loadResult.SetImportTables(importTables);
+            }
+
+            MarkupLineNumberTable lineNumberTable = new MarkupLineNumberTable();
+            MarkupConstantsTable constantsTable = _loadResult.BinaryDataTable == null
+                ? new MarkupConstantsTable()
+                : _loadResult.BinaryDataTable.ConstantsTable;
+
+            _loadResult.SetDataMappingsTable(PrepareDataMappingTable());
+            _loadResult.ValidationComplete();
+
+            ByteCodeReader reader = null;
+            if (!HasErrors)
+                EncodeOBJECTSection();
+            //  reader = new MarkupEncoder(importTables, constantsTable, lineNumberTable).EncodeOBJECTSection(_parseResult, _loadResult.Uri, null);
+
+            if (!_usingSharedBinaryDataTable)
+            {
+                constantsTable.PrepareForRuntimeUse();
+                _loadResult.SetConstantsTable(constantsTable);
+            }
+
+            lineNumberTable.PrepareForRuntimeUse();
+            _loadResult.SetLineNumberTable(lineNumberTable);
+
+            if (reader != null)
+                _loadResult.SetObjectSection(reader);
+            
+            _loadResult.SetDependenciesTable(PrepareDependenciesTable());
+
+            if (!MarkupSystem.TrackAdditionalMetadata)
+                _program = null;
+
+            //foreach (DisposableObject validateObject in _validateObjects)
+            //    validateObject.Dispose(this);
+        }
+    }
+
+    private LoadResult[] PrepareDependenciesTable()
+    {
+        throw new NotImplementedException();
+    }
+
+    private MarkupDataMapping[] PrepareDataMappingTable()
+    {
+        throw new NotImplementedException();
     }
 
     public void ReportError(string error, int line, int column)
     {
         MarkHasErrors();
         ErrorManager.ReportError(line, column, error);
+    }
+
+    private void EncodeOBJECTSection()
+    {
+        var instructions = _program.Body.OfType<Instruction>();
     }
 }

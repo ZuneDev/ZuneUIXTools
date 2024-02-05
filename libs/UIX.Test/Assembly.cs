@@ -18,6 +18,9 @@ public class Assembly(ITestOutputHelper output)
 .import-ns Me as me
 .import-ns assembly://UIX/Microsoft.Iris as iris
 
+.section data
+
+.section object
 main:
     COBJ 2
     PSHC 0
@@ -34,7 +37,7 @@ main:
 
         Assert.NotNull(ast);
         Assert.Equal(2, ast.Imports.Count());
-        Assert.Equal(9, ast.Body.Count());
+        Assert.Equal(9 + 2, ast.Body.Count());
     }
 
     [Fact]
