@@ -54,8 +54,30 @@ partial class Lexer
                 input = ConsumeWhitespace(input);
 
                 var operandsResult = Parse.Ref(() => AlphanumericText).DelimitedBy(Parse.Char(',').Token())(input);
-                operands.AddRange(operandsResult.Value.Select(s => new Operand(s) { Line = line }));
                 input = operandsResult.Remainder;
+
+                var opCode = InstructionSet.MnemonicToOpCode(identifier);
+                var schema = InstructionSet.InstructionSchema[opCode];
+
+                int schemaIndex = 0;
+                foreach (var operandContent in operandsResult.Value)
+                {
+                    var operandType = schema[schemaIndex++];
+
+                    object operandValue = operandType switch
+                    {
+                        OperandDataType.Byte => byte.Parse(operandContent),
+                        OperandDataType.UInt16 => ushort.Parse(operandContent),
+                        OperandDataType.UInt32 => uint.Parse(operandContent),
+                        OperandDataType.Int32 => int.Parse(operandContent),
+                        OperandDataType.Bytes or _ => operandContent,
+                    };
+
+                    operands.Add(new(operandValue, operandType, operandContent)
+                    {
+                        Line = line,
+                    });
+                }
             }
 
             bodyItem = new Instruction(identifier, operands)

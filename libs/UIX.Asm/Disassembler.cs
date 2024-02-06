@@ -62,7 +62,7 @@ public class Disassembler
 
         // Insert a label to mark the start of the object section.
         // In the future, this might use a special directive like `.section object`
-        yield return new Label("code");
+        yield return new SectionDirective("object");
 
         while (reader.CurrentOffset < reader.Size)
         {
@@ -77,7 +77,7 @@ public class Disassembler
                 case OpCode.DiscardValue:                       // DIS
                 case OpCode.ReturnValue:                        // RET
                 case OpCode.ReturnVoid:                         // RETV
-                    yield return new Instruction(opCode, []);
+                    yield return Instruction.CreateWithSchema(opCode);
                     break;
 
                 // CMD <UInt16>
@@ -107,7 +107,7 @@ public class Disassembler
                 case OpCode.TypeOf:                             // TYP <typeIndex>
                 case OpCode.PushConstant:                       // PSHC <constantIndex>
                 case OpCode.ConstructListenerStorage:           // CLIS <listenerCount>
-                    yield return new Instruction(opCode, [new(reader.ReadUInt16())]);
+                    yield return Instruction.CreateWithSchema(opCode, reader.ReadUInt16());
                     break;
 
                 // CMD <UInt32>
@@ -116,12 +116,12 @@ public class Disassembler
                 case OpCode.JumpIfTruePeek:                     // JMPT <jumpTo>
                 case OpCode.JumpIfNullPeek:                     // JMPNP <jumpTo>
                 case OpCode.Jump:                               // JMP <jumpTo>
-                    yield return new Instruction(opCode, [new(reader.ReadUInt32())]);
+                    yield return Instruction.CreateWithSchema(opCode, reader.ReadUInt32());
                     break;
 
                 // CMD <Int32>
                 case OpCode.EnterDebugState:                    // DBG <breakpointIndex>
-                    yield return new Instruction(opCode, [new(reader.ReadInt32())]);
+                    yield return Instruction.CreateWithSchema(opCode, reader.ReadInt32());
                     break;
 
                 // CMD <UInt16> <UInt16>
@@ -129,11 +129,11 @@ public class Disassembler
                 case OpCode.ConstructFromString:                // CSTR <typeIndex> <stringIndex>
                 case OpCode.PropertyDictionaryAdd:              // PDAD <propertyIndex> <keyIndex>
                 case OpCode.ConvertType:                        // CON <toTypeIndex> <fromTypeIndex>
-                    yield return new Instruction(opCode, [new(reader.ReadUInt16()), new(reader.ReadUInt16())]);
+                    yield return Instruction.CreateWithSchema(opCode, reader.ReadUInt16(), reader.ReadUInt16());
                     break;
 
                 case OpCode.JumpIfDictionaryContains:           // JMPD <propertyIndex> <keyIndex> <jumpTo>
-                    yield return new Instruction(opCode, [new(reader.ReadUInt16()), new(reader.ReadUInt16()), new(reader.ReadUInt32())]);
+                    yield return Instruction.CreateWithSchema(opCode, reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt32());
                     break;
 
                 case OpCode.ConstructFromBinary:                // CBIN <typeIndex> <object>
@@ -141,25 +141,28 @@ public class Disassembler
                     TypeSchema cbinTypeSchema = _loadResult.ImportTables.TypeImports[cbinTypeIndex];
                     object cbinObject = cbinTypeSchema.DecodeBinary(reader);
 
-                    yield return new Instruction(opCode, [new(cbinTypeIndex), new(cbinObject)]);
+                    yield return Instruction.CreateWithSchema(opCode, cbinTypeIndex, cbinObject);
                     break;
 
                 case OpCode.Operation:                          // OPR <opHostIndex> <operation>
                     var opHostIndex = reader.ReadUInt16();
                     var op = (OperationType)reader.ReadByte();
 
-                    yield return new Instruction(opCode, op, [new(opHostIndex)]);
+                    yield return Instruction.CreateWithSchema(opCode, opHostIndex, op);
                     break;
 
                 case OpCode.Listen:                             // LIS <listenerIndex> <listenerType> <watchIndex> <handlerOffset>
                 case OpCode.DestructiveListen:                  // LISD <listenerIndex> <listenerType> <watchIndex> <handlerOffset> <refreshOffset>
-                    List<Operand> lisOperands = [new(reader.ReadUInt16()), new(reader.ReadByte()),
-                        new(reader.ReadUInt16()), new(reader.ReadUInt32())];
+                    var listenerIndex = reader.ReadUInt16();
+                    var listenerType = reader.ReadByte();
+                    var watchIndex = reader.ReadUInt16();
+                    var handlerOffset = reader.ReadUInt32();
 
                     if (opCode == OpCode.DestructiveListen)
-                        lisOperands.Add(new(reader.ReadUInt32()));
+                        yield return Instruction.CreateWithSchema(opCode, listenerIndex, listenerType, watchIndex, handlerOffset, reader.ReadUInt32());
+                    else
+                        yield return Instruction.CreateWithSchema(opCode, listenerIndex, listenerType, watchIndex, handlerOffset);
 
-                    yield return new Instruction(opCode, lisOperands);
                     break;
 
                 default:
