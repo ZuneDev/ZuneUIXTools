@@ -6,39 +6,22 @@ using System.Text;
 
 namespace Microsoft.Iris.Asm.Models;
 
-[DebuggerDisplay("{ToString()} " + DebuggerDisplay)]
-public record Instruction(string Mnemonic, IEnumerable<Operand> Operands) : BodyItem
-{
-    public Instruction(OpCode opCode, OperationType? operationType, IEnumerable<Operand> Operands)
-        : this(LexerMaps.GetMnemonic(opCode, operationType), Operands)
-    {
-    }
-    public Instruction(OpCode opCode, IEnumerable<Operand> Operands)
-        : this(opCode, null, Operands)
-    {
-    }
-
-    public OpCode OpCode => LexerMaps.MnemonicToOpCode(Mnemonic);
-    public OperationType? OperationType => LexerMaps.TryOperationMnemonicToType(Mnemonic);
-
-    public override string ToString() => ToString(true);
-
-    public string ToString(bool uppercase)
-    {
-        var mnemonic = uppercase ? Mnemonic.ToUpperInvariant() : Mnemonic.ToLowerInvariant();
-        return Operands.Any()
-            ? $"{mnemonic} {string.Join(", ", Operands)}"
-            : mnemonic;
-    }
-}
-
 [DebuggerDisplay("{Name} " + DebuggerDisplay)]
 public record Label(string Name) : BodyItem
 {
     public override string ToString() => $"{Name}:";
 }
 
-public record Operand(object Value, string Content = null) : AsmItem
+public enum OperandDataType : byte
+{
+    Byte,
+    UInt16,
+    UInt32,
+    Int32,
+    Bytes,
+}
+
+public record Operand(object Value, OperandDataType DataType, string Content = null) : AsmItem
 {
     public override string ToString() => Content ?? Value.ToString();
 }
