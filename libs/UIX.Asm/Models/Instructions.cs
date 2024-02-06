@@ -31,20 +31,6 @@ public record Instruction(string Mnemonic, IEnumerable<Operand> Operands) : Body
             : mnemonic;
     }
 
-    public static Instruction CreateParamless(OpCode opCode) => new(opCode, Array.Empty<Operand>());
-
-    public static Instruction CreateUInt16(OpCode opCode, ushort operand1)
-        => new(opCode, [new(operand1, OperandDataType.UInt16)]);
-
-    public static Instruction CreateUInt32(OpCode opCode, uint operand1)
-        => new(opCode, [new(operand1, OperandDataType.UInt32)]);
-
-    public static Instruction CreateInt32(OpCode opCode, int operand1)
-        => new(opCode, [new(operand1, OperandDataType.Int32)]);
-
-    public static Instruction CreateUInt16UInt16(OpCode opCode, ushort operand1, ushort operand2)
-        => new(opCode, [new(operand1, OperandDataType.UInt16), new(operand2, OperandDataType.UInt16)]);
-
     public static Instruction CreateWithSchema(OpCode opCode, params object[] operands)
     {
         var schema = InstructionSet.InstructionSchema[opCode];
