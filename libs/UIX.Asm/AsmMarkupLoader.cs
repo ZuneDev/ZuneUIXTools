@@ -170,18 +170,16 @@ internal class AsmMarkupLoader
                 _loadResult.SetImportTables(importTables);
             }
 
-            MarkupLineNumberTable lineNumberTable = new MarkupLineNumberTable();
-            MarkupConstantsTable constantsTable = _loadResult.BinaryDataTable == null
-                ? new MarkupConstantsTable()
-                : _loadResult.BinaryDataTable.ConstantsTable;
+            MarkupLineNumberTable lineNumberTable = new();
+            MarkupConstantsTable constantsTable = _loadResult.BinaryDataTable?.ConstantsTable ?? new();
 
             _loadResult.SetDataMappingsTable(PrepareDataMappingTable());
             _loadResult.ValidationComplete();
 
             ByteCodeReader reader = null;
+            ObjectSection objectSection = new(_program, _loadResult);
             if (!HasErrors)
-                EncodeOBJECTSection();
-            //  reader = new MarkupEncoder(importTables, constantsTable, lineNumberTable).EncodeOBJECTSection(_parseResult, _loadResult.Uri, null);
+                reader = objectSection.Encode();
 
             if (!_usingSharedBinaryDataTable)
             {
@@ -207,22 +205,17 @@ internal class AsmMarkupLoader
 
     private LoadResult[] PrepareDependenciesTable()
     {
-        throw new NotImplementedException();
+        return null;
     }
 
     private MarkupDataMapping[] PrepareDataMappingTable()
     {
-        throw new NotImplementedException();
+        return null;
     }
 
     public void ReportError(string error, int line, int column)
     {
         MarkHasErrors();
         ErrorManager.ReportError(line, column, error);
-    }
-
-    private void EncodeOBJECTSection()
-    {
-        var instructions = _program.Body.OfType<Instruction>();
     }
 }
