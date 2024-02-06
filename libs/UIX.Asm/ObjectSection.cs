@@ -33,6 +33,9 @@ public class ObjectSection
 
         foreach (var instruction in _instructions)
         {
+            // Add entry to line number table
+            _loadResult.LineNumberTable.AddRecord(writer.DataSize, instruction.Line, instruction.Column);
+
             var opCode = instruction.OpCode;
             writer.WriteByte(opCode);
 
