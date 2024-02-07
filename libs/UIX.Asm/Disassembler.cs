@@ -19,16 +19,14 @@ public class Disassembler
 
     public IEnumerable<IImport> GetImports()
     {
+        // Keep track of which namespaces have already been imported,
+        // and skip self and default UIX namespace
+        HashSet<string> importedUris = [_loadResult.Uri, "http://schemas.microsoft.com/2007/uix"];
+
         foreach (var typeImport in _loadResult.ImportTables.TypeImports)
         {
             var uri = typeImport.Owner.Uri;
-
-            // Skip default UIX namespace
-            if (uri == "http://schemas.microsoft.com/2007/uix")
-                continue;
-
-            // Skip self
-            if (uri == _loadResult.Uri)
+            if (importedUris.Contains(uri))
                 continue;
 
             string name = uri;
@@ -61,7 +59,6 @@ public class Disassembler
         var reader = _loadResult.ObjectSection;
 
         // Insert a label to mark the start of the object section.
-        // In the future, this might use a special directive like `.section object`
         yield return new SectionDirective("object");
 
         while (reader.CurrentOffset < reader.Size)
