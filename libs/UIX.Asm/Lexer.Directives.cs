@@ -53,7 +53,22 @@ partial class Lexer
                 if (!labelPrefixResult.WasSuccessful)
                     return Result.Failure<IImport>(input, "Invalid export directive", ["Expected prefix of labels to export"]);
 
-                directive = new ExportDirective(labelPrefixResult.Value)
+                var listenerCountResult = WholeNumber.Token()(input);
+                input = listenerCountResult.Remainder;
+                if (!listenerCountResult.WasSuccessful)
+                    return Result.Failure<IImport>(input, "Invalid export directive", ["Expected listener count"]);
+
+                if (!uint.TryParse(listenerCountResult.Value, out var listenerCount))
+                    return Result.Failure<IImport>(input, "Invalid export directive", ["Expected export listener count to be an unsigned integer"]);
+
+                var baseTypeNameResult = AlphanumericText.Token()(input);
+                input = baseTypeNameResult.Remainder;
+                if (!baseTypeNameResult.WasSuccessful)
+                    return Result.Failure<IImport>(input, "Invalid export directive", ["Expected base type name"]);
+
+                var labelPrefix = labelPrefixResult.Value;
+                var baseTypeName = baseTypeNameResult.Value;
+                directive = new ExportDirective(labelPrefix, listenerCount, baseTypeName)
                 {
                     Line = line,
                     Column = column,

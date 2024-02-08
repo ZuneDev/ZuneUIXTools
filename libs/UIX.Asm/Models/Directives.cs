@@ -14,20 +14,33 @@ public record SectionDirective : Directive, IBodyItem
 
 public record ExportDirective : Directive
 {
-    public ExportDirective(string labelPrefix) : base("export")
+    public ExportDirective(string labelPrefix, uint listenerCount, string baseTypeName) : base("export")
     {
         LabelPrefix = labelPrefix;
+        ListenerCount = listenerCount;
+        BaseTypeName = baseTypeName;
     }
 
     public string LabelPrefix { get; init; }
 
-    public override string ToString() => $"{base.ToString()} {LabelPrefix}";
+    public uint ListenerCount { get; init; }
 
-    public string InitializePropertiesLabel => LabelPrefix + "_prop";
-    public string InitializeLocalInputLabel => LabelPrefix + "_locl";
-    public string InitializeContentLabel => LabelPrefix + "_cont";
+    public string BaseTypeName { get; init; }
 
-    public string InitialEvaluateOffsetsLabelPrefix => LabelPrefix + "_evali_";
-    public string FinalEvaluateOffsetsLabelPrefix => LabelPrefix + "_evalf_";
-    public string RefreshGroupOffsetsLabelPrefix => LabelPrefix + "_rfsh_";
+    public override string ToString() => $"{base.ToString()} {LabelPrefix} {ListenerCount} {BaseTypeName}";
+
+    public string InitializePropertiesLabel => GetInitializePropertiesLabel(LabelPrefix);
+    public string InitializeLocalsInputLabel => GetInitializeLocalsInputLabel(LabelPrefix);
+    public string InitializeContentLabel => GetInitializeContentLabel(LabelPrefix);
+
+    public string InitialEvaluateOffsetsLabelPrefix => GetInitialEvaluateOffsetsLabelPrefix(LabelPrefix);
+    public string FinalEvaluateOffsetsLabelPrefix => GetInitialEvaluateOffsetsLabelPrefix(LabelPrefix);
+    public string RefreshGroupOffsetsLabelPrefix => GetRefreshGroupOffsetsLabelPrefix(LabelPrefix);
+
+    public static string GetInitializePropertiesLabel(string prefix) => prefix + "_prop";
+    public static string GetInitializeLocalsInputLabel(string prefix) => prefix + "_locl";
+    public static string GetInitializeContentLabel(string prefix) => prefix + "_cont";
+    public static string GetInitialEvaluateOffsetsLabelPrefix(string prefix) => prefix + "_evali_";
+    public static string GetFinalEvaluateOffsetsLabelPrefix(string prefix) => prefix + "_evalf_";
+    public static string GetRefreshGroupOffsetsLabelPrefix(string prefix) => prefix + "_rfsh_";
 }

@@ -3,56 +3,118 @@ using Microsoft.Iris.Asm.Models;
 using Microsoft.Iris.Markup;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Microsoft.Iris.Asm;
 
 public class Disassembler
 {
     private readonly MarkupLoadResult _loadResult;
+    private readonly Dictionary<string, string> _importedUris;
+    private readonly Dictionary<uint, List<Label>> _offsetLabelMap = new();
 
     private Disassembler(MarkupLoadResult loadResult)
     {
         _loadResult = loadResult;
+        _importedUris = new()
+        {
+            [_loadResult.Uri] = "me",
+            ["http://schemas.microsoft.com/2007/uix"] = null
+        };
     }
 
     public static Disassembler Load(MarkupLoadResult loadResult) => new(loadResult);
 
+    public IEnumerable<Directive> GetExports()
+    {
+        foreach (var typeSchema in _loadResult.ExportTable)
+        {
+            var labelPrefix = typeSchema.Name;
+            var baseName = GetQualifiedName(typeSchema.Base);
+
+            if (typeSchema is not MarkupTypeSchema markupTypeSchema)
+                throw new Exception($"Disassembler failed to disassemble export {typeSchema}, '{typeSchema.GetType()}' is not supported.");
+
+            yield return new ExportDirective(labelPrefix, markupTypeSchema.ListenerCount, markupTypeSchema.Base.Name);
+
+            var propOffset = markupTypeSchema.InitializePropertiesOffset;
+            InsertLabel(propOffset, ExportDirective.GetInitializePropertiesLabel(labelPrefix));
+
+            var loclOffset = markupTypeSchema.InitializeLocalsInputOffset;
+            InsertLabel(loclOffset, ExportDirective.GetInitializeLocalsInputLabel(labelPrefix));
+
+            var contOffset = markupTypeSchema.InitializeContentOffset;
+            InsertLabel(contOffset, ExportDirective.GetInitializeContentLabel(labelPrefix));
+
+            if (markupTypeSchema.InitialEvaluateOffsets != null)
+            {
+                for (int i = 0; i < markupTypeSchema.InitialEvaluateOffsets.Length; i++)
+                {
+                    uint offset = markupTypeSchema.InitialEvaluateOffsets[i];
+                    var labelName = $"{ExportDirective.GetInitializeContentLabel(labelPrefix)}{i:N}";
+
+                    InsertLabel(offset, labelName);
+                }
+            }
+
+            if (markupTypeSchema.FinalEvaluateOffsets != null)
+            {
+                for (int i = 0; i < markupTypeSchema.FinalEvaluateOffsets.Length; i++)
+                {
+                    uint offset = markupTypeSchema.FinalEvaluateOffsets[i];
+                    var labelName = $"{ExportDirective.GetFinalEvaluateOffsetsLabelPrefix(labelPrefix)}{i:N}";
+
+                    InsertLabel(offset, labelName);
+                }
+
+            }
+
+            if (markupTypeSchema.RefreshGroupOffsets != null)
+            {
+                for (int i = 0; i < markupTypeSchema.RefreshGroupOffsets.Length; i++)
+                {
+                    uint offset = markupTypeSchema.RefreshGroupOffsets[i];
+                    var labelName = $"{ExportDirective.GetRefreshGroupOffsetsLabelPrefix(labelPrefix)}{i:N}";
+                    InsertLabel(offset, labelName);
+                }
+            }
+        }
+    }
+
     public IEnumerable<IImport> GetImports()
     {
-        // Keep track of what has already been imported. Skip self and default UIX namespace.
-        Dictionary<string, string> importedUris = new() {
-            [_loadResult.Uri] = "me",
-            ["http://schemas.microsoft.com/2007/uix"] = null
-        };
+        // Ues _importedUris to keep track of what has already been imported.
+        // Skip self and default UIX namespace.
 
         foreach (var typeImport in _loadResult.ImportTables.TypeImports)
         {
             var uri = typeImport.Owner.Uri;
-            if (!importedUris.TryGetValue(uri, out var namespacePrefix))
+            if (!_importedUris.TryGetValue(uri, out var namespacePrefix))
             {
                 namespacePrefix = uri;
-            var schemeLength = uri.IndexOf("://");
-            if (schemeLength > 0)
-            {
-                var scheme = uri[..schemeLength];
-                if (scheme == "assembly")
+                var schemeLength = uri.IndexOf("://");
+                if (schemeLength > 0)
                 {
-                    // Assume the URI represents a C# namespace
+                    var scheme = uri[..schemeLength];
+                    if (scheme == "assembly")
+                    {
+                        // Assume the URI represents a C# namespace
                         namespacePrefix = uri.Split('.', '/', '\\', '!')[^1];
 
-                    // Remove the extra assembly info
-                    uri = uri.Split(',')[0];
-                }
-                else
-                {
-                    // Assume the URI represents a file,
-                    // skip the extension
+                        // Remove the extra assembly info
+                        uri = uri.Split(',')[0];
+                    }
+                    else
+                    {
+                        // Assume the URI represents a file,
+                        // skip the extension
                         namespacePrefix = uri.Split('.', '/', '\\', '!')[^2];
                     }
                 }
 
                 namespacePrefix = namespacePrefix.Camelize();
-                importedUris.Add(uri, namespacePrefix);
+                _importedUris.Add(uri, namespacePrefix);
+
                 yield return new NamespaceImport(uri, namespacePrefix);
             }
 
@@ -69,6 +131,10 @@ public class Disassembler
 
         while (reader.CurrentOffset < reader.Size)
         {
+            if (_offsetLabelMap.TryGetValue(reader.CurrentOffset, out var labels))
+                foreach (var label in labels)
+                    yield return label;
+
             var opCode = (OpCode)reader.ReadByte();
             
             switch (opCode)
@@ -183,10 +249,28 @@ public class Disassembler
         _loadResult.Load(LoadPass.Full);
         _loadResult.Load(LoadPass.Done);
 
-        List<IImport> imports = new(GetImports());
+        List<IDirective> directives = GetImports().Cast<IDirective>()
+            .Concat(GetExports())
+            .ToList();
         List<IBodyItem> body = new(GetBody());
 
-        Program asmProgram = new(imports, body);
+        Program asmProgram = new(directives, body);
         return asmProgram.ToString();
+    }
+
+    private string GetQualifiedName(TypeSchema schema)
+    {
+        _importedUris.TryGetValue(schema.Owner.Uri, out string prefix);
+
+        return prefix != null
+            ? $"{prefix}:{schema.Name}"
+            : schema.Name;
+    }
+
+    private void InsertLabel(uint offset, string labelName)
+    {
+        if (!_offsetLabelMap.TryGetValue(offset, out var labels))
+            labels = _offsetLabelMap[offset] = new(1);
+        labels.Add(new(labelName));
     }
 }
