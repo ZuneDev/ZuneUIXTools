@@ -15,8 +15,12 @@ public class Assembly(ITestOutputHelper output)
     {
         const string code =
 """
+.export main 0 UI
+
 .import-ns Me as me
 .import-ns assembly://UIX/Microsoft.Iris as iris
+.import-type iris:Command
+
 
 .section data
 
@@ -36,8 +40,8 @@ main:
         output.WriteLine(ast.ToString());
 
         Assert.NotNull(ast);
-        Assert.Equal(2, ast.Imports.Count());
-        Assert.Equal(9 + 2, ast.Body.Count());
+        Assert.Equal(3 + 1 + 2, ast.Directives.Count());
+        Assert.Equal(9, ast.Body.Count());
     }
 
     [Fact]
