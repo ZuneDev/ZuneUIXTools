@@ -19,17 +19,18 @@ public class Disassembler
 
     public IEnumerable<IImport> GetImports()
     {
-        // Keep track of which namespaces have already been imported,
-        // and skip self and default UIX namespace
-        HashSet<string> importedUris = [_loadResult.Uri, "http://schemas.microsoft.com/2007/uix"];
+        // Keep track of what has already been imported. Skip self and default UIX namespace.
+        Dictionary<string, string> importedUris = new() {
+            [_loadResult.Uri] = "me",
+            ["http://schemas.microsoft.com/2007/uix"] = null
+        };
 
         foreach (var typeImport in _loadResult.ImportTables.TypeImports)
         {
             var uri = typeImport.Owner.Uri;
-            if (importedUris.Contains(uri))
-                continue;
-
-            string name = uri;
+            if (!importedUris.TryGetValue(uri, out var namespacePrefix))
+            {
+                namespacePrefix = uri;
             var schemeLength = uri.IndexOf("://");
             if (schemeLength > 0)
             {
@@ -37,7 +38,7 @@ public class Disassembler
                 if (scheme == "assembly")
                 {
                     // Assume the URI represents a C# namespace
-                    name = uri.Split('.', '/', '\\', '!')[^1];
+                        namespacePrefix = uri.Split('.', '/', '\\', '!')[^1];
 
                     // Remove the extra assembly info
                     uri = uri.Split(',')[0];
@@ -46,11 +47,16 @@ public class Disassembler
                 {
                     // Assume the URI represents a file,
                     // skip the extension
-                    name = uri.Split('.', '/', '\\', '!')[^2];
+                        namespacePrefix = uri.Split('.', '/', '\\', '!')[^2];
+                    }
                 }
+
+                namespacePrefix = namespacePrefix.Camelize();
+                importedUris.Add(uri, namespacePrefix);
+                yield return new NamespaceImport(uri, namespacePrefix);
             }
 
-            yield return new NamespaceImport(uri, name.Camelize());
+            yield return new TypeImport(namespacePrefix, typeImport.Name);
         };
     }
 
