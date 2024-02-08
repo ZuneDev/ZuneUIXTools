@@ -1,5 +1,4 @@
-﻿using Microsoft.Iris.Markup;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
@@ -26,7 +25,7 @@ public record Operand(object Value, OperandDataType DataType, string Content = n
     public override string ToString() => Content ?? Value.ToString();
 }
 
-public record Program(IEnumerable<IImport> Imports, IEnumerable<IBodyItem> Body)
+public record Program(IEnumerable<IDirective> Directives, IEnumerable<IBodyItem> Body)
 {
     public override string ToString()
     {
@@ -34,7 +33,7 @@ public record Program(IEnumerable<IImport> Imports, IEnumerable<IBodyItem> Body)
         const string indent = "    ";
         StringBuilder sb = new();
 
-        sb.AppendJoin(lineEnding, Imports.Select(i => i.ToString()));
+        sb.AppendJoin(lineEnding, Directives.Select(i => i.ToString()));
         sb.Append(lineEnding);
         sb.Append(lineEnding);
 

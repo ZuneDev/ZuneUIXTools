@@ -23,7 +23,7 @@ partial class Lexer
             return Result.Failure<IImport>(input, "Invalid import type", ["An import type must be specified"]);
         input = input.Advance();
 
-        var importTypeResult = Parse.Letter.AtLeastOnce().Text()(input);
+        var importTypeResult = WordText(input);
         input = importTypeResult.Remainder;
         if (!importTypeResult.WasSuccessful)
             return Result.Failure<IImport>(input, "Invalid import type", ["Expected 'ns'"]);
@@ -45,6 +45,22 @@ partial class Lexer
                     return Result.Failure<IImport>(input, "Invalid namespace alias", ["Expected a valid namespace alias"]);
 
                 import = new NamespaceImport(uriResult.Value, nameResult.Value);
+                break;
+
+            case "TYPE":
+                var typePrefixResult = WordText.Token()(input);
+                input = typePrefixResult.Remainder;
+                if (!typePrefixResult.WasSuccessful)
+                    return Result.Failure<IImport>(input, "Invalid type import", ["Expected a valid namespace prefix"]);
+
+                input = Parse.Char(':')(input).Remainder;
+
+                var typeNameResult = WordText(input);
+                input = typeNameResult.Remainder;
+                if (!typeNameResult.WasSuccessful)
+                    return Result.Failure<IImport>(input, "Invalid type import", ["Expected a valid type name"]);
+
+                import = new TypeImport(typePrefixResult.Value, typeNameResult.Value);
                 break;
 
             default:

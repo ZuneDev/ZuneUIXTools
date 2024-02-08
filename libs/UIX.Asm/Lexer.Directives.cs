@@ -1,5 +1,6 @@
 ﻿using Microsoft.Iris.Asm.Models;
 using Sprache;
+using System.Linq;
 
 namespace Microsoft.Iris.Asm;
 
@@ -16,7 +17,7 @@ partial class Lexer
         if (!directiveBeginResult.WasSuccessful)
             return Result.Failure<IDirective>(input, "Invalid directive", ["Expected '.', followed by an identifier"]);
 
-        var directiveIdResult = Parse.Letter.AtLeastOnce().Text()(input);
+        var directiveIdResult = WordText(input);
         input = directiveIdResult.Remainder;
         if (!directiveIdResult.WasSuccessful)
             return Result.Failure<IDirective>(input, "Invalid directive", ["Expected an identifier"]);
@@ -43,8 +44,24 @@ partial class Lexer
                 };
                 break;
 
+            case "EXPORT":
+                if (StatementEnd(input).WasSuccessful)
+                    return Result.Failure<IImport>(input, "Invalid export directive", ["Expected export information"]);
+
+                var labelPrefixResult = AlphanumericText.Token()(input);
+                input = labelPrefixResult.Remainder;
+                if (!labelPrefixResult.WasSuccessful)
+                    return Result.Failure<IImport>(input, "Invalid export directive", ["Expected prefix of labels to export"]);
+
+                directive = new ExportDirective(labelPrefixResult.Value)
+                {
+                    Line = line,
+                    Column = column,
+                };
+                break;
+
             default:
-                return Result.Failure<IImport>(input, $"Unknown import type '{directiveIdResult.Value}'", ["Expected 'import' or 'section'"]);
+                return Result.Failure<IImport>(input, $"Unknown import type '{directiveIdResult.Value}'", ["Expected 'export', 'import', or 'section'"]);
         }
 
         return Result.Success(directive, input);

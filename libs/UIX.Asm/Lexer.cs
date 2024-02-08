@@ -8,6 +8,8 @@ public static partial class Lexer
 {
     public static readonly Parser<string> AlphanumericText = Parse.LetterOrDigit.AtLeastOnce().Text();
 
+    public static readonly Parser<string> WordText = Parse.Letter.AtLeastOnce().Text();
+
     public static readonly Parser<string> Uri = Parse.LetterOrDigit.Or(Parse.Chars(":/!._-")).AtLeastOnce().Text();
 
     public static readonly Parser<string> StatementEnd = Parse.Char(';').Return(";").Or(Parse.LineTerminator);
@@ -19,9 +21,9 @@ public static partial class Lexer
     public static readonly Parser<IBodyItem> BodyItem = ParseBodyItem;
 
     public static readonly Parser<Program> Program =
-        from imports in Import.Token().Many()
+        from directives in Directive.Many()
         from body in BodyItem.Many()
-        select new Program(imports, body);
+        select new Program(directives, body);
 
     private static IInput ConsumeWhitespace(IInput input) => Parse.WhiteSpace.Many()(input).Remainder;
 }
