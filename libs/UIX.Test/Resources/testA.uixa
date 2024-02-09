@@ -1,6 +1,13 @@
-﻿.import-ns Me as me
-.import-ns assembly://UIX/Microsoft.Iris as iris
+﻿.export main 0 UI
 
+.import-ns Me as me
+.import-ns assembly://UIX/Microsoft.Iris as iris
+.import-type iris:Command
+
+
+.section data
+
+.section object
 main:
     COBJ 2
     PSHC 0
