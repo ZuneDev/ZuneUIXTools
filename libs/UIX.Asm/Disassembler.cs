@@ -30,12 +30,12 @@ public class Disassembler
         foreach (var typeSchema in _loadResult.ExportTable)
         {
             var labelPrefix = typeSchema.Name;
-            var baseName = GetQualifiedName(typeSchema.Base);
 
             if (typeSchema is not MarkupTypeSchema markupTypeSchema)
                 throw new Exception($"Disassembler failed to disassemble export {typeSchema}, '{typeSchema.GetType()}' is not supported.");
 
-            yield return new ExportDirective(labelPrefix, markupTypeSchema.ListenerCount, markupTypeSchema.Base.Name);
+            var baseName = markupTypeSchema.MarkupType.ToString();
+            yield return new ExportDirective(labelPrefix, markupTypeSchema.ListenerCount, baseName);
 
             var propOffset = markupTypeSchema.InitializePropertiesOffset;
             InsertLabel(propOffset, ExportDirective.GetInitializePropertiesLabel(labelPrefix));
@@ -66,7 +66,6 @@ public class Disassembler
 
                     InsertLabel(offset, labelName);
                 }
-
             }
 
             if (markupTypeSchema.RefreshGroupOffsets != null)
