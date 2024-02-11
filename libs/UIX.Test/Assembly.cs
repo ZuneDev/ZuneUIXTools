@@ -4,6 +4,7 @@ using Xunit.Abstractions;
 using Microsoft.Iris.Markup;
 using UIX.Test.Fixtures;
 using Microsoft.Iris;
+using Microsoft.Iris.Session;
 
 namespace UIX.Test;
 
@@ -46,24 +47,73 @@ main:
     }
 
     [Theory]
+    [InlineData("text")]
+    public async Task ReassembleFromUIB(string fileNameWithoutExtension)
+    {
+        using TempFile uibFile = new($"{fileNameWithoutExtension}.uib", ".uib");
+        await uibFile.InitAsync();
+
+        var uixaPath = Path.ChangeExtension(uibFile.Path, ".uixa");
+        var uibPathAc = Path.ChangeExtension(uibFile.Path, ".g.uib");
+
+        // Disassemble the compiled UIX
+        var sourceLoadResult = MarkupSystem.ResolveLoadResult($"file://{uibFile.Path}", MarkupSystem.RootIslandId);
+        var disassembly = Disassembler.Load(sourceLoadResult as MarkupLoadResult);
+        var disassemblyText = disassembly.Write();
+        File.WriteAllText(uixaPath, disassemblyText);
+
+        // Compile the generated Assembly source
+        CompilerInput compilerInput = new()
+        {
+            SourceFileName = uixaPath,
+            OutputFileName = uibPathAc
+        };
+
+        output.WriteLine($"Expected: {uibFile.Path}");
+        output.WriteLine($"Actual: {compilerInput.OutputFileName}");
+
+        ErrorManager.OnErrors += (errors) =>
+        {
+            foreach (ErrorRecord error in errors)
+                output.WriteLine($"Error at (L{error.Line}, C{error.Column}): {error.Message}");
+        };
+
+        // Assemble the disassembly result
+        var success = MarkupCompiler.Compile([compilerInput], default);
+        Assert.True(success);
+
+        // Compare the original UIB file to the reassembled UIB
+        var uibBytesEx = await File.ReadAllBytesAsync(uibFile.Path);
+        var uibBytesAc = await File.ReadAllBytesAsync(compilerInput.OutputFileName);
+        Assert.Equal(uibBytesEx, uibBytesAc);
+    }
+
+    [Theory]
     [InlineData("testA")]
     public async Task Assemble(string fileNameWithoutExtension)
     {
-        using TempFile tempFile = new($"{fileNameWithoutExtension}.uixa", ".uixa");
-        await tempFile.InitAsync();
+        using TempFile asmFile = new($"{fileNameWithoutExtension}.uixa", ".uixa");
+        await asmFile.InitAsync();
 
         CompilerInput[] compilerInputs = [
             new()
             {
-                SourceFileName = tempFile.Path,
-                OutputFileName = Path.ChangeExtension(tempFile.Path, ".uib")
+                SourceFileName = asmFile.Path,
+                OutputFileName = Path.ChangeExtension(asmFile.Path, ".uib")
             }
         ];
 
         foreach (var compilerInput in compilerInputs)
             output.WriteLine(compilerInput.OutputFileName);
 
-        MarkupCompiler.Compile(compilerInputs, default);
+        ErrorManager.OnErrors += (errors) =>
+        {
+            foreach (ErrorRecord error in errors)
+                output.WriteLine($"Error at (L{error.Line}, C{error.Column}): {error.Message}");
+        };
+
+        var success = MarkupCompiler.Compile(compilerInputs, default);
+        Assert.True(success);
     }
 
     [Theory]
