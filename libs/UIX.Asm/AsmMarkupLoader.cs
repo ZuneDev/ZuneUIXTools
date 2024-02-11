@@ -13,7 +13,6 @@ namespace Microsoft.Iris.Asm;
 internal class AsmMarkupLoader
 {
     private string _asmSource;
-    private Program _program;
     private LoadPass _currentValidationPass;
     private readonly AsmMarkupLoadResult _loadResult;
     private bool _usingSharedBinaryDataTable;
@@ -23,18 +22,9 @@ internal class AsmMarkupLoader
     private readonly Dictionary<string, LoadResult> _importedNamespaces = new();
     private readonly HashSet<string> _referencedNamespaces = new();
 
-    protected AsmMarkupLoader(AsmMarkupLoadResult loadResult)
+    internal unsafe AsmMarkupLoader(AsmMarkupLoadResult loadResult, Resource resource)
     {
         _loadResult = loadResult;
-        _objectSection = new(_program, _loadResult);
-    }
-
-    public bool HasErrors { get; protected set; }
-
-    internal static unsafe AsmMarkupLoader Load(AsmMarkupLoadResult loadResult, Resource resource)
-    {
-        AsmMarkupLoader owner = new(loadResult);
-
         if (resource.Status != ResourceStatus.Available)
             throw new InvalidOperationException("Resource must be available for reading");
 
@@ -44,17 +34,18 @@ internal class AsmMarkupLoader
         int sourceStartOffset = 0;
         if (resource.Length >= 4 && *data == 0xEF && *(data + 1) == 0xBB && *(data + 2) == 0xBF)
             sourceStartOffset = 3;
+        _asmSource = Encoding.UTF8.GetString(data + sourceStartOffset, (int)(resource.Length - sourceStartOffset));
 
-        owner._asmSource = Encoding.UTF8.GetString(data + sourceStartOffset, (int)(resource.Length - sourceStartOffset));
-
-        var parseResult = Lexer.Program.TryParse(owner._asmSource);
+        var parseResult = Lexer.Program.TryParse(_asmSource);
         if (parseResult.WasSuccessful)
-            owner._program = parseResult.Value;
+            Program = parseResult.Value;
         else
-            owner.MarkHasErrors();
-
-        return owner;
+            MarkHasErrors();
     }
+
+    public bool HasErrors { get; protected set; }
+
+    private Program Program { get; set; }
 
     public LoadResult FindDependency(string prefix)
     {
@@ -110,10 +101,15 @@ internal class AsmMarkupLoader
 
             var parseResult = Lexer.Program.TryParse(_asmSource);
             if (parseResult.WasSuccessful)
-                _program = parseResult.Value;
+            {
+                Program = parseResult.Value;
+                _objectSection = new(Program, _loadResult);
+            }
             else
+            {
                 foreach (var errors in parseResult.Expectations)
                     ReportError(errors, -1, -1);
+            }
 
             if (_loadResult.BinaryDataTable != null)
             {
@@ -125,7 +121,7 @@ internal class AsmMarkupLoader
                 _importTables = new SourceMarkupImportTables();
             }
 
-            foreach (var nsImport in _program.Directives.OfType<NamespaceImport>())
+            foreach (var nsImport in Program.Directives.OfType<NamespaceImport>())
             {
                 LoadResult loadResult;
                 if (nsImport.Uri == "Me")
@@ -158,7 +154,7 @@ internal class AsmMarkupLoader
             }
         }
 
-        if (_program != null && currentPass != LoadPass.Done)
+        if (Program != null && currentPass != LoadPass.Done)
         {
             //foreach (ValidateClass validateClass in _program.ClassList)
             //    validateClass.Validate(_currentValidationPass);
@@ -171,7 +167,7 @@ internal class AsmMarkupLoader
 
             if (_currentValidationPass == LoadPass.Full)
             {
-                foreach (var nsImport in _program.Directives.OfType<NamespaceImport>())
+                foreach (var nsImport in Program.Directives.OfType<NamespaceImport>())
                 {
                     if (!_referencedNamespaces.Contains(nsImport.Name))
                         ErrorManager.ReportWarning(nsImport.Line, nsImport.Column, $"Unreferenced namespace '{nsImport.Name}'");
@@ -186,7 +182,7 @@ internal class AsmMarkupLoader
         }
         else if (_currentValidationPass == LoadPass.PopulatePublicModel)
         {
-            if (_program == null)
+            if (Program == null)
                 return;
 
             //foreach (ValidateClass validateClass in _parseResult.ClassList)
@@ -216,7 +212,10 @@ internal class AsmMarkupLoader
 
             ByteCodeReader reader = null;
             if (!HasErrors)
+            {
                 reader = _objectSection.Encode();
+                UpdateExportOffsets();
+            }
 
             if (!_usingSharedBinaryDataTable)
             {
@@ -232,7 +231,7 @@ internal class AsmMarkupLoader
             _loadResult.SetDependenciesTable(PrepareDependenciesTable());
 
             if (!MarkupSystem.TrackAdditionalMetadata)
-                _program = null;
+                Program = null;
 
             //foreach (DisposableObject validateObject in _validateObjects)
             //    validateObject.Dispose(this);
@@ -241,7 +240,7 @@ internal class AsmMarkupLoader
 
     private TypeSchema[] PrepareExportTable()
     {
-        var exportDirectives = _program.Directives.OfType<ExportDirective>().ToArray();
+        var exportDirectives = Program.Directives.OfType<ExportDirective>().ToArray();
         var exports = new TypeSchema[exportDirectives.Length];
 
         for (int i = 0; i < exportDirectives.Length; i++)
@@ -251,41 +250,17 @@ internal class AsmMarkupLoader
             var markupType = (MarkupType)Enum.Parse(typeof(MarkupType), exportDirective.BaseTypeName);
             var exportedTypeSchema = MarkupTypeSchema.Build(markupType, _loadResult, exportDirective.LabelPrefix);
 
-            // Set all offsets
-            var propOffset = _objectSection.LabelOffsetMap[exportDirective.InitializePropertiesLabel];
-            exportedTypeSchema.SetInitializePropertiesOffset(propOffset);
-
-            var contOffset = _objectSection.LabelOffsetMap[exportDirective.InitializeContentLabel];
-            exportedTypeSchema.SetInitializeContentOffset(contOffset);
-
-            var loclOffset = _objectSection.LabelOffsetMap[exportDirective.InitializeLocalsInputLabel];
-            exportedTypeSchema.SetInitializeLocalsInputOffset(loclOffset);
-
-            var evaliOffsets = _objectSection.LabelOffsetMap
-                .Where(kvp => kvp.Key.StartsWith(exportDirective.InitialEvaluateOffsetsLabelPrefix))
-                .Select(kvp => kvp.Value)
-                .ToArray();
-            exportedTypeSchema.SetInitialEvaluateOffsets(evaliOffsets);
-
-            var evalfOffsets = _objectSection.LabelOffsetMap
-                .Where(kvp => kvp.Key.StartsWith(exportDirective.FinalEvaluateOffsetsLabelPrefix))
-                .Select(kvp => kvp.Value)
-                .ToArray();
-            exportedTypeSchema.SetFinalEvaluateOffsets(evalfOffsets);
-
-            var rfshOffsets = _objectSection.LabelOffsetMap
-                .Where(kvp => kvp.Key.StartsWith(exportDirective.RefreshGroupOffsetsLabelPrefix))
-                .Select(kvp => kvp.Value)
-                .ToArray();
-            exportedTypeSchema.SetRefreshListenerGroupOffsets(rfshOffsets);
-
             exportedTypeSchema.SetListenerCount(exportDirective.ListenerCount);
+
+            // The offsets aren't known until the object section has been encoded,
+            // so we have to defer setting them until the Full load pass.
 
             exports[i] = exportedTypeSchema;
         }
 
         return exports;
     }
+
     private LoadResult[] PrepareDependenciesTable()
     {
         // TODO
@@ -296,6 +271,41 @@ internal class AsmMarkupLoader
     {
         // TODO
         return [];
+    }
+
+    private void UpdateExportOffsets()
+    {
+        var exportDirectives = Program.Directives.OfType<ExportDirective>().ToArray();
+
+        uint[] GetOffsets(string prefix) => _objectSection.LabelOffsetMap
+            .Where(kvp => kvp.Key.StartsWith(prefix))
+            .Select(kvp => kvp.Value)
+            .ToArray();
+
+        for (int i = 0; i < _loadResult.ExportTable.Length; i++)
+        {
+            var exportedTypeSchema = (MarkupTypeSchema)_loadResult.ExportTable[i];
+            var exportDirective = exportDirectives[i];
+
+            // Set all offsets
+            if (_objectSection.LabelOffsetMap.TryGetValue(exportDirective.InitializePropertiesLabel, out var propOffset))
+                exportedTypeSchema.SetInitializePropertiesOffset(propOffset);
+
+            if (_objectSection.LabelOffsetMap.TryGetValue(exportDirective.InitializeContentLabel, out var contOffset))
+                exportedTypeSchema.SetInitializeContentOffset(contOffset);
+
+            if (_objectSection.LabelOffsetMap.TryGetValue(exportDirective.InitializeLocalsInputLabel, out var loclOffset))
+                exportedTypeSchema.SetInitializeLocalsInputOffset(loclOffset);
+
+            var evaliOffsets = GetOffsets(exportDirective.InitialEvaluateOffsetsLabelPrefix);
+            exportedTypeSchema.SetInitialEvaluateOffsets(evaliOffsets);
+
+            var evalfOffsets = GetOffsets(exportDirective.FinalEvaluateOffsetsLabelPrefix);
+            exportedTypeSchema.SetFinalEvaluateOffsets(evalfOffsets);
+
+            var rfshOffsets = GetOffsets(exportDirective.FinalEvaluateOffsetsLabelPrefix);
+            exportedTypeSchema.SetRefreshListenerGroupOffsets(rfshOffsets);
+        }
     }
 
     public void ReportError(string error, int line, int column)

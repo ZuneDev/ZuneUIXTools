@@ -38,12 +38,15 @@ public class Disassembler
             yield return new ExportDirective(labelPrefix, markupTypeSchema.ListenerCount, baseName);
 
             var propOffset = markupTypeSchema.InitializePropertiesOffset;
+            if (propOffset != uint.MaxValue)
             InsertLabel(propOffset, ExportDirective.GetInitializePropertiesLabel(labelPrefix));
 
             var loclOffset = markupTypeSchema.InitializeLocalsInputOffset;
+            if (loclOffset != uint.MaxValue)
             InsertLabel(loclOffset, ExportDirective.GetInitializeLocalsInputLabel(labelPrefix));
 
             var contOffset = markupTypeSchema.InitializeContentOffset;
+            if (contOffset != uint.MaxValue)
             InsertLabel(contOffset, ExportDirective.GetInitializeContentLabel(labelPrefix));
 
             if (markupTypeSchema.InitialEvaluateOffsets != null)

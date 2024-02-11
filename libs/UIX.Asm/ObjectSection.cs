@@ -10,7 +10,7 @@ public class ObjectSection
 {
     readonly IEnumerable<IBodyItem> _body;
     readonly MarkupLoadResult _loadResult;
-    readonly Dictionary<string, uint> _labelOffsetMap = new();
+    Dictionary<string, uint> _labelOffsetMap;
 
     public ObjectSection(IEnumerable<IBodyItem> body, MarkupLoadResult loadResult)
     {
@@ -28,6 +28,7 @@ public class ObjectSection
     public ByteCodeReader Encode()
     {
         ByteCodeWriter writer = new();
+        _labelOffsetMap = new();
 
         foreach (var bodyItem in _body)
         {

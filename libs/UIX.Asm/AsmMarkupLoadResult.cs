@@ -23,7 +23,7 @@ internal class AsmMarkupLoadResult : MarkupLoadResult
         _resource = resource;
         if (uri != resource.Uri)
             _uriUnderlying = resource.Uri;
-        _loader = AsmMarkupLoader.Load(this, resource);
+        _loader = new AsmMarkupLoader(this, resource);
     }
 
     public AsmMarkupLoadResult(string uri)
