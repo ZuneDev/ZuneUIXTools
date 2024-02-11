@@ -314,8 +314,7 @@ internal class AsmMarkupLoader
         ErrorManager.ReportError(line, column, error);
     }
 
-    public void ReportError(string error, IAsmItem item)
-        => ReportError(error, item.Line, item.Column);
+    public void ReportError(string error, IAsmItem item) => ReportError(error, item.Line, item.Column);
 
     public void TrackImportedLoadResult(LoadResult loadResult)
     {

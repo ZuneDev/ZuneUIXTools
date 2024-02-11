@@ -11,20 +11,6 @@ public record Label(string Name) : CodeItem
     public override string ToString() => $"{Name}:";
 }
 
-public enum OperandDataType : byte
-{
-    Byte,
-    UInt16,
-    UInt32,
-    Int32,
-    Bytes,
-}
-
-public record Operand(object Value, OperandDataType DataType, string Content = null) : AsmItem
-{
-    public override string ToString() => Content ?? Value.ToString();
-}
-
 public record Program
 {
     public Program(IEnumerable<IBodyItem> body)

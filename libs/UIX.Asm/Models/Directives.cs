@@ -12,6 +12,20 @@ public record SectionDirective : Directive
     public override string ToString() => $"{base.ToString()} {Name}";
 }
 
+public record ConstantDirective : Directive
+{
+    public ConstantDirective(string name, string typeName, string content) : base("constant")
+    {
+        Name = name;
+        TypeName = typeName;
+        ValueString = content;
+    }
+
+    public string Name { get; }
+    public string TypeName { get; }
+    public string ValueString { get; }
+}
+
 public record ExportDirective : Directive
 {
     public ExportDirective(string labelPrefix, uint listenerCount, string baseTypeName) : base("export")

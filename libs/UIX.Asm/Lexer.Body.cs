@@ -44,7 +44,7 @@ partial class Lexer
         }
         else
         {
-            List<Operand> operands = new();
+            List<OperandLiteral> operands = new();
             var endOfInstructionResult = StatementEnd(input);
             input = endOfInstructionResult.Remainder;
 
@@ -65,11 +65,11 @@ partial class Lexer
 
                     object operandValue = operandType switch
                     {
-                        OperandDataType.Byte => byte.Parse(operandContent),
-                        OperandDataType.UInt16 => ushort.Parse(operandContent),
-                        OperandDataType.UInt32 => uint.Parse(operandContent),
-                        OperandDataType.Int32 => int.Parse(operandContent),
-                        OperandDataType.Bytes or _ => operandContent,
+                        LiteralDataType.Byte => byte.Parse(operandContent),
+                        LiteralDataType.UInt16 => ushort.Parse(operandContent),
+                        LiteralDataType.UInt32 => uint.Parse(operandContent),
+                        LiteralDataType.Int32 => int.Parse(operandContent),
+                        LiteralDataType.Bytes or _ => operandContent,
                     };
 
                     operands.Add(new(operandValue, operandType, operandContent)

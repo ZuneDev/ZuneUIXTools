@@ -106,11 +106,11 @@ internal static class InstructionSet
         ("DBG", OpCode.EnterDebugState),
     ];
 
-    private static readonly OperandDataType[] Inst_UInt16 = [OperandDataType.UInt16];
-    private static readonly OperandDataType[] Inst_UInt32 = [OperandDataType.UInt32];
-    private static readonly OperandDataType[] Inst_UInt16x2 = [OperandDataType.UInt16, OperandDataType.UInt16];
+    private static readonly LiteralDataType[] Inst_UInt16 = [LiteralDataType.UInt16];
+    private static readonly LiteralDataType[] Inst_UInt32 = [LiteralDataType.UInt32];
+    private static readonly LiteralDataType[] Inst_UInt16x2 = [LiteralDataType.UInt16, LiteralDataType.UInt16];
 
-    public static readonly Dictionary<OpCode, OperandDataType[]> InstructionSchema = new()
+    public static readonly Dictionary<OpCode, LiteralDataType[]> InstructionSchema = new()
     {
         [OpCode.InitializeInstanceIndirect] = [],
         [OpCode.PushNull] = [],
@@ -152,20 +152,20 @@ internal static class InstructionSet
         [OpCode.JumpIfNullPeek] = Inst_UInt32,
         [OpCode.Jump] = Inst_UInt32,
 
-        [OpCode.EnterDebugState] = [OperandDataType.Int32],
+        [OpCode.EnterDebugState] = [LiteralDataType.Int32],
 
         [OpCode.ConstructObjectParam] = Inst_UInt16x2,
         [OpCode.ConstructFromString] = Inst_UInt16x2,
         [OpCode.PropertyDictionaryAdd] = Inst_UInt16x2,
         [OpCode.ConvertType] = Inst_UInt16x2,
 
-        [OpCode.JumpIfDictionaryContains] = [OperandDataType.UInt16, OperandDataType.UInt16, OperandDataType.UInt32],
+        [OpCode.JumpIfDictionaryContains] = [LiteralDataType.UInt16, LiteralDataType.UInt16, LiteralDataType.UInt32],
 
-        [OpCode.ConstructFromBinary] = [OperandDataType.UInt16, OperandDataType.Bytes],
+        [OpCode.ConstructFromBinary] = [LiteralDataType.UInt16, LiteralDataType.Bytes],
 
-        [OpCode.Operation] = [OperandDataType.UInt16, OperandDataType.Byte],
+        [OpCode.Operation] = [LiteralDataType.UInt16, LiteralDataType.Byte],
 
-        [OpCode.Listen] = [OperandDataType.UInt16, OperandDataType.Byte, OperandDataType.UInt16, OperandDataType.UInt32],
-        [OpCode.DestructiveListen] = [OperandDataType.UInt16, OperandDataType.Byte, OperandDataType.UInt16, OperandDataType.UInt32, OperandDataType.UInt32],
+        [OpCode.Listen] = [LiteralDataType.UInt16, LiteralDataType.Byte, LiteralDataType.UInt16, LiteralDataType.UInt32],
+        [OpCode.DestructiveListen] = [LiteralDataType.UInt16, LiteralDataType.Byte, LiteralDataType.UInt16, LiteralDataType.UInt32, LiteralDataType.UInt32],
     };
 }

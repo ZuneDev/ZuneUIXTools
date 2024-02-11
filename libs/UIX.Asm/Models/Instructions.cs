@@ -37,7 +37,7 @@ public record Instruction(string Mnemonic, IEnumerable<Operand> Operands) : Code
         if (operands.Length != schema.Length)
             throw new ArgumentException($"{opCode} requires {schema.Length} operands, got {operands.Length}");
 
-        var operandModels = new Operand[operands.Length];
+        var operandModels = new OperandLiteral[operands.Length];
         for (int i = 0; i < schema.Length; i++)
         {
             var operandValue = operands[i];
