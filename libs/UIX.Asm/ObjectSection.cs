@@ -8,18 +8,14 @@ namespace Microsoft.Iris.Asm;
 
 public class ObjectSection
 {
-    readonly IEnumerable<Instruction> _instructions;
+    readonly IEnumerable<IBodyItem> _body;
     readonly MarkupLoadResult _loadResult;
-
-    public ObjectSection(IEnumerable<Instruction> instructions, MarkupLoadResult loadResult)
-    {
-        _instructions = instructions;
-        _loadResult = loadResult;
-    }
+    readonly Dictionary<string, uint> _labelOffsetMap = new();
 
     public ObjectSection(IEnumerable<IBodyItem> body, MarkupLoadResult loadResult)
-        : this(body.OfType<Instruction>(), loadResult)
     {
+        _body = body;
+        _loadResult = loadResult;
     }
 
     public ObjectSection(Program program, MarkupLoadResult loadResult)
@@ -27,14 +23,26 @@ public class ObjectSection
     {
     }
 
+    public IReadOnlyDictionary<string, uint> LabelOffsetMap => _labelOffsetMap;
+
     public ByteCodeReader Encode()
     {
         ByteCodeWriter writer = new();
 
-        foreach (var instruction in _instructions)
+        foreach (var bodyItem in _body)
         {
+            var offset = writer.DataSize;
+
+            if (bodyItem is Label label)
+            {
+                _labelOffsetMap[label.Name] = offset;
+                continue;
+            }
+            if (bodyItem is not Instruction instruction)
+                continue;
+
             // Add entry to line number table
-            _loadResult.LineNumberTable.AddRecord(writer.DataSize, instruction.Line, instruction.Column);
+            _loadResult.LineNumberTable.AddRecord(offset, instruction.Line, instruction.Column);
 
             var opCode = instruction.OpCode;
             writer.WriteByte(opCode);

@@ -44,10 +44,11 @@ main:
         Assert.Equal(9, ast.Body.Count());
     }
 
-    [Fact]
-    public async Task Assemble()
+    [Theory]
+    [InlineData("testA")]
+    public async Task Assemble(string fileNameWithoutExtension)
     {
-        using TempFile tempFile = new("testA.uixa", ".uixa");
+        using TempFile tempFile = new($"{fileNameWithoutExtension}.uixa", ".uixa");
         await tempFile.InitAsync();
 
         CompilerInput[] compilerInputs = [

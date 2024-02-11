@@ -1,6 +1,5 @@
 ﻿using Microsoft.Iris.Asm.Models;
 using Microsoft.Iris.Data;
-using Microsoft.Iris.Library;
 using Microsoft.Iris.Markup;
 using Microsoft.Iris.Session;
 using Sprache;
@@ -19,11 +18,16 @@ internal class AsmMarkupLoader
     private readonly AsmMarkupLoadResult _loadResult;
     private bool _usingSharedBinaryDataTable;
     private SourceMarkupImportTables _importTables;
+    private ObjectSection _objectSection;
 
     private readonly Dictionary<string, LoadResult> _importedNamespaces = new();
     private readonly HashSet<string> _referencedNamespaces = new();
 
-    protected AsmMarkupLoader(AsmMarkupLoadResult loadResult) => _loadResult = loadResult;
+    protected AsmMarkupLoader(AsmMarkupLoadResult loadResult)
+    {
+        _loadResult = loadResult;
+        _objectSection = new(_program, _loadResult);
+    }
 
     public bool HasErrors { get; protected set; }
 
@@ -48,7 +52,40 @@ internal class AsmMarkupLoader
             owner._program = parseResult.Value;
         else
             owner.MarkHasErrors();
+
         return owner;
+    }
+
+    public LoadResult FindDependency(string prefix)
+    {
+        if (prefix == null)
+            return MarkupSystem.UIXGlobal;
+        
+        return _importedNamespaces[prefix];
+    }
+
+    public TypeSchema ResolveTypeFromQualifiedName(string qualifiedName)
+    {
+        if (qualifiedName == null)
+            throw new ArgumentNullException(nameof(qualifiedName));
+
+        string typeName;
+        LoadResult result;
+
+        int idx = qualifiedName.IndexOf(':');
+        if (idx <= 0)
+        {
+            typeName = qualifiedName[..idx];
+            result = FindDependency(qualifiedName[..idx]);
+        }
+        else
+        {
+            typeName = qualifiedName;
+            result = _loadResult;
+        }
+
+        return result.ExportTable.Where(e => e.Name == typeName).FirstOrDefault()
+            ?? throw new Exception($"No type with the name '{typeName}' was exported from {result.Uri}");
     }
 
     public void MarkHasErrors()
@@ -88,7 +125,7 @@ internal class AsmMarkupLoader
                 _importTables = new SourceMarkupImportTables();
             }
 
-            foreach (var nsImport in _program.Imports.OfType<NamespaceImport>())
+            foreach (var nsImport in _program.Directives.OfType<NamespaceImport>())
             {
                 LoadResult loadResult;
                 if (nsImport.Uri == "Me")
@@ -97,7 +134,7 @@ internal class AsmMarkupLoader
                     loadResult = MarkupSystem.ResolveLoadResult(nsImport.Uri, _loadResult.IslandReferences);
 
                 if (loadResult == null || loadResult is ErrorLoadResult)
-                    ReportError($"Unable to load '{nsImport.Uri}' (xmlns prefix '{nsImport.Name}')", -1, -1);
+                    ReportError($"Unable to load '{nsImport.Uri}' (xmlns prefix '{nsImport.Name}')", nsImport);
                 else if (loadResult.Status == LoadResultStatus.Error)
                     MarkHasErrors();
                 if (MarkupSystem.CompileMode)
@@ -106,7 +143,7 @@ internal class AsmMarkupLoader
                 if (loadResult != null)
                 {
                     _importedNamespaces[nsImport.Name] = loadResult;
-                    //TrackImportedLoadResult(loadResult);
+                    TrackImportedLoadResult(loadResult);
                 }
             }
         }
@@ -134,7 +171,7 @@ internal class AsmMarkupLoader
 
             if (_currentValidationPass == LoadPass.Full)
             {
-                foreach (var nsImport in _program.Imports.OfType<NamespaceImport>())
+                foreach (var nsImport in _program.Directives.OfType<NamespaceImport>())
                 {
                     if (!_referencedNamespaces.Contains(nsImport.Name))
                         ErrorManager.ReportWarning(nsImport.Line, nsImport.Column, $"Unreferenced namespace '{nsImport.Name}'");
@@ -144,7 +181,7 @@ internal class AsmMarkupLoader
 
         if (_currentValidationPass == LoadPass.DeclareTypes)
         {
-            //_loadResult.SetExportTable(PrepareExportTable());
+            _loadResult.SetExportTable(PrepareExportTable());
             //_loadResult.SetAliasTable(PrepareAliasTable());
         }
         else if (_currentValidationPass == LoadPass.PopulatePublicModel)
@@ -173,13 +210,13 @@ internal class AsmMarkupLoader
             MarkupLineNumberTable lineNumberTable = new();
             MarkupConstantsTable constantsTable = _loadResult.BinaryDataTable?.ConstantsTable ?? new();
 
+            _loadResult.SetLineNumberTable(lineNumberTable);
             _loadResult.SetDataMappingsTable(PrepareDataMappingTable());
             _loadResult.ValidationComplete();
 
             ByteCodeReader reader = null;
-            ObjectSection objectSection = new(_program, _loadResult);
             if (!HasErrors)
-                reader = objectSection.Encode();
+                reader = _objectSection.Encode();
 
             if (!_usingSharedBinaryDataTable)
             {
@@ -188,7 +225,6 @@ internal class AsmMarkupLoader
             }
 
             lineNumberTable.PrepareForRuntimeUse();
-            _loadResult.SetLineNumberTable(lineNumberTable);
 
             if (reader != null)
                 _loadResult.SetObjectSection(reader);
@@ -203,19 +239,133 @@ internal class AsmMarkupLoader
         }
     }
 
+    private TypeSchema[] PrepareExportTable()
+    {
+        var exportDirectives = _program.Directives.OfType<ExportDirective>().ToArray();
+        var exports = new TypeSchema[exportDirectives.Length];
+
+        for (int i = 0; i < exportDirectives.Length; i++)
+        {
+            ExportDirective exportDirective = exportDirectives[i];
+
+            var markupType = (MarkupType)Enum.Parse(typeof(MarkupType), exportDirective.BaseTypeName);
+            var exportedTypeSchema = MarkupTypeSchema.Build(markupType, _loadResult, exportDirective.LabelPrefix);
+
+            // Set all offsets
+            var propOffset = _objectSection.LabelOffsetMap[exportDirective.InitializePropertiesLabel];
+            exportedTypeSchema.SetInitializePropertiesOffset(propOffset);
+
+            var contOffset = _objectSection.LabelOffsetMap[exportDirective.InitializeContentLabel];
+            exportedTypeSchema.SetInitializeContentOffset(contOffset);
+
+            var loclOffset = _objectSection.LabelOffsetMap[exportDirective.InitializeLocalsInputLabel];
+            exportedTypeSchema.SetInitializeLocalsInputOffset(loclOffset);
+
+            var evaliOffsets = _objectSection.LabelOffsetMap
+                .Where(kvp => kvp.Key.StartsWith(exportDirective.InitialEvaluateOffsetsLabelPrefix))
+                .Select(kvp => kvp.Value)
+                .ToArray();
+            exportedTypeSchema.SetInitialEvaluateOffsets(evaliOffsets);
+
+            var evalfOffsets = _objectSection.LabelOffsetMap
+                .Where(kvp => kvp.Key.StartsWith(exportDirective.FinalEvaluateOffsetsLabelPrefix))
+                .Select(kvp => kvp.Value)
+                .ToArray();
+            exportedTypeSchema.SetFinalEvaluateOffsets(evalfOffsets);
+
+            var rfshOffsets = _objectSection.LabelOffsetMap
+                .Where(kvp => kvp.Key.StartsWith(exportDirective.RefreshGroupOffsetsLabelPrefix))
+                .Select(kvp => kvp.Value)
+                .ToArray();
+            exportedTypeSchema.SetRefreshListenerGroupOffsets(rfshOffsets);
+
+            exportedTypeSchema.SetListenerCount(exportDirective.ListenerCount);
+
+            exports[i] = exportedTypeSchema;
+        }
+
+        return exports;
+    }
     private LoadResult[] PrepareDependenciesTable()
     {
-        return null;
+        // TODO
+        return [];
     }
 
     private MarkupDataMapping[] PrepareDataMappingTable()
     {
-        return null;
+        // TODO
+        return [];
     }
 
     public void ReportError(string error, int line, int column)
     {
         MarkHasErrors();
         ErrorManager.ReportError(line, column, error);
+    }
+
+    public void ReportError(string error, IAsmItem item)
+        => ReportError(error, item.Line, item.Column);
+
+    public void TrackImportedLoadResult(LoadResult loadResult)
+    {
+        if (loadResult == MarkupSystem.UIXGlobal)
+            return;
+        for (int index = 0; index < _importTables.ImportedLoadResults.Count; ++index)
+        {
+            if ((LoadResult)_importTables.ImportedLoadResults[index] == loadResult)
+                return;
+        }
+        _importTables.ImportedLoadResults.Add(loadResult);
+    }
+
+    public int TrackImportedType(TypeSchema type)
+    {
+        TrackImportedLoadResult(type.Owner);
+        return TrackImportedSchema(_importTables.ImportedTypes, type);
+    }
+
+    public int TrackImportedConstructor(ConstructorSchema constructor)
+    {
+        int num = TrackImportedSchema(_importTables.ImportedConstructors, constructor);
+        TrackImportedType(constructor.Owner);
+        foreach (TypeSchema parameterType in constructor.ParameterTypes)
+            TrackImportedType(parameterType);
+        return num;
+    }
+
+    public int TrackImportedProperty(PropertySchema property)
+    {
+        int num = TrackImportedSchema(_importTables.ImportedProperties, property);
+        TrackImportedType(property.Owner);
+        return num;
+    }
+
+    public int TrackImportedMethod(MethodSchema method)
+    {
+        int num = TrackImportedSchema(_importTables.ImportedMethods, method);
+        TrackImportedType(method.Owner);
+        foreach (TypeSchema parameterType in method.ParameterTypes)
+            TrackImportedType(parameterType);
+        return num;
+    }
+
+    public int TrackImportedEvent(EventSchema evt)
+    {
+        int num = TrackImportedSchema(_importTables.ImportedEvents, evt);
+        TrackImportedType(evt.Owner);
+        return num;
+    }
+
+    public int TrackImportedSchema(Vector importList, object schema)
+    {
+        for (int index = 0; index < importList.Count; ++index)
+        {
+            if (importList[index] == schema)
+                return index;
+        }
+        int count = importList.Count;
+        importList.Add(schema);
+        return count;
     }
 }

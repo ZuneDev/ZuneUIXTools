@@ -12,7 +12,7 @@
 	            <Children>
 	                <Text Name="MainBlock" Color="Red"
 	                	  Content="Howdy from Microsoft.Iris!"/>
-	                	  <me:Alt/>
+                    <me:Alt/>
 	            </Children>
             </Panel>
         </Content>
