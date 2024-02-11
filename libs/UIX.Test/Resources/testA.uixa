@@ -1,19 +1,37 @@
-﻿.export main 0 UI
-
-.import-ns Me as me
+﻿.import-type UI
+.import-type Dictionary
 .import-ns assembly://UIX/Microsoft.Iris as iris
 .import-type iris:Command
-
-
-.section data
+.import-type String
+.import-type ViewItem
+.import-type Text
+.import-type Color
+.import-type Font
+.export Default 0 UI
+.export Alt 0 UI
 
 .section object
-main:
-    COBJ 2
+Default_cont:
+    COBJ 5
     PSHC 0
-    PINI 1
-    PSHC 1
     PINI 2
-    PINI 0
+    PSHC 1
+    PINI 3
+    PINI 1
     RETV
+Default_locl:
+    COBJ 2
+    PDAD 0, 2
+    RETV
+Alt_cont:
+    COBJ 5
+    PSHC 3
+    PINI 2
+    PSHC 4
+    PINI 4
+    PSHC 5
+    PINI 3
+    PINI 1
+    RETV
+Alt_locl:
     RETV
