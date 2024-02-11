@@ -39,15 +39,15 @@ public class Disassembler
 
             var propOffset = markupTypeSchema.InitializePropertiesOffset;
             if (propOffset != uint.MaxValue)
-            InsertLabel(propOffset, ExportDirective.GetInitializePropertiesLabel(labelPrefix));
+                InsertLabel(propOffset, ExportDirective.GetInitializePropertiesLabel(labelPrefix));
 
             var loclOffset = markupTypeSchema.InitializeLocalsInputOffset;
             if (loclOffset != uint.MaxValue)
-            InsertLabel(loclOffset, ExportDirective.GetInitializeLocalsInputLabel(labelPrefix));
+                InsertLabel(loclOffset, ExportDirective.GetInitializeLocalsInputLabel(labelPrefix));
 
             var contOffset = markupTypeSchema.InitializeContentOffset;
             if (contOffset != uint.MaxValue)
-            InsertLabel(contOffset, ExportDirective.GetInitializeContentLabel(labelPrefix));
+                InsertLabel(contOffset, ExportDirective.GetInitializeContentLabel(labelPrefix));
 
             if (markupTypeSchema.InitialEvaluateOffsets != null)
             {
@@ -100,11 +100,14 @@ public class Disassembler
                     var scheme = uri[..schemeLength];
                     if (scheme == "assembly")
                     {
-                        // Assume the URI represents a C# namespace
-                        namespacePrefix = uri.Split('.', '/', '\\', '!')[^1];
+                        // Assume 'host' is an assembly name and path represents a C# namespace
+                        var assemblyUriParts = uri.Split('/');
 
-                        // Remove the extra assembly info
-                        uri = uri.Split(',')[0];
+                        var importedNamespace = assemblyUriParts[^1];
+                        namespacePrefix = importedNamespace.Split('.', '/', '\\', '!')[^1];
+
+                        System.Reflection.AssemblyName assemblyName = new(assemblyUriParts[^2]);
+                        uri = $"{scheme}://{assemblyName.Name}/{importedNamespace}";
                     }
                     else
                     {
