@@ -5,44 +5,44 @@ namespace Microsoft.Iris.Asm;
 
 partial class Lexer
 {
-    private static IResult<IImport> ParseImport(IInput input)
+    private static IResult<IImportDirective> ParseImport(IInput input)
     {
         input = ConsumeWhitespace(input);
 
         var importDirectiveResult = Parse.String(".import")(input);
         input = importDirectiveResult.Remainder;
         if (!importDirectiveResult.WasSuccessful)
-            return Result.Failure<IImport>(input, "Invalid import directive", ["Expected '.import'"]);
+            return Result.Failure<IImportDirective>(input, "Invalid import directive", ["Expected '.import'"]);
 
         return ParseImportAsDirective(input);
     }
 
-    private static IResult<IImport> ParseImportAsDirective(IInput input)
+    private static IResult<IImportDirective> ParseImportAsDirective(IInput input)
     {
         if (input.Current != '-' || input.AtEnd)
-            return Result.Failure<IImport>(input, "Invalid import type", ["An import type must be specified"]);
+            return Result.Failure<IImportDirective>(input, "Invalid import type", ["An import type must be specified"]);
         input = input.Advance();
 
         var importTypeResult = WordText(input);
         input = importTypeResult.Remainder;
         if (!importTypeResult.WasSuccessful)
-            return Result.Failure<IImport>(input, "Invalid import type", ["Expected 'ns'"]);
+            return Result.Failure<IImportDirective>(input, "Invalid import type", ["Expected 'ns'"]);
 
-        IImport import;
+        IImportDirective import;
         switch (importTypeResult.Value.ToUpperInvariant())
         {
             case "NS":
                 var uriResult = Uri.Token()(input);
                 input = uriResult.Remainder;
                 if (!uriResult.WasSuccessful)
-                    return Result.Failure<IImport>(input, "Invalid URI", ["Expected a valid URI"]);
+                    return Result.Failure<IImportDirective>(input, "Invalid URI", ["Expected a valid URI"]);
 
                 input = Parse.String("as").Token()(input).Remainder;
 
                 var nameResult = AlphanumericText(input);
                 input = nameResult.Remainder;
                 if (!nameResult.WasSuccessful)
-                    return Result.Failure<IImport>(input, "Invalid namespace alias", ["Expected a valid namespace alias"]);
+                    return Result.Failure<IImportDirective>(input, "Invalid namespace alias", ["Expected a valid namespace alias"]);
 
                 import = new NamespaceImport(uriResult.Value, nameResult.Value);
                 break;
@@ -51,7 +51,7 @@ partial class Lexer
                 var typePrefixResult = Identifier.Token()(input);
                 input = typePrefixResult.Remainder;
                 if (!typePrefixResult.WasSuccessful)
-                    return Result.Failure<IImport>(input, "Invalid type import", ["Expected a valid namespace prefix"]);
+                    return Result.Failure<IImportDirective>(input, "Invalid type import", ["Expected a valid namespace prefix"]);
 
                 var typeNamespaceDelimitterResult = Parse.Char(':')(input);
                 input = typeNamespaceDelimitterResult.Remainder;
@@ -62,7 +62,7 @@ partial class Lexer
                     var typeNameResult = Identifier(input);
                     input = typeNameResult.Remainder;
                     if (!typeNameResult.WasSuccessful)
-                        return Result.Failure<IImport>(input, "Invalid type import", ["Expected a valid type name"]);
+                        return Result.Failure<IImportDirective>(input, "Invalid type import", ["Expected a valid type name"]);
 
                     typePrefix = typePrefixResult.Value;
                     typeName = typeNameResult.Value;
@@ -77,7 +77,7 @@ partial class Lexer
                 break;
 
             default:
-                return Result.Failure<IImport>(input, $"Unknown import type '{importTypeResult.Value}'", ["Expected 'ns'"]);
+                return Result.Failure<IImportDirective>(input, $"Unknown import type '{importTypeResult.Value}'", ["Expected 'ns'"]);
         }
 
         return Result.Success(import, input);

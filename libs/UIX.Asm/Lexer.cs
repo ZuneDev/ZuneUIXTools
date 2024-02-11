@@ -18,16 +18,15 @@ public static partial class Lexer
 
     public static readonly Parser<string> StatementEnd = Parse.Char(';').Return(";").Or(Parse.LineTerminator);
 
-    public static readonly Parser<IImport> Import = ParseImport;
+    public static readonly Parser<IImportDirective> Import = ParseImport;
 
     public static readonly Parser<IDirective> Directive = ParseDirective;
 
     public static readonly Parser<IBodyItem> BodyItem = ParseBodyItem;
 
     public static readonly Parser<Program> Program =
-        from directives in Directive.Many()
         from body in BodyItem.Many()
-        select new Program(directives, body);
+        select new Program(body);
 
     private static IInput ConsumeWhitespace(IInput input) => Parse.WhiteSpace.Many()(input).Remainder;
 }

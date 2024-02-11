@@ -43,7 +43,7 @@ main:
 
         Assert.NotNull(ast);
         Assert.Equal(3 + 2 + 2, ast.Directives.Count());
-        Assert.Equal(9, ast.Body.Count());
+        Assert.Equal(9, ast.Code.Count());
     }
 
     [Theory]
@@ -109,7 +109,10 @@ main:
         ErrorManager.OnErrors += (errors) =>
         {
             foreach (ErrorRecord error in errors)
-                output.WriteLine($"Error at (L{error.Line}, C{error.Column}): {error.Message}");
+            {
+                var errorTypeText = error.Warning ? "Warning" : "Error";
+                output.WriteLine($"{errorTypeText} at (L{error.Line}, C{error.Column}): {error.Message}");
+            }
         };
 
         var success = MarkupCompiler.Compile(compilerInputs, default);

@@ -30,12 +30,12 @@ partial class Lexer
 
             case "SECTION":
                 if (StatementEnd(input).WasSuccessful)
-                    return Result.Failure<IImport>(input, "Invalid section directive", ["Expected a section name"]);
+                    return Result.Failure<IImportDirective>(input, "Invalid section directive", ["Expected a section name"]);
 
                 var sectionNameResult = Parse.Letter.AtLeastOnce().Token().Text()(input);
                 input = sectionNameResult.Remainder;
                 if (!sectionNameResult.WasSuccessful)
-                    return Result.Failure<IImport>(input, "Invalid section name", ["Expected a section name containing only letters"]);
+                    return Result.Failure<IImportDirective>(input, "Invalid section name", ["Expected a section name containing only letters"]);
 
                 directive = new SectionDirective(sectionNameResult.Value)
                 {
@@ -46,25 +46,25 @@ partial class Lexer
 
             case "EXPORT":
                 if (StatementEnd(input).WasSuccessful)
-                    return Result.Failure<IImport>(input, "Invalid export directive", ["Expected export information"]);
+                    return Result.Failure<IImportDirective>(input, "Invalid export directive", ["Expected export information"]);
 
                 var labelPrefixResult = Identifier.Token()(input);
                 input = labelPrefixResult.Remainder;
                 if (!labelPrefixResult.WasSuccessful)
-                    return Result.Failure<IImport>(input, "Invalid export directive", ["Expected prefix of labels to export"]);
+                    return Result.Failure<IImportDirective>(input, "Invalid export directive", ["Expected prefix of labels to export"]);
 
                 var listenerCountResult = WholeNumber.Token()(input);
                 input = listenerCountResult.Remainder;
                 if (!listenerCountResult.WasSuccessful)
-                    return Result.Failure<IImport>(input, "Invalid export directive", ["Expected listener count"]);
+                    return Result.Failure<IImportDirective>(input, "Invalid export directive", ["Expected listener count"]);
 
                 if (!uint.TryParse(listenerCountResult.Value, out var listenerCount))
-                    return Result.Failure<IImport>(input, "Invalid export directive", ["Expected export listener count to be an unsigned integer"]);
+                    return Result.Failure<IImportDirective>(input, "Invalid export directive", ["Expected export listener count to be an unsigned integer"]);
 
                 var baseTypeNameResult = AlphanumericText.Token()(input);
                 input = baseTypeNameResult.Remainder;
                 if (!baseTypeNameResult.WasSuccessful)
-                    return Result.Failure<IImport>(input, "Invalid export directive", ["Expected base type name"]);
+                    return Result.Failure<IImportDirective>(input, "Invalid export directive", ["Expected base type name"]);
 
                 var labelPrefix = labelPrefixResult.Value;
                 var baseTypeName = baseTypeNameResult.Value;
@@ -76,7 +76,7 @@ partial class Lexer
                 break;
 
             default:
-                return Result.Failure<IImport>(input, $"Unknown import type '{directiveIdResult.Value}'", ["Expected 'export', 'import', or 'section'"]);
+                return Result.Failure<IImportDirective>(input, $"Unknown import type '{directiveIdResult.Value}'", ["Expected 'export', 'import', or 'section'"]);
         }
 
         return Result.Success(directive, input);

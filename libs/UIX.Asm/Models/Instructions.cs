@@ -7,7 +7,7 @@ using System.Linq;
 namespace Microsoft.Iris.Asm.Models;
 
 [DebuggerDisplay("{ToString()} " + DebuggerDisplay)]
-public record Instruction(string Mnemonic, IEnumerable<Operand> Operands) : BodyItem
+public record Instruction(string Mnemonic, IEnumerable<Operand> Operands) : CodeItem
 {
     public Instruction(OpCode opCode, OperationType? operationType, IEnumerable<Operand> Operands)
         : this(InstructionSet.GetMnemonic(opCode, operationType), Operands)

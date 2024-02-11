@@ -83,7 +83,7 @@ public class Disassembler
         }
     }
 
-    public IEnumerable<IImport> GetImports()
+    public IEnumerable<IImportDirective> GetImports()
     {
         // Ues _importedUris to keep track of what has already been imported.
         // Skip self and default UIX namespace.
@@ -117,6 +117,11 @@ public class Disassembler
                     }
                 }
 
+                // Some imports, such as assembly imports, require additional parsing
+                // and might change the URI that actually gets imported.
+                if (_importedUris.ContainsKey(uri))
+                    continue;
+
                 namespacePrefix = namespacePrefix.Camelize();
                 _importedUris.Add(uri, namespacePrefix);
 
@@ -127,7 +132,7 @@ public class Disassembler
         };
     }
 
-    public IEnumerable<IBodyItem> GetBody()
+    public IEnumerable<IBodyItem> GetCode()
     {
         var reader = _loadResult.ObjectSection;
 
@@ -254,12 +259,13 @@ public class Disassembler
         _loadResult.Load(LoadPass.Full);
         _loadResult.Load(LoadPass.Done);
 
-        List<IDirective> directives = GetImports().Cast<IDirective>()
-            .Concat(GetExports())
-            .ToList();
-        List<IBodyItem> body = new(GetBody());
+        IEnumerable<IEnumerable<IBodyItem>> segments = [
+            GetExports(),
+            GetImports(),
+            GetCode(),
+        ];
 
-        Program asmProgram = new(directives, body);
+        Program asmProgram = new(segments.SelectMany(e => e));
         return asmProgram.ToString();
     }
 

@@ -14,7 +14,10 @@ public abstract record AsmItem : IAsmItem
     internal const string DebuggerDisplay = "({Line}, {Column})";
 }
 
-public interface IDirective : IAsmItem
+public interface IBodyItem : IAsmItem;
+public abstract record BodyItem : AsmItem, IBodyItem;
+
+public interface IDirective : IBodyItem
 {
     string Identifier { get; init; }
 }
@@ -23,15 +26,15 @@ public abstract record Directive(string Identifier) : AsmItem, IDirective
     public override string ToString() => $".{Identifier}";
 }
 
-public interface IImport : IDirective;
-public abstract record Import : Directive, IImport
+public interface IImportDirective : IDirective;
+public abstract record ImportDirective : Directive, IImportDirective
 {
-    public Import(string Type) : base($"import-{Type}")
+    public ImportDirective(string Type) : base($"import-{Type}")
     {
     }
 
     public override string ToString() => base.ToString();
 }
 
-public interface IBodyItem : IAsmItem;
-public abstract record BodyItem : AsmItem, IBodyItem;
+public interface ICodeItem : IBodyItem;
+public abstract record CodeItem : BodyItem, ICodeItem;

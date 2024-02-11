@@ -1,6 +1,6 @@
 ﻿namespace Microsoft.Iris.Asm.Models;
 
-public record SectionDirective : Directive, IBodyItem
+public record SectionDirective : Directive
 {
     public SectionDirective(string name) : base("section")
     {
