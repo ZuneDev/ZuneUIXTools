@@ -26,7 +26,7 @@ partial class Lexer
             return Result.Success(directiveBodyItem, input);
         }
 
-        var identifierResult = Parse.Letter.AtLeastOnce().Text().Invoke(input);
+        var identifierResult = Identifier.Invoke(input);
         if (!identifierResult.WasSuccessful)
             return Result.Failure<IBodyItem>(input, "Invalid code", []);
 

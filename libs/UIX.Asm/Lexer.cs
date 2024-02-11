@@ -12,6 +12,8 @@ public static partial class Lexer
 
     public static readonly Parser<string> WholeNumber = Parse.Digit.AtLeastOnce().Text();
 
+    public static readonly Parser<string> Identifier = Parse.LetterOrDigit.Or(Parse.Chars('_', '-')).AtLeastOnce().Text();
+
     public static readonly Parser<string> Uri = Parse.LetterOrDigit.Or(Parse.Chars(":/!._-")).AtLeastOnce().Text();
 
     public static readonly Parser<string> StatementEnd = Parse.Char(';').Return(";").Or(Parse.LineTerminator);

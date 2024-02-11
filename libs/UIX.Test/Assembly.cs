@@ -20,6 +20,7 @@ public class Assembly(ITestOutputHelper output)
 .import-ns Me as me
 .import-ns assembly://UIX/Microsoft.Iris as iris
 .import-type iris:Command
+.import-type Int32
 
 
 .section data
@@ -40,7 +41,7 @@ main:
         output.WriteLine(ast.ToString());
 
         Assert.NotNull(ast);
-        Assert.Equal(3 + 1 + 2, ast.Directives.Count());
+        Assert.Equal(3 + 2 + 2, ast.Directives.Count());
         Assert.Equal(9, ast.Body.Count());
     }
 

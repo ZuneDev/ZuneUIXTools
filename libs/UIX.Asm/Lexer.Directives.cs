@@ -12,7 +12,7 @@ partial class Lexer
         var line = input.Line;
         var column = input.Column;
 
-        var directiveBeginResult = Parse.String(".")(input);
+        var directiveBeginResult = Parse.Char('.')(input);
         input = directiveBeginResult.Remainder;
         if (!directiveBeginResult.WasSuccessful)
             return Result.Failure<IDirective>(input, "Invalid directive", ["Expected '.', followed by an identifier"]);
@@ -20,7 +20,7 @@ partial class Lexer
         var directiveIdResult = WordText(input);
         input = directiveIdResult.Remainder;
         if (!directiveIdResult.WasSuccessful)
-            return Result.Failure<IDirective>(input, "Invalid directive", ["Expected an identifier"]);
+            return Result.Failure<IDirective>(input, "Invalid directive", ["Expected a valid directive name"]);
 
         IDirective directive;
         switch (directiveIdResult.Value.ToUpperInvariant())
@@ -48,7 +48,7 @@ partial class Lexer
                 if (StatementEnd(input).WasSuccessful)
                     return Result.Failure<IImport>(input, "Invalid export directive", ["Expected export information"]);
 
-                var labelPrefixResult = AlphanumericText.Token()(input);
+                var labelPrefixResult = Identifier.Token()(input);
                 input = labelPrefixResult.Remainder;
                 if (!labelPrefixResult.WasSuccessful)
                     return Result.Failure<IImport>(input, "Invalid export directive", ["Expected prefix of labels to export"]);
