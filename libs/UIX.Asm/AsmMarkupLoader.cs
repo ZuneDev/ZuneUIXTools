@@ -12,9 +12,9 @@ namespace Microsoft.Iris.Asm;
 
 internal class AsmMarkupLoader
 {
-    private string _asmSource;
-    private LoadPass _currentValidationPass;
+    private readonly string _asmSource;
     private readonly AsmMarkupLoadResult _loadResult;
+    private LoadPass _currentValidationPass;
     private bool _usingSharedBinaryDataTable;
     private SourceMarkupImportTables _importTables;
     private ObjectSection _objectSection;
@@ -55,25 +55,13 @@ internal class AsmMarkupLoader
         return _importedNamespaces[prefix];
     }
 
-    public TypeSchema ResolveTypeFromQualifiedName(string qualifiedName)
+    public TypeSchema ResolveTypeFromQualifiedName(QualifiedTypeName qualifiedName)
     {
         if (qualifiedName == null)
             throw new ArgumentNullException(nameof(qualifiedName));
 
-        string typeName;
-        LoadResult result;
-
-        int idx = qualifiedName.IndexOf(':');
-        if (idx <= 0)
-        {
-            typeName = qualifiedName[..idx];
-            result = FindDependency(qualifiedName[..idx]);
-        }
-        else
-        {
-            typeName = qualifiedName;
-            result = _loadResult;
-        }
+        var typeName = qualifiedName.TypeName;
+        var result = FindDependency(qualifiedName.NamespacePrefix);
 
         return result.ExportTable.Where(e => e.Name == typeName).FirstOrDefault()
             ?? throw new Exception($"No type with the name '{typeName}' was exported from {result.Uri}");
@@ -213,6 +201,36 @@ internal class AsmMarkupLoader
             ByteCodeReader reader = null;
             if (!HasErrors)
             {
+                // Add constants
+                var stringTypeSchema = UIXTypes.MapIDToType(UIXTypeID.String);
+
+                foreach (var constant in Program.Body.OfType<ConstantDirective>())
+                {
+                    object constantValue;
+                    var constantTypeSchema = ResolveTypeFromQualifiedName(constant.TypeName);
+
+                    if (constantTypeSchema.SupportsTypeConversion(stringTypeSchema))
+                    {
+                        var parseResult = constantTypeSchema.TypeConverter(constant.Content, stringTypeSchema, out constantValue);
+                        if (parseResult.Failed)
+                        {
+                            ReportError($"Failed to create an instance of '{constant.TypeName}' from '{constant.Content}'", constant);
+                            continue;
+                        }
+                    }
+                    else
+                    {
+                        ReportError($"'{constant.TypeName}' cannot be constructed from a string, and UIXA does not yet support XML construction.", constant);
+                        continue;
+                    }
+
+                    var mode = constantTypeSchema.SupportsBinaryEncoding
+                        ? MarkupConstantPersistMode.Binary
+                        : MarkupConstantPersistMode.FromString;
+
+                    constantsTable.Add(constantTypeSchema, constantValue, mode);
+                }
+
                 reader = _objectSection.Encode();
                 UpdateExportOffsets();
             }

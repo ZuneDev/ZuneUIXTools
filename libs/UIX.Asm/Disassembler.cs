@@ -136,19 +136,19 @@ public class Disassembler
     {
         var constantsTable = _loadResult.ConstantsTable;
 
+        List<(int c, TypeSchema typeSchema, object constantValue)> constants = new();
+
         bool canUsePersistList = constantsTable.PersistList is not null;
         if (canUsePersistList)
         {
-            var constants = _loadResult.ConstantsTable.PersistList;
+            var persistedList = _loadResult.ConstantsTable.PersistList;
 
-            for (int c = 0; c < constants.Length; c++)
+            for (int c = 0; c < persistedList.Length; c++)
             {
-                var persistedConstant = constants[c];
-
+                var persistedConstant = persistedList[c];
                 var typeSchema = persistedConstant.Type;
-                var qualifiedTypeName = GetQualifiedName(typeSchema);
 
-                yield return new ConstantDirective($"const{c:D}", qualifiedTypeName, persistedConstant.Data.ToString());
+                constants.Add((c, typeSchema, persistedConstant));
             }
         }
         else
@@ -169,9 +169,19 @@ public class Disassembler
                 var runtimeType = constantValue.GetType();
                 var typeSchema = _loadResult.ImportTables.TypeImports.FirstOrDefault(t => t.RuntimeType == runtimeType);
 
-                QualifiedTypeName qualifiedTypeName = GetQualifiedName(typeSchema);
-                yield return new ConstantDirective($"const{c:D}", qualifiedTypeName, constantValue.ToString());
+                constants.Add((c, typeSchema, constantValue));
             }
+        }
+
+        foreach (var (c, typeSchema, constantValue) in constants)
+        {
+            string encodedValue = constantValue is IStringEncodable encodable
+                ? encodable.EncodeString()
+                : constantValue.ToString();
+
+            QualifiedTypeName qualifiedTypeName = GetQualifiedName(typeSchema);
+
+            yield return new ConstantDirective($"const{c:D}", qualifiedTypeName, encodedValue);
         }
     }
 
