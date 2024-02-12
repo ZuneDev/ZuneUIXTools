@@ -48,36 +48,18 @@ partial class Lexer
                 break;
 
             case "TYPE":
-                var typePrefixResult = Identifier.Token()(input);
-                input = typePrefixResult.Remainder;
-                if (!typePrefixResult.WasSuccessful)
-                    return Result.Failure<IImportDirective>(input, "Invalid type import", ["Expected a valid namespace prefix"]);
+                input = ConsumeWhitespace(input);
 
-                var typeNamespaceDelimitterResult = Parse.Char(':')(input);
-                input = typeNamespaceDelimitterResult.Remainder;
+                var typeNameResult = ParseQualifiedTypeName(input);
+                input = typeNameResult.Remainder;
+                if (!typeNameResult.WasSuccessful)
+                    return Result.Failure<IImportDirective>(input, "Invalid type import", ["Expected qualified type name"]);
 
-                string typeName, typePrefix;
-                if (typeNamespaceDelimitterResult.WasSuccessful)
-                {
-                    var typeNameResult = Identifier(input);
-                    input = typeNameResult.Remainder;
-                    if (!typeNameResult.WasSuccessful)
-                        return Result.Failure<IImportDirective>(input, "Invalid type import", ["Expected a valid type name"]);
-
-                    typePrefix = typePrefixResult.Value;
-                    typeName = typeNameResult.Value;
-                }
-                else
-                {
-                    typePrefix = null;
-                    typeName = typePrefixResult.Value;
-                }
-
-                import = new TypeImport(typePrefix, typeName);
+                import = new TypeImport(typeNameResult.Value);
                 break;
 
             default:
-                return Result.Failure<IImportDirective>(input, $"Unknown import type '{importTypeResult.Value}'", ["Expected 'ns'"]);
+                return Result.Failure<IImportDirective>(input, $"Unknown import type '{importTypeResult.Value}'", ["Expected 'ns', 'type'"]);
         }
 
         return Result.Success(import, input);

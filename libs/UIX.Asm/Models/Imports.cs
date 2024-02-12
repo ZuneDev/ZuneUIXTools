@@ -16,20 +16,12 @@ public record NamespaceImport : ImportDirective
 
 public record TypeImport : ImportDirective
 {
-    public TypeImport(string namespacePrefix, string name) : base("type")
+    public TypeImport(QualifiedTypeName qualifiedName) : base("type")
     {
-        NamespacePrefix = namespacePrefix;
-        Name = name;
+        QualifiedName = qualifiedName;
     }
 
-    public string NamespacePrefix { get; init; }
-    public string Name { get; init; }
+    public QualifiedTypeName QualifiedName { get; init; }
 
-    public override string ToString()
-    {
-        if (NamespacePrefix is null)
-            return $"{base.ToString()} {Name}";
-        else
-            return $"{base.ToString()} {NamespacePrefix}:{Name}";
-    }
+    public override string ToString() => $"{base.ToString()} {QualifiedName}";
 }

@@ -14,16 +14,18 @@ public record SectionDirective : Directive
 
 public record ConstantDirective : Directive
 {
-    public ConstantDirective(string name, string typeName, string content) : base("constant")
+    public ConstantDirective(string name, QualifiedTypeName typeName, string content) : base("constant")
     {
         Name = name;
         TypeName = typeName;
-        ValueString = content;
+        Content = content;
     }
 
     public string Name { get; }
-    public string TypeName { get; }
-    public string ValueString { get; }
+    public QualifiedTypeName TypeName { get; }
+    public string Content { get; }
+
+    public override string ToString() => $"{base.ToString()} {Name} = {TypeName}({Content})";
 }
 
 public record ExportDirective : Directive

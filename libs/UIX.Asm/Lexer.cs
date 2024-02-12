@@ -18,6 +18,8 @@ public static partial class Lexer
 
     public static readonly Parser<string> StatementEnd = Parse.Char(';').Return(";").Or(Parse.LineTerminator);
 
+    public static readonly Parser<QualifiedTypeName> QualifiedTypeName = ParseQualifiedTypeName;
+
     public static readonly Parser<IImportDirective> Import = ParseImport;
 
     public static readonly Parser<IDirective> Directive = ParseDirective;
@@ -29,4 +31,35 @@ public static partial class Lexer
         select new Program(body);
 
     private static IInput ConsumeWhitespace(IInput input) => Parse.WhiteSpace.Many()(input).Remainder;
+
+    private static IResult<QualifiedTypeName> ParseQualifiedTypeName(IInput input)
+    {
+        var typePrefixResult = Identifier(input);
+        input = typePrefixResult.Remainder;
+        if (!typePrefixResult.WasSuccessful)
+            return Result.Failure<QualifiedTypeName>(input, "Invalid type name", ["Expected a valid namespace prefix"]);
+
+        var typeNamespaceDelimitterResult = Parse.Char(':')(input);
+        input = typeNamespaceDelimitterResult.Remainder;
+
+        string typeName, typePrefix;
+        if (typeNamespaceDelimitterResult.WasSuccessful)
+        {
+            var typeNameResult = Identifier(input);
+            input = typeNameResult.Remainder;
+            if (!typeNameResult.WasSuccessful)
+                return Result.Failure<QualifiedTypeName>(input, "Invalid type name", ["Expected a valid type name"]);
+
+            typePrefix = typePrefixResult.Value;
+            typeName = typeNameResult.Value;
+        }
+        else
+        {
+            typePrefix = null;
+            typeName = typePrefixResult.Value;
+        }
+
+        QualifiedTypeName qualifiedName = new(typePrefix, typeName);
+        return Result.Success(qualifiedName, input);
+    }
 }

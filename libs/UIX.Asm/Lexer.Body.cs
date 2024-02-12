@@ -44,7 +44,7 @@ partial class Lexer
         }
         else
         {
-            List<OperandLiteral> operands = new();
+            Operand[] operands = null;
             var endOfInstructionResult = StatementEnd(input);
             input = endOfInstructionResult.Remainder;
 
@@ -52,34 +52,62 @@ partial class Lexer
             {
                 input = ConsumeWhitespace(input);
 
-                var operandsResult = Parse.Ref(() => AlphanumericText).DelimitedBy(Parse.Char(',').Token())(input);
-                input = operandsResult.Remainder;
-
                 var opCode = InstructionSet.MnemonicToOpCode(identifier);
                 var schema = InstructionSet.InstructionSchema[opCode];
+                operands = new Operand[schema.Length];
 
-                int schemaIndex = 0;
-                foreach (var operandContent in operandsResult.Value)
+                for (int operandIndex = 0; operandIndex < schema.Length; operandIndex++)
                 {
-                    var operandType = schema[schemaIndex++];
+                    Operand operand;
+                    var operandType = schema[operandIndex];
 
-                    object operandValue = operandType switch
+                    var operandConstPrefixResult = Parse.Char('@')(input);
+                    input = operandConstPrefixResult.Remainder;
+                    if (operandConstPrefixResult.WasSuccessful)
                     {
-                        LiteralDataType.Byte => byte.Parse(operandContent),
-                        LiteralDataType.UInt16 => ushort.Parse(operandContent),
-                        LiteralDataType.UInt32 => uint.Parse(operandContent),
-                        LiteralDataType.Int32 => int.Parse(operandContent),
-                        LiteralDataType.Bytes or _ => operandContent,
-                    };
+                        if (!OperandLiteral.IsIndex(operandType))
+                            return Result.Failure<IBodyItem>(input, "Invalid instruction", [$"Constant references are not allowed for this operand, expected a {operandType}"]);
 
-                    operands.Add(new(operandValue, operandType, operandContent)
+                        var operandConstResult = Identifier(input);
+                        input = operandConstResult.Remainder;
+                        if (!operandConstResult.WasSuccessful)
+                            return Result.Failure<IBodyItem>(input, "Invalid instruction", ["Invalid constant name"]);
+
+                        operand = new OperandReference(operandConstResult.Value)
+                        {
+                            Line = line,
+                        };
+                    }
+                    else
                     {
-                        Line = line,
-                    });
+                        var operandContentResult = AlphanumericText(input);
+                        input = operandContentResult.Remainder;
+                        if (!operandContentResult.WasSuccessful)
+                            return Result.Failure<IBodyItem>(input, "Invalid instruction", ["Invalid operand"]);
+
+                        var operandContent = operandContentResult.Value;
+                        object operandValue = OperandLiteral.ReduceDataType(operandType) switch
+                        {
+                            LiteralDataType.Byte => byte.Parse(operandContent),
+                            LiteralDataType.UInt16 => ushort.Parse(operandContent),
+                            LiteralDataType.UInt32 => uint.Parse(operandContent),
+                            LiteralDataType.Int32 => int.Parse(operandContent),
+                            LiteralDataType.Bytes or _ => operandContent,
+                        };
+
+                        operand = new OperandLiteral(operandValue, operandType, operandContent)
+                        {
+                            Line = line,
+                        };
+                    }
+
+                    operands[operandIndex] = operand;
+
+                    input = Parse.Char(',').Token()(input).Remainder;
                 }
             }
 
-            bodyItem = new Instruction(identifier, operands)
+            bodyItem = new Instruction(identifier, operands ?? [])
             {
                 Line = line,
                 Column = column,

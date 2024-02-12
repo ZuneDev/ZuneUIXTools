@@ -11,6 +11,17 @@ public record Label(string Name) : CodeItem
     public override string ToString() => $"{Name}:";
 }
 
+public record QualifiedTypeName(string NamespacePrefix, string TypeName) : AsmItem
+{
+    public override string ToString()
+    {
+        if (NamespacePrefix is null)
+            return TypeName;
+        else
+            return $"{NamespacePrefix}:{TypeName}";
+    }
+}
+
 public record Program
 {
     public Program(IEnumerable<IBodyItem> body)
@@ -42,6 +53,9 @@ public record Program
         sb.Append(lineEnding);
         sb.Append(lineEnding);
         sb.AppendJoin(lineEnding, Imports.Select(i => i.ToString()));
+        sb.Append(lineEnding);
+        sb.Append(lineEnding);
+        sb.AppendJoin(lineEnding, Directives.Where(d => d is not (IImportDirective or ExportDirective)).Select(i => i.ToString()));
         sb.Append(lineEnding);
         sb.Append(lineEnding);
 
