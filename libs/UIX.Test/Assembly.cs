@@ -16,25 +16,50 @@ public class Assembly(ITestOutputHelper output)
     {
         const string code =
 """
-.export main 0 UI
+.export Default 0 UI
+.export Alt 0 UI
 
-.import-ns Me as me
+.import-type UI
+.import-type Dictionary
 .import-ns assembly://UIX/Microsoft.Iris as iris
 .import-type iris:Command
-.import-type Int32
+.import-type String
+.import-type ViewItem
+.import-type Text
+.import-type Color
+.import-type Font
 
-
-.section data
-
+.constant const0 = Color(A=255, R=255, G=0, B=0)
+.constant const1 = String(Howdy from Microsoft.Iris!)
+.constant const2 = String(SelectCommand)
+.constant const3 = Color(A=255, R=0, G=0, B=255)
+.constant const4 = Font(JetBrains Mono)
+.constant const5 = String(This is some blue text)
 .section object
-main:
-    COBJ 2
-    PSHC 0
-    PINI 1
-    PSHC 1
+
+Default_cont:
+    COBJ 5
+    PSHC @const0
     PINI 2
-    PINI 0
+    PSHC @const1
+    PINI 3
+    PINI 1
     RETV
+Default_locl:
+    COBJ 2
+    PDAD 0, @const2
+    RETV
+Alt_cont:
+    COBJ 5
+    PSHC @const3
+    PINI 2
+    PSHC @const4
+    PINI 4
+    PSHC @const5
+    PINI 3
+    PINI 1
+    RETV
+Alt_locl:
     RETV
 """;
 
@@ -42,8 +67,8 @@ main:
         output.WriteLine(ast.ToString());
 
         Assert.NotNull(ast);
-        Assert.Equal(3 + 2 + 2, ast.Directives.Count());
-        Assert.Equal(9, ast.Code.Count());
+        Assert.Equal(18, ast.Directives.Count());
+        Assert.Equal(24, ast.Code.Count());
     }
 
     [Theory]
