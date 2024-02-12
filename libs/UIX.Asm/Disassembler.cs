@@ -128,8 +128,51 @@ public class Disassembler
                 yield return new NamespaceImport(uri, namespacePrefix);
             }
 
-            yield return new TypeImport(namespacePrefix, typeImport.Name);
+            yield return new TypeImport(new(namespacePrefix, typeImport.Name));
         };
+    }
+
+    public IEnumerable<ConstantDirective> GetConstants()
+    {
+        var constantsTable = _loadResult.ConstantsTable;
+
+        bool canUsePersistList = constantsTable.PersistList is not null;
+        if (canUsePersistList)
+        {
+            var constants = _loadResult.ConstantsTable.PersistList;
+
+            for (int c = 0; c < constants.Length; c++)
+            {
+                var persistedConstant = constants[c];
+
+                var typeSchema = persistedConstant.Type;
+                var qualifiedTypeName = GetQualifiedName(typeSchema);
+
+                yield return new ConstantDirective($"const{c:D}", qualifiedTypeName, persistedConstant.Data.ToString());
+            }
+        }
+        else
+        {
+            // UIB doesn't persist constants, so we have to use an alternate, slower method
+            for (int c = 0; ; c++)
+            {
+                object constantValue;
+                try
+                {
+                    constantValue = constantsTable.Get(c);
+                }
+                catch
+                {
+                    break;
+                }
+
+                var runtimeType = constantValue.GetType();
+                var typeSchema = _loadResult.ImportTables.TypeImports.FirstOrDefault(t => t.RuntimeType == runtimeType);
+
+                QualifiedTypeName qualifiedTypeName = GetQualifiedName(typeSchema);
+                yield return new ConstantDirective($"const{c:D}", qualifiedTypeName, constantValue.ToString());
+            }
+        }
     }
 
     public IEnumerable<IBodyItem> GetCode()
@@ -146,107 +189,40 @@ public class Disassembler
                     yield return label;
 
             var opCode = (OpCode)reader.ReadByte();
-            
-            switch (opCode)
+
+            var instSchema = InstructionSet.InstructionSchema[opCode];
+            Operand[] operands = new Operand[instSchema.Length];
+
+            for (int i = 0; i < instSchema.Length; i++)
             {
-                // CMD (No operands)
-                case OpCode.InitializeInstanceIndirect:         // INITI
-                case OpCode.PushNull:                           // PSHN
-                case OpCode.PushThis:                           // PSHT
-                case OpCode.DiscardValue:                       // DIS
-                case OpCode.ReturnValue:                        // RET
-                case OpCode.ReturnVoid:                         // RETV
-                    yield return Instruction.CreateWithSchema(opCode);
-                    break;
+                var operandDataType = instSchema[i];
+                Operand operand;
 
-                // CMD <UInt16>
-                case OpCode.ConstructObject:                    // COBJ <typeIndex>
-                case OpCode.ConstructObjectIndirect:            // COBJI <assignmentTypeIndex>
-                case OpCode.InitializeInstance:                 // INIT <typeIndex>
-                case OpCode.LookupSymbol:                       // LSYM <symbolRefIndex>
-                case OpCode.WriteSymbol:                        // WSYM <symbolRefIndex>
-                case OpCode.WriteSymbolPeek:                    // WSYMP <symbolRefIndex>
-                case OpCode.ClearSymbol:                        // CSYM <symbolRefIndex>
-                case OpCode.PropertyInitialize:                 // PINI <propertyIndex>
-                case OpCode.PropertyInitializeIndirect:         // PINII <propertyIndex>
-                case OpCode.PropertyListAdd:                    // PLAD <propertyIndex>
-                case OpCode.PropertyAssign:                     // PASS <propertyIndex>
-                case OpCode.PropertyAssignStatic:               // PASST <propertyIndex>
-                case OpCode.PropertyGet:                        // PGET <propertyIndex>
-                case OpCode.PropertyGetPeek:                    // PGETP <propertyIndex>
-                case OpCode.PropertyGetStatic:                  // PGETT <propertyIndex>
-                case OpCode.MethodInvoke:                       // MINV <methodIndex>
-                case OpCode.MethodInvokePeek:                   // MINVP <methodIndex>
-                case OpCode.MethodInvokeStatic:                 // MINVT <methodIndex>
-                case OpCode.MethodInvokePushLastParam:          // MINVA <methodIndex>
-                case OpCode.MethodInvokeStaticPushLastParam:    // MINVAT <methodIndex>
-                case OpCode.VerifyTypeCast:                     // VTC <typeIndex>
-                case OpCode.IsCheck:                            // ISC <targetTypeIndex>
-                case OpCode.As:                                 // ASC <targetTypeIndex>
-                case OpCode.TypeOf:                             // TYP <typeIndex>
-                case OpCode.PushConstant:                       // PSHC <constantIndex>
-                case OpCode.ConstructListenerStorage:           // CLIS <listenerCount>
-                    yield return Instruction.CreateWithSchema(opCode, reader.ReadUInt16());
-                    break;
+                if (operandDataType == LiteralDataType.ConstantIndex)
+                {
+                    // Refer to the constant by name rather than index
+                    var constantIndex = reader.ReadUInt16();
 
-                // CMD <UInt32>
-                case OpCode.JumpIfFalse:                        // JMPF <jumpTo>
-                case OpCode.JumpIfFalsePeek:                    // JMPFP <jumpTo>
-                case OpCode.JumpIfTruePeek:                     // JMPT <jumpTo>
-                case OpCode.JumpIfNullPeek:                     // JMPNP <jumpTo>
-                case OpCode.Jump:                               // JMP <jumpTo>
-                    yield return Instruction.CreateWithSchema(opCode, reader.ReadUInt32());
-                    break;
+                    operand = new OperandReference($"const{constantIndex}");
+                }
+                else
+                {
+                    object literalValue = OperandLiteral.ReduceDataType(operandDataType) switch
+                    {
+                        LiteralDataType.Byte => reader.ReadByte(),
+                        LiteralDataType.UInt16 => reader.ReadUInt16(),
+                        LiteralDataType.UInt32 => reader.ReadUInt32(),
+                        LiteralDataType.Int32 => reader.ReadInt32(),
+                        _ => throw new InvalidOperationException($"Unexpected operand data type '{operandDataType}'")
+                    };
 
-                // CMD <Int32>
-                case OpCode.EnterDebugState:                    // DBG <breakpointIndex>
-                    yield return Instruction.CreateWithSchema(opCode, reader.ReadInt32());
-                    break;
+                    operand = new OperandLiteral(literalValue, operandDataType);
+                }
 
-                // CMD <UInt16> <UInt16>
-                case OpCode.ConstructObjectParam:               // COBP <targetTypeIndex> <constructorIndex>
-                case OpCode.ConstructFromString:                // CSTR <typeIndex> <stringIndex>
-                case OpCode.PropertyDictionaryAdd:              // PDAD <propertyIndex> <keyIndex>
-                case OpCode.ConvertType:                        // CON <toTypeIndex> <fromTypeIndex>
-                    yield return Instruction.CreateWithSchema(opCode, reader.ReadUInt16(), reader.ReadUInt16());
-                    break;
-
-                case OpCode.JumpIfDictionaryContains:           // JMPD <propertyIndex> <keyIndex> <jumpTo>
-                    yield return Instruction.CreateWithSchema(opCode, reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt32());
-                    break;
-
-                case OpCode.ConstructFromBinary:                // CBIN <typeIndex> <object>
-                    var cbinTypeIndex = reader.ReadUInt16();
-                    TypeSchema cbinTypeSchema = _loadResult.ImportTables.TypeImports[cbinTypeIndex];
-                    object cbinObject = cbinTypeSchema.DecodeBinary(reader);
-
-                    yield return Instruction.CreateWithSchema(opCode, cbinTypeIndex, cbinObject);
-                    break;
-
-                case OpCode.Operation:                          // OPR <opHostIndex> <operation>
-                    var opHostIndex = reader.ReadUInt16();
-                    var op = (OperationType)reader.ReadByte();
-
-                    yield return Instruction.CreateWithSchema(opCode, opHostIndex, op);
-                    break;
-
-                case OpCode.Listen:                             // LIS <listenerIndex> <listenerType> <watchIndex> <handlerOffset>
-                case OpCode.DestructiveListen:                  // LISD <listenerIndex> <listenerType> <watchIndex> <handlerOffset> <refreshOffset>
-                    var listenerIndex = reader.ReadUInt16();
-                    var listenerType = reader.ReadByte();
-                    var watchIndex = reader.ReadUInt16();
-                    var handlerOffset = reader.ReadUInt32();
-
-                    if (opCode == OpCode.DestructiveListen)
-                        yield return Instruction.CreateWithSchema(opCode, listenerIndex, listenerType, watchIndex, handlerOffset, reader.ReadUInt32());
-                    else
-                        yield return Instruction.CreateWithSchema(opCode, listenerIndex, listenerType, watchIndex, handlerOffset);
-
-                    break;
-
-                default:
-                    throw new NotImplementedException($"The {opCode} instruction has not been implemented yet.");
+                operands[i] = operand;
             }
+
+            yield return new Instruction(opCode, operands);
         }
 
         yield break;
@@ -259,23 +235,25 @@ public class Disassembler
         _loadResult.Load(LoadPass.Full);
         _loadResult.Load(LoadPass.Done);
 
-        IEnumerable<IEnumerable<IBodyItem>> segments = [
+        List<IEnumerable<IBodyItem>> segments = [
             GetExports(),
             GetImports(),
+            GetConstants(),
             GetCode(),
         ];
 
-        Program asmProgram = new(segments.SelectMany(e => e));
+        List<IBodyItem> body = [];
+        foreach (var segment in segments)
+            body.AddRange(segment);
+
+        Program asmProgram = new(body);
         return asmProgram.ToString();
     }
 
-    private string GetQualifiedName(TypeSchema schema)
+    private QualifiedTypeName GetQualifiedName(TypeSchema schema)
     {
         _importedUris.TryGetValue(schema.Owner.Uri, out string prefix);
-
-        return prefix != null
-            ? $"{prefix}:{schema.Name}"
-            : schema.Name;
+        return new(prefix, schema.Name);
     }
 
     private void InsertLabel(uint offset, string labelName)
