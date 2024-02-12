@@ -54,7 +54,7 @@ public class Disassembler
                 for (int i = 0; i < markupTypeSchema.InitialEvaluateOffsets.Length; i++)
                 {
                     uint offset = markupTypeSchema.InitialEvaluateOffsets[i];
-                    var labelName = $"{ExportDirective.GetInitializeContentLabel(labelPrefix)}{i:N}";
+                    var labelName = $"{ExportDirective.GetInitializeContentLabel(labelPrefix)}{i:D}";
 
                     InsertLabel(offset, labelName);
                 }
@@ -65,7 +65,7 @@ public class Disassembler
                 for (int i = 0; i < markupTypeSchema.FinalEvaluateOffsets.Length; i++)
                 {
                     uint offset = markupTypeSchema.FinalEvaluateOffsets[i];
-                    var labelName = $"{ExportDirective.GetFinalEvaluateOffsetsLabelPrefix(labelPrefix)}{i:N}";
+                    var labelName = $"{ExportDirective.GetFinalEvaluateOffsetsLabelPrefix(labelPrefix)}{i:D}";
 
                     InsertLabel(offset, labelName);
                 }
@@ -76,7 +76,7 @@ public class Disassembler
                 for (int i = 0; i < markupTypeSchema.RefreshGroupOffsets.Length; i++)
                 {
                     uint offset = markupTypeSchema.RefreshGroupOffsets[i];
-                    var labelName = $"{ExportDirective.GetRefreshGroupOffsetsLabelPrefix(labelPrefix)}{i:N}";
+                    var labelName = $"{ExportDirective.GetRefreshGroupOffsetsLabelPrefix(labelPrefix)}{i:D}";
                     InsertLabel(offset, labelName);
                 }
             }
