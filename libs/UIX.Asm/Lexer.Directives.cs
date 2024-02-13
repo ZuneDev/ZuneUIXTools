@@ -55,31 +55,54 @@ partial class Lexer
 
                 input = Parse.Char('=').Token()(input).Remainder;
 
-                var typeNameResult = QualifiedTypeName.Token()(input);
-                input = typeNameResult.Remainder;
-                if (!typeNameResult.WasSuccessful)
-                    return Result.Failure<IDirective>(input, "Invalid constant directive", ["Expected qualified name of type to construct"]);
-
-                var openBracketResult = Parse.Char('(').Token()(input);
-                input = openBracketResult.Remainder;
-                if (!openBracketResult.WasSuccessful)
-                    return Result.Failure<IDirective>(input, "Invalid constant directive", ["Expected '('"]);
-
-                var contentResult = Parse.CharExcept(')').AtLeastOnce().Text().Token()(input);
-                input = contentResult.Remainder;
-                if (!contentResult.WasSuccessful)
-                    return Result.Failure<IDirective>(input, "Invalid constant directive", ["Expected constant value"]);
-
-                var closeBracketResult = Parse.Char(')').Token()(input);
-                input = closeBracketResult.Remainder;
-                if (!closeBracketResult.WasSuccessful)
-                    return Result.Failure<IDirective>(input, "Invalid constant directive", ["Expected ')'"]);
-
-                directive = new ConstantDirective(constNameResult.Value, typeNameResult.Value, contentResult.Value)
+                // Types that can't be encoded as simple strings, such as FlowLayout,
+                // are defined inline using XML elements.
+                bool isInlineXml = Parse.Char('<')(input).WasSuccessful;
+                if (isInlineXml)
                 {
-                    Line = line,
-                    Column = column,
-                };
+                    // Find the end of the XML tag
+                    var xmlPartResult = Parse.AnyChar.Until(Parse.String("/>")).Text()(input);
+                    input = xmlPartResult.Remainder;
+                    if (!xmlPartResult.WasSuccessful)
+                        return Result.Failure<IDirective>(input, "Invalid constant directive", ["Expected valid XML"]);
+
+                    var xmlElem = System.Xml.Linq.XElement.Parse($"{xmlPartResult.Value}/>");
+                    QualifiedTypeName typeName = new(xmlElem.Name.NamespaceName, xmlElem.Name.LocalName);
+                    var content = xmlElem.ToString(System.Xml.Linq.SaveOptions.DisableFormatting);
+
+                    directive = new ConstantDirective(constNameResult.Value, typeName, content)
+                    {
+                        Line = line,
+                    };
+                }
+                else
+                {
+                    var typeNameResult = QualifiedTypeName.Token()(input);
+                    input = typeNameResult.Remainder;
+                    if (!typeNameResult.WasSuccessful)
+                        return Result.Failure<IDirective>(input, "Invalid constant directive", ["Expected qualified name of type to construct"]);
+
+                    var openBracketResult = Parse.Char('(').Token()(input);
+                    input = openBracketResult.Remainder;
+                    if (!openBracketResult.WasSuccessful)
+                        return Result.Failure<IDirective>(input, "Invalid constant directive", ["Expected '('"]);
+
+                    var contentResult = Parse.CharExcept(')').AtLeastOnce().Text().Token()(input);
+                    input = contentResult.Remainder;
+                    if (!contentResult.WasSuccessful)
+                        return Result.Failure<IDirective>(input, "Invalid constant directive", ["Expected constant value"]);
+
+                    var closeBracketResult = Parse.Char(')').Token()(input);
+                    input = closeBracketResult.Remainder;
+                    if (!closeBracketResult.WasSuccessful)
+                        return Result.Failure<IDirective>(input, "Invalid constant directive", ["Expected ')'"]);
+
+                    directive = new EncodedConstantDirective(constNameResult.Value, typeNameResult.Value, contentResult.Value)
+                    {
+                        Line = line,
+                        Column = column,
+                    };
+                }
                 break;
 
             case "EXPORT":

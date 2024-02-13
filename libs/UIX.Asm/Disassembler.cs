@@ -4,6 +4,7 @@ using Microsoft.Iris.Markup;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Xml.Linq;
 
 namespace Microsoft.Iris.Asm;
 
@@ -148,7 +149,7 @@ public class Disassembler
                 var persistedConstant = persistedList[c];
                 var typeSchema = persistedConstant.Type;
 
-                constants.Add((c, typeSchema, persistedConstant));
+                constants.Add((c, typeSchema, persistedConstant.Data));
             }
         }
         else
@@ -173,15 +174,54 @@ public class Disassembler
             }
         }
 
+        var stringTypeSchema = UIXTypes.MapIDToType(UIXTypeID.String);
+
         foreach (var (c, typeSchema, constantValue) in constants)
         {
-            string encodedValue = constantValue is IStringEncodable encodable
-                ? encodable.EncodeString()
-                : constantValue.ToString();
-
+            var constantName = $"const{c:D}";
             QualifiedTypeName qualifiedTypeName = GetQualifiedName(typeSchema);
+            
+            if (constantValue is IStringEncodable encodable)
+            {
+                var encodedValue = encodable.EncodeString();
+                yield return new EncodedConstantDirective(constantName, qualifiedTypeName, encodedValue);
+            }
+            else if (typeSchema.SupportsTypeConversion(stringTypeSchema))
+            {
+                var encodedValue = constantValue.ToString();
+                yield return new EncodedConstantDirective(constantName, qualifiedTypeName, encodedValue);
+            }
+            else
+            {
+                XName constElemName = qualifiedTypeName.NamespacePrefix is null
+                    ? qualifiedTypeName.TypeName
+                    : XName.Get(qualifiedTypeName.TypeName, qualifiedTypeName.NamespacePrefix);
+                XElement constElem = new(constElemName);
 
-            yield return new ConstantDirective($"const{c:D}", qualifiedTypeName, encodedValue);
+                var defaultConstantValue = typeSchema.ConstructDefault();
+
+                foreach (var prop in typeSchema.Properties)
+                {
+                    // No need to serialize properties that can't be set
+                    if (!prop.CanWrite)
+                        continue;
+
+                    var defaultPropValue = prop.GetValue(defaultConstantValue);
+                    var propValue = prop.GetValue(constantValue);
+
+                    var encodedPropValue = EncodeSimpleConstant(propValue);
+                    var encodedDefaultPropValue = EncodeSimpleConstant(defaultPropValue);
+
+                    // No need to serialize properties that are at their default value
+                    if (encodedPropValue == encodedDefaultPropValue)
+                        continue;
+
+                    constElem.SetAttributeValue(prop.Name, encodedPropValue);
+                }
+
+                var constructor = constElem.ToString(SaveOptions.DisableFormatting);
+                yield return new ConstantDirective(constantName, qualifiedTypeName, constructor);
+            }
         }
     }
 
@@ -271,5 +311,12 @@ public class Disassembler
         if (!_offsetLabelMap.TryGetValue(offset, out var labels))
             labels = _offsetLabelMap[offset] = new(1);
         labels.Add(new(labelName));
+    }
+
+    private static string EncodeSimpleConstant(object value)
+    {
+        return value is IStringEncodable encodable
+            ? encodable.EncodeString()
+            : value.ToString();
     }
 }

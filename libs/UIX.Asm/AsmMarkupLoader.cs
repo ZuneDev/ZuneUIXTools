@@ -209,17 +209,28 @@ internal class AsmMarkupLoader
                     object constantValue;
                     var constantTypeSchema = ResolveTypeFromQualifiedName(constant.TypeName);
 
-                    if (constantTypeSchema.SupportsTypeConversion(stringTypeSchema))
+                    if (constant is EncodedConstantDirective encodedConstant)
                     {
-                        var parseResult = constantTypeSchema.TypeConverter(constant.Content, stringTypeSchema, out constantValue);
+                        var parseResult = constantTypeSchema.TypeConverter(encodedConstant.Content, stringTypeSchema, out constantValue);
                         if (parseResult.Failed)
                         {
-                            ReportError($"Failed to create an instance of '{constant.TypeName}' from '{constant.Content}'", constant);
+                            ReportError($"Failed to create an instance of '{constant.TypeName}' from '{encodedConstant.Content}'", constant);
                             continue;
                         }
                     }
                     else
                     {
+                        var xmlElem = System.Xml.Linq.XElement.Parse(constant.Constructor);
+
+                        constantValue = constantTypeSchema.ConstructDefault();
+
+                        foreach (var attr in xmlElem.Attributes())
+                        {
+                            var propName = attr.Name.LocalName;
+                            var prop = constantTypeSchema.FindProperty(propName);
+                            prop.SetValue(ref constantValue, attr.Value);
+                        }
+
                         ReportError($"'{constant.TypeName}' cannot be constructed from a string, and UIXA does not yet support XML construction.", constant);
                         continue;
                     }

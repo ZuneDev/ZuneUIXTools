@@ -14,18 +14,31 @@ public record SectionDirective : Directive
 
 public record ConstantDirective : Directive
 {
-    public ConstantDirective(string name, QualifiedTypeName typeName, string content) : base("constant")
+    public ConstantDirective(string name, QualifiedTypeName typeName, string constructor) : base("constant")
     {
         Name = name;
         TypeName = typeName;
-        Content = content;
+        Constructor = constructor;
     }
 
     public string Name { get; }
     public QualifiedTypeName TypeName { get; }
+    public string Constructor { get; }
+
+    public override string ToString() => $"{base.ToString()} {Name} = {Constructor}";
+}
+
+public record EncodedConstantDirective : ConstantDirective
+{
+    public EncodedConstantDirective(string name, QualifiedTypeName typeName, string content)
+        : base(name, typeName, $"{typeName}({content})")
+    {
+        Content = content;
+    }
+
     public string Content { get; }
 
-    public override string ToString() => $"{base.ToString()} {Name} = {TypeName}({Content})";
+    public override string ToString() => base.ToString();
 }
 
 public record ExportDirective : Directive
