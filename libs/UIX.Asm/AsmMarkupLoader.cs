@@ -20,6 +20,7 @@ internal class AsmMarkupLoader
     private ObjectSection _objectSection;
 
     private readonly Dictionary<string, LoadResult> _importedNamespaces = new();
+    private readonly Dictionary<string, ushort> _constants = new();
     private readonly HashSet<string> _referencedNamespaces = new();
 
     internal unsafe AsmMarkupLoader(AsmMarkupLoadResult loadResult, Resource resource)
@@ -51,6 +52,8 @@ internal class AsmMarkupLoader
     {
         if (prefix == null)
             return MarkupSystem.UIXGlobal;
+        if (prefix == "me")
+            return _loadResult;
         
         return _importedNamespaces[prefix];
     }
@@ -155,7 +158,13 @@ internal class AsmMarkupLoader
 
             if (_currentValidationPass == LoadPass.Full)
             {
-                foreach (var nsImport in Program.Directives.OfType<NamespaceImport>())
+                foreach (var typeImport in Program.Imports.OfType<TypeImport>())
+                {
+                    var typeSchema = ResolveTypeFromQualifiedName(typeImport.QualifiedName);
+                    _importTables.ImportedTypes.Add(typeSchema);
+                }
+
+                foreach (var nsImport in Program.Imports.OfType<NamespaceImport>())
                 {
                     if (!_referencedNamespaces.Contains(nsImport.Name))
                         ErrorManager.ReportWarning(nsImport.Line, nsImport.Column, $"Unreferenced namespace '{nsImport.Name}'");
@@ -228,20 +237,27 @@ internal class AsmMarkupLoader
                         {
                             var propName = attr.Name.LocalName;
                             var prop = constantTypeSchema.FindProperty(propName);
-                            prop.SetValue(ref constantValue, attr.Value);
-                        }
 
-                        ReportError($"'{constant.TypeName}' cannot be constructed from a string, and UIXA does not yet support XML construction.", constant);
-                        continue;
+                            var propConvertResult = prop.PropertyType.TypeConverter(attr.Value, stringTypeSchema, out var propValue);
+                            if (propConvertResult.Failed)
+                            {
+                                ReportError($"Failed to set {constantTypeSchema.Name}.{propName}", constant);
+                                continue;
+                            }
+
+                            prop.SetValue(ref constantValue, propValue);
+                        }
                     }
 
                     var mode = constantTypeSchema.SupportsBinaryEncoding
                         ? MarkupConstantPersistMode.Binary
                         : MarkupConstantPersistMode.FromString;
 
-                    constantsTable.Add(constantTypeSchema, constantValue, mode);
+                    var constantIndex = (ushort)constantsTable.Add(constantTypeSchema, constantValue, mode);
+                    _constants.Add(constant.Name, constantIndex);
                 }
 
+                _objectSection.Constants = _constants;
                 reader = _objectSection.Encode();
                 UpdateExportOffsets();
             }

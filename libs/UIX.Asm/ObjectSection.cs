@@ -8,29 +8,26 @@ namespace Microsoft.Iris.Asm;
 
 public class ObjectSection
 {
-    readonly IEnumerable<IBodyItem> _body;
+    readonly Program _program;
     readonly MarkupLoadResult _loadResult;
     Dictionary<string, uint> _labelOffsetMap;
 
-    public ObjectSection(IEnumerable<IBodyItem> body, MarkupLoadResult loadResult)
+    public ObjectSection(Program program, MarkupLoadResult loadResult)
     {
-        _body = body;
+        _program = program;
         _loadResult = loadResult;
     }
 
-    public ObjectSection(Program program, MarkupLoadResult loadResult)
-        : this(program.Body, loadResult)
-    {
-    }
-
     public IReadOnlyDictionary<string, uint> LabelOffsetMap => _labelOffsetMap;
+
+    public IReadOnlyDictionary<string, ushort> Constants { get; set; }
 
     public ByteCodeReader Encode()
     {
         ByteCodeWriter writer = new();
         _labelOffsetMap = new();
 
-        foreach (var bodyItem in _body)
+        foreach (var bodyItem in _program.Body)
         {
             var offset = writer.DataSize;
 
@@ -50,7 +47,12 @@ public class ObjectSection
 
             foreach (var operand in instruction.Operands)
             {
-                switch (operand.Value)
+                object operandValue = operand.Value;
+
+                if (operand is OperandReference operandRef)
+                    operandValue = Constants[operandRef.ConstantName];
+
+                switch (operandValue)
                 {
                     case OperationType opType:
                         writer.WriteByte((byte)opType);

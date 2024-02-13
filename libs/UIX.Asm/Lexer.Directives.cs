@@ -67,7 +67,10 @@ partial class Lexer
                         return Result.Failure<IDirective>(input, "Invalid constant directive", ["Expected valid XML"]);
 
                     var xmlElem = System.Xml.Linq.XElement.Parse($"{xmlPartResult.Value}/>");
-                    QualifiedTypeName typeName = new(xmlElem.Name.NamespaceName, xmlElem.Name.LocalName);
+                    var xmlPrefix = xmlElem.Name.NamespaceName == string.Empty
+                        ? null : xmlElem.Name.NamespaceName;
+
+                    QualifiedTypeName typeName = new(xmlPrefix, xmlElem.Name.LocalName);
                     var content = xmlElem.ToString(System.Xml.Linq.SaveOptions.DisableFormatting);
 
                     directive = new ConstantDirective(constNameResult.Value, typeName, content)
