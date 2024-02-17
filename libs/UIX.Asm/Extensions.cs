@@ -1,13 +1,22 @@
-﻿using System;
+﻿using Microsoft.Iris.Markup;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace Microsoft.Iris.Asm;
 
-internal static class StringBuilderExtensions
+public static class Extensions
 {
+    public static void FullLoad(this LoadResult result)
+    {
+        result.Load(LoadPass.DeclareTypes);
+        result.Load(LoadPass.PopulatePublicModel);
+        result.Load(LoadPass.Full);
+        result.Load(LoadPass.Done);
+    }
+
 #if NETSTANDARD
-    public static StringBuilder AppendJoin<T>(this StringBuilder sb, string? separator, IEnumerable<T> values)
+    internal static StringBuilder AppendJoin<T>(this StringBuilder sb, string? separator, IEnumerable<T> values)
     {
         _ = values ?? throw new ArgumentNullException(nameof(values));
 

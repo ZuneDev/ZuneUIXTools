@@ -314,10 +314,7 @@ public class Disassembler
 
     public string Write()
     {
-        _loadResult.Load(LoadPass.DeclareTypes);
-        _loadResult.Load(LoadPass.PopulatePublicModel);
-        _loadResult.Load(LoadPass.Full);
-        _loadResult.Load(LoadPass.Done);
+        _loadResult.FullLoad();
 
         List<IEnumerable<IBodyItem>> segments = [
             GetExports(),
