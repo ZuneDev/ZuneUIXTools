@@ -66,7 +66,7 @@ internal class AsmMarkupLoader
         var typeName = qualifiedName.TypeName;
         var result = FindDependency(qualifiedName.NamespacePrefix);
 
-        return result.ExportTable.Where(e => e.Name == typeName).FirstOrDefault()
+        return result.FindType(typeName)
             ?? throw new Exception($"No type with the name '{typeName}' was exported from {result.Uri}");
     }
 
