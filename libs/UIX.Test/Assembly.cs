@@ -28,6 +28,8 @@ public class Assembly(ITestOutputHelper output)
 .import-type Text
 .import-type Color
 .import-type Font
+.import-mbrs UI{Locals, Content}
+.import-mbrs Text{Color, Content, Font}
 
 .constant const0 = Color(255, 255, 0, 0)
 .constant const1 = String(Howdy from Microsoft.Iris!)
@@ -35,8 +37,6 @@ public class Assembly(ITestOutputHelper output)
 .constant const3 = Color(255, 0, 0, 255)
 .constant const4 = Font(JetBrains Mono)
 .constant const5 = String(This is some blue text)
-.constant xmlTest = <FlowLayout Orientation="Vertical" Spacing="50,0" />
-
 .section object
 
 Default_cont:
@@ -69,7 +69,7 @@ Alt_locl:
         output.WriteLine(ast.ToString());
 
         Assert.NotNull(ast);
-        Assert.Equal(19, ast.Directives.Count());
+        Assert.Equal(20, ast.Directives.Count());
         Assert.Equal(24, ast.Code.Count());
     }
 

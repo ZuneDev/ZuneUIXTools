@@ -131,6 +131,40 @@ public class Disassembler
 
             yield return new TypeImport(new(namespacePrefix, typeImport.Name));
         };
+
+        foreach (var constructorImport in _loadResult.ImportTables.ConstructorImports)
+        {
+            var typeName = GetQualifiedName(constructorImport.Owner);
+            var parameterTypeNames = constructorImport.ParameterTypes.Select(GetQualifiedName);
+
+            yield return new ConstructorImport(typeName, parameterTypeNames);
+        }
+
+        foreach (var methodImport in _loadResult.ImportTables.MethodImports)
+        {
+            var typeName = GetQualifiedName(methodImport.Owner);
+            var parameterTypeNames = methodImport.ParameterTypes.Select(GetQualifiedName);
+
+            yield return new MethodImport(typeName, methodImport.Name, parameterTypeNames);
+        }
+
+        Dictionary<QualifiedTypeName, List<string>> namedMemberImports = new();
+        void GroupMemberImport(TypeSchema owner, string memberName)
+        {
+            var typeName = GetQualifiedName(owner);
+            if (!namedMemberImports.TryGetValue(typeName, out var currentTypeImports))
+                currentTypeImports = namedMemberImports[typeName] = new();
+            currentTypeImports.Add(memberName);
+        }
+
+        foreach (var propertyImport in _loadResult.ImportTables.PropertyImports)
+            GroupMemberImport(propertyImport.Owner, propertyImport.Name);
+
+        foreach (var eventImport in _loadResult.ImportTables.EventImports)
+            GroupMemberImport(eventImport.Owner, eventImport.Name);
+
+        foreach (var groupedImport in namedMemberImports)
+            yield return new NamedMemberImport(groupedImport.Key, groupedImport.Value);
     }
 
     public IEnumerable<ConstantDirective> GetConstants()

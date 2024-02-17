@@ -161,7 +161,7 @@ internal class AsmMarkupLoader
                 foreach (var typeImport in Program.Imports.OfType<TypeImport>())
                 {
                     var typeSchema = ResolveTypeFromQualifiedName(typeImport.QualifiedName);
-                    _importTables.ImportedTypes.Add(typeSchema);
+                    TrackImportedType(typeSchema);
                 }
 
                 foreach (var nsImport in Program.Imports.OfType<NamespaceImport>())
@@ -215,7 +215,7 @@ internal class AsmMarkupLoader
 
                 foreach (var constant in Program.Body.OfType<ConstantDirective>())
                 {
-                    object constantValue;
+                    object constantValue, persistData = null;
                     var constantTypeSchema = ResolveTypeFromQualifiedName(constant.TypeName);
 
                     if (constant is EncodedConstantDirective encodedConstant)
@@ -226,6 +226,8 @@ internal class AsmMarkupLoader
                             ReportError($"Failed to create an instance of '{constant.TypeName}' from '{encodedConstant.Content}'", constant);
                             continue;
                         }
+
+                        persistData = encodedConstant.Content;
                     }
                     else
                     {
@@ -249,11 +251,18 @@ internal class AsmMarkupLoader
                         }
                     }
 
-                    var mode = constantTypeSchema.SupportsBinaryEncoding
-                        ? MarkupConstantPersistMode.Binary
-                        : MarkupConstantPersistMode.FromString;
+                    MarkupConstantPersistMode mode;
+                    if (constantTypeSchema.SupportsBinaryEncoding)
+                    {
+                        mode = MarkupConstantPersistMode.Binary;
+                        persistData = constantValue;
+                    }
+                    else
+                    {
+                        mode = MarkupConstantPersistMode.FromString;
+                    }
 
-                    var constantIndex = (ushort)constantsTable.Add(constantTypeSchema, constantValue, mode);
+                    var constantIndex = (ushort)constantsTable.Add(constantTypeSchema, constantValue, mode, persistData);
                     _constants.Add(constant.Name, constantIndex);
                 }
 
@@ -308,8 +317,30 @@ internal class AsmMarkupLoader
 
     private LoadResult[] PrepareDependenciesTable()
     {
-        // TODO
-        return [];
+        LoadResult[] loadResultArray = LoadResult.EmptyList;
+        int length = 0;
+        if (_importTables != null)
+        {
+            foreach (LoadResult importedLoadResult in _importTables.ImportedLoadResults)
+            {
+                if (importedLoadResult != _loadResult)
+                    ++length;
+            }
+        }
+        if (length != 0)
+        {
+            loadResultArray = new LoadResult[length];
+            int index = 0;
+            foreach (LoadResult importedLoadResult in _importTables.ImportedLoadResults)
+            {
+                if (importedLoadResult != _loadResult)
+                {
+                    loadResultArray[index] = importedLoadResult;
+                    ++index;
+                }
+            }
+        }
+        return loadResultArray;
     }
 
     private MarkupDataMapping[] PrepareDataMappingTable()

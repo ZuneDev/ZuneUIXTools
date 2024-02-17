@@ -58,6 +58,73 @@ partial class Lexer
                 import = new TypeImport(typeNameResult.Value);
                 break;
 
+            case "MBRS":
+                input = ConsumeWhitespace(input);
+
+                var memberTypeNameResult = ParseQualifiedTypeName(input);
+                input = memberTypeNameResult.Remainder;
+                if (!memberTypeNameResult.WasSuccessful)
+                    return Result.Failure<IImportDirective>(input, "Invalid member import", ["Expected qualified type name"]);
+
+                input = Parse.Char('{')(input).Remainder;
+
+                var memberNamesResult = Parse.Ref(() => Identifier).DelimitedBy(Parse.Char(',').Token())(input);
+                input = memberNamesResult.Remainder;
+                if (!memberNamesResult.WasSuccessful)
+                    return Result.Failure<IImportDirective>(input, "Invalid member import", ["Expected list of members to import"]);
+
+                input = Parse.Char('}')(input).Remainder;
+
+                import = new NamedMemberImport(memberTypeNameResult.Value, memberNamesResult.Value);
+                break;
+
+            case "CTOR":
+                input = ConsumeWhitespace(input);
+
+                var ctorMemberTypeNameResult = ParseQualifiedTypeName(input);
+                input = ctorMemberTypeNameResult.Remainder;
+                if (!ctorMemberTypeNameResult.WasSuccessful)
+                    return Result.Failure<IImportDirective>(input, "Invalid constructor import", ["Expected qualified type name"]);
+
+                input = Parse.Char('(')(input).Remainder;
+
+                var ctorParameterTypesResult = Parse.Ref(() => QualifiedTypeName).DelimitedBy(Parse.Char(',').Token())(input);
+                input = ctorParameterTypesResult.Remainder;
+                if (!ctorParameterTypesResult.WasSuccessful)
+                    return Result.Failure<IImportDirective>(input, "Invalid constructor import", ["Expected constructor parameter types"]);
+
+                input = Parse.Char(')')(input).Remainder;
+
+                import = new ConstructorImport(ctorMemberTypeNameResult.Value, ctorParameterTypesResult.Value);
+                break;
+
+            case "MTHD":
+                input = ConsumeWhitespace(input);
+
+                var mthdMemberTypeNameResult = ParseQualifiedTypeName(input);
+                input = mthdMemberTypeNameResult.Remainder;
+                if (!mthdMemberTypeNameResult.WasSuccessful)
+                    return Result.Failure<IImportDirective>(input, "Invalid method import", ["Expected qualified type name"]);
+
+                input = Parse.Char('.')(input).Remainder;
+
+                var mthdNameResult = Identifier(input);
+                input = mthdNameResult.Remainder;
+                if (!mthdNameResult.WasSuccessful)
+                    return Result.Failure<IImportDirective>(input, "Invalid method import", ["Expected method name"]);
+
+                input = Parse.Char('(')(input).Remainder;
+
+                var mthdParameterTypesResult = Parse.Ref(() => QualifiedTypeName).DelimitedBy(Parse.Char(',').Token())(input);
+                input = mthdParameterTypesResult.Remainder;
+                if (!mthdParameterTypesResult.WasSuccessful)
+                    return Result.Failure<IImportDirective>(input, "Invalid constructor import", ["Expected constructor parameter types"]);
+
+                input = Parse.Char(')')(input).Remainder;
+
+                import = new MethodImport(mthdMemberTypeNameResult.Value, mthdNameResult.Value, mthdParameterTypesResult.Value);
+                break;
+
             default:
                 return Result.Failure<IImportDirective>(input, $"Unknown import type '{importTypeResult.Value}'", ["Expected 'ns', 'type'"]);
         }
