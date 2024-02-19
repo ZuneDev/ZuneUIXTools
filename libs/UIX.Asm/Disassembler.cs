@@ -102,13 +102,19 @@ public class Disassembler
                     if (scheme == "assembly")
                     {
                         // Assume 'host' is an assembly name and path represents a C# namespace
-                        var assemblyUriParts = uri.Split('/');
-
-                        var importedNamespace = assemblyUriParts[^1];
-                        namespacePrefix = importedNamespace.Split('.', '/', '\\', '!')[^1];
-
-                        System.Reflection.AssemblyName assemblyName = new(assemblyUriParts[^2]);
-                        uri = $"{scheme}://{assemblyName.Name}/{importedNamespace}";
+                        var path = uri[(schemeLength + 3)..];
+                        var nsIndex = path.IndexOf('/');
+                        if (nsIndex >= 0)
+                        {
+                            var importedNamespace = path[(nsIndex + 1)..];
+                            namespacePrefix = importedNamespace.Split('.', '/', '\\', '!')[^1];
+                        }
+                        else
+                        {
+                            // No namespace was specified, assume we're importing the whole assembly
+                            System.Reflection.AssemblyName assemblyName = new(path);
+                            namespacePrefix = assemblyName.Name;
+                        }
                     }
                     else
                     {
@@ -202,7 +208,9 @@ public class Disassembler
                 }
 
                 var runtimeType = constantValue.GetType();
-                var typeSchema = _loadResult.ImportTables.TypeImports.FirstOrDefault(t => t.RuntimeType == runtimeType);
+                var typeSchema = _loadResult.ImportTables.TypeImports.FirstOrDefault(t => t.RuntimeType == runtimeType)
+                    ?? _loadResult.ImportTables.TypeImports.FirstOrDefault(t => t.RuntimeType == runtimeType.BaseType)
+                    ?? throw new Exception($"Failed to find type schema for '{runtimeType.Name}' in {_loadResult.Uri}");
 
                 constants.Add((c, typeSchema, constantValue));
             }
