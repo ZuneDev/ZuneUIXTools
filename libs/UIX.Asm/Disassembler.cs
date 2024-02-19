@@ -225,6 +225,11 @@ public class Disassembler
                 var encodedValue = constantValue.ToString();
                 yield return new EncodedConstantDirective(constantName, qualifiedTypeName, encodedValue);
             }
+            else if (constantValue is Layout.ILayout constantLayout && Layout.PredefinedLayouts.TryConvertToString(constantLayout, out var constantLayoutString))
+            {
+                qualifiedTypeName = GetQualifiedName(typeSchema.Base);
+                yield return new EncodedConstantDirective(constantName, qualifiedTypeName, constantLayoutString);
+            }
             else
             {
                 XName constElemName = qualifiedTypeName.NamespacePrefix is null
