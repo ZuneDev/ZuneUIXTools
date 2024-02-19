@@ -158,16 +158,57 @@ internal class AsmMarkupLoader
 
             if (_currentValidationPass == LoadPass.Full)
             {
-                foreach (var typeImport in Program.Imports.OfType<TypeImport>())
+                foreach (var import in Program.Imports)
                 {
-                    var typeSchema = ResolveTypeFromQualifiedName(typeImport.QualifiedName);
-                    TrackImportedType(typeSchema);
-                }
+                    if (import is TypeImport typeImport)
+                    {
+                        var typeSchema = ResolveTypeFromQualifiedName(typeImport.QualifiedName);
+                        TrackImportedType(typeSchema);
+                    }
+                    else if (import is NamespaceImport nsImport)
+                    {
+                        if (!_referencedNamespaces.Contains(nsImport.Name))
+                            ErrorManager.ReportWarning(nsImport.Line, nsImport.Column, $"Unreferenced namespace '{nsImport.Name}'");
+                    }
+                    else if (import is ConstructorImport ctorImport)
+                    {
+                        var typeSchema = ResolveTypeFromQualifiedName(ctorImport.QualifiedName);
+                        var ctorParamTypes = ctorImport.ParameterTypes.Select(ResolveTypeFromQualifiedName).ToArray();
 
-                foreach (var nsImport in Program.Imports.OfType<NamespaceImport>())
-                {
-                    if (!_referencedNamespaces.Contains(nsImport.Name))
-                        ErrorManager.ReportWarning(nsImport.Line, nsImport.Column, $"Unreferenced namespace '{nsImport.Name}'");
+                        var ctorSchema = typeSchema.FindConstructor(ctorParamTypes);
+
+                        TrackImportedConstructor(ctorSchema);
+                    }
+                    else if (import is MethodImport mthdImport)
+                    {
+                        var typeSchema = ResolveTypeFromQualifiedName(mthdImport.QualifiedName);
+                        var mthdParamTypes = mthdImport.ParameterTypes.Select(ResolveTypeFromQualifiedName).ToArray();
+
+                        var mthdSchema = typeSchema.FindMethod(mthdImport.MethodName, mthdParamTypes);
+
+                        TrackImportedMethod(mthdSchema);
+                    }
+                    else if (import is NamedMemberImport mbrsImport)
+                    {
+                        var typeSchema = ResolveTypeFromQualifiedName(mbrsImport.QualifiedName);
+                        
+                        foreach (var memberName in mbrsImport.MemberNames)
+                        {
+                            var propMember = typeSchema.FindProperty(memberName);
+                            if (propMember is not null)
+                            {
+                                TrackImportedProperty(propMember);
+                                continue;
+                            }
+
+                            var eventMember = typeSchema.FindEvent(memberName);
+                            if (eventMember is not null)
+                            {
+                                TrackImportedEvent(eventMember);
+                                continue;
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -260,6 +301,8 @@ internal class AsmMarkupLoader
                     else
                     {
                         mode = MarkupConstantPersistMode.FromString;
+                        if (persistData is null)
+                            throw new Exception($"{constant.Name} cannot be persisted as a string without persist data.");
                     }
 
                     var constantIndex = (ushort)constantsTable.Add(constantTypeSchema, constantValue, mode, persistData);
