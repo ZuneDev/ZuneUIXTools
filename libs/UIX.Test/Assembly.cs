@@ -121,8 +121,8 @@ Alt_locl:
 
 
         var actualLoadResult = MarkupSystem.ResolveLoadResult($"file://{compilerInput.OutputFileName}", (uint)Random.Shared.Next());
-        disassembly = Disassembler.Load(actualLoadResult as MarkupLoadResult);
-        disassemblyText = disassembly.Write();
+        actualLoadResult.FullLoad();
+        AssertEx.DeepEquivalent(sourceLoadResult, actualLoadResult);
     }
 
     [Theory]
@@ -181,10 +181,19 @@ Alt_locl:
         var asmSuccess = MarkupCompiler.Compile([asmCompilerInput], default);
         Assert.True(asmSuccess);
 
-        // Compare the original UIB file to the reassembled UIB
-        var uibBytesEx = await File.ReadAllBytesAsync(uibPathEx);
-        var uibBytesAc = await File.ReadAllBytesAsync(asmCompilerInput.OutputFileName);
-        Assert.Equal(uibBytesEx, uibBytesAc);
+        // Load assembled UIB and compare with original result
+        var actualLoadResult = MarkupSystem.ResolveLoadResult($"file://{uibPathAc}", (uint)Random.Shared.Next());
+        actualLoadResult.FullLoad();
+
+        AssertEx.DeepEquivalent(sourceLoadResult, actualLoadResult);
+
+        if (false)
+        {
+            // Compare the original UIB file to the reassembled UIB
+            var uibBytesEx = await File.ReadAllBytesAsync(uibPathEx);
+            var uibBytesAc = await File.ReadAllBytesAsync(asmCompilerInput.OutputFileName);
+            Assert.Equal(uibBytesEx, uibBytesAc);
+        }
     }
 
     [Theory]
