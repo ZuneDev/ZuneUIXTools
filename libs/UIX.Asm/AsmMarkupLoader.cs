@@ -259,7 +259,7 @@ internal class AsmMarkupLoader
                     object constantValue, persistData = null;
                     var constantTypeSchema = ResolveTypeFromQualifiedName(constant.TypeName);
 
-                    if (constant is EncodedConstantDirective encodedConstant)
+                    if (constant is StringEncodedConstantDirective encodedConstant)
                     {
                         var parseResult = constantTypeSchema.TypeConverter(encodedConstant.Content, stringTypeSchema, out constantValue);
                         if (parseResult.Failed)

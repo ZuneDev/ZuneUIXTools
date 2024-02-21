@@ -1,5 +1,7 @@
 ﻿using Microsoft.Iris.Asm.Models;
 using Sprache;
+using System;
+using System.Globalization;
 using System.Linq;
 
 namespace Microsoft.Iris.Asm;
@@ -85,6 +87,10 @@ partial class Lexer
                     if (!typeNameResult.WasSuccessful)
                         return Result.Failure<IDirective>(input, "Invalid constant directive", ["Expected qualified name of type to construct"]);
 
+                    var binaryEncodingMarkerResult = Parse.String(".bin")(input);
+                    input = binaryEncodingMarkerResult.Remainder;
+                    var binaryEncoded = binaryEncodingMarkerResult.WasSuccessful;
+
                     var openBracketResult = Parse.Char('(').Token()(input);
                     input = openBracketResult.Remainder;
                     if (!openBracketResult.WasSuccessful)
@@ -100,11 +106,56 @@ partial class Lexer
                     if (!closeBracketResult.WasSuccessful)
                         return Result.Failure<IDirective>(input, "Invalid constant directive", ["Expected ')'"]);
 
-                    directive = new EncodedConstantDirective(constNameResult.Value, typeNameResult.Value, contentResult.Value)
+                    var constantName = constNameResult.Value;
+                    var typeName = typeNameResult.Value;
+
+                    if (!binaryEncoded)
                     {
-                        Line = line,
-                        Column = column,
-                    };
+                        directive = new StringEncodedConstantDirective(constantName, typeName, contentResult.Value)
+                        {
+                            Line = line,
+                            Column = column,
+                        };
+                    }
+                    else
+                    {
+                        byte[] constantBytes;
+                        var byteParts = contentResult.Value.Split(',');
+                        if (byteParts.Length == 1)
+                        {
+                            var constantStr = byteParts[0].Trim().TrimStart('0', 'x');
+                            if (constantStr.Length == 2)
+                            {
+                                constantBytes = [byte.Parse(constantStr, NumberStyles.HexNumber)];
+                            }
+                            else if (constantStr.Length == 4)
+                            {
+                                constantBytes = BitConverter.GetBytes(
+                                    ushort.Parse(constantStr, NumberStyles.HexNumber));
+                            }
+                            else if (constantStr.Length == 8)
+                            {
+                                constantBytes = BitConverter.GetBytes(
+                                    uint.Parse(constantStr, NumberStyles.HexNumber));
+                            }
+                            else
+                            {
+                                return Result.Failure<IDirective>(input, "Invalid constant directive", [$"Expected a 1, 2, or 4 hex number, or a list of bytes."]);
+                            }
+                        }
+                        else
+                        {
+                            constantBytes = byteParts
+                                .Select(s => byte.Parse(s.TrimStart('0', 'x'), NumberStyles.HexNumber))
+                                .ToArray();
+                        }
+
+                        directive = new BinaryEncodedConstantDirective(constantName, typeName, constantBytes)
+                        {
+                            Line = line,
+                            Column = column,
+                        };
+                    }
                 }
                 break;
 

@@ -4,6 +4,7 @@ using Microsoft.Iris.Markup;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Xml.Linq;
 
 namespace Microsoft.Iris.Asm;
@@ -226,17 +227,28 @@ public class Disassembler
             if (constantValue is IStringEncodable encodable)
             {
                 var encodedValue = encodable.EncodeString();
-                yield return new EncodedConstantDirective(constantName, qualifiedTypeName, encodedValue);
+                yield return new StringEncodedConstantDirective(constantName, qualifiedTypeName, encodedValue);
+            }
+            else if (constantValue is Layout.ILayout constantLayout && Layout.PredefinedLayouts.TryConvertToString(constantLayout, out var constantLayoutString))
+            {
+                qualifiedTypeName = GetQualifiedName(UIXTypes.MapIDToType(UIXTypeID.Layout));
+                yield return new StringEncodedConstantDirective(constantName, qualifiedTypeName, constantLayoutString);
             }
             else if (typeSchema.SupportsTypeConversion(stringTypeSchema))
             {
                 var encodedValue = constantValue.ToString();
-                yield return new EncodedConstantDirective(constantName, qualifiedTypeName, encodedValue);
+                yield return new StringEncodedConstantDirective(constantName, qualifiedTypeName, encodedValue);
             }
-            else if (constantValue is Layout.ILayout constantLayout && Layout.PredefinedLayouts.TryConvertToString(constantLayout, out var constantLayoutString))
+            else if (typeSchema.SupportsBinaryEncoding)
             {
-                qualifiedTypeName = GetQualifiedName(typeSchema.Base);
-                yield return new EncodedConstantDirective(constantName, qualifiedTypeName, constantLayoutString);
+                ByteCodeWriter writer = new();
+                typeSchema.EncodeBinary(writer, constantValue);
+
+                var reader = writer.CreateReader();
+                byte[] encodedBytes = new byte[reader.Size];
+                Marshal.Copy(reader.GetAddress(0), encodedBytes, 0, (int)reader.Size);
+
+                yield return new BinaryEncodedConstantDirective(constantName, qualifiedTypeName, encodedBytes);
             }
             else
             {
