@@ -33,7 +33,7 @@ internal class AsmMarkupLoader
 
         // Check for BOM (byte order mark)
         int sourceStartOffset = 0;
-        if (resource.Length >= 4 && *data == 0xEF && *(data + 1) == 0xBB && *(data + 2) == 0xBF)
+        if (resource.Length > 3 && (*(uint*)data & 0x00FFFFFF) == 0x00BFBBEF)
             sourceStartOffset = 3;
         _asmSource = Encoding.UTF8.GetString(data + sourceStartOffset, (int)(resource.Length - sourceStartOffset));
 
