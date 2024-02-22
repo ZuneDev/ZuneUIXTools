@@ -109,12 +109,17 @@ public class Disassembler
                         {
                             var importedNamespace = path[(nsIndex + 1)..];
                             namespacePrefix = importedNamespace.Split('.', '/', '\\', '!')[^1];
+
+                            System.Reflection.AssemblyName assemblyName = new(path[..nsIndex]);
+                            uri = $"assembly://{assemblyName.Name}/{importedNamespace}";
                         }
                         else
                         {
                             // No namespace was specified, assume we're importing the whole assembly
                             System.Reflection.AssemblyName assemblyName = new(path);
                             namespacePrefix = assemblyName.Name;
+
+                            uri = $"assembly://{assemblyName.Name}";
                         }
                     }
                     else
