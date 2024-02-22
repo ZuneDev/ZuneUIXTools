@@ -39,9 +39,18 @@ internal class AsmMarkupLoader
 
         var parseResult = Lexer.Program.TryParse(_asmSource);
         if (parseResult.WasSuccessful)
+        {
             Program = parseResult.Value;
+        }
         else
-            MarkHasErrors();
+        {
+            MarkHasErrors();    // Who's Mark?
+
+            StringBuilder errorMessageBuilder = new(parseResult.Message);
+            errorMessageBuilder.Append(": ");
+            errorMessageBuilder.AppendJoin(", ", parseResult.Expectations);
+            ErrorManager.ReportError(errorMessageBuilder.ToString());
+        }
     }
 
     public bool HasErrors { get; protected set; }
