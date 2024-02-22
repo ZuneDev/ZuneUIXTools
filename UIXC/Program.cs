@@ -11,6 +11,10 @@ internal class Program
 
         app.Configure(config =>
         {
+            config.AddCommand<CompileCommand>("compile")
+                .WithAlias("c")
+                .WithDescription("Compiles the given source to UIB.");
+
 #if DEBUG
             config.PropagateExceptions();
             config.ValidateExamples();

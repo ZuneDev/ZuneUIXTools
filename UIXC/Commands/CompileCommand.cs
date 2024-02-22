@@ -14,21 +14,29 @@ public class CompileCommand : Command<CompileCommand.Settings>
 {
     public override int Execute(CommandContext context, Settings settings)
     {
-        if (settings.Compilands.Length <= 0)
+        if (settings.Compilands is null || settings.Compilands.Length <= 0)
         {
-            Diagnostic.Error("Missing arguments: must specify a file to compile. Accepts XML and Asm source.");
-            //AnsiConsole.MarkupLine("[red][/]");
+            AnsiConsole.MarkupLine("[red]Missing arguments: must specify a file to compile. Accepts XML and Asm source.[/]");
             return -1;
         }
 
-        // TODO: Support multiple compilands
-        string sourcePath = settings.Compilands[0];
-        CompilerInput compiland = new()
+        CompilerInput[] compilands = new CompilerInput[settings.Compilands.Length];
+        for (int c = 0; c < settings.Compilands.Length; c++)
         {
-            SourceFileName = sourcePath,
-            OutputFileName = Path.Combine(Environment.CurrentDirectory, Path.ChangeExtension(sourcePath, ".uib"))
-        };
-        CompilerInput[] compilands = [compiland];
+            string sourcePath = settings.Compilands[0];
+            compilands[c] = new()
+            {
+                SourceFileName = sourcePath,
+                OutputFileName = SourceToCompiledPath(settings, sourcePath),
+            };
+        }
+
+        CompilerInput dataTableInput = new();
+        if (settings.DataTable is not null)
+        {
+            dataTableInput.SourceFileName = settings.DataTable;
+            dataTableInput.OutputFileName = SourceToCompiledPath(settings, settings.DataTable);
+        }
 
         // Configure error and warning messages
         var report = new Report(new IrisSourceRepository(compilands, default));
@@ -60,8 +68,7 @@ public class CompileCommand : Command<CompileCommand.Settings>
         MarkupSystem.Startup(true);
         Assembler.RegisterLoader();
 
-        // TODO: Support shared binary data tables
-        var success = MarkupCompiler.Compile(compilands, default);
+        var success = MarkupCompiler.Compile(compilands, dataTableInput);
 
         if (!success)
         {
@@ -73,6 +80,12 @@ public class CompileCommand : Command<CompileCommand.Settings>
             AnsiConsole.MarkupLine("[green]Compilation finished.[/]");
             return 0;
         }
+    }
+
+    private static string SourceToCompiledPath(Settings settings, string sourceFilePath)
+    {
+        var outputDir = settings.OutputDir ?? Environment.CurrentDirectory;
+        return Path.Combine(outputDir, Path.ChangeExtension(sourceFilePath, ".uib"));
     }
 
     public sealed class Settings : CommandSettings
@@ -88,6 +101,10 @@ public class CompileCommand : Command<CompileCommand.Settings>
         [Description("A shared binary data table to compile with.")]
         [CommandOption("-t|--dataTable")]
         public string? DataTable { get; init; }
+
+        [Description("The directory to output to.")]
+        [CommandOption("-o|--output <outputDir>")]
+        public string? OutputDir { get; init; }
 
         [CommandOption("--verbose")]
         [DefaultValue(false)]
