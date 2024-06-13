@@ -1,9 +1,11 @@
 ﻿using Microsoft.Iris.Asm;
 using Microsoft.Iris.Debug;
 using Microsoft.Iris.Markup;
+using Microsoft.Iris.Session;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using System.ComponentModel;
+using System.Runtime.Loader;
 
 namespace UIXC.Commands;
 
@@ -27,6 +29,43 @@ public class DecompileCommand : Command<DecompileCommand.Settings>
             {
                 AnsiConsole.MarkupLineInterpolated($"[grey]{line}[/]");
             };
+        }
+
+        ErrorManager.OnErrors += (errors) =>
+        {
+            foreach (ErrorRecord error in errors)
+            {
+                var (color, type) = error.Warning
+                    ? ("yellow", "WARN") : ("red", "ERROR");
+
+                AnsiConsole.MarkupLineInterpolated($"[{color}]{type}: {error.Message}[/]");
+            }
+        };
+
+        foreach (var givenPath in settings.Assemblies ?? [])
+        {
+            try
+            {
+                var assemblyPath = givenPath;
+                if (!Path.IsPathFullyQualified(givenPath))
+                {
+                    assemblyPath = Path.GetFullPath(givenPath);
+                }
+
+                _ = AssemblyLoadContext.Default.LoadFromAssemblyPath(assemblyPath);
+            }
+            catch (Exception ex)
+            {
+                AnsiConsole.WriteException(ex);
+                if (!AnsiConsole.Ask("Do you want to continue?", false))
+                    return -1;
+            }
+        }
+
+        foreach (var redirectOption in settings.ImportRedirects ?? [])
+        {
+            var parts = redirectOption.Split('>');
+            MarkupSystem.AddImportRedirect(parts[0], parts[1]);
         }
 
         MarkupSystem.Startup(true);
@@ -77,37 +116,22 @@ public class DecompileCommand : Command<DecompileCommand.Settings>
             return 0;
         }
     }
+
     private static string GetOutputPath(Settings settings, string inputFilePath)
     {
         var outputDir = settings.OutputDir ?? Environment.CurrentDirectory;
         return Path.Combine(outputDir, Path.ChangeExtension(inputFilePath, settings.Language.GetExtension()));
     }
 
-    public sealed class Settings : CommandSettings
+    public sealed class Settings : CompilerSettings
     {
         [Description("The UIB files to decompile.")]
         [CommandArgument(0, "[inputs]")]
         public required string[] Inputs { get; init; }
 
-        [Description("Directories to search for imported files in.")]
-        [CommandOption("-I <VALUES>")]
-        public required string[] IncludeDirectories { get; init; }
-
-        [Description("A shared binary data table to decompile with.")]
-        [CommandOption("-t|--dataTable")]
-        public string? DataTable { get; init; }
-
-        [Description("The directory to output to.")]
-        [CommandOption("-o|--output <outputDir>")]
-        public string? OutputDir { get; init; }
-
         // TODO: Enum options
         [Description("The language to decompile to.")]
         [CommandOption("-l|--lang <lang>")]
         public SourceLanguage Language { get; init; } = SourceLanguage.Asm;
-
-        [CommandOption("--verbose")]
-        [DefaultValue(false)]
-        public bool Verbose { get; init; }
     }
 }

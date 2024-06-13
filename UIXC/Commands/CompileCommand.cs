@@ -23,7 +23,7 @@ public class CompileCommand : Command<CompileCommand.Settings>
         CompilerInput[] compilands = new CompilerInput[settings.Compilands.Length];
         for (int c = 0; c < settings.Compilands.Length; c++)
         {
-            string sourcePath = settings.Compilands[0];
+            string sourcePath = settings.Compilands[c];
             compilands[c] = new()
             {
                 SourceFileName = sourcePath,
@@ -88,26 +88,10 @@ public class CompileCommand : Command<CompileCommand.Settings>
         return Path.Combine(outputDir, Path.ChangeExtension(sourceFilePath, ".uib"));
     }
 
-    public sealed class Settings : CommandSettings
+    public sealed class Settings : CompilerSettings
     {
         [Description("The source files to compile.")]
         [CommandArgument(0, "[compilands]")]
         public required string[] Compilands { get; init; }
-
-        [Description("Directories to search for imported files in.")]
-        [CommandOption("-I <VALUES>")]
-        public required string[] IncludeDirectories { get; init; }
-
-        [Description("A shared binary data table to compile with.")]
-        [CommandOption("-t|--dataTable")]
-        public string? DataTable { get; init; }
-
-        [Description("The directory to output to.")]
-        [CommandOption("-o|--output <outputDir>")]
-        public string? OutputDir { get; init; }
-
-        [CommandOption("--verbose")]
-        [DefaultValue(false)]
-        public bool Verbose { get; init; }
     }
 }
