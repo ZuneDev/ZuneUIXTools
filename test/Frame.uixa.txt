@@ -1,0 +1,3648 @@
+.import-ns assembly://UIX/Microsoft.Iris as iris
+.import-ns clr-res://ZuneShell!Animations.uix as zuneShell!Animations
+.import-ns clr-res://ZuneShell!PivotList.uix as zuneShell!PivotList
+.import-ns res://UIXControls!Style.uix as uIXControls!Style
+.import-ns clr-res://ZuneShell!FilterList.uix as zuneShell!FilterList
+.import-ns res://UIXControls!ListView.uix as uIXControls!ListView
+.import-ns clr-res://ZuneShell!PivotList.uix as zuneShell!PivotList
+.import-ns clr-res://ZuneShell!FilterList.uix as zuneShell!FilterList
+.import-ns res://UIXControls!ListView.uix as uIXControls!ListView
+.import-ns assembly://ZuneShell/ZuneUI as zuneUI
+.import-ns res://UIXControls!ImageStyle.uix as uIXControls!ImageStyle
+.import-ns clr-res://ZuneShell!Styles.uix as styles
+.import-ns res://UIXControls!Style.uix as uixStyle
+.import-ns res://UIXControls!Styles.uix as uixStyles
+.import-ns res://UIXControls!ImageStyle.uix as uIXControls!ImageStyle
+.import-ns clr-res://ZuneShell!ImageStyleControls.uix as zuneShell!ImageStyleControls
+.import-ns res://UIXControls!Button.uix as uixButton
+.import-ns res://UIXControls!ListView.uix as uIXControls!ListView
+.import-ns res://UIXControls!ScrollBar.uix as uIXControls!ScrollBar
+.import-ns res://UIXControls!ToolTip.uix as uixToolTip
+.import-ns clr-res://ZuneShell!ToolTip.uix as zuneShell!ToolTip
+.import-ns clr-res://ZuneShell!ThumbnailButton.uix as ThumbnailButton
+.import-ns res://UIXControls!Style.uix as uIXControls!Style
+.import-ns clr-res://ZuneShell!EditBox.uix as zuneShell!EditBox
+.import-ns res://UIXControls!ContentList.uix as uIXControls!ContentList
+.import-ns clr-res://ZuneShell!PagingControl.uix as zuneShell!PagingControl
+.import-ns res://UIXControls!ContentList.uix as uIXControls!ContentList
+.import-ns res://UIXControls!ContentList.uix as uIXControls!ContentList
+.import-ns clr-res://ZuneShell!GalleryView.uix as zuneShell!GalleryView
+.import-ns clr-res://ZuneShell!ContentList.uix as zuneShell!ContentList
+.import-ns clr-res://ZuneShell!GalleryView.uix as zuneShell!GalleryView
+.import-ns clr-res://ZuneShell!AutoCompleteBox.uix as zuneShell!AutoCompleteBox
+.import-ns res://UIXControls!ComboBox.uix as uIXControls!ComboBox
+.import-ns res://UIXControls!ComboBox.uix as uIXControls!ComboBox
+.import-ns res://UIXControls!SpreadSheet.uix as uIXControls!SpreadSheet
+.import-ns clr-res://ZuneShell!SpreadSheet.uix as zuneShell!SpreadSheet
+.import-ns assembly://System.Private.CoreLib/System as system
+.import-ns clr-res://ZuneShell!SpreadSheet.uix as zuneShell!SpreadSheet
+.import-ns res://UIXControls!SpreadSheet.uix as uIXControls!SpreadSheet
+.import-ns res://UIXControls!SpreadSheet.uix as uIXControls!SpreadSheet
+.import-ns assembly://ZuneDBApi as zuneDbApi
+.import-ns res://UIXControls!RadioButton.uix as uIXControls!RadioButton
+.import-ns clr-res://ZuneShell!LinkButtons.uix as zuneShell!LinkButtons
+.import-ns clr-res://ZuneShell!LinkButtons.uix as zuneShell!LinkButtons
+.import-ns res://UIXControls!Label.uix as uIXControls!Label
+.import-ns clr-res://ZuneShell!LinkButtons.uix as zuneShell!LinkButtons
+.import-ns res://UIXControls!Label.uix as uIXControls!Label
+.import-ns res://UIXControls!Label.uix as uIXControls!Label
+.import-ns clr-res://ZuneShell!LinkButtons.uix as zuneShell!LinkButtons
+.import-ns res://UIXControls!Style.uix as uIXControls!Style
+.import-ns clr-res://ZuneShell!LinkButtons.uix as zuneShell!LinkButtons
+.import-ns clr-res://ZuneShell!BrokenUpText.uix as zuneShell!BrokenUpText
+.import-ns clr-res://ZuneShell!BrokenUpText.uix as zuneShell!BrokenUpText
+.import-ns clr-res://ZuneShell!BrokenUpText.uix as zuneShell!BrokenUpText
+.import-ns res://UIXControls!Splitter.uix as uIXControls!Splitter
+.import-ns res://UIXControls!EditBox.uix as uIXControls!EditBox
+.import-ns clr-res://ZuneShell!EditBox.uix as zuneShell!EditBox
+.import-ns clr-res://ZuneShell!StarRatings.uix as zuneShell!StarRatings
+.import-ns clr-res://ZuneShell!StarRatings.uix as zuneShell!StarRatings
+.import-ns clr-res://ZuneShell!ImageStyleControls.uix as zuneShell!ImageStyleControls
+.import-ns clr-res://ZuneShell!LibraryData.schema.xml as libraryData
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Util as util
+.import-ns clr-res://ZuneShell!SocialData.schema.xml as socialData
+.import-ns res://ZuneMarketplaceResources!MarketplaceData.schema.xml as marketplaceData
+.import-ns res://ZuneMarketplaceResources!RecommendationsData.schema.xml as schema
+.import-ns clr-res://ZuneShell!EditMediaInfoControls.uix as editMediaInfoControls
+.import-ns res://UIXControls!SpreadSheet.uix as uIXControls!SpreadSheet
+.import-ns res://UIXControls!ContentList.uix as uIXControls!ContentList
+.import-ns res://UIXControls!Dialog.uix as uIXControls!Dialog
+.import-ns res://UIXControls!Scrollable.uix as uIXControls!Scrollable
+.import-ns clr-res://ZuneShell!Wizard.uix as zuneShell!Wizard
+.import-ns res://UIXControls!ScrollBar.uix as uIXControls!ScrollBar
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Service as service
+.import-ns res://UIXControls!RadioButton.uix as uIXControls!RadioButton
+.import-ns clr-res://ZuneShell!PaymentInstrument.uix as zuneShell!PaymentInstrument
+.import-ns clr-res://ZuneShell!PaymentInstrument.uix as zuneShell!PaymentInstrument
+.import-ns clr-res://ZuneShell!PaymentInstrument.uix as zuneShell!PaymentInstrument
+.import-ns clr-res://ZuneShell!PaymentInstrument.uix as zuneShell!PaymentInstrument
+.import-ns res://UIXControls!Dialog.uix as uIXControls!Dialog
+.import-ns clr-res://ZuneShell!PaymentInstrument.uix as zuneShell!PaymentInstrument
+.import-ns assembly://System.Private.CoreLib/System.Collections as collections
+.import-ns res://UIXControls!DropCommands.uix as uIXControls!DropCommands
+.import-ns clr-res://ZuneShell!DropCommands.uix as zuneShell!DropCommands
+.import-ns clr-res://ZuneShell!GasGauge.uix as zuneShell!GasGauge
+.import-ns clr-res://ZuneShell!GasGauge.uix as zuneShell!GasGauge
+.import-ns clr-res://ZuneShell!GasGauge.uix as zuneShell!GasGauge
+.import-ns clr-res://ZuneShell!PageStack.uix as zuneShell!PageStack
+.import-ns res://UIXControls!Splitter.uix as uIXControls!Splitter
+.import-ns clr-res://ZuneShell!DevicelandElements.uix as zuneShell!DevicelandElements
+.import-ns res://UIXControls!SpreadSheet.uix as uIXControls!SpreadSheet
+.import-ns clr-res://ZuneShell!Splitter.uix as zuneShell!Splitter
+.import-ns res://UIXControls!DragFeedback.uix as uIXControls!DragFeedback
+.import-ns clr-res://ZuneShell!Library.uix as zuneShell!Library
+.import-ns res://UIXControls!SpreadSheet.uix as uIXControls!SpreadSheet
+.import-ns res://UIXControls!ComboBox.uix as uIXControls!ComboBox
+.import-ns clr-res://ZuneShell!Library.uix as zuneShell!Library
+.import-ns clr-res://ZuneShell!Library.uix as zuneShell!Library
+.import-ns clr-res://ZuneShell!Library.uix as zuneShell!Library
+.import-ns clr-res://ZuneShell!Library.uix as zuneShell!Library
+.import-ns res://UIXControls!SpreadSheet.uix as uIXControls!SpreadSheet
+.import-ns clr-res://ZuneShell!LibraryCells.uix as zuneShell!LibraryCells
+.import-ns clr-res://ZuneShell!Library.uix as zuneShell!Library
+.import-ns clr-res://ZuneShell!SpreadSheetCells.uix as zuneShell!SpreadSheetCells
+.import-ns res://UIXControls!SpreadSheet.uix as uIXControls!SpreadSheet
+.import-ns res://UIXControls!SpreadSheet.uix as uIXControls!SpreadSheet
+.import-ns clr-res://ZuneShell!SpreadSheet.uix as zuneShell!SpreadSheet
+.import-ns res://UIXControls!SpreadSheet.uix as uIXControls!SpreadSheet
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns res://UIXControls!SpreadSheet.uix as uIXControls!SpreadSheet
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns clr-res://ZuneShell!SpreadSheetCells.uix as zuneShell!SpreadSheetCells
+.import-ns res://UIXControls!SpreadSheet.uix as uIXControls!SpreadSheet
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns res://UIXControls!SpreadSheet.uix as uIXControls!SpreadSheet
+.import-ns res://UIXControls!ContextMenu.uix as uIXControls!ContextMenu
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns clr-res://ZuneShell!ArtistChooser.uix as zuneShell!ArtistChooser
+.import-ns clr-res://ZuneShell!Dialog.uix as zuneShell!Dialog
+.import-ns clr-res://ZuneShell!ArtistChooser.uix as zuneShell!ArtistChooser
+.import-ns clr-res://ZuneShell!SocialComposer.uix as zuneShell!SocialComposer
+.import-ns clr-res://ZuneShell!SocialComposer.uix as zuneShell!SocialComposer
+.import-ns clr-res://ZuneShell!SocialComposer.uix as zuneShell!SocialComposer
+.import-ns clr-res://ZuneShell!SocialComposer.uix as zuneShell!SocialComposer
+.import-ns res://ZuneMarketplaceResources!Metadata.uix as zuneMarketplaceResources!Metadata
+.import-ns clr-res://ZuneShell!SocialComposer.uix as zuneShell!SocialComposer
+.import-ns clr-res://ZuneShell!SocialComposer.uix as zuneShell!SocialComposer
+.import-ns clr-res://ZuneShell!MixManager.uix as zuneShell!MixManager
+.import-ns clr-res://ZuneShell!ThumbnailButtonOverlay.uix as zuneShell!ThumbnailButtonOverlay
+.import-ns clr-res://ZuneShell!ThumbnailButtonOverlay.uix as zuneShell!ThumbnailButtonOverlay
+.import-ns clr-res://ZuneShell!ThumbnailButtonOverlay.uix as zuneShell!ThumbnailButtonOverlay
+.import-ns clr-res://ZuneShell!LinkButtons.uix as zuneShell!LinkButtons
+.import-ns res://UIXControls!Checkbox.uix as uIXControls!Checkbox
+.import-ns res://UIXControls!TextArea.uix as uIXControls!TextArea
+.import-ns clr-res://ZuneShell!WizardControls.uix as zuneShell!WizardControls
+.import-ns res://UIXControls!Dialog.uix as uIXControls!Dialog
+.import-ns clr-res://ZuneShell!WizardControls.uix as zuneShell!WizardControls
+.import-ns res://UIXControls!SelectionIndex.uix as uIXControls!SelectionIndex
+.import-ns res://ZuneMarketplaceResources!Controls.uix as zuneMarketplaceResources!Controls
+.import-ns clr-res://ZuneShell!WizardControls.uix as zuneShell!WizardControls
+.import-ns clr-res://ZuneShell!PanelResizer.uix as zuneShell!PanelResizer
+.import-ns clr-res://ZuneShell!PanelResizer.uix as zuneShell!PanelResizer
+.import-ns clr-res://ZuneShell!ClipImage.uix as zuneShell!ClipImage
+.import-ns clr-res://ZuneShell!ClipImage.uix as zuneShell!ClipImage
+.import-ns clr-res://ZuneShell!AccountCreation.uix as zuneShell!AccountCreation
+.import-ns clr-res://ZuneShell!Dialog.uix as zuneShell!Dialog
+.import-ns clr-res://ZuneShell!Wizard.uix as zuneShell!Wizard
+.import-ns clr-res://ZuneShell!AccountCreation.uix as zuneShell!AccountCreation
+.import-ns clr-res://ZuneShell!AccountCreation.uix as zuneShell!AccountCreation
+.import-ns res://UIXControls!ContentList.uix as uIXControls!ContentList
+.import-ns clr-res://ZuneShell!Dialog.uix as zuneShell!Dialog
+.import-ns clr-res://ZuneShell!MessagingData.schema.xml as messagingData
+.import-ns clr-res://ZuneShell!TopToolbarSignIn.uix as zuneShell!TopToolbarSignIn
+.import-ns clr-res://ZuneShell!TopToolbarSignIn.uix as zuneShell!TopToolbarSignIn
+.import-ns clr-res://ZuneShell!TopToolbarSignIn.uix as zuneShell!TopToolbarSignIn
+.import-ns clr-res://ZuneShell!BoxedTypes.uix as zuneShell!BoxedTypes
+.import-ns clr-res://ZuneShell!TopToolbarSignIn.uix as zuneShell!TopToolbarSignIn
+.import-ns clr-res://ZuneShell!TopToolbarSignIn.uix as zuneShell!TopToolbarSignIn
+.import-ns clr-res://ZuneShell!TopToolbarSignIn.uix as zuneShell!TopToolbarSignIn
+.import-ns clr-res://ZuneShell!TopToolbarSignIn.uix as zuneShell!TopToolbarSignIn
+.import-ns clr-res://ZuneShell!NowPlayingEffects.uix as zuneShell!NowPlayingEffects
+.import-ns clr-res://ZuneShell!MoreInfoActions.uix as zuneShell!MoreInfoActions
+.import-ns clr-res://ZuneShell!NowPlayingAlbumGridDefs.uix as zuneShell!NowPlayingAlbumGridDefs
+.import-ns clr-res://ZuneShell!NowPlayingLand.uix as zuneShell!NowPlayingLand
+.import-ns clr-res://ZuneShell!NowPlayingNotification.uix as zuneShell!NowPlayingNotification
+.import-ns clr-res://ZuneShell!NowPlayingAlbumGridDefs.uix as zuneShell!NowPlayingAlbumGridDefs
+.import-ns clr-res://ZuneShell!NowPlayingMusicBackground.uix as zuneShell!NowPlayingMusicBackground
+.import-ns res://UIXControls!ContextMenu.uix as uIXControls!ContextMenu
+.import-ns res://UIXControls!ContextMenu.uix as uIXControls!ContextMenu
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns clr-res://ZuneShell!SpreadSheet.uix as zuneShell!SpreadSheet
+.import-ns clr-res://ZuneShell!PodcastEpisodesColumns.uix as zuneShell!PodcastEpisodesColumns
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns clr-res://ZuneShell!SpreadSheetCells.uix as zuneShell!SpreadSheetCells
+.import-ns clr-res://ZuneShell!AddToPlaylist.uix as zuneShell!AddToPlaylist
+.import-ns clr-res://ZuneShell!PlaylistDialog.uix as zuneShell!PlaylistDialog
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.QuickMix as quickMix
+.import-ns clr-res://ZuneShell!PlaylistDialog.uix as zuneShell!PlaylistDialog
+.import-ns clr-res://ZuneShell!SpreadSheetCells.uix as zuneShell!SpreadSheetCells
+.import-ns clr-res://ZuneShell!NowPlayingLand.uix as zuneShell!NowPlayingLand
+.import-ns clr-res://ZuneShell!NowPlayingLand.uix as zuneShell!NowPlayingLand
+.import-ns clr-res://ZuneShell!MiniModeAudio.uix as zuneShell!MiniModeAudio
+.import-ns clr-res://ZuneShell!QuickplayMethods.uix as zuneShell!QuickplayMethods
+.import-ns clr-res://ZuneShell!QuickplayStyles.uix as zuneShell!QuickplayStyles
+.import-ns clr-res://ZuneShell!QuickplayMethods.uix as zuneShell!QuickplayMethods
+.import-ns clr-res://ZuneShell!QuickplayQueries.uix as zuneShell!QuickplayQueries
+.import-ns clr-res://ZuneShell!QuickplayQueries.uix as zuneShell!QuickplayQueries
+.import-ns clr-res://ZuneShell!QuickplayQueries.uix as zuneShell!QuickplayQueries
+.import-ns clr-res://ZuneShell!QuickplayQueries.uix as zuneShell!QuickplayQueries
+.import-ns clr-res://ZuneShell!QuickplayQueries.uix as zuneShell!QuickplayQueries
+.import-ns clr-res://ZuneShell!AddToSync.uix as zuneShell!AddToSync
+.import-ns clr-res://ZuneShell!QuickplayListModel.uix as zuneShell!QuickplayListModel
+.import-ns clr-res://ZuneShell!MoreInfoActions.uix as zuneShell!MoreInfoActions
+.import-ns clr-res://ZuneShell!MoreInfoActions.uix as zuneShell!MoreInfoActions
+.import-ns clr-res://ZuneShell!MoreInfoActions.uix as zuneShell!MoreInfoActions
+.import-ns clr-res://ZuneShell!MoreInfoActions.uix as zuneShell!MoreInfoActions
+.import-ns clr-res://ZuneShell!MoreInfoActions.uix as zuneShell!MoreInfoActions
+.import-ns clr-res://ZuneShell!ToolbarIcon.uix as zuneShell!ToolbarIcon
+.import-ns clr-res://ZuneShell!PercentageIcon.uix as zuneShell!PercentageIcon
+.import-ns clr-res://ZuneShell!PopupIcon.uix as zuneShell!PopupIcon
+.import-ns clr-res://ZuneShell!PopupIcon.uix as zuneShell!PopupIcon
+.import-ns clr-res://ZuneShell!FriendsDialogs.uix as zuneShell!FriendsDialogs
+.import-ns clr-res://ZuneShell!FriendsDialogs.uix as zuneShell!FriendsDialogs
+.import-ns clr-res://ZuneShell!FriendsDialogs.uix as zuneShell!FriendsDialogs
+.import-ns clr-res://ZuneShell!FriendsDialogs.uix as zuneShell!FriendsDialogs
+.import-ns clr-res://ZuneShell!FriendsDialogs.uix as zuneShell!FriendsDialogs
+.import-ns res://UIXControls!ContentList.uix as uIXControls!ContentList
+.import-ns res://UIXControls!ContentList.uix as uIXControls!ContentList
+.import-ns clr-res://ZuneShell!GalleryPanel.uix as zuneShell!GalleryPanel
+.import-ns res://UIXControls!Scrollable.uix as uIXControls!Scrollable
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Util as util
+.import-ns clr-res://ZuneShell!ConfirmAlbumChangesDialog.uix as zuneShell!ConfirmAlbumChangesDialog
+.import-ns assembly://ZuneDBApi/MicrosoftZuneLibrary as microsoftZuneLibrary
+.import-ns res://ZuneMarketplaceResources!WMISData.schema.xml as schema
+.import-ns clr-res://ZuneShell!FindAlbumInfoSongMatch.uix as zuneShell!FindAlbumInfoSongMatch
+.import-ns res://ZuneMarketplaceResources!WMISData.schema.xml as schema
+.import-ns clr-res://ZuneShell!FindAlbumInfoDialog.uix as zuneShell!FindAlbumInfoDialog
+.import-ns clr-res://ZuneShell!FindAlbumInfoDialog.uix as zuneShell!FindAlbumInfoDialog
+.import-ns res://ZuneMarketplaceResources!WMISData.schema.xml as schema
+.import-ns res://ZuneMarketplaceResources!WMISData.schema.xml as schema
+.import-ns res://ZuneMarketplaceResources!WMISData.schema.xml as schema
+.import-ns res://ZuneMarketplaceResources!WMISData.schema.xml as schema
+.import-ns res://ZuneMarketplaceResources!WMISData.schema.xml as schema
+.import-ns clr-res://ZuneShell!FindAlbumInfoDialog.uix as zuneShell!FindAlbumInfoDialog
+.import-ns res://UIXControls!Slider.uix as uIXControls!Slider
+.import-ns clr-res://ZuneShell!QuickMixPlaylistDialog.uix as zuneShell!QuickMixPlaylistDialog
+.import-ns clr-res://ZuneShell!QuickMixPlaylistDialog.uix as zuneShell!QuickMixPlaylistDialog
+.import-ns clr-res://ZuneShell!Library.uix as zuneShell!Library
+.import-ns clr-res://ZuneShell!LibraryPanels.uix as zuneShell!LibraryPanels
+.import-ns clr-res://ZuneShell!EditMediaInfoDialog.uix as zuneShell!EditMediaInfoDialog
+.import-ns clr-res://ZuneShell!AddToCollection.uix as zuneShell!AddToCollection
+.import-ns clr-res://ZuneShell!LibraryPanels.uix as zuneShell!LibraryPanels
+.import-ns clr-res://ZuneShell!GalleryPanel.uix as zuneShell!GalleryPanel
+.import-ns clr-res://ZuneShell!ListViewPanel.uix as zuneShell!ListViewPanel
+.import-ns clr-res://ZuneShell!Library.uix as zuneShell!Library
+.import-ns clr-res://ZuneShell!LibraryPanels.uix as zuneShell!LibraryPanels
+.import-ns clr-res://ZuneShell!LibraryPanels.uix as zuneShell!LibraryPanels
+.import-ns clr-res://ZuneShell!ApplicationLibrary.uix as zuneShell!ApplicationLibrary
+.import-ns clr-res://ZuneShell!LibraryPanels.uix as zuneShell!LibraryPanels
+.import-ns clr-res://ZuneShell!Library.uix as zuneShell!Library
+.import-ns clr-res://ZuneShell!ApplicationLibrary.uix as zuneShell!ApplicationLibrary
+.import-ns clr-res://ZuneShell!PopupIcon.uix as zuneShell!PopupIcon
+.import-ns clr-res://ZuneShell!DeviceIconPopup.uix as zuneShell!DeviceIconPopup
+.import-ns res://UIXControls!Popup.uix as uIXControls!Popup
+.import-ns res://UIXControls!Popup.uix as uIXControls!Popup
+.import-ns clr-res://ZuneShell!PopupIcon.uix as zuneShell!PopupIcon
+.import-ns clr-res://ZuneShell!AutoPlaylistDialog.uix as autoPlaylistDialog
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Playlist as playlist
+.import-ns res://UIXControls!ComboBox.uix as uIXControls!ComboBox
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Playlist as playlist
+.import-ns res://UIXControls!ComboBox.uix as uIXControls!ComboBox
+.import-ns clr-res://ZuneShell!PlaylistPopup.uix as zuneShell!PlaylistPopup
+.import-ns clr-res://ZuneShell!PodcastDialogs.uix as zuneShell!PodcastDialogs
+.import-ns clr-res://ZuneShell!PodcastDialogs.uix as zuneShell!PodcastDialogs
+.import-ns clr-res://ZuneShell!PodcastDialogs.uix as zuneShell!PodcastDialogs
+.import-ns clr-res://ZuneShell!PivotHelper.uix as zuneShell!PivotHelper
+.import-ns clr-res://ZuneShell!SocialEmpty.uix as zuneShell!SocialEmpty
+.import-ns clr-res://ZuneShell!Friends.uix as friends
+.import-ns clr-res://ZuneShell!GalleryView.uix as zuneShell!GalleryView
+.import-ns clr-res://ZuneShell!PagingControl.uix as zuneShell!PagingControl
+.import-ns res://UIXControls!DragFeedback.uix as uIXControls!DragFeedback
+.import-ns clr-res://ZuneShell!MessagingHelper.uix as zuneShell!MessagingHelper
+.import-ns clr-res://ZuneShell!InboxBaseDetails.uix as zuneShell!InboxBaseDetails
+.import-ns clr-res://ZuneShell!MessagingHelper.uix as zuneShell!MessagingHelper
+.import-ns clr-res://ZuneShell!InboxBaseDetails.uix as zuneShell!InboxBaseDetails
+.import-ns clr-res://ZuneShell!InboxBaseDetails.uix as zuneShell!InboxBaseDetails
+.import-ns res://ZuneMarketplaceResources!TrackCollectionActions.uix as zuneMarketplaceResources!TrackCollectionActions
+.import-ns clr-res://ZuneShell!InboxTrackDetails.uix as zuneShell!InboxTrackDetails
+.import-ns clr-res://ZuneShell!InboxTrackDetails.uix as zuneShell!InboxTrackDetails
+.import-ns clr-res://ZuneShell!InboxTrackDetails.uix as zuneShell!InboxTrackDetails
+.import-ns clr-res://ZuneShell!InboxTrackDetails.uix as zuneShell!InboxTrackDetails
+.import-ns clr-res://ZuneShell!InboxTrackDetails.uix as zuneShell!InboxTrackDetails
+.import-ns clr-res://ZuneShell!QuickplayActions.uix as zuneShell!QuickplayActions
+.import-ns clr-res://ZuneShell!MiniMode.uix as zuneShell!MiniMode
+.import-ns res://UIXControls!NonClientControls.uix as uIXControls!NonClientControls
+.import-ns res://ZuneMarketplaceResources!PodcastData.schema.xml as podcastData
+.import-ns res://ZuneMarketplaceResources!VideoData.schema.xml as videoData
+.import-ns clr-res://ZuneShell!AutoCompleteBox.uix as zuneShell!AutoCompleteBox
+.import-ns clr-res://ZuneShell!AboutDialog.uix as zuneShell!AboutDialog
+.import-ns clr-res://ZuneShell!ManagementGeneral.uix as zuneShell!ManagementGeneral
+.import-ns clr-res://ZuneShell!PivotList.uix as zuneShell!PivotList
+.import-ns clr-res://ZuneShell!BulletList.uix as zuneShell!BulletList
+.import-ns clr-res://ZuneShell!PageStack.uix as zuneShell!PageStack
+.import-ns res://UIXControls!Dialog.uix as uIXControls!Dialog
+.import-ns clr-res://ZuneShell!Dialog.uix as zuneShell!Dialog
+.import-ns res://UIXControls!Dialog.uix as uIXControls!Dialog
+.import-ns clr-res://ZuneShell!Dialog.uix as zuneShell!Dialog
+.import-ns clr-res://ZuneShell!EditMediaInfoDialog.uix as zuneShell!EditMediaInfoDialog
+.import-ns clr-res://ZuneShell!WindowsLive.uix as zuneShell!WindowsLive
+.import-ns clr-res://ZuneShell!WindowsLive.uix as zuneShell!WindowsLive
+.import-ns clr-res://ZuneShell!LibraryThumbnailOverlays.uix as zuneShell!LibraryThumbnailOverlays
+.import-ns clr-res://ZuneShell!LibraryThumbnailOverlays.uix as zuneShell!LibraryThumbnailOverlays
+.import-ns clr-res://ZuneShell!ThumbnailButtonOverlay.uix as zuneShell!ThumbnailButtonOverlay
+.import-ns res://UIXControls!ContentList.uix as uIXControls!ContentList
+.import-ns clr-res://ZuneShell!AlbumsPanel.uix as zuneShell!AlbumsPanel
+.import-ns clr-res://ZuneShell!GalleryPanel.uix as zuneShell!GalleryPanel
+.import-ns clr-res://ZuneShell!AlbumsPanel.uix as zuneShell!AlbumsPanel
+.import-ns clr-res://ZuneShell!AlbumsPanel.uix as zuneShell!AlbumsPanel
+.import-ns clr-res://ZuneShell!AlbumsPanel.uix as zuneShell!AlbumsPanel
+.import-ns clr-res://ZuneShell!LibraryPanels.uix as zuneShell!LibraryPanels
+.import-ns clr-res://ZuneShell!AlbumsPanel.uix as zuneShell!AlbumsPanel
+.import-ns clr-res://ZuneShell!Animations.uix as zuneShell!Animations
+.import-ns clr-res://ZuneShell!FilterList.uix as zuneShell!FilterList
+.import-ns clr-res://ZuneShell!PivotList.uix as zuneShell!PivotList
+.import-ns clr-res://ZuneShell!PivotList.uix as zuneShell!PivotList
+.import-ns clr-res://ZuneShell!FilterList.uix as zuneShell!FilterList
+.import-ns clr-res://ZuneShell!FilterList.uix as zuneShell!FilterList
+.import-ns assembly://System.Private.CoreLib/System.Collections.Generic as generic
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Configuration as configuration
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Configuration as configuration
+.import-ns res://UIXControls!ImageStyle.uix as uIXControls!ImageStyle
+.import-ns assembly://ZuneShell, Version=5.0.0.0, Culture=neutral, PublicKeyToken=null/Microsoft.Zune.Util as util
+.import-ns clr-res://ZuneShell!ImageStyleControls.uix as zuneShell!ImageStyleControls
+.import-ns clr-res://ZuneShell!ImageStyle.uix as zuneShell!ImageStyle
+.import-ns res://UIXControls!Style.uix as uIXControls!Style
+.import-ns assembly://System.Private.CoreLib/System.Security as security
+.import-ns clr-res://ZuneShell!ToolTip.uix as zuneShell!ToolTip
+.import-ns res://UIXControls!Label.uix as uIXControls!Label
+.import-ns res://UIXControls!ContentList.uix as uIXControls!ContentList
+.import-ns clr-res://ZuneShell!PagingControl.uix as zuneShell!PagingControl
+.import-ns clr-res://ZuneShell!PagingControl.uix as zuneShell!PagingControl
+.import-ns clr-res://ZuneShell!GalleryView.uix as zuneShell!GalleryView
+.import-ns clr-res://ZuneShell!SpreadSheet.uix as zuneShell!SpreadSheet
+.import-ns clr-res://ZuneShell!ActionProgressButton.uix as zuneShell!ActionProgressButton
+.import-ns clr-res://ZuneShell!SpreadSheetCells.uix as zuneShell!SpreadSheetCells
+.import-ns clr-res://ZuneShell!SpreadSheetCells.uix as zuneShell!SpreadSheetCells
+.import-ns res://UIXControls!DragFeedback.uix as uIXControls!DragFeedback
+.import-ns clr-res://ZuneShell!LinkButtons.uix as zuneShell!LinkButtons
+.import-ns clr-res://ZuneShell!LinkButtons.uix as zuneShell!LinkButtons
+.import-ns clr-res://ZuneShell!LinkButtons.uix as zuneShell!LinkButtons
+.import-ns assembly://System.Private.CoreLib/System.Text as text
+.import-ns clr-res://ZuneShell!BrokenUpText.uix as zuneShell!BrokenUpText
+.import-ns clr-res://ZuneShell!StarRatings.uix as zuneShell!StarRatings
+.import-ns res://UIXControls!Strings.uix as uIXControls!Strings
+.import-ns assembly://UIXControls, Version=4.8.0.0, Culture=neutral, PublicKeyToken=ddd0da4d3e678217/UIXControls as uIXControls
+.import-ns assembly://UIXControls, Version=4.8.0.0, Culture=neutral, PublicKeyToken=ddd0da4d3e678217/UIXControls as uIXControls
+.import-ns res://ZuneMarketplaceResources!ImageSelector.uix as zuneMarketplaceResources!ImageSelector
+.import-ns res://ZuneMarketplaceResources!Globals.uix as zuneMarketplaceResources!Globals
+.import-ns clr-res://ZuneShell!ActiveUser.uix as zuneShell!ActiveUser
+.import-ns assembly://ZuneShell, Version=5.0.0.0, Culture=neutral, PublicKeyToken=null/ZuneXml as zuneXml
+.import-ns assembly://ZuneDBApi/ZuneUI as zuneUI
+.import-ns res://UIXControls!SpreadSheet.uix as uIXControls!SpreadSheet
+.import-ns clr-res://ZuneShell!ErrorDialog.uix as zuneShell!ErrorDialog
+.import-ns res://ZuneMarketplaceResources!Hyperlink.uix as zuneMarketplaceResources!Hyperlink
+.import-ns clr-res://ZuneShell!WizardControls.uix as zuneShell!WizardControls
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.ErrorMapperApi as errorMapperApi
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.ErrorMapperApi as errorMapperApi
+.import-ns clr-res://ZuneShell!Wizard.uix as zuneShell!Wizard
+.import-ns clr-res://ZuneShell!Wizard.uix as zuneShell!Wizard
+.import-ns clr-res://ZuneShell!LoadStatus.uix as zuneShell!LoadStatus
+.import-ns clr-res://ZuneShell!WizardControls.uix as zuneShell!WizardControls
+.import-ns clr-res://ZuneShell!WizardControls.uix as zuneShell!WizardControls
+.import-ns clr-res://ZuneShell!Wizard.uix as zuneShell!Wizard
+.import-ns res://UIXControls!ScrollBar.uix as uIXControls!ScrollBar
+.import-ns clr-res://ZuneShell!WizardControls.uix as zuneShell!WizardControls
+.import-ns clr-res://ZuneShell!PaymentInstrument.uix as zuneShell!PaymentInstrument
+.import-ns clr-res://ZuneShell!PaymentInstrument.uix as zuneShell!PaymentInstrument
+.import-ns clr-res://ZuneShell!PaymentInstrument.uix as zuneShell!PaymentInstrument
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Service as service
+.import-ns clr-res://ZuneShell!PaymentInstrument.uix as zuneShell!PaymentInstrument
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Service as service
+.import-ns clr-res://ZuneShell!PaymentInstrument.uix as zuneShell!PaymentInstrument
+.import-ns clr-res://ZuneShell!PaymentInstrument.uix as zuneShell!PaymentInstrument
+.import-ns assembly://ZuneShell, Version=5.0.0.0, Culture=neutral, PublicKeyToken=null/Microsoft.Zune.Shell as shell
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Service as service
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Service as service
+.import-ns res://ZuneMarketplaceResources!PurchaseDialog.uix as zuneMarketplaceResources!PurchaseDialog
+.import-ns res://ZuneMarketplaceResources!CommerceDialog.uix as zuneMarketplaceResources!CommerceDialog
+.import-ns clr-res://ZuneShell!ListViewPanel.uix as zuneShell!ListViewPanel
+.import-ns clr-res://ZuneShell!ListViewPanel.uix as zuneShell!ListViewPanel
+.import-ns assembly://UIXControls, Version=4.8.0.0, Culture=neutral, PublicKeyToken=ddd0da4d3e678217/UIXControls as uIXControls
+.import-ns clr-res://ZuneShell!DeviceIcons.uix as zuneShell!DeviceIcons
+.import-ns clr-res://ZuneShell!GasGauge.uix as zuneShell!GasGauge
+.import-ns clr-res://ZuneShell!GasGauge.uix as zuneShell!GasGauge
+.import-ns clr-res://ZuneShell!GasGauge.uix as zuneShell!GasGauge
+.import-ns clr-res://ZuneShell!GasGauge.uix as zuneShell!GasGauge
+.import-ns clr-res://ZuneShell!GasGauge.uix as zuneShell!GasGauge
+.import-ns clr-res://ZuneShell!DevicelandElements.uix as zuneShell!DevicelandElements
+.import-ns clr-res://ZuneShell!DevicelandElements.uix as zuneShell!DevicelandElements
+.import-ns clr-res://ZuneShell!DevicelandElements.uix as zuneShell!DevicelandElements
+.import-ns clr-res://ZuneShell!LinkButtons.uix as zuneShell!LinkButtons
+.import-ns clr-res://ZuneShell!DropCommands.uix as zuneShell!DropCommands
+.import-ns clr-res://ZuneShell!DevicelandElements.uix as zuneShell!DevicelandElements
+.import-ns clr-res://ZuneShell!Library.uix as zuneShell!Library
+.import-ns clr-res://ZuneShell!Library.uix as zuneShell!Library
+.import-ns res://UIXControls!Splitter.uix as uIXControls!Splitter
+.import-ns clr-res://ZuneShell!Library.uix as zuneShell!Library
+.import-ns res://UIXControls!DragFeedback.uix as uIXControls!DragFeedback
+.import-ns res://UIXControls!Checkbox.uix as uIXControls!Checkbox
+.import-ns res://UIXControls!ContentList.uix as uIXControls!ContentList
+.import-ns res://UIXControls!Splitter.uix as uIXControls!Splitter
+.import-ns clr-res://ZuneShell!DevicelandElements.uix as zuneShell!DevicelandElements
+.import-ns clr-res://ZuneShell!LinkButtons.uix as zuneShell!LinkButtons
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Util as util
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Service as service
+.import-ns clr-res://ZuneShell!ListViewPanel.uix as zuneShell!ListViewPanel
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns clr-res://ZuneShell!LibraryCells.uix as zuneShell!LibraryCells
+.import-ns clr-res://ZuneShell!LibraryCells.uix as zuneShell!LibraryCells
+.import-ns clr-res://ZuneShell!LibraryCells.uix as zuneShell!LibraryCells
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns assembly://System.Collections.NonGeneric, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a/System.Collections as collections
+.import-ns clr-res://ZuneShell!ArtistChooser.uix as zuneShell!ArtistChooser
+.import-ns clr-res://ZuneShell!Utility.uix as zuneShell!Utility
+.import-ns clr-res://ZuneShell!ArtistChooser.uix as zuneShell!ArtistChooser
+.import-ns clr-res://ZuneShell!ArtistChooser.uix as zuneShell!ArtistChooser
+.import-ns clr-res://ZuneShell!ArtistChooser.uix as zuneShell!ArtistChooser
+.import-ns clr-res://ZuneShell!ArtistChooser.uix as zuneShell!ArtistChooser
+.import-ns res://ZuneMarketplaceResources!ListItem.uix as zuneMarketplaceResources!ListItem
+.import-ns clr-res://ZuneShell!ArtistChooser.uix as zuneShell!ArtistChooser
+.import-ns clr-res://ZuneShell!ArtistChooser.uix as zuneShell!ArtistChooser
+.import-ns clr-res://ZuneShell!ArtistChooser.uix as zuneShell!ArtistChooser
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Messaging as messaging
+.import-ns clr-res://ZuneShell!SocialComposer.uix as zuneShell!SocialComposer
+.import-ns clr-res://ZuneShell!EditBox.uix as zuneShell!EditBox
+.import-ns clr-res://ZuneShell!AutoCompleteBox.uix as zuneShell!AutoCompleteBox
+.import-ns res://ZuneMarketplaceResources!VideoData.schema.xml as videoData
+.import-ns clr-res://ZuneShell!MixManager.uix as zuneShell!MixManager
+.import-ns clr-res://ZuneShell!MixManager.uix as zuneShell!MixManager
+.import-ns clr-res://ZuneShell!ThumbnailButtonOverlay.uix as zuneShell!ThumbnailButtonOverlay
+.import-ns clr-res://ZuneShell!ThumbnailButtonOverlay.uix as zuneShell!ThumbnailButtonOverlay
+.import-ns clr-res://ZuneShell!ThumbnailButtonOverlay.uix as zuneShell!ThumbnailButtonOverlay
+.import-ns clr-res://ZuneShell!ThumbnailButtonOverlay.uix as zuneShell!ThumbnailButtonOverlay
+.import-ns clr-res://ZuneShell!ThumbnailButtonOverlay.uix as zuneShell!ThumbnailButtonOverlay
+.import-ns clr-res://ZuneShell!WizardControls.uix as zuneShell!WizardControls
+.import-ns clr-res://ZuneShell!Wizard.uix as zuneShell!Wizard
+.import-ns clr-res://ZuneShell!WizardControls.uix as zuneShell!WizardControls
+.import-ns clr-res://ZuneShell!WizardControls.uix as zuneShell!WizardControls
+.import-ns clr-res://ZuneShell!LabelWithArrow.uix as zuneShell!LabelWithArrow
+.import-ns clr-res://ZuneShell!WizardControls.uix as zuneShell!WizardControls
+.import-ns clr-res://ZuneShell!EditBox.uix as zuneShell!EditBox
+.import-ns assembly://ZuneShell, Version=5.0.0.0, Culture=neutral, PublicKeyToken=null/Microsoft.Zune.Shell as shell
+.import-ns clr-res://ZuneShell!WizardControls.uix as zuneShell!WizardControls
+.import-ns clr-res://ZuneShell!WizardControls.uix as zuneShell!WizardControls
+.import-ns clr-res://ZuneShell!WizardControls.uix as zuneShell!WizardControls
+.import-ns clr-res://ZuneShell!LinkButtons.uix as zuneShell!LinkButtons
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Service as service
+.import-ns clr-res://ZuneShell!PanelResizer.uix as zuneShell!PanelResizer
+.import-ns clr-res://ZuneShell!PanelResizer.uix as zuneShell!PanelResizer
+.import-ns clr-res://ZuneShell!PanelResizer.uix as zuneShell!PanelResizer
+.import-ns clr-res://ZuneShell!ClipImage.uix as zuneShell!ClipImage
+.import-ns clr-res://ZuneShell!ProfileEdit.uix as profileEdit
+.import-ns assembly://ZuneDBApi/MicrosoftZuneLibrary as microsoftZuneLibrary
+.import-ns clr-res://ZuneShell!ClipImage.uix as zuneShell!ClipImage
+.import-ns clr-res://ZuneShell!Dialog.uix as zuneShell!Dialog
+.import-ns clr-res://ZuneShell!AccountCreation.uix as zuneShell!AccountCreation
+.import-ns clr-res://ZuneShell!AccountCreation.uix as zuneShell!AccountCreation
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Service as service
+.import-ns clr-res://ZuneShell!Dialog.uix as zuneShell!Dialog
+.import-ns clr-res://ZuneShell!WizardControls.uix as zuneShell!WizardControls
+.import-ns res://UIXControls!NonClientControls.uix as uIXControls!NonClientControls
+.import-ns clr-res://ZuneShell!AccountCreation.uix as zuneShell!AccountCreation
+.import-ns clr-res://ZuneShell!AccountCreation.uix as zuneShell!AccountCreation
+.import-ns clr-res://ZuneShell!WizardControls.uix as zuneShell!WizardControls
+.import-ns clr-res://ZuneShell!AccountCreation.uix as zuneShell!AccountCreation
+.import-ns clr-res://ZuneShell!AccountCreation.uix as zuneShell!AccountCreation
+.import-ns clr-res://ZuneShell!SignInDialog.uix as signInDialog
+.import-ns clr-res://ZuneShell!TopToolbarSignIn.uix as zuneShell!TopToolbarSignIn
+.import-ns clr-res://ZuneShell!TopToolbarSignIn.uix as zuneShell!TopToolbarSignIn
+.import-ns clr-res://ZuneShell!Animations.uix as zuneShell!Animations
+.import-ns clr-res://ZuneShell!TopToolbarSignIn.uix as zuneShell!TopToolbarSignIn
+.import-ns clr-res://ZuneShell!TopToolbarSignIn.uix as zuneShell!TopToolbarSignIn
+.import-ns clr-res://ZuneShell!Animations.uix as zuneShell!Animations
+.import-ns clr-res://ZuneShell!TopToolbarSignIn.uix as zuneShell!TopToolbarSignIn
+.import-ns clr-res://ZuneShell!TopToolbarSignIn.uix as zuneShell!TopToolbarSignIn
+.import-ns clr-res://ZuneShell!TopToolbarSignIn.uix as zuneShell!TopToolbarSignIn
+.import-ns clr-res://ZuneShell!TopToolbarSignIn.uix as zuneShell!TopToolbarSignIn
+.import-ns clr-res://ZuneShell!TopToolbarSignIn.uix as zuneShell!TopToolbarSignIn
+.import-ns clr-res://ZuneShell!TopToolbarSignIn.uix as zuneShell!TopToolbarSignIn
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Configuration as configuration
+.import-ns res://UIXControls!ContextMenu.uix as uIXControls!ContextMenu
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Service as service
+.import-ns clr-res://ZuneShell!NowPlayingStyles.uix as nowPlayingStyles
+.import-ns clr-res://ZuneShell!NowPlayingEffects.uix as zuneShell!NowPlayingEffects
+.import-ns clr-res://ZuneShell!NowPlayingEffects.uix as zuneShell!NowPlayingEffects
+.import-ns clr-res://ZuneShell!NowPlayingEffects.uix as zuneShell!NowPlayingEffects
+.import-ns clr-res://ZuneShell!NowPlayingClips.uix as zuneShell!nowPlayingClips
+.import-ns clr-res://ZuneShell!BrokenUpText.uix as zuneShell!BrokenUpText
+.import-ns clr-res://ZuneShell!NowPlayingEffects.uix as zuneShell!NowPlayingEffects
+.import-ns clr-res://ZuneShell!NowPlayingEffects.uix as zuneShell!NowPlayingEffects
+.import-ns clr-res://ZuneShell!BrokenUpText.uix as zuneShell!BrokenUpText
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Service as service
+.import-ns assembly://ZuneDBApi/MicrosoftZuneLibrary as microsoftZuneLibrary
+.import-ns clr-res://ZuneShell!NowPlayingNotification.uix as zuneShell!NowPlayingNotification
+.import-ns clr-res://ZuneShell!NowPlayingNotification.uix as zuneShell!NowPlayingNotification
+.import-ns clr-res://ZuneShell!NowPlayingNotification.uix as zuneShell!NowPlayingNotification
+.import-ns clr-res://ZuneShell!NowPlayingNotification.uix as zuneShell!NowPlayingNotification
+.import-ns clr-res://ZuneShell!NowPlayingMusicBackground.uix as zuneShell!NowPlayingMusicBackground
+.import-ns clr-res://ZuneShell!NowPlayingMusicBackground.uix as zuneShell!NowPlayingMusicBackground
+.import-ns clr-res://ZuneShell!NowPlayingMusicBackground.uix as zuneShell!NowPlayingMusicBackground
+.import-ns clr-res://ZuneShell!NowPlayingMusicBackground.uix as zuneShell!NowPlayingMusicBackground
+.import-ns clr-res://ZuneShell!NowPlayingMusicBackground.uix as zuneShell!NowPlayingMusicBackground
+.import-ns clr-res://ZuneShell!NowPlayingMusicBackground.uix as zuneShell!NowPlayingMusicBackground
+.import-ns res://UIXControls!NonClientControls.uix as uIXControls!NonClientControls
+.import-ns clr-res://ZuneShell!MixManager.uix as zuneShell!MixManager
+.import-ns clr-res://ZuneShell!NowPlayingMusicBackground.uix as zuneShell!NowPlayingMusicBackground
+.import-ns clr-res://ZuneShell!NowPlayingMusicBackground.uix as zuneShell!NowPlayingMusicBackground
+.import-ns clr-res://ZuneShell!NowPlayingMusicBackground.uix as zuneShell!NowPlayingMusicBackground
+.import-ns clr-res://ZuneShell!NowPlayingAlbumGridDefs.uix as zuneShell!NowPlayingAlbumGridDefs
+.import-ns clr-res://ZuneShell!NowPlayingMusicBackground.uix as zuneShell!NowPlayingMusicBackground
+.import-ns clr-res://ZuneShell!NowPlayingMusicBackground.uix as zuneShell!NowPlayingMusicBackground
+.import-ns clr-res://ZuneShell!NowPlayingEffects.uix as zuneShell!NowPlayingEffects
+.import-ns clr-res://ZuneShell!NowPlayingEffects.uix as zuneShell!NowPlayingEffects
+.import-ns clr-res://ZuneShell!LibraryContextMenu.uix as zuneShell!LibraryContextMenu
+.import-ns clr-res://ZuneShell!PodcastEpisodesColumns.uix as zuneShell!PodcastEpisodesColumns
+.import-ns clr-res://ZuneShell!PodcastEpisodesColumns.uix as zuneShell!PodcastEpisodesColumns
+.import-ns clr-res://ZuneShell!PodcastEpisodesColumns.uix as zuneShell!PodcastEpisodesColumns
+.import-ns clr-res://ZuneShell!PodcastEpisodesColumns.uix as zuneShell!PodcastEpisodesColumns
+.import-ns clr-res://ZuneShell!PodcastEpisodesColumns.uix as zuneShell!PodcastEpisodesColumns
+.import-ns clr-res://ZuneShell!PodcastEpisodesColumns.uix as zuneShell!PodcastEpisodesColumns
+.import-ns clr-res://ZuneShell!PodcastEpisodesColumns.uix as zuneShell!PodcastEpisodesColumns
+.import-ns clr-res://ZuneShell!PodcastEpisodesColumns.uix as zuneShell!PodcastEpisodesColumns
+.import-ns clr-res://ZuneShell!LibraryDialogs.uix as libraryDialogs
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Service as service
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Playlist as playlist
+.import-ns clr-res://ZuneShell!NowPlayingLand.uix as zuneShell!NowPlayingLand
+.import-ns clr-res://ZuneShell!SocialComposer.uix as zuneShell!SocialComposer
+.import-ns clr-res://ZuneShell!LibraryContextMenu.uix as zuneShell!LibraryContextMenu
+.import-ns clr-res://ZuneShell!MiniMode.uix as zuneShell!MiniMode
+.import-ns clr-res://ZuneShell!NowPlayingLand.uix as zuneShell!NowPlayingLand
+.import-ns clr-res://ZuneShell!NowPlayingLand.uix as zuneShell!NowPlayingLand
+.import-ns assembly://ZuneShell, Version=5.0.0.0, Culture=neutral, PublicKeyToken=null/Microsoft.Zune.Shell as shell
+.import-ns clr-res://ZuneShell!NowPlayingLand.uix as zuneShell!NowPlayingLand
+.import-ns res://UIXControls!Popup.uix as uIXControls!Popup
+.import-ns assembly://ZuneDBApi/MicrosoftZunePlayback as microsoftZunePlayback
+.import-ns clr-res://ZuneShell!NowPlayingLand.uix as zuneShell!NowPlayingLand
+.import-ns clr-res://ZuneShell!NowPlayingMusicBackground.uix as zuneShell!NowPlayingMusicBackground
+.import-ns clr-res://ZuneShell!NowPlayingLand.uix as zuneShell!NowPlayingLand
+.import-ns clr-res://ZuneShell!NowPlayingLand.uix as zuneShell!NowPlayingLand
+.import-ns clr-res://ZuneShell!NowPlayingLand.uix as zuneShell!NowPlayingLand
+.import-ns clr-res://ZuneShell!NowPlayingLand.uix as zuneShell!NowPlayingLand
+.import-ns clr-res://ZuneShell!NowPlayingLand.uix as zuneShell!NowPlayingLand
+.import-ns res://UIXControls!Label.uix as uIXControls!Label
+.import-ns clr-res://ZuneShell!NowPlayingLand.uix as zuneShell!NowPlayingLand
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Configuration as configuration
+.import-ns clr-res://ZuneShell!MiniModeAudio.uix as zuneShell!MiniModeAudio
+.import-ns clr-res://ZuneShell!MiniModeAudio.uix as zuneShell!MiniModeAudio
+.import-ns clr-res://ZuneShell!MiniModeAudio.uix as zuneShell!MiniModeAudio
+.import-ns clr-res://ZuneShell!MiniModeAudio.uix as zuneShell!MiniModeAudio
+.import-ns clr-res://ZuneShell!MiniModeAudio.uix as zuneShell!MiniModeAudio
+.import-ns clr-res://ZuneShell!MiniModeAudio.uix as zuneShell!MiniModeAudio
+.import-ns clr-res://ZuneShell!MiniModeAudio.uix as zuneShell!MiniModeAudio
+.import-ns clr-res://ZuneShell!MiniModeAudio.uix as zuneShell!MiniModeAudio
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Configuration as configuration
+.import-ns clr-res://ZuneShell!MiniModeVideo.uix as zuneShell!MiniModeVideo
+.import-ns clr-res://ZuneShell!MiniMode.uix as zuneShell!MiniMode
+.import-ns clr-res://ZuneShell!QuickplayStyles.uix as zuneShell!QuickplayStyles
+.import-ns clr-res://ZuneShell!QuickplayMethods.uix as zuneShell!QuickplayMethods
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Configuration as configuration
+.import-ns assembly://ZuneShell, Version=5.0.0.0, Culture=neutral, PublicKeyToken=null/Microsoft.Zune.PerfTrace as perfTrace
+.import-ns assembly://ZuneShell, Version=5.0.0.0, Culture=neutral, PublicKeyToken=null/Microsoft.Zune.PerfTrace as perfTrace
+.import-ns clr-res://ZuneShell!QuickplayQueries.uix as zuneShell!QuickplayQueries
+.import-ns clr-res://ZuneShell!QuickplayQueries.uix as zuneShell!QuickplayQueries
+.import-ns clr-res://ZuneShell!QuickplayQueries.uix as zuneShell!QuickplayQueries
+.import-ns clr-res://ZuneShell!QuickplayQueries.uix as zuneShell!QuickplayQueries
+.import-ns clr-res://ZuneShell!QuickplayQueries.uix as zuneShell!QuickplayQueries
+.import-ns clr-res://ZuneShell!QuickplayQueries.uix as zuneShell!QuickplayQueries
+.import-ns clr-res://ZuneShell!QuickplayQueries.uix as zuneShell!QuickplayQueries
+.import-ns clr-res://ZuneShell!QuickplayQueries.uix as zuneShell!QuickplayQueries
+.import-ns clr-res://ZuneShell!QuickplayQueries.uix as zuneShell!QuickplayQueries
+.import-ns clr-res://ZuneShell!QuickplayQueries.uix as zuneShell!QuickplayQueries
+.import-ns clr-res://ZuneShell!QuickplayQueries.uix as zuneShell!QuickplayQueries
+.import-ns clr-res://ZuneShell!QuickplayQueries.uix as zuneShell!QuickplayQueries
+.import-ns clr-res://ZuneShell!AddToSync.uix as zuneShell!AddToSync
+.import-ns clr-res://ZuneShell!AddToSync.uix as zuneShell!AddToSync
+.import-ns clr-res://ZuneShell!QuickplayActions.uix as zuneShell!QuickplayActions
+.import-ns assembly://ZuneDBApi/MicrosoftZuneLibrary as microsoftZuneLibrary
+.import-ns clr-res://ZuneShell!AddToSync.uix as zuneShell!AddToSync
+.import-ns clr-res://ZuneShell!QuickplayActions.uix as zuneShell!QuickplayActions
+.import-ns clr-res://ZuneShell!QuickplayPlayHelper.uix as zuneShell!QuickplayPlayHelper
+.import-ns clr-res://ZuneShell!QuickplayPlayHelper.uix as zuneShell!QuickplayPlayHelper
+.import-ns res://ZuneMarketplaceResources!Controls.uix as zuneMarketplaceResources!Controls
+.import-ns clr-res://ZuneShell!TransportControls.uix as zuneShell!TransportControls
+.import-ns clr-res://ZuneShell!TransportControls.uix as zuneShell!TransportControls
+.import-ns clr-res://ZuneShell!TransportControls.uix as zuneShell!TransportControls
+.import-ns clr-res://ZuneShell!TransportControls.uix as zuneShell!TransportControls
+.import-ns clr-res://ZuneShell!ImageStyleControls.uix as zuneShell!ImageStyleControls
+.import-ns clr-res://ZuneShell!NotificationArea.uix as zuneShell!NotificationArea
+.import-ns clr-res://ZuneShell!NotificationArea.uix as zuneShell!NotificationArea
+.import-ns clr-res://ZuneShell!NotificationArea.uix as zuneShell!NotificationArea
+.import-ns clr-res://ZuneShell!LinkButtons.uix as zuneShell!LinkButtons
+.import-ns clr-res://ZuneShell!PopupIcon.uix as zuneShell!PopupIcon
+.import-ns clr-res://ZuneShell!PopupIcon.uix as zuneShell!PopupIcon
+.import-ns clr-res://ZuneShell!FriendsDialogs.uix as zuneShell!FriendsDialogs
+.import-ns clr-res://ZuneShell!FriendsDialogs.uix as zuneShell!FriendsDialogs
+.import-ns clr-res://ZuneShell!FriendsDialogs.uix as zuneShell!FriendsDialogs
+.import-ns res://UIXControls!ContentList.uix as uIXControls!ContentList
+.import-ns clr-res://ZuneShell!FindAlbumInfoControls.uix as zuneShell!FindAlbumInfoControls
+.import-ns clr-res://ZuneShell!ConfirmAlbumChangesDialog.uix as zuneShell!ConfirmAlbumChangesDialog
+.import-ns clr-res://ZuneShell!ConfirmAlbumChangesDialog.uix as zuneShell!ConfirmAlbumChangesDialog
+.import-ns clr-res://ZuneShell!ConfirmAlbumChangesDialog.uix as zuneShell!ConfirmAlbumChangesDialog
+.import-ns clr-res://ZuneShell!FindAlbumInfoSongMatch.uix as zuneShell!FindAlbumInfoSongMatch
+.import-ns clr-res://ZuneShell!FindAlbumInfoSongMatch.uix as zuneShell!FindAlbumInfoSongMatch
+.import-ns assembly://ZuneDBApi/MicrosoftZuneLibrary as microsoftZuneLibrary
+.import-ns clr-res://ZuneShell!FindAlbumInfoSongMatch.uix as zuneShell!FindAlbumInfoSongMatch
+.import-ns clr-res://ZuneShell!FindAlbumInfoSongMatch.uix as zuneShell!FindAlbumInfoSongMatch
+.import-ns clr-res://ZuneShell!FindAlbumInfoControls.uix as zuneShell!FindAlbumInfoControls
+.import-ns clr-res://ZuneShell!FindAlbumInfoControls.uix as zuneShell!FindAlbumInfoControls
+.import-ns clr-res://ZuneShell!FindAlbumInfoSongMatch.uix as zuneShell!FindAlbumInfoSongMatch
+.import-ns clr-res://ZuneShell!FindAlbumInfoSongMatch.uix as zuneShell!FindAlbumInfoSongMatch
+.import-ns clr-res://ZuneShell!FindAlbumInfoDialog.uix as zuneShell!FindAlbumInfoDialog
+.import-ns clr-res://ZuneShell!FindAlbumInfoDialog.uix as zuneShell!FindAlbumInfoDialog
+.import-ns clr-res://ZuneShell!FindAlbumInfoDialog.uix as zuneShell!FindAlbumInfoDialog
+.import-ns clr-res://ZuneShell!FindAlbumInfoDialog.uix as zuneShell!FindAlbumInfoDialog
+.import-ns clr-res://ZuneShell!FindAlbumInfoDialog.uix as zuneShell!FindAlbumInfoDialog
+.import-ns clr-res://ZuneShell!FindAlbumInfoDialog.uix as zuneShell!FindAlbumInfoDialog
+.import-ns clr-res://ZuneShell!FindAlbumInfoDialog.uix as zuneShell!FindAlbumInfoDialog
+.import-ns clr-res://ZuneShell!FindAlbumInfoDialog.uix as zuneShell!FindAlbumInfoDialog
+.import-ns clr-res://ZuneShell!FindAlbumInfoDialog.uix as zuneShell!FindAlbumInfoDialog
+.import-ns clr-res://ZuneShell!FindAlbumInfoControls.uix as zuneShell!FindAlbumInfoControls
+.import-ns res://ZuneMarketplaceResources!WMISData.schema.xml as schema
+.import-ns res://ZuneMarketplaceResources!WMISData.schema.xml as schema
+.import-ns res://ZuneMarketplaceResources!WMISData.schema.xml as schema
+.import-ns clr-res://ZuneShell!FindAlbumInfoDialog.uix as zuneShell!FindAlbumInfoDialog
+.import-ns clr-res://ZuneShell!FindAlbumInfoDialog.uix as zuneShell!FindAlbumInfoDialog
+.import-ns clr-res://ZuneShell!FindAlbumInfoDialog.uix as zuneShell!FindAlbumInfoDialog
+.import-ns clr-res://ZuneShell!FindAlbumInfoDialog.uix as zuneShell!FindAlbumInfoDialog
+.import-ns clr-res://ZuneShell!FindAlbumInfoDialog.uix as zuneShell!FindAlbumInfoDialog
+.import-ns clr-res://ZuneShell!EditBox.uix as zuneShell!EditBox
+.import-ns clr-res://ZuneShell!LinkButtons.uix as zuneShell!LinkButtons
+.import-ns clr-res://ZuneShell!Slider.uix as zuneShell!Slider
+.import-ns clr-res://ZuneShell!EditBox.uix as zuneShell!EditBox
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Playlist as playlist
+.import-ns clr-res://ZuneShell!QuickMixPlaylistDialog.uix as zuneShell!QuickMixPlaylistDialog
+.import-ns clr-res://ZuneShell!QuickMixHelper.uix as zuneShell!QuickMixHelper
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.QuickMix as quickMix
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Configuration as configuration
+.import-ns clr-res://ZuneShell!QuickMixHelper.uix as zuneShell!QuickMixHelper
+.import-ns clr-res://ZuneShell!LibraryPanels.uix as zuneShell!LibraryPanels
+.import-ns res://UIXControls!JumpInList.uix as uIXControls!JumpInList
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Playlist as playlist
+.import-ns clr-res://ZuneShell!LibraryPanels.uix as zuneShell!LibraryPanels
+.import-ns clr-res://ZuneShell!LibraryPanels.uix as zuneShell!LibraryPanels
+.import-ns clr-res://ZuneShell!AddToCollection.uix as zuneShell!AddToCollection
+.import-ns clr-res://ZuneShell!LibraryPanels.uix as zuneShell!LibraryPanels
+.import-ns clr-res://ZuneShell!LibraryPanels.uix as zuneShell!LibraryPanels
+.import-ns clr-res://ZuneShell!ApplicationLibrary.uix as zuneShell!ApplicationLibrary
+.import-ns clr-res://ZuneShell!ApplicationLibrary.uix as zuneShell!ApplicationLibrary
+.import-ns clr-res://ZuneShell!ApplicationLibrary.uix as zuneShell!ApplicationLibrary
+.import-ns clr-res://ZuneShell!ApplicationLibrary.uix as zuneShell!ApplicationLibrary
+.import-ns clr-res://ZuneShell!ApplicationLibrary.uix as zuneShell!ApplicationLibrary
+.import-ns clr-res://ZuneShell!ApplicationLibrary.uix as zuneShell!ApplicationLibrary
+.import-ns clr-res://ZuneShell!ApplicationLibrary.uix as zuneShell!ApplicationLibrary
+.import-ns clr-res://ZuneShell!MoreInfoActions.uix as zuneShell!MoreInfoActions
+.import-ns clr-res://ZuneShell!ApplicationLibrary.uix as zuneShell!ApplicationLibrary
+.import-ns clr-res://ZuneShell!ApplicationLibrary.uix as zuneShell!ApplicationLibrary
+.import-ns res://ZuneMarketplaceResources!Controls.uix as zuneMarketplaceResources!Controls
+.import-ns clr-res://ZuneShell!ApplicationLibrary.uix as zuneShell!ApplicationLibrary
+.import-ns clr-res://ZuneShell!ApplicationLibrary.uix as zuneShell!ApplicationLibrary
+.import-ns clr-res://ZuneShell!ApplicationLibrary.uix as zuneShell!ApplicationLibrary
+.import-ns clr-res://ZuneShell!DeviceIconPopup.uix as zuneShell!DeviceIconPopup
+.import-ns clr-res://ZuneShell!DeviceIconPopup.uix as zuneShell!DeviceIconPopup
+.import-ns clr-res://ZuneShell!SyncAnimation.uix as zuneShell!SyncAnimation
+.import-ns clr-res://ZuneShell!SyncInstructionToast.uix as zuneShell!SyncInstructionToast
+.import-ns clr-res://ZuneShell!DeviceSignInFailure.uix as zuneShell!DeviceSignInFailure
+.import-ns clr-res://ZuneShell!SyncInstructionToast.uix as zuneShell!SyncInstructionToast
+.import-ns clr-res://ZuneShell!SyncAnimation.uix as zuneShell!SyncAnimation
+.import-ns clr-res://ZuneShell!DeviceIcon.uix as zuneShell!DeviceIcon
+.import-ns clr-res://ZuneShell!Animations.uix as zuneShell!Animations
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Playlist as playlist
+.import-ns res://UIXControls!Label.uix as uIXControls!Label
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Playlist as playlist
+.import-ns clr-res://ZuneShell!PlaylistPopup.uix as zuneShell!PlaylistPopup
+.import-ns clr-res://ZuneShell!PlaylistPopup.uix as zuneShell!PlaylistPopup
+.import-ns clr-res://ZuneShell!AnimatedIconButton.uix as zuneShell!AnimatedIconButton
+.import-ns clr-res://ZuneShell!PlaylistIcon.uix as zuneShell!PlaylistIcon
+.import-ns clr-res://ZuneShell!PlaylistIcon.uix as zuneShell!PlaylistIcon
+.import-ns clr-res://ZuneShell!BottomToolbar.uix as zuneShell!BottomToolbar
+.import-ns clr-res://ZuneShell!DeviceIcon.uix as zuneShell!DeviceIcon
+.import-ns clr-res://ZuneShell!BottomToolbar.uix as zuneShell!BottomToolbar
+.import-ns clr-res://ZuneShell!PlaylistIcon.uix as zuneShell!PlaylistIcon
+.import-ns clr-res://ZuneShell!NotificationArea.uix as zuneShell!NotificationArea
+.import-ns clr-res://ZuneShell!BottomToolbar.uix as zuneShell!BottomToolbar
+.import-ns clr-res://ZuneShell!TransportControls.uix as zuneShell!TransportControls
+.import-ns clr-res://ZuneShell!BottomToolbar.uix as zuneShell!BottomToolbar
+.import-ns clr-res://ZuneShell!BottomToolbar.uix as zuneShell!BottomToolbar
+.import-ns clr-res://ZuneShell!BottomToolbar.uix as zuneShell!BottomToolbar
+.import-ns clr-res://ZuneShell!BottomToolbar.uix as zuneShell!BottomToolbar
+.import-ns clr-res://ZuneShell!Management.uix as management
+.import-ns clr-res://ZuneShell!ManagementPodcast.uix as zuneShell!ManagementPodcast
+.import-ns res://UIXControls!Slider.uix as uIXControls!Slider
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Configuration as configuration
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Subscription as subscription
+.import-ns assembly://System.Collections.NonGeneric, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a/System.Collections as collections
+.import-ns clr-res://ZuneShell!SocialEmpty.uix as zuneShell!SocialEmpty
+.import-ns clr-res://ZuneShell!SocialEmpty.uix as zuneShell!SocialEmpty
+.import-ns clr-res://ZuneShell!SocialEmpty.uix as zuneShell!SocialEmpty
+.import-ns res://ZuneMarketplaceResources!Controls.uix as zuneMarketplaceResources!Controls
+.import-ns res://ZuneMarketplaceResources!LoadStatus.uix as zuneMarketplaceResources!LoadStatus
+.import-ns res://ZuneMarketplaceResources!LoadStatus.uix as zuneMarketplaceResources!LoadStatus
+.import-ns res://UIXControls!DragFeedback.uix as uIXControls!DragFeedback
+.import-ns assembly://ZuneDBApi/MicrosoftZuneLibrary as microsoftZuneLibrary
+.import-ns clr-res://ZuneShell!MessagingHelper.uix as zuneShell!MessagingHelper
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Messaging as messaging
+.import-ns clr-res://ZuneShell!InboxBaseDetails.uix as zuneShell!InboxBaseDetails
+.import-ns clr-res://ZuneShell!InboxBaseDetails.uix as zuneShell!InboxBaseDetails
+.import-ns clr-res://ZuneShell!InboxBaseDetails.uix as zuneShell!InboxBaseDetails
+.import-ns clr-res://ZuneShell!MessagingHelper.uix as zuneShell!MessagingHelper
+.import-ns res://ZuneMarketplaceResources!MetadataArt.uix as zuneMarketplaceResources!MetadataArt
+.import-ns res://ZuneMarketplaceResources!AlbumData.uix as zuneMarketplaceResources!AlbumData
+.import-ns res://ZuneMarketplaceResources!PlaylistData.uix as zuneMarketplaceResources!PlaylistData
+.import-ns clr-res://ZuneShell!InboxTrackDetails.uix as zuneShell!InboxTrackDetails
+.import-ns clr-res://ZuneShell!InboxTrackDetails.uix as zuneShell!InboxTrackDetails
+.import-ns res://ZuneMarketplaceResources!Track.uix as zuneMarketplaceResources!Track
+.import-ns res://ZuneMarketplaceResources!Track.uix as zuneMarketplaceResources!Track
+.import-ns res://ZuneMarketplaceResources!Track.uix as zuneMarketplaceResources!Track
+.import-ns res://ZuneMarketplaceResources!MetadataArt.uix as zuneMarketplaceResources!MetadataArt
+.import-ns res://ZuneMarketplaceResources!Controls.uix as zuneMarketplaceResources!Controls
+.import-ns clr-res://ZuneShell!QuickplayStyles.uix as zuneShell!QuickplayStyles
+.import-ns clr-res://ZuneShell!QuickplayThumbnail.uix as quickplayThumbnail
+.import-ns clr-res://ZuneShell!QuickplayStrip.uix as zuneShell!QuickplayStrip
+.import-ns clr-res://ZuneShell!QuickplayPlayHelper.uix as zuneShell!QuickplayPlayHelper
+.import-ns clr-res://ZuneShell!QuickplayPlayHelper.uix as zuneShell!QuickplayPlayHelper
+.import-ns clr-res://ZuneShell!MiniModeJumpList.uix as miniModeJumpList
+.import-ns clr-res://ZuneShell!QuickplayPlayHelper.uix as zuneShell!QuickplayPlayHelper
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Util as util
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Util as util
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Configuration as configuration
+.import-ns clr-res://ZuneShell!MiniMode.uix as zuneShell!MiniMode
+.import-ns clr-res://ZuneShell!MiniMode.uix as zuneShell!MiniMode
+.import-ns clr-res://ZuneShell!MiniModeAudio.uix as zuneShell!MiniModeAudio
+.import-ns clr-res://ZuneShell!MiniModeVideo.uix as zuneShell!MiniModeVideo
+.import-ns clr-res://ZuneShell!MiniMode.uix as zuneShell!MiniMode
+.import-ns clr-res://ZuneShell!MiniMode.uix as zuneShell!MiniMode
+.import-ns clr-res://ZuneShell!MiniMode.uix as zuneShell!MiniMode
+.import-ns clr-res://ZuneShell!TopToolbar.uix as zuneShell!TopToolbar
+.import-ns clr-res://ZuneShell!MiniMode.uix as zuneShell!MiniMode
+.import-ns clr-res://ZuneShell!NonClientControls.uix as zuneShell!NonClientControls
+.import-ns res://UIXControls!NonClientControls.uix as uIXControls!NonClientControls
+.import-ns clr-res://ZuneShell!Search.uix as search
+.import-ns res://ZuneMarketplaceResources!Controls.uix as zuneMarketplaceResources!Controls
+.import-ns res://ZuneMarketplaceResources!GalleryOverlays.uix as zuneMarketplaceResources!GalleryOverlays
+.import-ns clr-res://ZuneShell!ManagementGeneral.uix as zuneShell!ManagementGeneral
+.import-ns clr-res://ZuneShell!TopToolbar.uix as zuneShell!TopToolbar
+.import-ns clr-res://ZuneShell!TopToolbar.uix as zuneShell!TopToolbar
+.import-ns clr-res://ZuneShell!TopToolbar.uix as zuneShell!TopToolbar
+.import-ns clr-res://ZuneShell!TopToolbar.uix as zuneShell!TopToolbar
+.import-ns clr-res://ZuneShell!TopToolbarSignIn.uix as zuneShell!TopToolbarSignIn
+.import-ns clr-res://ZuneShell!TopToolbar.uix as zuneShell!TopToolbar
+.import-ns clr-res://ZuneShell!NonClientControls.uix as zuneShell!NonClientControls
+.import-ns clr-res://ZuneShell!FocusRect.uix as zuneShell!FocusRect
+.import-ns clr-res://ZuneShell!FocusRect.uix as zuneShell!FocusRect
+.import-ns clr-res://ZuneShell!FocusRect.uix as zuneShell!FocusRect
+.import-ns clr-res://ZuneShell!WhatsNew.uix as zuneShell!WhatsNew
+.import-ns assembly://ZuneShell, Version=5.0.0.0, Culture=neutral, PublicKeyToken=null/ZuneXml as zuneXml
+.import-ns res://ZuneMarketplaceResources!RecommendationsData.schema.xml as schema
+.import-ns res://ZuneMarketplaceResources!RecommendationsData.schema.xml as schema
+.import-ns res://ZuneMarketplaceResources!RecommendationsData.schema.xml as schema
+.import-ns clr-res://ZuneShell!JumpList.uix as zuneShell!JumpList
+.import-ns clr-res://ZuneShell!PlayAll.uix as zuneShell!PlayAll
+.import-ns clr-res://ZuneShell!MiniGasGauge.uix as zuneShell!MiniGasGauge
+.import-ns clr-res://ZuneShell!BulletList.uix as zuneShell!BulletList
+.import-ns clr-res://ZuneShell!BulletList.uix as zuneShell!BulletList
+.import-ns clr-res://ZuneShell!DeviceSummaryStatus.uix as deviceSummaryStatus
+.import-ns clr-res://ZuneShell!BulletList.uix as zuneShell!BulletList
+.import-ns clr-res://ZuneShell!MiniGasGauge.uix as zuneShell!MiniGasGauge
+.import-ns res://ZuneMarketplaceResources!Navigation.uix as zuneMarketplaceResources!Navigation
+.import-ns clr-res://ZuneShell!QuickplayNavigation.uix as zuneShell!QuickplayNavigation
+.import-ns clr-res://ZuneShell!CollectionNavigation.uix as zuneShell!CollectionNavigation
+.import-ns clr-res://ZuneShell!CollectionNavigation.uix as zuneShell!CollectionNavigation
+.import-ns clr-res://ZuneShell!SocialNavigation.uix as zuneShell!SocialNavigation
+.import-ns clr-res://ZuneShell!ManagementNavigation.uix as zuneShell!ManagementNavigation
+.import-ns clr-res://ZuneShell!TestNavigation.uix as zuneShell!TestNavigation
+.import-ns clr-res://ZuneShell!JumpInList.uix as zuneShell!JumpInList
+.import-ns clr-res://ZuneShell!Controls.uix as zuneShell!Controls
+.import-ns clr-res://ZuneShell!SchemaData.reg.uix as reg
+.import-ns clr-res://ZuneShell!JumpList.uix as zuneShell!JumpList
+.import-ns clr-res://ZuneShell!ApplicationLibrary.uix as zuneShell!ApplicationLibrary
+.import-ns clr-res://ZuneShell!PlayAll.uix as zuneShell!PlayAll
+.import-ns clr-res://ZuneShell!SyncNotification.uix as zuneShell!SyncNotification
+.import-ns clr-res://ZuneShell!FocusRect.uix as zuneShell!FocusRect
+.import-ns clr-res://ZuneShell!ShortcutKeys.uix as zuneShell!ShortcutKeys
+.import-ns clr-res://ZuneShell!NonClientControls.uix as zuneShell!NonClientControls
+.import-ns res://UIXControls!CodePopupLayer.uix as uIXControls!CodePopupLayer
+.import-ns clr-res://ZuneShell!TopToolbar.uix as zuneShell!TopToolbar
+.import-ns clr-res://ZuneShell!BottomToolbar.uix as zuneShell!BottomToolbar
+.import-ns clr-res://ZuneShell!QuickplayPlayHelper.uix as zuneShell!QuickplayPlayHelper
+.import-ns res://UIXControls!PopupLayer.uix as uIXControls!PopupLayer
+.import-ns clr-res://ZuneShell!MiniMode.uix as zuneShell!MiniMode
+.import-ns clr-res://ZuneShell!WhatsNew.uix as zuneShell!WhatsNew
+.import-ns clr-res://ZuneShell!Dialog.uix as zuneShell!Dialog
+.import-ns clr-res://ZuneShell!WizardControls.uix as zuneShell!WizardControls
+.import-ns clr-res://ZuneShell!Dialog.uix as zuneShell!Dialog
+.import-ns clr-res://ZuneShell!EditMediaInfoColumns.uix as editMediaInfoColumns
+.import-ns clr-res://ZuneShell!WindowsLive.uix as zuneShell!WindowsLive
+.import-ns clr-res://ZuneShell!WindowsLive.uix as zuneShell!WindowsLive
+.import-ns clr-res://ZuneShell!WindowsLive.uix as zuneShell!WindowsLive
+.import-ns clr-res://ZuneShell!LibraryThumbnailOverlays.uix as zuneShell!LibraryThumbnailOverlays
+.import-ns clr-res://ZuneShell!LibraryThumbnailOverlays.uix as zuneShell!LibraryThumbnailOverlays
+.import-ns clr-res://ZuneShell!LibraryThumbnailOverlays.uix as zuneShell!LibraryThumbnailOverlays
+.import-ns clr-res://ZuneShell!LibraryThumbnailOverlays.uix as zuneShell!LibraryThumbnailOverlays
+.import-ns clr-res://ZuneShell!LibraryThumbnailOverlays.uix as zuneShell!LibraryThumbnailOverlays
+.import-ns clr-res://ZuneShell!WindowsLive.uix as zuneShell!WindowsLive
+.import-ns clr-res://ZuneShell!LibraryThumbnailOverlays.uix as zuneShell!LibraryThumbnailOverlays
+.import-ns clr-res://ZuneShell!AlbumsPanel.uix as zuneShell!AlbumsPanel
+.import-ns clr-res://ZuneShell!AlbumsPanel.uix as zuneShell!AlbumsPanel
+.import-ns clr-res://ZuneShell!AlbumsPanel.uix as zuneShell!AlbumsPanel
+.import-ns clr-res://ZuneShell!AlbumsPanel.uix as zuneShell!AlbumsPanel
+.import-ns res://ZuneMarketplaceResources!Controls.uix as zuneMarketplaceResources!Controls
+.import-ns clr-res://ZuneShell!AlbumsPanel.uix as zuneShell!AlbumsPanel
+.import-ns clr-res://ZuneShell!DropCommands.uix as zuneShell!DropCommands
+.import-ns clr-res://ZuneShell!DropCommands.uix as zuneShell!DropCommands
+.import-ns clr-res://ZuneShell!AlbumsPanel.uix as zuneShell!AlbumsPanel
+.import-ns clr-res://ZuneShell!AlbumsPanel.uix as zuneShell!AlbumsPanel
+.import-ns clr-res://ZuneShell!AlbumsPanel.uix as zuneShell!AlbumsPanel
+.import-ns clr-res://ZuneShell!AlbumsPanel.uix as zuneShell!AlbumsPanel
+.import-ns clr-res://ZuneShell!AlbumsPanel.uix as zuneShell!AlbumsPanel
+.import-ns clr-res://ZuneShell!LibraryThumbnailOverlays.uix as zuneShell!LibraryThumbnailOverlays
+.import-ns clr-res://ZuneShell!ArtistsPanel.uix as zuneShell!ArtistsPanel
+.import-ns clr-res://ZuneShell!DropCommands.uix as zuneShell!DropCommands
+.import-ns clr-res://ZuneShell!DropCommands.uix as zuneShell!DropCommands
+.import-ns clr-res://ZuneShell!DropCommands.uix as zuneShell!DropCommands
+.import-ns clr-res://ZuneShell!CDState.uix as zuneShell!CDState
+.import-ns clr-res://ZuneShell!CDState.uix as zuneShell!CDState
+.import-ns clr-res://ZuneShell!CDState.uix as zuneShell!CDState
+.import-ns clr-res://ZuneShell!PlaylistContentsPanel.uix as zuneShell!PlaylistContentsPanel
+.import-ns res://UIXControls!SpreadSheet.uix as uIXControls!SpreadSheet
+.import-ns clr-res://ZuneShell!PlaylistContentsPanelColumns.uix as playlistContentsPanelColumns
+.import-ns clr-res://ZuneShell!LibraryCells.uix as zuneShell!LibraryCells
+.import-ns clr-res://ZuneShell!PlaylistContentsPanel.uix as zuneShell!PlaylistContentsPanel
+.import-ns clr-res://ZuneShell!CDState.uix as zuneShell!CDState
+.import-ns res://UIXControls!Label.uix as uIXControls!Label
+.import-ns clr-res://ZuneShell!NotificationArea.uix as zuneShell!NotificationArea
+.import-ns clr-res://ZuneShell!CDView.uix as cdView
+.import-ns assembly://ZuneDBApi/MicrosoftZuneLibrary as microsoftZuneLibrary
+.import-ns clr-res://ZuneShell!PurchaseForBurn.uix as zuneShell!PurchaseForBurn
+.import-ns clr-res://ZuneShell!ConfirmClose.uix as zuneShell!ConfirmClose
+.import-ns clr-res://ZuneShell!DevicelandFilters.uix as zuneShell!DevicelandFilters
+.import-ns clr-res://ZuneShell!DevicelandFilters.uix as zuneShell!DevicelandFilters
+.import-ns clr-res://ZuneShell!DevicelandFilters.uix as zuneShell!DevicelandFilters
+.import-ns clr-res://ZuneShell!DevicelandFilters.uix as zuneShell!DevicelandFilters
+.import-ns clr-res://ZuneShell!DevicelandFilters.uix as zuneShell!DevicelandFilters
+.import-ns clr-res://ZuneShell!DevicelandFilters.uix as zuneShell!DevicelandFilters
+.import-ns clr-res://ZuneShell!GenresPanel.uix as zuneShell!GenresPanel
+.import-ns clr-res://ZuneShell!DropCommands.uix as zuneShell!DropCommands
+.import-ns clr-res://ZuneShell!DropCommands.uix as zuneShell!DropCommands
+.import-ns clr-res://ZuneShell!DropCommands.uix as zuneShell!DropCommands
+.import-ns clr-res://ZuneShell!TracksPanel.uix as zuneShell!TracksPanel
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns clr-res://ZuneShell!Library.uix as zuneShell!Library
+.import-ns clr-res://ZuneShell!TracksPanelColumns.uix as zuneShell!TracksPanelColumns
+.import-ns clr-res://ZuneShell!TracksPanel.uix as zuneShell!TracksPanel
+.import-ns clr-res://ZuneShell!TracksPanel.uix as zuneShell!TracksPanel
+.import-ns clr-res://ZuneShell!PlaylistsPanel.uix as zuneShell!PlaylistsPanel
+.import-ns clr-res://ZuneShell!PlaylistsPanel.uix as zuneShell!PlaylistsPanel
+.import-ns clr-res://ZuneShell!PlaylistsPanel.uix as zuneShell!PlaylistsPanel
+.import-ns clr-res://ZuneShell!PlaylistsPanel.uix as zuneShell!PlaylistsPanel
+.import-ns clr-res://ZuneShell!PlaylistsPanel.uix as zuneShell!PlaylistsPanel
+.import-ns res://UIXControls!SpreadSheet.uix as uIXControls!SpreadSheet
+.import-ns clr-res://ZuneShell!PlaylistDetailsPanel.uix as zuneShell!PlaylistDetailsPanel
+.import-ns clr-res://ZuneShell!PlaylistDetailsPanel.uix as zuneShell!PlaylistDetailsPanel
+.import-ns clr-res://ZuneShell!ArtistsPanel.uix as zuneShell!ArtistsPanel
+.import-ns clr-res://ZuneShell!TracksPanel.uix as zuneShell!TracksPanel
+.import-ns clr-res://ZuneShell!GenresPanel.uix as zuneShell!GenresPanel
+.import-ns clr-res://ZuneShell!AlbumsPanel.uix as zuneShell!AlbumsPanel
+.import-ns clr-res://ZuneShell!TracksPanel.uix as zuneShell!TracksPanel
+.import-ns clr-res://ZuneShell!PlaylistsPanel.uix as zuneShell!PlaylistsPanel
+.import-ns clr-res://ZuneShell!PlaylistContentsPanel.uix as zuneShell!PlaylistContentsPanel
+.import-ns clr-res://ZuneShell!PlaylistDetailsPanel.uix as zuneShell!PlaylistDetailsPanel
+.import-ns clr-res://ZuneShell!MusicLibrary.uix as zuneShell!MusicLibrary
+.import-ns clr-res://ZuneShell!MusicLibrary.uix as zuneShell!MusicLibrary
+.import-ns clr-res://ZuneShell!MusicLibrary.uix as zuneShell!MusicLibrary
+.import-ns clr-res://ZuneShell!MusicLibrary.uix as zuneShell!MusicLibrary
+.import-ns clr-res://ZuneShell!MusicLibrary.uix as zuneShell!MusicLibrary
+.import-ns clr-res://ZuneShell!PhotoLibrary.uix as zuneShell!PhotoLibrary
+.import-ns clr-res://ZuneShell!PhotoFolderTreePanel.uix as zuneShell!PhotoFolderTreePanel
+.import-ns clr-res://ZuneShell!PhotoLibrary.uix as zuneShell!PhotoLibrary
+.import-ns clr-res://ZuneShell!DevicelandElements.uix as zuneShell!DevicelandElements
+.import-ns clr-res://ZuneShell!PhotoLibrary.uix as zuneShell!PhotoLibrary
+.import-ns clr-res://ZuneShell!PhotoLibrary.uix as zuneShell!PhotoLibrary
+.import-ns clr-res://ZuneShell!PhotoLibrary.uix as zuneShell!PhotoLibrary
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Configuration as configuration
+.import-ns clr-res://ZuneShell!PhotoLibrary.uix as zuneShell!PhotoLibrary
+.import-ns clr-res://ZuneShell!PhotoLibrary.uix as zuneShell!PhotoLibrary
+.import-ns assembly://System.Private.CoreLib/System.Collections.Generic as generic
+.import-ns assembly://System.Private.CoreLib/System.IO as iO
+.import-ns clr-res://ZuneShell!PhotoLibrary.uix as zuneShell!PhotoLibrary
+.import-ns clr-res://ZuneShell!PhotoLibrary.uix as zuneShell!PhotoLibrary
+.import-ns clr-res://ZuneShell!PhotoLibrary.uix as zuneShell!PhotoLibrary
+.import-ns clr-res://ZuneShell!LibraryThumbnailOverlays.uix as zuneShell!LibraryThumbnailOverlays
+.import-ns clr-res://ZuneShell!LibraryThumbnailOverlays.uix as zuneShell!LibraryThumbnailOverlays
+.import-ns clr-res://ZuneShell!PhotoFolderTreePanel.uix as zuneShell!PhotoFolderTreePanel
+.import-ns res://UIXControls!ContentList.uix as uIXControls!ContentList
+.import-ns clr-res://ZuneShell!PhotoFolderTreePanel.uix as zuneShell!PhotoFolderTreePanel
+.import-ns clr-res://ZuneShell!LinkButtons.uix as zuneShell!LinkButtons
+.import-ns clr-res://ZuneShell!PhotoFolderTreePanel.uix as zuneShell!PhotoFolderTreePanel
+.import-ns assembly://System.Private.CoreLib/System.IO as iO
+.import-ns clr-res://ZuneShell!PhotoFolderTreePanel.uix as zuneShell!PhotoFolderTreePanel
+.import-ns clr-res://ZuneShell!PhotoFolderTreePanel.uix as zuneShell!PhotoFolderTreePanel
+.import-ns clr-res://ZuneShell!PhotoLibrary.uix as zuneShell!PhotoLibrary
+.import-ns assembly://System.Private.CoreLib/System.IO as iO
+.import-ns assembly://ZuneDBApi/MicrosoftZuneLibrary as microsoftZuneLibrary
+.import-ns clr-res://ZuneShell!PhotoFolderTreePanel.uix as zuneShell!PhotoFolderTreePanel
+.import-ns clr-res://ZuneShell!PhotoFolderTreePanel.uix as zuneShell!PhotoFolderTreePanel
+.import-ns clr-res://ZuneShell!PhotoFolderTreePanel.uix as zuneShell!PhotoFolderTreePanel
+.import-ns clr-res://ZuneShell!QuickplayModuleStrip.uix as zuneShell!QuickplayModuleStrip
+.import-ns clr-res://ZuneShell!QuickplayModuleStrip.uix as zuneShell!QuickplayModuleStrip
+.import-ns clr-res://ZuneShell!QuickplayModuleStrip.uix as zuneShell!QuickplayModuleStrip
+.import-ns clr-res://ZuneShell!QuickplayModuleStrip.uix as zuneShell!QuickplayModuleStrip
+.import-ns clr-res://ZuneShell!QuickplayModule.uix as zuneShell!QuickplayModule
+.import-ns clr-res://ZuneShell!QuickplayModuleStrip.uix as zuneShell!QuickplayModuleStrip
+.import-ns clr-res://ZuneShell!QuickplayModule.uix as zuneShell!QuickplayModule
+.import-ns clr-res://ZuneShell!QuickplayModule.uix as zuneShell!QuickplayModule
+.import-ns clr-res://ZuneShell!BoxedTypes.uix as zuneShell!BoxedTypes
+.import-ns clr-res://ZuneShell!QuickplayModule.uix as zuneShell!QuickplayModule
+.import-ns clr-res://ZuneShell!QuickMix.uix as zuneShell!QuickMix
+.import-ns clr-res://ZuneShell!QuickMix.uix as zuneShell!QuickMix
+.import-ns clr-res://ZuneShell!QuickplayModuleStrip.uix as zuneShell!QuickplayModuleStrip
+.import-ns clr-res://ZuneShell!QuickplayModuleStrip.uix as zuneShell!QuickplayModuleStrip
+.import-ns clr-res://ZuneShell!QuickplayModule.uix as zuneShell!QuickplayModule
+.import-ns clr-res://ZuneShell!QuickplayModule.uix as zuneShell!QuickplayModule
+.import-ns clr-res://ZuneShell!QuickplayModule.uix as zuneShell!QuickplayModule
+.import-ns clr-res://ZuneShell!QuickplayModule.uix as zuneShell!QuickplayModule
+.import-ns clr-res://ZuneShell!QuickplayStrip.uix as zuneShell!QuickplayStrip
+.import-ns clr-res://ZuneShell!QuickplayModule.uix as zuneShell!QuickplayModule
+.import-ns clr-res://ZuneShell!LinkButtons.uix as zuneShell!LinkButtons
+.import-ns clr-res://ZuneShell!QuickplayModule.uix as zuneShell!QuickplayModule
+.import-ns clr-res://ZuneShell!QuickMix.uix as zuneShell!QuickMix
+.import-ns clr-res://ZuneShell!QuickMix.uix as zuneShell!QuickMix
+.import-ns clr-res://ZuneShell!QuickMix.uix as zuneShell!QuickMix
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Configuration as configuration
+.import-ns clr-res://ZuneShell!QuickMix.uix as zuneShell!QuickMix
+.import-ns clr-res://ZuneShell!QuickMix.uix as zuneShell!QuickMix
+.import-ns clr-res://ZuneShell!QuickMix.uix as zuneShell!QuickMix
+.import-ns clr-res://ZuneShell!QuickMix.uix as zuneShell!QuickMix
+.import-ns clr-res://ZuneShell!QuickMix.uix as zuneShell!QuickMix
+.import-ns clr-res://ZuneShell!QuickMix.uix as zuneShell!QuickMix
+.import-ns clr-res://ZuneShell!Quickplay.uix as zuneShell!Quickplay
+.import-ns clr-res://ZuneShell!ArtistChooser.uix as zuneShell!ArtistChooser
+.import-ns clr-res://ZuneShell!Quickplay.uix as zuneShell!Quickplay
+.import-ns clr-res://ZuneShell!Quickplay.uix as zuneShell!Quickplay
+.import-ns clr-res://ZuneShell!Quickplay.uix as zuneShell!Quickplay
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Configuration as configuration
+.import-ns clr-res://ZuneShell!QuickplayModule.uix as zuneShell!QuickplayModule
+.import-ns clr-res://ZuneShell!QuickplayModule.uix as zuneShell!QuickplayModule
+.import-ns clr-res://ZuneShell!QuickplayModule.uix as zuneShell!QuickplayModule
+.import-ns clr-res://ZuneShell!QuickplayModule.uix as zuneShell!QuickplayModule
+.import-ns clr-res://ZuneShell!QuickplayModuleStrip.uix as zuneShell!QuickplayModuleStrip
+.import-ns clr-res://ZuneShell!QuickMix.uix as zuneShell!QuickMix
+.import-ns clr-res://ZuneShell!QuickMix.uix as zuneShell!QuickMix
+.import-ns clr-res://ZuneShell!RadioPanel.uix as zuneShell!RadioPanel
+.import-ns clr-res://ZuneShell!RadioPanel.uix as zuneShell!RadioPanel
+.import-ns clr-res://ZuneShell!RadioPanel.uix as zuneShell!RadioPanel
+.import-ns clr-res://ZuneShell!RadioPanel.uix as zuneShell!RadioPanel
+.import-ns clr-res://ZuneShell!RadioPanel.uix as zuneShell!RadioPanel
+.import-ns clr-res://ZuneShell!RadioPanel.uix as zuneShell!RadioPanel
+.import-ns clr-res://ZuneShell!Dialog.uix as zuneShell!Dialog
+.import-ns clr-res://ZuneShell!Wizard.uix as zuneShell!Wizard
+.import-ns clr-res://ZuneShell!FirstConnect.uix as zuneShell!FirstConnect
+.import-ns clr-res://ZuneShell!SetupLand.uix as zuneShell!SetupLand
+.import-ns clr-res://ZuneShell!WizardControls.uix as zuneShell!WizardControls
+.import-ns clr-res://ZuneShell!DeviceUpdate.uix as zuneShell!DeviceUpdate
+.import-ns clr-res://ZuneShell!WizardControls.uix as zuneShell!WizardControls
+.import-ns clr-res://ZuneShell!WizardControls.uix as zuneShell!WizardControls
+.import-ns clr-res://ZuneShell!DeviceUpdate.uix as zuneShell!DeviceUpdate
+.import-ns clr-res://ZuneShell!DeviceUpdate.uix as zuneShell!DeviceUpdate
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Util as util
+.import-ns clr-res://ZuneShell!WizardControls.uix as zuneShell!WizardControls
+.import-ns assembly://ZuneDBApi/MicrosoftZuneLibrary as microsoftZuneLibrary
+.import-ns clr-res://ZuneShell!DeviceUpdate.uix as zuneShell!DeviceUpdate
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Configuration as configuration
+.import-ns clr-res://ZuneShell!WizardControls.uix as zuneShell!WizardControls
+.import-ns assembly://ZuneDBApi/MicrosoftZuneLibrary as microsoftZuneLibrary
+.import-ns assembly://ZuneDBApi/MicrosoftZuneLibrary as microsoftZuneLibrary
+.import-ns clr-res://ZuneShell!DeviceUpdate.uix as zuneShell!DeviceUpdate
+.import-ns assembly://ZuneDBApi/MicrosoftZuneLibrary as microsoftZuneLibrary
+.import-ns clr-res://ZuneShell!DeviceUpdate.uix as zuneShell!DeviceUpdate
+.import-ns assembly://ZuneDBApi/MicrosoftZuneLibrary as microsoftZuneLibrary
+.import-ns clr-res://ZuneShell!DeviceUpdate.uix as zuneShell!DeviceUpdate
+.import-ns clr-res://ZuneShell!DeviceRestore.uix as zuneShell!DeviceRestore
+.import-ns clr-res://ZuneShell!DeviceRestore.uix as zuneShell!DeviceRestore
+.import-ns clr-res://ZuneShell!FirstLaunch.uix as zuneShell!FirstLaunch
+.import-ns clr-res://ZuneShell!FirstLaunch.uix as zuneShell!FirstLaunch
+.import-ns clr-res://ZuneShell!SetupLand.uix as zuneShell!SetupLand
+.import-ns clr-res://ZuneShell!DeviceRestore.uix as zuneShell!DeviceRestore
+.import-ns clr-res://ZuneShell!SetupLand.uix as zuneShell!SetupLand
+.import-ns clr-res://ZuneShell!SetupLand.uix as zuneShell!SetupLand
+.import-ns assembly://ZuneDBApi/MicrosoftZuneLibrary as microsoftZuneLibrary
+.import-ns clr-res://ZuneShell!SetupLand.uix as zuneShell!SetupLand
+.import-ns clr-res://ZuneShell!DeviceUpdate.uix as zuneShell!DeviceUpdate
+.import-ns clr-res://ZuneShell!FirstConnect.uix as zuneShell!FirstConnect
+.import-ns clr-res://ZuneShell!FirstConnect.uix as zuneShell!FirstConnect
+.import-ns clr-res://ZuneShell!SetupLand.uix as zuneShell!SetupLand
+.import-ns clr-res://ZuneShell!SetupLand.uix as zuneShell!SetupLand
+.import-ns clr-res://ZuneShell!SetupLand.uix as zuneShell!SetupLand
+.import-ns clr-res://ZuneShell!VideoLibrary.uix as videoLibrary
+.import-ns clr-res://ZuneShell!SpreadSheetCells.uix as zuneShell!SpreadSheetCells
+.import-ns assembly://ZuneShell, Version=5.0.0.0, Culture=neutral, PublicKeyToken=null/ZuneXml as zuneXml
+.import-ns clr-res://ZuneShell!WebHostDialog.uix as zuneShell!WebHostDialog
+.import-ns clr-res://ZuneShell!WebHostDialog.uix as zuneShell!WebHostDialog
+.import-ns clr-res://ZuneShell!WebHostControl.uix as zuneShell!WebHostControl
+.import-ns res://ZuneMarketplaceResources!Controls.uix as zuneMarketplaceResources!Controls
+.import-ns res://ZuneMarketplaceResources!Controls.uix as zuneMarketplaceResources!Controls
+.import-ns clr-res://ZuneShell!TestWebHost.uix as zuneShell!TestWebHost
+.import-ns res://ZuneMarketplaceResources!Controls.uix as zuneMarketplaceResources!Controls
+.import-ns clr-res://ZuneShell!PodcastEpisodesColumns.uix as zuneShell!PodcastEpisodesColumns
+.import-ns clr-res://ZuneShell!EpisodesPanel.uix as zuneShell!EpisodesPanel
+.import-ns clr-res://ZuneShell!EpisodesPanel.uix as zuneShell!EpisodesPanel
+.import-ns clr-res://ZuneShell!SeriesPanel.uix as zuneShell!SeriesPanel
+.import-ns clr-res://ZuneShell!SeriesPanel.uix as zuneShell!SeriesPanel
+.import-ns clr-res://ZuneShell!PodcastDialogs.uix as zuneShell!PodcastDialogs
+.import-ns clr-res://ZuneShell!SeriesPanel.uix as zuneShell!SeriesPanel
+.import-ns clr-res://ZuneShell!SeriesPanel.uix as zuneShell!SeriesPanel
+.import-ns clr-res://ZuneShell!PodcastDetailsPanel.uix as zuneShell!PodcastDetailsPanel
+.import-ns clr-res://ZuneShell!PodcastDetailsPanel.uix as zuneShell!PodcastDetailsPanel
+.import-ns clr-res://ZuneShell!PodcastDetailsPanel.uix as zuneShell!PodcastDetailsPanel
+.import-ns clr-res://ZuneShell!PodcastDetailsPanel.uix as zuneShell!PodcastDetailsPanel
+.import-ns clr-res://ZuneShell!PodcastDetailsPanel.uix as zuneShell!PodcastDetailsPanel
+.import-ns clr-res://ZuneShell!PodcastDialogs.uix as zuneShell!PodcastDialogs
+.import-ns res://ZuneMarketplaceResources!Controls.uix as zuneMarketplaceResources!Controls
+.import-ns clr-res://ZuneShell!EpisodesPanel.uix as zuneShell!EpisodesPanel
+.import-ns clr-res://ZuneShell!PodcastEpisodesPanel.uix as zuneShell!PodcastEpisodesPanel
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Util as util
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Util as util
+.import-ns clr-res://ZuneShell!PodcastEpisodesPanel.uix as zuneShell!PodcastEpisodesPanel
+.import-ns clr-res://ZuneShell!SeriesPanel.uix as zuneShell!SeriesPanel
+.import-ns clr-res://ZuneShell!PodcastSeriesPanel.uix as zuneShell!PodcastSeriesPanel
+.import-ns clr-res://ZuneShell!PodcastSeriesPanel.uix as zuneShell!PodcastSeriesPanel
+.import-ns clr-res://ZuneShell!PodcastSeriesPanel.uix as zuneShell!PodcastSeriesPanel
+.import-ns clr-res://ZuneShell!PodcastSeriesPanel.uix as zuneShell!PodcastSeriesPanel
+.import-ns clr-res://ZuneShell!PodcastEpisodesPanel.uix as zuneShell!PodcastEpisodesPanel
+.import-ns clr-res://ZuneShell!PodcastDetailsPanel.uix as zuneShell!PodcastDetailsPanel
+.import-ns clr-res://ZuneShell!PodcastLibrary.uix as zuneShell!PodcastLibrary
+.import-ns clr-res://ZuneShell!EmptyCollectionPanel.uix as zuneShell!EmptyCollectionPanel
+.import-ns clr-res://ZuneShell!EmptyCollectionPanel.uix as zuneShell!EmptyCollectionPanel
+.import-ns clr-res://ZuneShell!ChannelDialogs.uix as zuneShell!ChannelDialogs
+.import-ns clr-res://ZuneShell!ChannelDialogs.uix as zuneShell!ChannelDialogs
+.import-ns res://UIXControls!SpreadSheet.uix as uIXControls!SpreadSheet
+.import-ns clr-res://ZuneShell!ChannelDevicePanel.uix as zuneShell!ChannelDevicePanel
+.import-ns clr-res://ZuneShell!ChannelDetailsPanel.uix as zuneShell!ChannelDetailsPanel
+.import-ns res://ZuneMarketplaceResources!Track.uix as zuneMarketplaceResources!Track
+.import-ns clr-res://ZuneShell!ChannelSongColumns.uix as zuneShell!ChannelSongColumns
+.import-ns clr-res://ZuneShell!ChannelEpisodesPanel.uix as zuneShell!ChannelEpisodesPanel
+.import-ns clr-res://ZuneShell!SocialComposer.uix as zuneShell!SocialComposer
+.import-ns clr-res://ZuneShell!ChannelGlobals.uix as zuneShell!ChannelGlobals
+.import-ns clr-res://ZuneShell!ChannelSeriesPanel.uix as zuneShell!ChannelSeriesPanel
+.import-ns clr-res://ZuneShell!ChannelSeriesPanel.uix as zuneShell!ChannelSeriesPanel
+.import-ns clr-res://ZuneShell!ChannelDevicePanel.uix as zuneShell!ChannelDevicePanel
+.import-ns clr-res://ZuneShell!ChannelDevicePanel.uix as zuneShell!ChannelDevicePanel
+.import-ns clr-res://ZuneShell!ChannelDevicePanel.uix as zuneShell!ChannelDevicePanel
+.import-ns clr-res://ZuneShell!ChannelDetailsPanel.uix as zuneShell!ChannelDetailsPanel
+.import-ns clr-res://ZuneShell!ChannelDetailsPanel.uix as zuneShell!ChannelDetailsPanel
+.import-ns clr-res://ZuneShell!ChannelGlobals.uix as zuneShell!ChannelGlobals
+.import-ns clr-res://ZuneShell!PlaylistContentsPanel.uix as zuneShell!PlaylistContentsPanel
+.import-ns clr-res://ZuneShell!ChannelSeriesPanel.uix as zuneShell!ChannelSeriesPanel
+.import-ns clr-res://ZuneShell!ChannelEpisodesPanel.uix as zuneShell!ChannelEpisodesPanel
+.import-ns clr-res://ZuneShell!ChannelDetailsPanel.uix as zuneShell!ChannelDetailsPanel
+.import-ns clr-res://ZuneShell!ChannelDevicePanel.uix as zuneShell!ChannelDevicePanel
+.import-ns clr-res://ZuneShell!ChannelLibrary.uix as zuneShell!ChannelLibrary
+.import-ns clr-res://ZuneShell!EmptyCollectionPanel.uix as zuneShell!EmptyCollectionPanel
+.import-ns clr-res://ZuneShell!EmptyCollectionPanel.uix as zuneShell!EmptyCollectionPanel
+.import-ns clr-res://ZuneShell!Badges.uix as badges
+.import-ns res://UIXControls!SpreadSheet.uix as uIXControls!SpreadSheet
+.import-ns clr-res://ZuneShell!Comments.uix as comments
+.import-ns res://ZuneMarketplaceResources!PageBackground.uix as zuneMarketplaceResources!PageBackground
+.import-ns clr-res://ZuneShell!Profile.uix as zuneShell!Profile
+.import-ns clr-res://ZuneShell!SocialEmpty.uix as zuneShell!SocialEmpty
+.import-ns clr-res://ZuneShell!Profile.uix as zuneShell!Profile
+.import-ns clr-res://ZuneShell!Profile.uix as zuneShell!Profile
+.import-ns clr-res://ZuneShell!Profile.uix as zuneShell!Profile
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Messaging as messaging
+.import-ns clr-res://ZuneShell!Profile.uix as zuneShell!Profile
+.import-ns res://ZuneMarketplaceResources!Controls.uix as zuneMarketplaceResources!Controls
+.import-ns clr-res://ZuneShell!ProfileCategories.uix as zuneShell!ProfileCategories
+.import-ns clr-res://ZuneShell!ProfileCategories.uix as zuneShell!ProfileCategories
+.import-ns clr-res://ZuneShell!ProfileCategories.uix as zuneShell!ProfileCategories
+.import-ns clr-res://ZuneShell!ProfileCategories.uix as zuneShell!ProfileCategories
+.import-ns clr-res://ZuneShell!SocialComposer.uix as zuneShell!SocialComposer
+.import-ns res://ZuneMarketplaceResources!Track.uix as zuneMarketplaceResources!Track
+.import-ns clr-res://ZuneShell!ProfileCategories.uix as zuneShell!ProfileCategories
+.import-ns clr-res://ZuneShell!SocialEmpty.uix as zuneShell!SocialEmpty
+.import-ns clr-res://ZuneShell!InboxMainPanel.uix as zuneShell!InboxMainPanel
+.import-ns clr-res://ZuneShell!InboxBaseDetails.uix as zuneShell!InboxBaseDetails
+.import-ns clr-res://ZuneShell!InboxMainPanel.uix as zuneShell!InboxMainPanel
+.import-ns clr-res://ZuneShell!InboxMainPanel.uix as zuneShell!InboxMainPanel
+.import-ns clr-res://ZuneShell!InboxBaseDetails.uix as zuneShell!InboxBaseDetails
+.import-ns clr-res://ZuneShell!InboxBaseDetails.uix as zuneShell!InboxBaseDetails
+.import-ns clr-res://ZuneShell!InboxMainPanel.uix as zuneShell!InboxMainPanel
+.import-ns clr-res://ZuneShell!InboxMainPanel.uix as zuneShell!InboxMainPanel
+.import-ns clr-res://ZuneShell!InboxMainPanel.uix as zuneShell!InboxMainPanel
+.import-ns clr-res://ZuneShell!InboxMainPanel.uix as zuneShell!InboxMainPanel
+.import-ns clr-res://ZuneShell!InboxMainPanel.uix as zuneShell!InboxMainPanel
+.import-ns clr-res://ZuneShell!SpreadSheet.uix as zuneShell!SpreadSheet
+.import-ns clr-res://ZuneShell!InboxPhotoDetails.uix as zuneShell!InboxPhotoDetails
+.import-ns clr-res://ZuneShell!InboxPhotoDetails.uix as zuneShell!InboxPhotoDetails
+.import-ns clr-res://ZuneShell!InboxPhotoDetails.uix as zuneShell!InboxPhotoDetails
+.import-ns clr-res://ZuneShell!InboxPhotoDetails.uix as zuneShell!InboxPhotoDetails
+.import-ns clr-res://ZuneShell!InboxPhotoDetails.uix as zuneShell!InboxPhotoDetails
+.import-ns res://ZuneMarketplaceResources!PodcastActions.uix as zuneMarketplaceResources!PodcastActions
+.import-ns res://ZuneMarketplaceResources!PodcastActions.uix as zuneMarketplaceResources!PodcastActions
+.import-ns res://ZuneMarketplaceResources!PodcastActions.uix as zuneMarketplaceResources!PodcastActions
+.import-ns clr-res://ZuneShell!InboxPodcastDetails.uix as zuneShell!InboxPodcastDetails
+.import-ns res://ZuneMarketplaceResources!PodcastActions.uix as zuneMarketplaceResources!PodcastActions
+.import-ns res://ZuneMarketplaceResources!MetadataArt.uix as zuneMarketplaceResources!MetadataArt
+.import-ns res://ZuneMarketplaceResources!PodcastView.uix as zuneMarketplaceResources!PodcastView
+.import-ns clr-res://ZuneShell!InboxProfileDetails.uix as zuneShell!InboxProfileDetails
+.import-ns clr-res://ZuneShell!InboxProfileDetails.uix as zuneShell!InboxProfileDetails
+.import-ns clr-res://ZuneShell!InboxProfileDetails.uix as zuneShell!InboxProfileDetails
+.import-ns clr-res://ZuneShell!InboxTextDetails.uix as zuneShell!InboxTextDetails
+.import-ns clr-res://ZuneShell!InboxTextDetails.uix as zuneShell!InboxTextDetails
+.import-ns clr-res://ZuneShell!InboxTextDetails.uix as zuneShell!InboxTextDetails
+.import-ns clr-res://ZuneShell!InboxTextDetails.uix as zuneShell!InboxTextDetails
+.import-ns res://ZuneMarketplaceResources!VideoPreview.uix as zuneMarketplaceResources!VideoPreview
+.import-ns res://ZuneMarketplaceResources!VideoPreview.uix as zuneMarketplaceResources!VideoPreview
+.import-ns clr-res://ZuneShell!InboxVideoDetails.uix as zuneShell!InboxVideoDetails
+.import-ns clr-res://ZuneShell!InboxVideoDetails.uix as zuneShell!InboxVideoDetails
+.import-ns clr-res://ZuneShell!InboxVideoDetails.uix as zuneShell!InboxVideoDetails
+.import-ns clr-res://ZuneShell!InboxVideoDetails.uix as zuneShell!InboxVideoDetails
+.import-ns clr-res://ZuneShell!InboxVideoDetails.uix as zuneShell!InboxVideoDetails
+.import-ns res://ZuneMarketplaceResources!RentDialog.uix as zuneMarketplaceResources!RentDialog
+.import-ns clr-res://ZuneShell!InboxVideoDetails.uix as zuneShell!InboxVideoDetails
+.import-ns res://ZuneMarketplaceResources!Controls.uix as zuneMarketplaceResources!Controls
+.import-ns res://ZuneMarketplaceResources!VideoPreview.uix as zuneMarketplaceResources!VideoPreview
+.import-ns res://ZuneMarketplaceResources!Controls.uix as zuneMarketplaceResources!Controls
+.import-ns res://ZuneMarketplaceResources!Controls.uix as zuneMarketplaceResources!Controls
+.import-ns clr-res://ZuneShell!BillingOffer.uix as zuneShell!BillingOffer
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Service as service
+.import-ns clr-res://ZuneShell!BillingOffer.uix as zuneShell!BillingOffer
+.import-ns clr-res://ZuneShell!BillingOffer.uix as zuneShell!BillingOffer
+.import-ns clr-res://ZuneShell!BillingOffer.uix as zuneShell!BillingOffer
+.import-ns clr-res://ZuneShell!BillingOffer.uix as zuneShell!BillingOffer
+.import-ns clr-res://ZuneShell!ComplexSyncRuleDialog.uix as zuneShell!ComplexSyncRuleDialog
+.import-ns clr-res://ZuneShell!ComplexSyncRuleDialog.uix as zuneShell!ComplexSyncRuleDialog
+.import-ns clr-res://ZuneShell!ComplexSyncRuleDialog.uix as zuneShell!ComplexSyncRuleDialog
+.import-ns clr-res://ZuneShell!ComplexSyncRuleDialog.uix as zuneShell!ComplexSyncRuleDialog
+.import-ns clr-res://ZuneShell!ComplexSyncRuleDialog.uix as zuneShell!ComplexSyncRuleDialog
+.import-ns clr-res://ZuneShell!ComplexSyncRuleDialog.uix as zuneShell!ComplexSyncRuleDialog
+.import-ns clr-res://ZuneShell!DeviceFirmware.uix as zuneShell!DeviceFirmware
+.import-ns clr-res://ZuneShell!DeviceFirmware.uix as zuneShell!DeviceFirmware
+.import-ns clr-res://ZuneShell!DeviceFirmware.uix as zuneShell!DeviceFirmware
+.import-ns clr-res://ZuneShell!WizardControls.uix as zuneShell!WizardControls
+.import-ns clr-res://ZuneShell!DeviceFirmware.uix as zuneShell!DeviceFirmware
+.import-ns clr-res://ZuneShell!DeviceFirmware.uix as zuneShell!DeviceFirmware
+.import-ns clr-res://ZuneShell!WizardControls.uix as zuneShell!WizardControls
+.import-ns clr-res://ZuneShell!DeviceMarketplace.uix as zuneShell!DeviceMarketplace
+.import-ns clr-res://ZuneShell!DeviceMarketplace.uix as zuneShell!DeviceMarketplace
+.import-ns clr-res://ZuneShell!DeviceMarketplace.uix as zuneShell!DeviceMarketplace
+.import-ns clr-res://ZuneShell!WizardControls.uix as zuneShell!WizardControls
+.import-ns clr-res://ZuneShell!DeviceSyncGroups.uix as zuneShell!DeviceSyncGroups
+.import-ns clr-res://ZuneShell!DeviceSyncGroups.uix as zuneShell!DeviceSyncGroups
+.import-ns clr-res://ZuneShell!DeviceSyncGroups.uix as zuneShell!DeviceSyncGroups
+.import-ns clr-res://ZuneShell!DeviceSyncGroups.uix as zuneShell!DeviceSyncGroups
+.import-ns clr-res://ZuneShell!DeviceSyncGroups.uix as zuneShell!DeviceSyncGroups
+.import-ns clr-res://ZuneShell!DeviceSyncGroups.uix as zuneShell!DeviceSyncGroups
+.import-ns clr-res://ZuneShell!DeviceSyncGroups.uix as zuneShell!DeviceSyncGroups
+.import-ns clr-res://ZuneShell!DeviceSyncGroups.uix as zuneShell!DeviceSyncGroups
+.import-ns clr-res://ZuneShell!DeviceSyncGroups.uix as zuneShell!DeviceSyncGroups
+.import-ns clr-res://ZuneShell!DeviceSyncGroups.uix as zuneShell!DeviceSyncGroups
+.import-ns clr-res://ZuneShell!DeviceSyncGroups.uix as zuneShell!DeviceSyncGroups
+.import-ns clr-res://ZuneShell!DeviceSyncOptions.uix as zuneShell!DeviceSyncOptions
+.import-ns clr-res://ZuneShell!DeviceSyncOptions.uix as zuneShell!DeviceSyncOptions
+.import-ns clr-res://ZuneShell!DeviceSyncOptions.uix as zuneShell!DeviceSyncOptions
+.import-ns clr-res://ZuneShell!WizardControls.uix as zuneShell!WizardControls
+.import-ns clr-res://ZuneShell!WizardControls.uix as zuneShell!WizardControls
+.import-ns clr-res://ZuneShell!WizardControls.uix as zuneShell!WizardControls
+.import-ns clr-res://ZuneShell!DeviceTranscode.uix as zuneShell!DeviceTranscode
+.import-ns clr-res://ZuneShell!DeviceTranscode.uix as zuneShell!DeviceTranscode
+.import-ns clr-res://ZuneShell!WirelessSync.uix as zuneShell!WirelessSync
+.import-ns clr-res://ZuneShell!Dialog.uix as zuneShell!Dialog
+.import-ns clr-res://ZuneShell!DeviceWirelessSync.uix as zuneShell!DeviceWirelessSync
+.import-ns clr-res://ZuneShell!WirelessSync.uix as zuneShell!WirelessSync
+.import-ns assembly://ZuneDBApi/MicrosoftZuneLibrary as microsoftZuneLibrary
+.import-ns clr-res://ZuneShell!WirelessSync.uix as zuneShell!WirelessSync
+.import-ns assembly://ZuneDBApi/MicrosoftZuneLibrary as microsoftZuneLibrary
+.import-ns assembly://ZuneDBApi/MicrosoftZuneLibrary as microsoftZuneLibrary
+.import-ns clr-res://ZuneShell!WirelessSync.uix as zuneShell!WirelessSync
+.import-ns clr-res://ZuneShell!DeviceWirelessSync.uix as zuneShell!DeviceWirelessSync
+.import-ns clr-res://ZuneShell!WirelessSync.uix as zuneShell!WirelessSync
+.import-ns clr-res://ZuneShell!DeviceWirelessSync.uix as zuneShell!DeviceWirelessSync
+.import-ns clr-res://ZuneShell!MobileWirelessSync.uix as zuneShell!MobileWirelessSync
+.import-ns clr-res://ZuneShell!EULADialog.uix as zuneShell!EULADialog
+.import-ns clr-res://ZuneShell!ManagementDeviceList.uix as zuneShell!ManagementDeviceList
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Configuration as configuration
+.import-ns clr-res://ZuneShell!ManagementDeviceList.uix as zuneShell!ManagementDeviceList
+.import-ns clr-res://ZuneShell!ManagementDeviceList.uix as zuneShell!ManagementDeviceList
+.import-ns clr-res://ZuneShell!ManagementDeviceList.uix as zuneShell!ManagementDeviceList
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Configuration as configuration
+.import-ns clr-res://ZuneShell!ManagementDeviceList.uix as zuneShell!ManagementDeviceList
+.import-ns clr-res://ZuneShell!ManagementFileTypes.uix as zuneShell!ManagementFileTypes
+.import-ns clr-res://ZuneShell!ManagementFileTypes.uix as zuneShell!ManagementFileTypes
+.import-ns clr-res://ZuneShell!ManagementCollection.uix as zuneShell!ManagementCollection
+.import-ns clr-res://ZuneShell!ManagementCollection.uix as zuneShell!ManagementCollection
+.import-ns clr-res://ZuneShell!ManagementCollection.uix as zuneShell!ManagementCollection
+.import-ns clr-res://ZuneShell!ManagementCollection.uix as zuneShell!ManagementCollection
+.import-ns clr-res://ZuneShell!ManagementCollection.uix as zuneShell!ManagementCollection
+.import-ns clr-res://ZuneShell!ManagementCollection.uix as zuneShell!ManagementCollection
+.import-ns clr-res://ZuneShell!ManagementCollection.uix as zuneShell!ManagementCollection
+.import-ns clr-res://ZuneShell!ManagementMetadata.uix as zuneShell!ManagementMetadata
+.import-ns clr-res://ZuneShell!ManagementMetadata.uix as zuneShell!ManagementMetadata
+.import-ns clr-res://ZuneShell!ManagementMetadata.uix as zuneShell!ManagementMetadata
+.import-ns clr-res://ZuneShell!ManagementMetadata.uix as zuneShell!ManagementMetadata
+.import-ns res://ZuneMarketplaceResources!DownloadsData.uix as zuneMarketplaceResources!DownloadsData
+.import-ns res://ZuneMarketplaceResources!DownloadsData.uix as zuneMarketplaceResources!DownloadsData
+.import-ns clr-res://ZuneShell!ManagementSharing.uix as zuneShell!ManagementSharing
+.import-ns clr-res://ZuneShell!ManagementSharing.uix as zuneShell!ManagementSharing
+.import-ns res://ZuneMarketplaceResources!DownloadsData.uix as zuneMarketplaceResources!DownloadsData
+.import-ns res://UIXControls!Slider.uix as uIXControls!Slider
+.import-ns clr-res://ZuneShell!AccountCreation.uix as zuneShell!AccountCreation
+.import-ns clr-res://ZuneShell!AccountCreation.uix as zuneShell!AccountCreation
+.import-ns clr-res://ZuneShell!AccountCreation.uix as zuneShell!AccountCreation
+.import-ns clr-res://ZuneShell!AccountCreation.uix as zuneShell!AccountCreation
+.import-ns clr-res://ZuneShell!AccountCreation.uix as zuneShell!AccountCreation
+.import-ns clr-res://ZuneShell!ManagementAccount.uix as zuneShell!ManagementAccount
+.import-ns clr-res://ZuneShell!MixQuery.uix as mixQuery
+.import-ns clr-res://ZuneShell!MixLayout.uix as mixLayout
+.import-ns clr-res://ZuneShell!MixControls.uix as mixControls
+.import-ns clr-res://ZuneShell!MoreInfoActions.uix as zuneShell!MoreInfoActions
+.import-ns clr-res://ZuneShell!MixLayer.uix as zuneShell!MixLayer
+.import-ns res://ZuneMarketplaceResources!Controls.uix as zuneMarketplaceResources!Controls
+.import-ns clr-res://ZuneShell!DeviceSummaryData.uix as zuneShell!DeviceSummaryData
+.import-ns clr-res://ZuneShell!DeviceSummaryData.uix as zuneShell!DeviceSummaryData
+.import-ns clr-res://ZuneShell!DeviceSummaryData.uix as zuneShell!DeviceSummaryData
+.import-ns clr-res://ZuneShell!DeviceSummaryData.uix as zuneShell!DeviceSummaryData
+.import-ns clr-res://ZuneShell!DeviceSummary.uix as zuneShell!DeviceSummary
+.import-ns clr-res://ZuneShell!DeviceSummary.uix as zuneShell!DeviceSummary
+.import-ns res://UIXControls!SpreadSheet.uix as uIXControls!SpreadSheet
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Service as service
+.import-ns clr-res://ZuneShell!WizardControls.uix as zuneShell!WizardControls
+.import-ns clr-res://ZuneShell!WizardControls.uix as zuneShell!WizardControls
+.import-ns clr-res://ZuneShell!AccountInfo.uix as accountInfo
+.import-ns clr-res://ZuneShell!WizardControls.uix as zuneShell!WizardControls
+.import-ns clr-res://ZuneShell!WizardControls.uix as zuneShell!WizardControls
+.import-ns clr-res://ZuneShell!WizardControls.uix as zuneShell!WizardControls
+.import-ns assembly://System.Private.CoreLib/System.Globalization as globalization
+.import-ns clr-res://ZuneShell!PaymentInstrument.uix as zuneShell!PaymentInstrument
+.import-ns clr-res://ZuneShell!PaymentInstrument.uix as zuneShell!PaymentInstrument
+.import-ns clr-res://ZuneShell!PaymentInstrument.uix as zuneShell!PaymentInstrument
+.import-ns clr-res://ZuneShell!PaymentInstrument.uix as zuneShell!PaymentInstrument
+.import-ns clr-res://ZuneShell!PaymentInstrument.uix as zuneShell!PaymentInstrument
+.import-ns clr-res://ZuneShell!BillingOffer.uix as zuneShell!BillingOffer
+.import-ns clr-res://ZuneShell!BillingOffer.uix as zuneShell!BillingOffer
+.import-ns clr-res://ZuneShell!PaymentInstrument.uix as zuneShell!PaymentInstrument
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Service as service
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Service as service
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Service as service
+.import-ns res://ZuneMarketplaceResources!RedeemCode.uix as zuneMarketplaceResources!RedeemCode
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Service as service
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Service as service
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Service as service
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Service as service
+.import-ns clr-res://ZuneShell!WizardControls.uix as zuneShell!WizardControls
+.import-ns clr-res://ZuneShell!CreatePassport.uix as zuneShell!CreatePassport
+.import-ns clr-res://ZuneShell!CreatePassport.uix as zuneShell!CreatePassport
+.import-ns clr-res://ZuneShell!WizardControls.uix as zuneShell!WizardControls
+.import-ns clr-res://ZuneShell!CreatePassport.uix as zuneShell!CreatePassport
+.import-ns clr-res://ZuneShell!CreatePassport.uix as zuneShell!CreatePassport
+.import-ns clr-res://ZuneShell!CreatePassport.uix as zuneShell!CreatePassport
+.import-ns clr-res://ZuneShell!CreatePassport.uix as zuneShell!CreatePassport
+.import-ns clr-res://ZuneShell!CreatePassport.uix as zuneShell!CreatePassport
+.import-ns clr-res://ZuneShell!CreatePassport.uix as zuneShell!CreatePassport
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Service as service
+.import-ns clr-res://ZuneShell!CreatePassport.uix as zuneShell!CreatePassport
+
+code:
+    LSYM 2
+    PGETT 5
+    PASS 4986
+    DIS
+    RETV
+    LSYM 4
+    PGET 4987
+    LSYM 3
+    PASS 2164
+    DIS
+    RETV
+    LSYM 4
+    PGET 4988
+    WSYMP 5
+    DIS
+    LSYM 1
+    PGET 9
+    PGET 4747
+    WSYMP 6
+    DIS
+    LSYM 1
+    PGET 9
+    PGET 3962
+    PSHC 7063
+    OPR 1764
+    WSYMP 7
+    DIS
+    LSYM 1
+    PGET 9
+    PGET 3278
+    WSYMP 8
+    DIS
+    LSYM 10
+    PGET 2961
+    JMPTP 102
+    LSYM 10
+    PGET 2962
+    OPR 7
+    WSYMP 9
+    DIS
+    LSYM 5
+    OPR 7
+    JMPFP 129
+    LSYM 9
+    OPR 7
+    OPR 7
+    JMPFP 165
+    LSYM 7
+    JMPTP 149
+    LSYM 6
+    OPR 7
+    JMPTP 161
+    LSYM 8
+    OPR 7
+    OPR 7
+    WSYMP 11
+    DIS
+    CSYM 5
+    CSYM 6
+    CSYM 7
+    CSYM 8
+    CSYM 9
+    RETV
+    LSYM 13
+    PGET 4762
+    OPR 7
+    JMPFP 217
+    LSYM 13
+    PGET 1544
+    PSHC 3538
+    OPR 1125
+    OPR 7
+    JMPFP 236
+    LSYM 10
+    PGET 2962
+    OPR 7
+    OPR 7
+    LSYM 12
+    PASS 551
+    DIS
+    RETV
+    LSYM 10
+    PGET 2961
+    JMPTP 265
+    LSYM 10
+    PGET 2962
+    OPR 7
+    WSYMP 14
+    DIS
+    LSYM 13
+    PGET 1544
+    PSHC 5603
+    OPR 1125
+    JMPFP 328
+    LSYM 14
+    OPR 7
+    JMPTP 324
+    LSYM 10
+    PGET 2961
+    JMPFP 320
+    LSYM 16
+    PGET 2786
+    OPR 7
+    OPR 7
+    OPR 7
+    LSYM 15
+    PASS 551
+    DIS
+    CSYM 14
+    RETV
+    LSYM 1
+    PGET 9
+    PGET 4989
+    LSYM 16
+    PGET 4990
+    OPR 871
+    WSYMP 17
+    DIS
+    LSYM 17
+    LSYM 13
+    PASS 4991
+    DIS
+    RETV
+    LSYM 0
+    LSYM 13
+    PASS 4992
+    DIS
+    RETV
+    PSHC 1
+    LSYM 16
+    PASS 3010
+    DIS
+    RETV
+    LSYM 13
+    PGET 2975
+    JMPTP 416
+    LSYM 16
+    PGET 2976
+    OPR 7
+    WSYMP 18
+    DIS
+    LSYM 18
+    LSYM 16
+    PASS 2786
+    DIS
+    LSYM 18
+    OPR 7
+    LSYM 19
+    PASS 4993
+    DIS
+    LSYM 18
+    CON 10, 7
+    LSYM 20
+    PASS 4994
+    DIS
+    CSYM 18
+    RETV
+    LSYM 17
+    LSYM 16
+    PGET 2786
+    OPR 7
+    OPR 871
+    JMPFP 499
+    PGETT 1726
+    PGET 2658
+    OPR 871
+    OPR 7
+    WSYMP 21
+    DIS
+    LSYM 21
+    LSYM 22
+    PASS 4995
+    DIS
+    LSYM 21
+    LSYM 23
+    PASS 4996
+    DIS
+    CSYM 21
+    RETV
+    PSHC 0
+    LSYM 16
+    PASS 2976
+    DIS
+    LSYM 24
+    MINV 9
+    LSYM 24
+    MINV 0
+    RETV
+    PSHC 1
+    LSYM 16
+    PASS 2976
+    DIS
+    RETV
+    PGETT 1726
+    PGET 2741
+    JMPF 587
+    PGETT 1726
+    PGET 3297
+    MINV 115
+    DIS
+    JMP 597
+    PGETT 1726
+    PGET 3295
+    MINV 115
+    DIS
+    RETV
+    LSYM 28
+    PGET 3651
+    WSYMP 27
+    DIS
+    LSYM 27
+    JMPFP 630
+    LSYM 29
+    PGET 649
+    OPR 7
+    OPR 7
+    JMPF 646
+    LSYM 29
+    MINV 31
+    JMP 679
+    LSYM 27
+    OPR 7
+    JMPFP 668
+    LSYM 29
+    PGET 649
+    OPR 7
+    JMPF 679
+    LSYM 29
+    MINV 30
+    CSYM 27
+    RETV
+    LSYM 29
+    PGET 649
+    OPR 7
+    JMPF 704
+    LSYM 28
+    MINV 754
+    RETV
+    LSYM 28
+    MINV 754
+    RETV
+    LSYM 22
+    PGET 4998
+    LSYM 30
+    PASS 1075
+    DIS
+    RETV
+    PGETT 1726
+    PGET 3263
+    PSHC 0
+    MINV 755
+    DIS
+    RETV
+    PGETT 1726
+    PGET 3260
+    PSHC 0
+    MINV 755
+    DIS
+    RETV
+    PGETT 1726
+    PGET 3301
+    PSHC 0
+    MINV 755
+    DIS
+    RETV
+    PGETT 1726
+    PGET 3305
+    PGET 2670
+    PSHC 19
+    OPR 1407
+    PGETT 1726
+    PGET 3305
+    PASS 2670
+    DIS
+    RETV
+    PGETT 1726
+    PGET 3305
+    PGET 2670
+    PSHC 19
+    OPR 1407
+    PGETT 1726
+    PGET 3305
+    PASS 2670
+    DIS
+    RETV
+    PGETT 5
+    MINV 727
+    DIS
+    RETV
+    PSHC 0
+    LSYM 20
+    PASS 4999
+    DIS
+    RETV
+    LSYM 13
+    PGET 1543
+    OPR 7
+    JMPTP 870
+    LSYM 4
+    PGET 5000
+    OPR 7
+    OPR 7
+    JMPF 885
+    PSHC 1
+    LSYM 20
+    PASS 4999
+    DIS
+    RETV
+    LSYM 20
+    PGET 4999
+    JMPFP 937
+    LSYM 20
+    PGET 5001
+    PSHN
+    OPR 25
+    JMPTP 933
+    LSYM 20
+    PGET 5001
+    LSYM 37
+    PGET 5002
+    OPR 25
+    OPR 7
+    OPR 7
+    LSYM 40
+    PASS 551
+    DIS
+    RETV
+    LSYM 20
+    PGET 4994
+    LSYM 40
+    PASS 472
+    DIS
+    RETV
+    PGETT 5
+    PGET 205
+    WSYMP 41
+    DIS
+    LSYM 4
+    PGET 4988
+    OPR 7
+    JMPFP 1011
+    LSYM 41
+    PSHN
+    OPR 368
+    JMPTP 1007
+    LSYM 41
+    PGET 5003
+    OPR 7
+    OPR 7
+    LSYM 10
+    PASS 4531
+    DIS
+    CSYM 41
+    RETV
+    LSYM 10
+    PGET 2962
+    LSYM 10
+    PGET 2961
+    OPR 7
+    JMPF 1077
+    PSHC 1
+    LSYM 42
+    PASS 551
+    DIS
+    LSYM 43
+    TYP 2096
+    MINV 24
+    PSHC 1
+    LSYM 30
+    PASS 553
+    DIS
+    JMP 1138
+    LSYM 10
+    PGET 2962
+    OPR 7
+    JMPFP 1106
+    LSYM 10
+    PGET 2961
+    OPR 7
+    OPR 7
+    JMPF 1138
+    LSYM 43
+    PSHN
+    MINV 14
+    PSHC 0
+    LSYM 42
+    PASS 551
+    DIS
+    PSHC 1
+    LSYM 30
+    PASS 553
+    DIS
+    RETV
+    LSYM 10
+    PGET 2961
+    JMPFP 1160
+    LSYM 4
+    PGET 4988
+    OPR 7
+    JMPF 1177
+    PSHC 0
+    WSYMP 44
+    DIS
+    JMP 1199
+    LSYM 4
+    PGET 4988
+    OPR 7
+    JMPF 1199
+    PSHC 1
+    WSYMP 44
+    DIS
+    RETV
+    LSYM 44
+    JMPFP 1218
+    LSYM 10
+    PGET 2961
+    OPR 7
+    JMPF 1234
+    LSYM 10
+    MINV 695
+    JMP 1271
+    LSYM 44
+    OPR 7
+    JMPFP 1260
+    LSYM 10
+    PGET 2961
+    OPR 7
+    OPR 7
+    JMPF 1271
+    LSYM 10
+    MINV 724
+    RETV
+    LSYM 10
+    PGET 2962
+    OPR 7
+    JMPTP 1301
+    LSYM 4
+    PGET 4988
+    OPR 7
+    OPR 7
+    LSYM 4
+    PASS 551
+    DIS
+    RETV
+    LSYM 13
+    PGET 1543
+    JMPF 1327
+    LSYM 45
+    PSHN
+    MINV 14
+    RETV
+    PGETT 5
+    VTC 518
+    PGET 5004
+    WSYMP 47
+    DIS
+    LSYM 47
+    PSHC 274
+    OPR 15
+    JMPFP 1366
+    LSYM 13
+    PGET 1543
+    OPR 7
+    JMPF 1441
+    LSYM 16
+    PGET 2786
+    OPR 7
+    JMPF 1431
+    PSHC 2044
+    LSYM 47
+    PSHC 2658
+    OPR 15
+    MINVT 228
+    PSHC 225
+    OPR 872
+    LSYM 48
+    PASS 6
+    DIS
+    PSHC 0
+    LSYM 48
+    PASS 8
+    DIS
+    JMP 1441
+    PSHC 1
+    LSYM 48
+    PASS 8
+    DIS
+    LSYM 13
+    PGET 1543
+    JMPFP 1481
+    LSYM 16
+    PGET 2786
+    JMPTP 1477
+    LSYM 46
+    PGET 2741
+    OPR 871
+    OPR 7
+    OPR 7
+    JMPF 1493
+    LSYM 45
+    PSHN
+    MINV 14
+    CSYM 47
+    RETV
+    PGETT 5
+    PGET 205
+    WSYMP 41
+    DIS
+    LSYM 41
+    PSHN
+    OPR 368
+    JMPTP 1530
+    LSYM 41
+    PGET 5005
+    OPR 7
+    JMPFP 1549
+    LSYM 4
+    PGET 4988
+    OPR 7
+    OPR 7
+    JMPFP 1587
+    LSYM 16
+    PGET 2786
+    OPR 7
+    JMPTP 1583
+    LSYM 13
+    PGET 1543
+    OPR 7
+    OPR 7
+    OPR 7
+    JMPFP 1625
+    LSYM 10
+    PGET 2961
+    OPR 7
+    JMPFP 1621
+    LSYM 10
+    PGET 2962
+    OPR 7
+    OPR 7
+    OPR 7
+    JMPFP 1640
+    LSYM 46
+    PGET 2741
+    OPR 7
+    JMPFP 1659
+    LSYM 46
+    PGET 2698
+    OPR 871
+    OPR 7
+    JMPF 1679
+    LSYM 45
+    TYP 1525
+    PSHC 5267
+    PSHC 0
+    MINV 22
+    CSYM 41
+    RETV
+    LSYM 49
+    LSYM 1
+    PGET 9
+    PGET 2791
+    MINV 14
+    RETV
+    PGETT 2757
+    PSHC 5281
+    OPR 1417
+    JMPF 1748
+    PGETT 2422
+    PGET 2
+    JMPF 1739
+    LSYM 42
+    PGETT 2758
+    MINV 282
+    JMP 1748
+    LSYM 42
+    PGETT 2759
+    MINV 282
+    RETV
+    LSYM 1
+    PGET 9
+    PGET 4749
+    LSYM 1
+    PGET 1511
+    PGET 5006
+    OPR 871
+    OPR 871
+    JMPFP 1787
+    LSYM 50
+    OPR 7
+    JMPF 1798
+    LSYM 51
+    MINV 0
+    RETV
+    LSYM 1
+    PGET 9
+    PGET 4749
+    LSYM 1
+    PGET 1511
+    PGET 5006
+    OPR 871
+    OPR 871
+    JMPFP 1840
+    LSYM 1
+    PGET 4810
+    OPR 7
+    JMPFP 1852
+    LSYM 50
+    OPR 7
+    JMPF 1873
+    PSHC 1
+    WSYMP 50
+    DIS
+    LSYM 52
+    TYP 2097
+    MINV 24
+    RETV
+    LSYM 1
+    PGET 4810
+    OPR 871
+    JMPF 1896
+    LSYM 52
+    PSHN
+    MINV 14
+    RETV
+    LSYM 54
+    MINV 756
+    DIS
+    RETV
+    LSYM 54
+    MINV 757
+    DIS
+    RETV
+    LSYM 54
+    MINV 758
+    DIS
+    RETV
+    LSYM 54
+    MINV 759
+    DIS
+    RETV
+    LSYM 54
+    MINV 760
+    DIS
+    RETV
+    LSYM 54
+    MINV 761
+    DIS
+    RETV
+    LSYM 22
+    PGET 5007
+    MINV 21
+    RETV
+    MINVT 702
+    JMPF 1973
+    COBJ 2081
+    INIT 2081
+    WSYMP 61
+    DIS
+    RETV
+    PGETT 207
+    PGET 3703
+    OPR 871
+    JMPFP 1999
+    LSYM 1
+    PGET 3700
+    OPR 7
+    JMPFP 2016
+    LSYM 62
+    PSHN
+    OPR 2082
+    OPR 7
+    JMPF 2031
+    COBJ 2082
+    INIT 2082
+    WSYMP 62
+    DIS
+    RETV
+    LSYM 62
+    PSHN
+    OPR 2082
+    JMPFP 2055
+    LSYM 62
+    PGET 5008
+    OPR 7
+    JMPF 2074
+    LSYM 63
+    LSYM 62
+    MINV 16
+    PSHN
+    WSYMP 62
+    DIS
+    RETV
+    LSYM 4
+    LIS 4, 0, 4988, 268435481
+    RETV
+    LISD 5, 2, 1, 268435481, 268437545
+    LSYM 1
+    LISD 6, 0, 9, 268435481, 268437545
+    PGET 9
+    LIS 7, 0, 4747, 268435481
+    RETV
+    LISD 8, 2, 1, 268435481, 268437590
+    LSYM 1
+    LISD 9, 0, 9, 268435481, 268437590
+    PGET 9
+    LIS 10, 0, 3962, 268435481
+    RETV
+    LISD 11, 2, 1, 268435481, 268437635
+    LSYM 1
+    LISD 12, 0, 9, 268435481, 268437635
+    PGET 9
+    LIS 13, 0, 3278, 268435481
+    RETV
+    LISD 14, 2, 10, 268435481, 268437680
+    LSYM 10
+    LIS 15, 0, 2961, 268435481
+    RETV
+    LISD 16, 2, 10, 268435481, 268437708
+    LSYM 10
+    LIS 17, 0, 2962, 268435481
+    RETV
+    LISD 18, 2, 13, 268435641, 268437736
+    LSYM 13
+    LIS 19, 0, 1544, 268435641
+    RETV
+    LISD 20, 2, 10, 268435641, 268437764
+    LSYM 10
+    LIS 21, 0, 2962, 268435641
+    RETV
+    LISD 22, 2, 10, 268435700, 268437792
+    LSYM 10
+    LIS 23, 0, 2961, 268435700
+    RETV
+    LISD 24, 2, 10, 268435700, 268437820
+    LSYM 10
+    LIS 25, 0, 2962, 268435700
+    RETV
+    LISD 26, 2, 13, 268435700, 268437848
+    LSYM 13
+    LIS 27, 0, 1544, 268435700
+    RETV
+    LISD 28, 2, 16, 268435700, 268437876
+    LSYM 16
+    LIS 29, 0, 2786, 268435700
+    RETV
+    LISD 30, 2, 1, 268435795, 268437904
+    LSYM 1
+    LISD 31, 0, 9, 268435795, 268437904
+    PGET 9
+    LIS 32, 0, 4989, 268435795
+    RETV
+    LISD 33, 2, 16, 268435795, 268437949
+    LSYM 16
+    LIS 34, 0, 4990, 268435795
+    RETV
+    LISD 35, 2, 1, 268435840, 268437977
+    LSYM 1
+    LIS 36, 0, 9, 268435840
+    RETV
+    LISD 37, 2, 13, 268435851, 268438005
+    LSYM 13
+    LIS 38, 0, 2975, 268435851
+    RETV
+    LISD 39, 2, 16, 268435851, 268438033
+    LSYM 16
+    LIS 40, 0, 2976, 268435851
+    RETV
+    LIS 41, 2, 17, 268435919
+    RETV
+    LISD 42, 2, 16, 268435919, 268438072
+    LSYM 16
+    LIS 43, 0, 2786, 268435919
+    RETV
+    PGETT 1726
+    LIS 44, 0, 2658, 268435919
+    RETV
+    LSYM 19
+    LIS 45, 0, 4997, 268435983
+    RETV
+    LISD 46, 2, 24, 4294967295, 268438128
+    LSYM 24
+    LIS 47, 1, 0, 268436006
+    RETV
+    LSYM 25
+    LIS 48, 1, 32, 268436017
+    RETV
+    LSYM 26
+    LIS 49, 1, 4, 268436017
+    RETV
+    LISD 50, 2, 28, 268436054, 268438184
+    LSYM 28
+    LIS 51, 0, 3651, 268436054
+    RETV
+    LISD 52, 2, 29, 268436139, 268438212
+    LSYM 29
+    LIS 53, 0, 649, 268436139
+    RETV
+    LISD 54, 2, 1, 268436161, 268438240
+    LSYM 1
+    LIS 55, 0, 9, 268436161
+    RETV
+    LSYM 31
+    LIS 56, 1, 4, 268436182
+    RETV
+    LSYM 32
+    LIS 57, 1, 4, 268436196
+    RETV
+    LSYM 33
+    LIS 58, 1, 4, 268436210
+    RETV
+    LSYM 34
+    LIS 59, 1, 4, 268436224
+    RETV
+    LSYM 35
+    LIS 60, 1, 4, 268436251
+    RETV
+    LSYM 36
+    LIS 61, 1, 4, 268436278
+    RETV
+    LSYM 37
+    LIS 62, 1, 33, 268436286
+    RETV
+    LSYM 38
+    LIS 63, 1, 4, 268436286
+    RETV
+    LSYM 39
+    LIS 64, 1, 4, 268436286
+    RETV
+    LISD 65, 2, 13, 268436297, 268438394
+    LSYM 13
+    LIS 66, 0, 1543, 268436297
+    RETV
+    LSYM 4
+    LIS 67, 0, 5000, 268436297
+    RETV
+    LISD 68, 2, 20, 268436342, 268438436
+    LSYM 20
+    LIS 69, 0, 4999, 268436342
+    RETV
+    LISD 70, 2, 20, 268436342, 268438464
+    LSYM 20
+    LIS 71, 0, 5001, 268436342
+    RETV
+    LSYM 37
+    LIS 72, 1, 33, 268436342
+    RETV
+    LSYM 37
+    LIS 73, 0, 5002, 268436342
+    RETV
+    LISD 74, 2, 20, 268436401, 268438520
+    LSYM 20
+    LIS 75, 0, 4994, 268436401
+    RETV
+    PGETT 5
+    LIS 76, 0, 205, 268436415
+    RETV
+    LSYM 4
+    LIS 77, 0, 4988, 268436415
+    RETV
+    LISD 78, 2, 10, 268436478, 268438576
+    LSYM 10
+    LIS 79, 0, 2962, 268436478
+    RETV
+    LISD 80, 2, 10, 268436478, 268438604
+    LSYM 10
+    LIS 81, 0, 2961, 268436478
+    RETV
+    LISD 82, 2, 10, 268436595, 268438632
+    LSYM 10
+    LIS 83, 0, 2961, 268436595
+    RETV
+    LSYM 4
+    LIS 84, 0, 4988, 268436595
+    RETV
+    LIS 85, 2, 44, 268436656
+    RETV
+    LISD 86, 2, 10, 268436728, 268438685
+    LSYM 10
+    LIS 87, 0, 2962, 268436728
+    RETV
+    LSYM 4
+    LIS 88, 0, 4988, 268436728
+    RETV
+    LISD 89, 2, 13, 268436765, 268438727
+    LSYM 13
+    LIS 90, 0, 1543, 268436765
+    RETV
+    LISD 91, 2, 46, 268436784, 268438755
+    LSYM 46
+    LIS 92, 0, 2741, 268436784
+    RETV
+    LISD 93, 2, 16, 268436784, 268438783
+    LSYM 16
+    LIS 94, 0, 2786, 268436784
+    RETV
+    LISD 95, 2, 48, 4294967295, 268438811
+    LSYM 48
+    LIS 96, 1, 0, 268436953
+    RETV
+    LISD 97, 2, 1, 268437139, 268438839
+    LSYM 1
+    LISD 98, 0, 9, 268437139, 268438839
+    PGET 9
+    LIS 99, 0, 2791, 268437139
+    RETV
+    PGETT 2422
+    LIS 100, 0, 2, 268437155
+    RETV
+    LISD 101, 2, 1, 268437205, 268438898
+    LSYM 1
+    LISD 102, 0, 9, 268437205, 268438898
+    PGET 9
+    LIS 103, 0, 4749, 268437205
+    RETV
+    LISD 104, 2, 51, 4294967295, 268438943
+    LSYM 51
+    LIS 105, 1, 0, 268437255
+    RETV
+    LISD 106, 2, 1, 268437330, 268438971
+    LSYM 1
+    LIS 107, 0, 4810, 268437330
+    RETV
+    LSYM 53
+    LIS 108, 1, 4, 268437353
+    RETV
+    LSYM 55
+    LIS 109, 1, 4, 268437361
+    RETV
+    LSYM 56
+    LIS 110, 1, 4, 268437369
+    RETV
+    LSYM 57
+    LIS 111, 1, 4, 268437377
+    RETV
+    LSYM 58
+    LIS 112, 1, 4, 268437385
+    RETV
+    LSYM 59
+    LIS 113, 1, 4, 268437393
+    RETV
+    LSYM 60
+    LIS 114, 1, 4, 268437401
+    RETV
+    LISD 115, 2, 1, 268437430, 268439097
+    LSYM 1
+    LIS 116, 0, 3700, 268437430
+    RETV
+    LISD 117, 2, 62, 268437488, 268439125
+    LSYM 62
+    LIS 118, 0, 5008, 268437488
+    RETV
+    JMPD 43, 9, 3717
+    PGETT 5
+    VTC 518
+    PDAD 43, 9
+    RETV
+    COBJ 934
+    COBJ 2089
+    PGETT 2178
+    CON 927, 10
+    PINI 4978
+    PGETT 2178
+    CON 927, 10
+    PINI 4979
+    PINI 37
+    COBJ 934
+    PSHC 3240
+    PINI 37
+    COBJ 1985
+    PSHC 8601
+    PINI 82
+    PSHC 1
+    PINI 551
+    COBJ 613
+    CSTR 938, 8602
+    PINI 521
+    CSTR 938, 8603
+    PINI 47
+    CSTR 938, 8602
+    PINI 52
+    CSTR 938, 8603
+    PINI 522
+    PSHC 1
+    PINI 46
+    PSHC 1
+    PINI 45
+    PINI 525
+    INIT 1985
+    PLAD 38
+    COBJ 934
+    COBJ 613
+    CSTR 938, 2601
+    PINI 521
+    CSTR 938, 2641
+    PINI 47
+    CSTR 938, 2601
+    PINI 52
+    CSTR 938, 2641
+    PINI 522
+    PINI 525
+    COBJ 975
+    PSHC 1341
+    PINI 82
+    PLAD 38
+    COBJ 2090
+    PSHC 8604
+    PINI 82
+    INIT 2090
+    PLAD 38
+    COBJ 976
+    PSHC 1331
+    PINI 82
+    PGETT 4980
+    PINI 481
+    PSHC 8605
+    PINI 490
+    PSHC 2683
+    PINI 463
+    PSHC 834
+    PINI 68
+    PLAD 38
+    COBJ 2091
+    PSHC 8606
+    PINI 82
+    INIT 2091
+    PLAD 38
+    COBJ 975
+    PSHC 8607
+    PINI 82
+    PLAD 38
+    COBJ 975
+    PSHC 8608
+    PINI 82
+    PLAD 38
+    COBJ 975
+    PSHC 8609
+    PINI 82
+    PLAD 38
+    COBJ 934
+    PSHC 8610
+    PINI 603
+    PSHC 274
+    PINI 60
+    COBJ 934
+    PSHC 8611
+    PINI 82
+    PSHC 2774
+    PINI 37
+    COBJ 2092
+    PSHC 8612
+    PINI 82
+    LSYM 1
+    PINI 4981
+    PSHC 0
+    PINI 4982
+    PSHC 2044
+    PINI 60
+    PSHC 2682
+    PINI 525
+    INIT 2092
+    PLAD 38
+    COBJ 2093
+    PSHC 8613
+    PINI 82
+    LSYM 1
+    PINI 4983
+    PSHC 0
+    PINI 4984
+    PSHC 206
+    PINI 60
+    PSHC 3280
+    PINI 525
+    INIT 2093
+    PLAD 38
+    COBJ 444
+    PSHC 3075
+    PINI 82
+    LSYM 1
+    PINI 1080
+    LSYM 1
+    PGET 9
+    PINI 1081
+    PSHC 64
+    PINI 60
+    PGETT 4985
+    PINI 68
+    PSHC 3286
+    PINI 525
+    INIT 444
+    PLAD 38
+    PLAD 38
+    COBJ 444
+    PSHC 3076
+    PINI 82
+    LSYM 1
+    PINI 1080
+    LSYM 1
+    PGET 9
+    PINI 1081
+    PSHC 3807
+    PINI 60
+    INIT 444
+    PLAD 38
+    PLAD 38
+    COBJ 1255
+    LSYM 1
+    PINI 2003
+    INIT 1255
+    PLAD 38
+    PLAD 38
+    PLAD 38
+    COBJ 2094
+    INIT 2094
+    PLAD 38
+    PINI 36
+    RETV
+    COBJ 1123
+    PDAD 59, 3543
+    COBJ 885
+    COBJ 2068
+    PDAD 4788, 3074
+    PGETT 4938
+    PDAD 4788, 8614
+    PGETT 4939
+    PDAD 4788, 8615
+    PGETT 4940
+    PDAD 4788, 8616
+    PGETT 4941
+    PDAD 4788, 235
+    PGETT 4942
+    PDAD 4788, 8617
+    PGETT 4943
+    PDAD 4788, 8618
+    PGETT 4944
+    PDAD 4788, 8619
+    COBJ 2076
+    PDAD 4788, 8620
+    COBJ 2077
+    PDAD 4788, 8621
+    PDAD 59, 8622
+    COBJ 2078
+    INIT 2078
+    PDAD 59, 8623
+    COBJ 2079
+    PDAD 59, 8624
+    PSHC 789
+    PDAD 59, 8625
+    COBJ 871
+    PDAD 59, 8626
+    COBJ 240
+    LSYM 0
+    PINI 6
+    PSHC 1
+    PINI 7
+    PSHC 1
+    PINI 8
+    PDAD 59, 8627
+    COBJ 1426
+    PDAD 59, 8628
+    COBJ 240
+    PSHC 1
+    PINI 7
+    PSHC 1
+    PINI 8
+    PDAD 59, 8629
+    PGETT 1726
+    PDAD 59, 5205
+    COBJ 240
+    PSHC 5191
+    PINI 6
+    PSHC 1
+    PINI 7
+    PSHC 1
+    PINI 8
+    PDAD 59, 8630
+    PSHC 2677
+    PDAD 59, 8631
+    COBJ 2080
+    INIT 2080
+    PDAD 59, 8632
+    COBJ 1666
+    PDAD 59, 6661
+    COBJ 1511
+    PDAD 59, 5679
+    COBJ 7
+    PDAD 59, 8633
+    PGETT 4464
+    PDAD 59, 7763
+    PSHN
+    PDAD 59, 8634
+    PSHN
+    PDAD 59, 8635
+    COBJ 2083
+    INIT 2083
+    PDAD 59, 6623
+    COBJ 2084
+    PDAD 59, 8636
+    COBJ 2085
+    PDAD 59, 8637
+    COBJ 989
+    PSHC 8638
+    PINI 582
+    PSHC 8639
+    PINI 583
+    PSHC 4256
+    PINI 584
+    PSHC 1
+    PINI 585
+    PLAD 581
+    COBJ 989
+    PSHC 8640
+    PINI 582
+    PSHC 8641
+    PINI 583
+    PSHC 8642
+    PINI 4976
+    PSHC 4256
+    PINI 584
+    PSHC 1
+    PINI 585
+    PGETT 4977
+    PINI 1075
+    PLAD 581
+    COBJ 989
+    PSHC 5683
+    PINI 583
+    PSHC 2714
+    PINI 632
+    PSHC 3083
+    PINI 658
+    PSHC 2633
+    PINI 584
+    PGETT 4975
+    PINI 1075
+    PLAD 581
+    COBJ 989
+    PSHC 8643
+    PINI 583
+    PSHC 2714
+    PINI 632
+    PSHC 3083
+    PINI 658
+    PSHC 2633
+    PINI 584
+    PGETT 4974
+    PINI 1075
+    PLAD 581
+    COBJ 989
+    PSHC 8644
+    PINI 583
+    PSHC 2714
+    PINI 632
+    PSHC 3083
+    PINI 658
+    PSHC 2633
+    PINI 584
+    PGETT 4973
+    PINI 1075
+    PLAD 581
+    COBJ 989
+    PSHC 8645
+    PINI 583
+    PSHC 2714
+    PINI 632
+    PSHC 3083
+    PINI 658
+    PSHC 2633
+    PINI 584
+    PGETT 4972
+    PINI 1075
+    PLAD 581
+    COBJ 989
+    PSHC 8646
+    PINI 583
+    PSHC 2714
+    PINI 632
+    PSHC 3083
+    PINI 658
+    PSHC 2633
+    PINI 584
+    PGETT 4971
+    PINI 1075
+    PLAD 581
+    COBJ 989
+    PSHC 8647
+    PINI 583
+    PSHC 2714
+    PINI 632
+    PSHC 3083
+    PINI 658
+    PSHC 2633
+    PINI 584
+    PGETT 4970
+    PINI 1075
+    PLAD 581
+    COBJ 989
+    PSHC 8648
+    PINI 583
+    PSHC 2714
+    PINI 632
+    PSHC 3083
+    PINI 658
+    PSHC 2633
+    PINI 584
+    PGETT 4969
+    PINI 1075
+    PLAD 581
+    COBJ 989
+    PSHC 8649
+    PINI 583
+    PSHC 2714
+    PINI 632
+    PSHC 3083
+    PINI 658
+    PSHC 2633
+    PINI 584
+    PGETT 4968
+    PINI 1075
+    PLAD 581
+    COBJ 989
+    PSHC 7562
+    PINI 583
+    PSHC 2714
+    PINI 632
+    PSHC 3083
+    PINI 658
+    PSHC 2633
+    PINI 584
+    PGETT 4967
+    PINI 1075
+    PLAD 581
+    COBJ 989
+    PSHC 8650
+    PINI 583
+    PSHC 2714
+    PINI 632
+    PSHC 3083
+    PINI 658
+    PSHC 2633
+    PINI 584
+    PGETT 4966
+    PINI 1075
+    PLAD 581
+    COBJ 989
+    PSHC 8651
+    PINI 583
+    PSHC 2714
+    PINI 632
+    PSHC 3083
+    PINI 658
+    PSHC 2633
+    PINI 584
+    PGETT 4965
+    PINI 1075
+    PLAD 581
+    COBJ 989
+    PSHC 8652
+    PINI 583
+    PSHC 2714
+    PINI 632
+    PSHC 3083
+    PINI 658
+    PSHC 2633
+    PINI 584
+    PGETT 4964
+    PINI 1075
+    PLAD 581
+    COBJ 989
+    PSHC 8653
+    PINI 583
+    PSHC 2714
+    PINI 632
+    PSHC 3083
+    PINI 658
+    PSHC 2633
+    PINI 584
+    PGETT 4963
+    PINI 1075
+    PLAD 581
+    COBJ 989
+    PSHC 8654
+    PINI 583
+    PSHC 2714
+    PINI 632
+    PSHC 3083
+    PINI 658
+    PSHC 2633
+    PINI 584
+    PGETT 4962
+    PINI 1075
+    PLAD 581
+    COBJ 989
+    PSHC 8655
+    PINI 583
+    PSHC 2714
+    PINI 632
+    PSHC 3083
+    PINI 658
+    PSHC 2633
+    PINI 584
+    PGETT 4961
+    PINI 1075
+    PLAD 581
+    COBJ 989
+    PSHC 8656
+    PINI 583
+    PSHC 2714
+    PINI 632
+    PSHC 3083
+    PINI 658
+    PSHC 2633
+    PINI 584
+    PGETT 4960
+    PINI 1075
+    PLAD 581
+    COBJ 989
+    PSHC 8657
+    PINI 583
+    PSHC 2714
+    PINI 632
+    PSHC 3083
+    PINI 658
+    PSHC 2633
+    PINI 584
+    PGETT 4959
+    PINI 1075
+    PLAD 581
+    COBJ 989
+    PSHC 8658
+    PINI 583
+    PSHC 2714
+    PINI 632
+    PSHC 3083
+    PINI 658
+    PSHC 2633
+    PINI 584
+    PGETT 4958
+    PINI 1075
+    PLAD 581
+    COBJ 989
+    PSHC 8659
+    PINI 583
+    PSHC 2714
+    PINI 632
+    PSHC 3083
+    PINI 658
+    PSHC 2633
+    PINI 584
+    PGETT 4957
+    PINI 1075
+    PLAD 581
+    COBJ 989
+    PSHC 8660
+    PINI 583
+    PSHC 2714
+    PINI 632
+    PSHC 3083
+    PINI 658
+    PSHC 2633
+    PINI 584
+    PGETT 4956
+    PINI 1075
+    PLAD 581
+    COBJ 989
+    PSHC 8661
+    PINI 583
+    PSHC 2714
+    PINI 632
+    PSHC 3083
+    PINI 658
+    PSHC 2633
+    PINI 584
+    PGETT 4955
+    PINI 1075
+    PLAD 581
+    COBJ 989
+    PSHC 8662
+    PINI 583
+    PSHC 2714
+    PINI 632
+    PSHC 3083
+    PINI 658
+    PSHC 2633
+    PINI 584
+    PGETT 4954
+    PINI 1075
+    PLAD 581
+    COBJ 989
+    PSHC 8663
+    PINI 583
+    PSHC 2714
+    PINI 632
+    PSHC 3083
+    PINI 658
+    PSHC 2633
+    PINI 584
+    PGETT 4953
+    PINI 1075
+    PLAD 581
+    COBJ 989
+    PSHC 8664
+    PINI 583
+    PSHC 2714
+    PINI 632
+    PSHC 3083
+    PINI 658
+    PSHC 2633
+    PINI 584
+    PGETT 4952
+    PINI 1075
+    PLAD 581
+    COBJ 989
+    PSHC 8665
+    PINI 583
+    PSHC 2714
+    PINI 632
+    PSHC 3083
+    PINI 658
+    PSHC 2633
+    PINI 584
+    PGETT 4951
+    PINI 1075
+    PLAD 581
+    COBJ 989
+    PSHC 8666
+    PINI 583
+    PSHC 2714
+    PINI 632
+    PSHC 3083
+    PINI 658
+    PSHC 2633
+    PINI 584
+    PGETT 4950
+    PINI 1075
+    PLAD 581
+    COBJ 989
+    PSHC 8667
+    PINI 582
+    PSHC 3082
+    PINI 583
+    PSHC 8668
+    PINI 632
+    PSHC 8669
+    PINI 658
+    PSHC 4256
+    PINI 584
+    PLAD 581
+    COBJ 989
+    PSHC 8670
+    PINI 582
+    PSHC 4125
+    PINI 583
+    PSHC 8668
+    PINI 632
+    PSHC 8669
+    PINI 658
+    PSHC 4256
+    PINI 584
+    PLAD 581
+    COBJ 989
+    PSHC 8671
+    PINI 582
+    PSHC 3082
+    PINI 583
+    PSHC 8672
+    PINI 632
+    PSHC 5681
+    PINI 658
+    PSHC 4256
+    PINI 584
+    PLAD 581
+    COBJ 989
+    PSHC 8673
+    PINI 582
+    PSHC 4125
+    PINI 583
+    PSHC 8672
+    PINI 632
+    PSHC 5681
+    PINI 658
+    PSHC 4256
+    PINI 584
+    PLAD 581
+    COBJ 989
+    PSHC 8674
+    PINI 582
+    PSHC 2713
+    PINI 583
+    PSHC 8672
+    PINI 632
+    PSHC 5681
+    PINI 658
+    PSHC 4256
+    PINI 584
+    PLAD 581
+    COBJ 989
+    PSHC 8675
+    PINI 582
+    PSHC 2716
+    PINI 583
+    PSHC 8672
+    PINI 632
+    PSHC 5681
+    PINI 658
+    PSHC 4256
+    PINI 584
+    PLAD 581
+    COBJ 989
+    PSHC 8676
+    PINI 582
+    PSHC 7774
+    PINI 583
+    PSHC 2714
+    PINI 632
+    PSHC 3083
+    PINI 658
+    PSHC 4256
+    PINI 584
+    PSHC 1
+    PINI 1074
+    PLAD 581
+    COBJ 989
+    PSHC 8677
+    PINI 582
+    PSHC 4596
+    PINI 583
+    PSHC 1
+    PINI 585
+    PSHC 4256
+    PINI 584
+    PLAD 581
+    COBJ 989
+    PSHC 8678
+    PINI 582
+    PSHC 4598
+    PINI 583
+    PSHC 1
+    PINI 585
+    PSHC 4256
+    PINI 584
+    PLAD 581
+    COBJ 2086
+    PSHC 8679
+    PINI 582
+    PSHC 8680
+    PINI 4948
+    PSHC 2633
+    PINI 4949
+    PLAD 581
+    COBJ 989
+    PSHC 8681
+    PINI 582
+    PSHC 8662
+    PINI 583
+    PSHC 4207
+    PINI 632
+    PSHC 5684
+    PINI 658
+    PSHC 2633
+    PINI 584
+    PGETT 4533
+    PGET 4780
+    PINI 1075
+    PLAD 581
+    COBJ 989
+    PSHC 8682
+    PINI 582
+    PSHC 8665
+    PINI 583
+    PSHC 8683
+    PINI 632
+    PSHC 8684
+    PINI 658
+    PSHC 2633
+    PINI 584
+    PGETT 1726
+    PGET 4947
+    PINI 1075
+    PLAD 581
+    COBJ 989
+    PSHC 8685
+    PINI 582
+    PSHC 8661
+    PINI 583
+    PSHC 8683
+    PINI 632
+    PSHC 8684
+    PINI 658
+    PSHC 2633
+    PINI 584
+    PGETT 1726
+    PGET 4946
+    PINI 1075
+    PLAD 581
+    COBJ 989
+    PSHC 8686
+    PINI 582
+    PSHC 8687
+    PINI 583
+    PSHC 2729
+    PINI 658
+    PSHC 2633
+    PINI 584
+    PLAD 581
+    COBJ 989
+    PSHC 8688
+    PINI 582
+    PSHC 8689
+    PINI 583
+    PSHC 2729
+    PINI 658
+    PSHC 2633
+    PINI 584
+    PLAD 581
+    COBJ 989
+    PSHC 8690
+    PINI 582
+    PSHC 8691
+    PINI 583
+    PSHC 2729
+    PINI 658
+    PSHC 2633
+    PINI 584
+    PLAD 581
+    COBJ 989
+    PSHC 8692
+    PINI 582
+    PSHC 8693
+    PINI 583
+    PSHC 2729
+    PINI 658
+    PSHC 2633
+    PINI 584
+    PLAD 581
+    COBJ 989
+    PSHC 8694
+    PINI 582
+    PSHC 8648
+    PINI 583
+    PSHC 4207
+    PINI 632
+    PSHC 5684
+    PINI 658
+    PSHC 2633
+    PINI 584
+    PLAD 581
+    COBJ 989
+    PSHC 8695
+    PINI 582
+    PSHC 8659
+    PINI 583
+    PSHC 4207
+    PINI 632
+    PSHC 5684
+    PINI 658
+    PSHC 2633
+    PINI 584
+    PLAD 581
+    COBJ 989
+    PSHC 8696
+    PINI 582
+    PSHC 8651
+    PINI 583
+    PSHC 4207
+    PINI 632
+    PSHC 5684
+    PINI 658
+    PSHC 2633
+    PINI 584
+    PLAD 581
+    COBJ 989
+    PSHC 8697
+    PINI 582
+    PSHC 8649
+    PINI 583
+    PSHC 4207
+    PINI 632
+    PSHC 5684
+    PINI 658
+    PSHC 2633
+    PINI 584
+    PGETT 1726
+    PGET 4945
+    PINI 1075
+    PLAD 581
+    COBJ 989
+    PSHC 8698
+    PINI 582
+    PSHC 8665
+    PINI 583
+    PSHC 4207
+    PINI 632
+    PSHC 5684
+    PINI 658
+    PSHC 2633
+    PINI 584
+    PGETT 1726
+    PGET 3286
+    PINI 1075
+    PLAD 581
+    COBJ 989
+    PSHC 8699
+    PINI 582
+    PSHC 8661
+    PINI 583
+    PSHC 4207
+    PINI 632
+    PSHC 5684
+    PINI 658
+    PSHC 2633
+    PINI 584
+    PGETT 1726
+    PGET 2938
+    PINI 1075
+    PLAD 581
+    COBJ 1033
+    PSHC 8700
+    PINI 582
+    PSHC 8701
+    PINI 1077
+    PSHC 2633
+    PINI 1078
+    PGETT 1726
+    PGET 2938
+    PINI 1079
+    PLAD 581
+    COBJ 1033
+    PSHC 8702
+    PINI 582
+    PSHC 8703
+    PINI 1077
+    PSHC 2633
+    PINI 1078
+    PGETT 1726
+    PGET 3286
+    PINI 1079
+    PLAD 581
+    COBJ 1033
+    PSHC 8704
+    PINI 582
+    PSHC 8705
+    PINI 1077
+    PSHC 2633
+    PINI 1078
+    PGETT 1726
+    PGET 4945
+    PINI 1079
+    PLAD 581
+    COBJ 1033
+    PSHC 8706
+    PINI 582
+    PSHC 8707
+    PINI 1077
+    PSHC 2633
+    PINI 1078
+    PLAD 581
+    COBJ 1033
+    PSHC 8708
+    PINI 582
+    PSHC 8709
+    PINI 1077
+    PSHC 2633
+    PINI 1078
+    PGETT 1726
+    PGET 3297
+    PINI 1079
+    PLAD 581
+    COBJ 1033
+    PSHC 8710
+    PINI 582
+    PSHC 8711
+    PINI 1077
+    PSHC 2633
+    PINI 1078
+    PGETT 1726
+    PGET 3295
+    PINI 1079
+    PLAD 581
+    COBJ 983
+    PSHC 8712
+    PINI 582
+    PSHC 5203
+    PINI 2163
+    PSHC 2500
+    PINI 4811
+    PSHC 8713
+    PINI 689
+    PSHC 1
+    PINI 690
+    PLAD 581
+    COBJ 989
+    PSHC 8714
+    PINI 582
+    PSHC 7774
+    PINI 583
+    PSHC 2714
+    PINI 632
+    PSHC 3083
+    PINI 658
+    PSHC 4256
+    PINI 584
+    PLAD 581
+    CLIS 115
+    RETV
+    LSYM 2
+    PGET 1543
+    JMPF 6674
+    PSHC 23
+    LSYM 3
+    PASS 472
+    DIS
+    PSHC 23
+    LSYM 4
+    PASS 472
+    DIS
+    JMP 6694
+    PSHC 42
+    LSYM 3
+    PASS 472
+    DIS
+    PSHC 42
+    LSYM 4
+    PASS 472
+    DIS
+    RETV
+    LSYM 2
+    PGET 1544
+    PSHC 3538
+    OPR 1125
+    JMPF 6738
+    PSHC 42
+    LSYM 3
+    PASS 472
+    DIS
+    PSHC 42
+    LSYM 4
+    PASS 472
+    DIS
+    JMP 6758
+    PSHC 23
+    LSYM 3
+    PASS 472
+    DIS
+    PSHC 23
+    LSYM 4
+    PASS 472
+    DIS
+    RETV
+    LSYM 6
+    PGET 9
+    PGET 5011
+    LSYM 5
+    PASS 551
+    DIS
+    RETV
+    PSHN
+    WSYM 7
+    LSYM 8
+    JMPFP 6808
+    LSYM 6
+    PGET 5012
+    PGET 5013
+    MINVT 4
+    OPR 7
+    OPR 7
+    JMPF 6836
+    LSYM 6
+    PGET 5012
+    PGET 5013
+    COBP 36, 1
+    WSYMP 7
+    DIS
+    JMP 6884
+    LSYM 6
+    PGET 5014
+    MINVT 4
+    OPR 7
+    JMPF 6874
+    LSYM 6
+    PGET 5014
+    COBP 36, 1
+    WSYMP 7
+    DIS
+    JMP 6884
+    MINVT 762
+    PGETT 5009
+    WSYMP 7
+    DIS
+    LSYM 7
+    LSYM 5
+    PASS 481
+    DIS
+    CSYM 7
+    RETV
+    LISD 0, 2, 2, 134224366, 134224626
+    LSYM 2
+    LIS 1, 0, 1543, 134224366
+    RETV
+    LISD 2, 2, 2, 134224423, 134224654
+    LSYM 2
+    LIS 3, 0, 1544, 134224423
+    RETV
+    LISD 4, 2, 6, 134224487, 134224682
+    LSYM 6
+    LISD 5, 0, 9, 134224487, 134224682
+    PGET 9
+    LIS 6, 0, 5011, 134224487
+    RETV
+    LISD 7, 2, 6, 134224504, 134224727
+    LSYM 6
+    LIS 8, 0, 9, 134224504
+    RETV
+    LISD 9, 2, 6, 134224504, 134224755
+    LSYM 6
+    LISD 10, 0, 5012, 134224504, 134224755
+    PGET 5012
+    LIS 11, 0, 5013, 134224504
+    RETV
+    LISD 12, 2, 6, 134224504, 134224800
+    LSYM 6
+    LIS 13, 0, 5014, 134224504
+    RETV
+    JMPD 43, 8715, 7117
+    COBJ 7
+    PDAD 43, 8715
+    JMPD 43, 2587, 7132
+    PSHN
+    PDAD 43, 2587
+    JMPD 43, 2588, 7147
+    PSHN
+    PDAD 43, 2588
+    RETV
+    COBJ 934
+    COBJ 934
+    PSHC 3323
+    PINI 82
+    PGETT 279
+    PINI 1085
+    PSHC 3297
+    PINI 498
+    PSHC 3585
+    PINI 463
+    PLAD 38
+    COBJ 934
+    PSHC 3324
+    PINI 82
+    PGETT 279
+    PINI 1085
+    PSHC 773
+    PINI 498
+    PSHC 3875
+    PINI 463
+    PLAD 38
+    COBJ 976
+    PSHC 4163
+    PINI 82
+    PSHN
+    PINI 488
+    PSHC 2706
+    PINI 534
+    PSHC 4072
+    PINI 535
+    PSHC 2595
+    PINI 483
+    PSHC 2531
+    PINI 491
+    PGETT 5009
+    PINI 489
+    PSHC 8716
+    PINI 68
+    PGETT 5010
+    PLAD 86
+    LSYM 0
+    PLAD 86
+    LSYM 1
+    PLAD 86
+    PLAD 38
+    PINI 36
+    RETV
+    COBJ 1123
+    PDAD 59, 3543
+    CLIS 14
+    RETV
+    PGETT 2673
+    PGET 2
+    PGETT 2674
+    PGET 2
+    OPR 871
+    JMPTP 7325
+    LSYM 2
+    OPR 7
+    JMPF 7345
+    PSHC 382
+    LSYM 3
+    PASS 1085
+    DIS
+    JMP 7355
+    PSHC 363
+    LSYM 3
+    PASS 1085
+    DIS
+    RETV
+    LSYM 5
+    PSHN
+    OPR 253
+    JMPF 7375
+    LSYM 5
+    MINV 21
+    RETV
+    PGETT 2757
+    PSHC 5281
+    OPR 1417
+    WSYMP 6
+    DIS
+    LSYM 6
+    LSYM 7
+    PASS 551
+    DIS
+    LSYM 6
+    LSYM 8
+    PASS 551
+    DIS
+    CSYM 6
+    RETV
+    PGETT 2673
+    LIS 0, 0, 2, 134225025
+    RETV
+    PGETT 2674
+    LIS 1, 0, 2, 134225025
+    RETV
+    LIS 2, 2, 2, 134225025
+    RETV
+    LSYM 4
+    LIS 3, 1, 5, 134225084
+    RETV
+    JMPD 43, 3263, 7484
+    COBJ 7
+    PDAD 43, 3263
+    RETV
+    COBJ 934
+    PSHC 8717
+    PINI 82
+    PSHC 0
+    PINI 524
+    COBJ 976
+    PSHC 8718
+    PINI 82
+    LSYM 0
+    PINI 2582
+    PGETT 2814
+    PINI 481
+    COBJ 12
+    PSHC 53
+    PINI 15
+    COBJ 925
+    PSHC 42
+    PINI 17
+    PSHC 42
+    PINI 19
+    PLAD 16
+    COBJ 925
+    PSHC 112
+    PINI 17
+    PSHC 23
+    PINI 19
+    PLAD 16
+    PLAD 86
+    PLAD 38
+    COBJ 976
+    PSHC 8719
+    PINI 82
+    LSYM 1
+    PINI 2582
+    PGETT 2814
+    PINI 481
+    COBJ 12
+    PSHC 53
+    PINI 15
+    COBJ 925
+    PSHC 42
+    PINI 17
+    PSHC 42
+    PINI 19
+    PLAD 16
+    COBJ 925
+    PSHC 112
+    PINI 17
+    PSHC 23
+    PINI 19
+    PLAD 16
+    PLAD 86
+    PLAD 38
+    COBJ 934
+    PSHC 8720
+    PINI 82
+    COBJ 12
+    PSHC 53
+    PINI 15
+    COBJ 925
+    PSHC 42
+    PINI 17
+    PSHC 42
+    PINI 19
+    PLAD 16
+    COBJ 925
+    PGETT 5015
+    PINI 17
+    PSHC 153
+    PINI 19
+    PLAD 16
+    PLAD 86
+    PLAD 38
+    PINI 36
+    RETV
+    COBJ 2098
+    INIT 2098
+    PDAD 59, 8721
+    COBJ 2099
+    INIT 2099
+    PDAD 59, 8722
+    COBJ 983
+    PSHC 8723
+    PINI 582
+    PLAD 581
+    CLIS 4
+    RETV
+    LSYM 0
+    PGET 1544
+    PSHC 3538
+    OPR 1125
+    LSYM 1
+    PASS 551
+    DIS
+    LSYM 0
+    PGET 1543
+    JMPFP 7794
+    LSYM 0
+    PGET 1544
+    PSHC 3538
+    OPR 1125
+    OPR 7
+    LSYM 1
+    PASS 551
+    DIS
+    RETV
+    LISD 0, 2, 0, 134225474, 134225530
+    LSYM 0
+    LIS 1, 0, 1544, 134225474
+    RETV
+    LISD 2, 2, 0, 134225474, 134225558
+    LSYM 0
+    LIS 3, 0, 1544, 134225474
+    RETV
+    LISD 4, 2, 0, 134225474, 134225586
+    LSYM 0
+    LIS 5, 0, 1543, 134225474
+    RETV
+    LISD 6, 2, 0, 134225474, 134225614
+    LSYM 0
+    LIS 7, 0, 1544, 134225474
+    RETV
+    COBJ 934
+    PSHC 7796
+    PINI 82
+    PSHC 3240
+    PINI 37
+    COBJ 934
+    PGETT 4512
+    PINI 1085
+    COBJ 613
+    CSTR 938, 5801
+    PINI 521
+    CSTR 938, 5833
+    PINI 47
+    CSTR 938, 2601
+    PINI 52
+    CSTR 938, 5801
+    PINI 522
+    PINI 525
+    PLAD 38
+    COBJ 934
+    PGETT 4512
+    PINI 1085
+    COBJ 613
+    CSTR 938, 5801
+    PINI 521
+    CSTR 938, 5833
+    PINI 47
+    CSTR 938, 5833
+    PINI 52
+    CSTR 938, 2641
+    PINI 522
+    PINI 525
+    PLAD 38
+    COBJ 934
+    PGETT 4512
+    PINI 1085
+    COBJ 613
+    CSTR 938, 2601
+    PINI 521
+    CSTR 938, 5801
+    PINI 47
+    CSTR 938, 2601
+    PINI 52
+    CSTR 938, 2641
+    PINI 522
+    PINI 525
+    PLAD 38
+    COBJ 934
+    PGETT 4512
+    PINI 1085
+    COBJ 613
+    CSTR 938, 5833
+    PINI 521
+    CSTR 938, 2641
+    PINI 47
+    CSTR 938, 2601
+    PINI 52
+    CSTR 938, 2641
+    PINI 522
+    PINI 525
+    PLAD 38
+    PINI 36
+    RETV
+    COBJ 1123
+    PDAD 59, 3543
+    CLIS 8
+    RETV
+    COBJ 1366
+    COBJ 1362
+    PSHC 133
+    PINI 2535
+    PINI 2538
+    COBJ 37
+    COBJ 2100
+    PSHC 8724
+    PINI 5016
+    PSHC 2044
+    PINI 5017
+    PSHC 244
+    PINI 5018
+    PLAD 65535
+    PINI 2539
+    RET
+    RETV
+    COBJ 1366
+    COBJ 1362
+    PSHC 133
+    PINI 2535
+    PINI 2538
+    COBJ 37
+    COBJ 2100
+    PSHC 8725
+    PINI 5016
+    PSHC 2044
+    PINI 5017
+    PSHC 244
+    PINI 5018
+    PLAD 65535
+    PINI 2539
+    RET
+    RETV

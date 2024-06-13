@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "UIXC": {
+      "commandName": "Project",
+      "commandLineArgs": "decompile CONTEXTMENU.UIX --verbose -A UIXControls.dll",
+      "workingDirectory": "D:\\Documents\\REProj\\Zune\\UIXControls48"
+    }
+  }
+}
