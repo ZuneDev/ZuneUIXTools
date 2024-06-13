@@ -1,4 +1,7 @@
-﻿.import-type UI
+﻿.export Default 0 UI
+.export Alt 0 UI
+
+.import-type UI
 .import-type Dictionary
 .import-ns assembly://UIX/Microsoft.Iris as iris
 .import-type iris:Command
@@ -7,29 +10,36 @@
 .import-type Text
 .import-type Color
 .import-type Font
-.export Default 0 UI
-.export Alt 0 UI
+.import-mbrs UI{Locals, Content}
+.import-mbrs Text{Color, Content, Font}
 
+.constant const0 = Color(255, 255, 0, 0)
+.constant const1 = String(Howdy from Microsoft.Iris!)
+.constant const2 = String(SelectCommand)
+.constant const3 = Color(255, 0, 0, 255)
+.constant const4 = Font(JetBrains Mono)
+.constant const5 = String(This is some blue text)
 .section object
+
 Default_cont:
     COBJ 5
-    PSHC 0
+    PSHC @const0
     PINI 2
-    PSHC 1
+    PSHC @const1
     PINI 3
     PINI 1
     RETV
 Default_locl:
     COBJ 2
-    PDAD 0, 2
+    PDAD 0, @const2
     RETV
 Alt_cont:
     COBJ 5
-    PSHC 3
+    PSHC @const3
     PINI 2
-    PSHC 4
+    PSHC @const4
     PINI 4
-    PSHC 5
+    PSHC @const5
     PINI 3
     PINI 1
     RETV

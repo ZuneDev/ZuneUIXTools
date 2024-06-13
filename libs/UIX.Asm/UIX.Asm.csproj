@@ -23,6 +23,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <!--<ProjectReference Include="..\..\..\ZuneShell.dll\libs\MicrosoftIris\UIX\UIX.csproj" />-->
         <ProjectReference Include="..\MicrosoftIris\UIX\UIX.csproj" />
         <PackageReference Include="Humanizer.Core" Version="2.14.1" />
         <PackageReference Include="Sprache" Version="2.3.1" />
