@@ -85,7 +85,9 @@ public class Disassembler
         }
     }
 
-    public IEnumerable<IImportDirective> GetImports()
+    public IEnumerable<IImportDirective> GetImports() => EnumerateImports().Distinct();
+
+    public IEnumerable<IImportDirective> EnumerateImports()
     {
         // Ues _importedUris to keep track of what has already been imported.
         // Skip self and default UIX namespace.
