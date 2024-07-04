@@ -14,7 +14,7 @@ public abstract class CompilerSettings : CommonSettings
 {
     [Description("The directory to output to.")]
     [CommandOption("-o|--output <outputDir>")]
-    public string? OutputDir { get; init; }
+    public string? OutputDir { get; init; } = Environment.CurrentDirectory;
 
     [Description("The shared binary data table to use.")]
     [CommandOption("-t|--dataTable")]
