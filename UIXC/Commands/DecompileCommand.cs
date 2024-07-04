@@ -5,6 +5,7 @@ using Microsoft.Iris.Session;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.Loader;
 
 namespace UIXC.Commands;
@@ -42,22 +43,19 @@ public class DecompileCommand : Command<DecompileCommand.Settings>
             }
         };
 
+        var searchPaths = settings.IncludeDirectories.Prepend(Environment.CurrentDirectory).ToArray();
+
         foreach (var givenPath in settings.Assemblies ?? [])
         {
             try
             {
-                var assemblyPath = givenPath;
-                if (!Path.IsPathFullyQualified(givenPath))
-                {
-                    assemblyPath = Path.GetFullPath(givenPath);
-                }
-
+                var assemblyPath = ResolvePath(givenPath, searchPaths);
                 _ = AssemblyLoadContext.Default.LoadFromAssemblyPath(assemblyPath);
             }
             catch (Exception ex)
             {
                 AnsiConsole.WriteException(ex);
-                if (!AnsiConsole.Ask("Do you want to continue?", false))
+                if (!AnsiConsole.Confirm("Do you want to continue?", false))
                     return -1;
             }
         }
@@ -77,7 +75,9 @@ public class DecompileCommand : Command<DecompileCommand.Settings>
             {
                 try
                 {
-                    var uibLoadResult = MarkupSystem.Load($"file://{input}", (uint)Random.Shared.Next());
+                    var inputPath = ResolvePath(input, searchPaths);
+
+                    var uibLoadResult = MarkupSystem.Load($"file://{inputPath}", (uint)Random.Shared.Next());
                     uibLoadResult.FullLoad();
 
                     if (uibLoadResult.Status != LoadResultStatus.Success)
@@ -113,14 +113,43 @@ public class DecompileCommand : Command<DecompileCommand.Settings>
         else
         {
             AnsiConsole.MarkupLine("[green]Decompilation finished.[/]");
+            AnsiConsole.MarkupLine($"[green]Output saved to '{settings.OutputDir}'.[/]");
             return 0;
         }
     }
 
     private static string GetOutputPath(Settings settings, string inputFilePath)
     {
-        var outputDir = settings.OutputDir ?? Environment.CurrentDirectory;
-        return Path.Combine(outputDir, Path.ChangeExtension(inputFilePath, settings.Language.GetExtension()));
+        return Path.Combine(settings.OutputDir, Path.ChangeExtension(inputFilePath, settings.Language.GetExtension()));
+    }
+
+    private static string ResolvePath(string givenPath, ICollection<string> searchPaths)
+    {
+        if (!ResolvePath(givenPath, searchPaths, out var assemblyPath))
+            throw new FileNotFoundException(null, givenPath);
+        return assemblyPath;
+    }
+
+    private static bool ResolvePath(string givenPath, ICollection<string> searchPaths, [NotNullWhen(true)] out string? absolutePath)
+    {
+        if (Path.IsPathFullyQualified(givenPath))
+        {
+            absolutePath = givenPath;
+            return Path.Exists(absolutePath);
+        }
+
+        absolutePath = null;
+        if (searchPaths.Count == 0)
+            return false;
+        
+        foreach (var searchPath in searchPaths)
+        {
+            absolutePath = Path.GetFullPath(givenPath, searchPath);
+            if (Path.Exists(absolutePath))
+                return true;
+        }
+
+        return false;
     }
 
     public sealed class Settings : CompilerSettings
