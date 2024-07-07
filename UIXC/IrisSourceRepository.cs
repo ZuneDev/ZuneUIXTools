@@ -14,6 +14,11 @@ internal class IrisSourceRepository : ISourceRepository
         foreach (var compiland in compilands)
         {
             var id = compiland.SourceFileName;
+
+            // We can only read source from local files
+            if (id.Contains(Uri.SchemeDelimiter))
+                continue;
+
             _sourceCache.Add(id, null);
         }
 
@@ -21,10 +26,13 @@ internal class IrisSourceRepository : ISourceRepository
             _sourceCache.Add(sharedBinaryDataTable.Value.SourceFileName, null);
     }
 
-    public bool TryGet(string id, [NotNullWhen(true)] out Source? source)
+    public bool TryGet(string uri, [NotNullWhen(true)] out Source? source)
     {
+        var idStart = uri.IndexOf(Uri.SchemeDelimiter) + Uri.SchemeDelimiter.Length;
+        var id = uri[idStart..];
+        
         if (!_sourceCache.TryGetValue(id, out source))
-            throw new ArgumentException($"No compiland with ID '{id}' was loaded.");
+            return false;
 
         if (source is null)
         {
