@@ -75,8 +75,24 @@ internal class AsmMarkupLoader
         var typeName = qualifiedName.TypeName;
         var result = FindDependency(qualifiedName.NamespacePrefix);
 
-        return result.FindType(typeName)
-            ?? throw new Exception($"No type with the name '{typeName}' was exported from {result.Uri}");
+        if (result.Status == LoadResultStatus.Error)
+        {
+            ErrorManager.ReportError(qualifiedName.Line, qualifiedName.Column,
+                $"Type '{typeName}' could not be resolved because {result.Uri} failed to load");
+            MarkHasErrors();
+            return null;
+        }
+
+        var type = result.FindType(typeName);
+
+        if (type is null)
+        {
+            ErrorManager.ReportError(qualifiedName.Line, qualifiedName.Column,
+                $"No type with the name '{typeName}' was exported from {result.Uri}");
+            MarkHasErrors();
+        }
+
+        return type;
     }
 
     public void MarkHasErrors()
@@ -458,12 +474,16 @@ internal class AsmMarkupLoader
 
     public int TrackImportedType(TypeSchema type)
     {
+        if (type is null) return -1;
+
         TrackImportedLoadResult(type.Owner);
         return TrackImportedSchema(_importTables.ImportedTypes, type);
     }
 
     public int TrackImportedConstructor(ConstructorSchema constructor)
     {
+        if (constructor is null) return -1;
+
         int num = TrackImportedSchema(_importTables.ImportedConstructors, constructor);
         TrackImportedType(constructor.Owner);
         foreach (TypeSchema parameterType in constructor.ParameterTypes)
@@ -473,6 +493,8 @@ internal class AsmMarkupLoader
 
     public int TrackImportedProperty(PropertySchema property)
     {
+        if (property is null) return -1;
+
         int num = TrackImportedSchema(_importTables.ImportedProperties, property);
         TrackImportedType(property.Owner);
         return num;
@@ -480,6 +502,8 @@ internal class AsmMarkupLoader
 
     public int TrackImportedMethod(MethodSchema method)
     {
+        if (method is null) return -1;
+
         int num = TrackImportedSchema(_importTables.ImportedMethods, method);
         TrackImportedType(method.Owner);
         foreach (TypeSchema parameterType in method.ParameterTypes)
@@ -489,6 +513,8 @@ internal class AsmMarkupLoader
 
     public int TrackImportedEvent(EventSchema evt)
     {
+        if (evt is null) return -1;
+
         int num = TrackImportedSchema(_importTables.ImportedEvents, evt);
         TrackImportedType(evt.Owner);
         return num;
@@ -496,11 +522,13 @@ internal class AsmMarkupLoader
 
     public int TrackImportedSchema(Vector importList, object schema)
     {
+        if (schema is null)
+            return -1;
+
         for (int index = 0; index < importList.Count; ++index)
-        {
             if (importList[index] == schema)
                 return index;
-        }
+        
         int count = importList.Count;
         importList.Add(schema);
         return count;
