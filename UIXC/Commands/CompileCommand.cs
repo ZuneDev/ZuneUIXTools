@@ -47,20 +47,25 @@ public class CompileCommand : Command<CompileCommand.Settings>
                 var l = error.Line;
                 var c = error.Column;
                 var msg = error.Message;
-                var ctx = error.Context ?? "";
+                var ctx = error.Context;
 
                 var diagnostic = error.Warning
                     ? Diagnostic.Warning(msg)
                     : Diagnostic.Error(msg);
 
-                if (ctx is not null && error.Line >= 0 && error.Column >= 0)
+                if (ctx is not null)
                 {
-                    Label label = new(ctx, new Location(l, c), "")
+                    if (error.Line >= 0 && error.Column >= 0)
                     {
-                        Color = error.Warning ? Color.Yellow : Color.Red
-                    };
+                        var label = new Label(ctx, new Location(l, c), "")
+                            .WithColor(error.Warning ? Color.Yellow : Color.Red);
 
-                    diagnostic = diagnostic.WithLabel(label);
+                        diagnostic.Labels.Add(label);
+                    }
+                    else
+                    {
+                        diagnostic.Note = ctx;
+                    }
                 }
 
                 report.AddDiagnostic(diagnostic);
@@ -79,6 +84,8 @@ public class CompileCommand : Command<CompileCommand.Settings>
         var success = MarkupCompiler.Compile(compilands, dataTableInput);
 
         report.Render(AnsiConsole.Console);
+        AnsiConsole.WriteLine();
+        AnsiConsole.WriteLine();
 
         if (!success)
         {
