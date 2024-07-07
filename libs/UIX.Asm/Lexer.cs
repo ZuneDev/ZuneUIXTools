@@ -34,6 +34,9 @@ public static partial class Lexer
 
     private static IResult<QualifiedTypeName> ParseQualifiedTypeName(IInput input)
     {
+        var line = input.Line;
+        var col = input.Column;
+
         var typePrefixResult = Identifier(input);
         input = typePrefixResult.Remainder;
         if (!typePrefixResult.WasSuccessful)
@@ -59,7 +62,12 @@ public static partial class Lexer
             typeName = typePrefixResult.Value;
         }
 
-        QualifiedTypeName qualifiedName = new(typePrefix, typeName);
+        QualifiedTypeName qualifiedName = new(typePrefix, typeName)
+        {
+            Line = line,
+            Column = col,
+        };
+
         return Result.Success(qualifiedName, input);
     }
 }

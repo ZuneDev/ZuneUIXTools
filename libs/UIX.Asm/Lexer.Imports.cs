@@ -28,6 +28,9 @@ partial class Lexer
         if (!importTypeResult.WasSuccessful)
             return Result.Failure<IImportDirective>(input, "Invalid import type", ["Expected 'ns'"]);
 
+        var line = input.Line;
+        var col = input.Column;
+
         IImportDirective import;
         switch (importTypeResult.Value.ToUpperInvariant())
         {
@@ -44,7 +47,11 @@ partial class Lexer
                 if (!nameResult.WasSuccessful)
                     return Result.Failure<IImportDirective>(input, "Invalid namespace alias", ["Expected a valid namespace alias"]);
 
-                import = new NamespaceImport(uriResult.Value, nameResult.Value);
+                import = new NamespaceImport(uriResult.Value, nameResult.Value)
+                {
+                    Line = line,
+                    Column = col,
+                };
                 break;
 
             case "TYPE":
@@ -55,7 +62,11 @@ partial class Lexer
                 if (!typeNameResult.WasSuccessful)
                     return Result.Failure<IImportDirective>(input, "Invalid type import", ["Expected qualified type name"]);
 
-                import = new TypeImport(typeNameResult.Value);
+                import = new TypeImport(typeNameResult.Value)
+                {
+                    Line = line,
+                    Column = col,
+                };
                 break;
 
             case "MBRS":
@@ -75,7 +86,11 @@ partial class Lexer
 
                 input = Parse.Char('}')(input).Remainder;
 
-                import = new NamedMemberImport(memberTypeNameResult.Value, memberNamesResult.Value);
+                import = new NamedMemberImport(memberTypeNameResult.Value, memberNamesResult.Value)
+                {
+                    Line = line,
+                    Column = col,
+                };
                 break;
 
             case "CTOR":
@@ -95,7 +110,11 @@ partial class Lexer
 
                 input = Parse.Char(')')(input).Remainder;
 
-                import = new ConstructorImport(ctorMemberTypeNameResult.Value, ctorParameterTypesResult.Value);
+                import = new ConstructorImport(ctorMemberTypeNameResult.Value, ctorParameterTypesResult.Value)
+                {
+                    Line = line,
+                    Column = col,
+                };
                 break;
 
             case "MTHD":
@@ -122,7 +141,11 @@ partial class Lexer
 
                 input = Parse.Char(')')(input).Remainder;
 
-                import = new MethodImport(mthdMemberTypeNameResult.Value, mthdNameResult.Value, mthdParameterTypesResult.Value);
+                import = new MethodImport(mthdMemberTypeNameResult.Value, mthdNameResult.Value, mthdParameterTypesResult.Value)
+                {
+                    Line = line,
+                    Column = col,
+                };
                 break;
 
             default:
