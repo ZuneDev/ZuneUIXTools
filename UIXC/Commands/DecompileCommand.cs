@@ -75,9 +75,13 @@ public class DecompileCommand : Command<DecompileCommand.Settings>
             {
                 try
                 {
-                    var inputPath = ResolvePath(input, searchPaths);
+                    if (!ResolvePath(input, searchPaths, out var inputPath))
+                        inputPath = input;
 
-                    var uibLoadResult = MarkupSystem.Load($"file://{inputPath}", (uint)Random.Shared.Next());
+                    if (!inputPath.Contains("://"))
+                        inputPath = $"file://{inputPath}";
+
+                    var uibLoadResult = MarkupSystem.Load(inputPath, (uint)Random.Shared.Next());
                     uibLoadResult.FullLoad();
 
                     if (uibLoadResult.Status != LoadResultStatus.Success)
@@ -120,7 +124,13 @@ public class DecompileCommand : Command<DecompileCommand.Settings>
 
     private static string GetOutputPath(Settings settings, string inputFilePath)
     {
-        return Path.Combine(settings.OutputDir, Path.ChangeExtension(inputFilePath, settings.Language.GetExtension()));
+        var fileName = Path.GetFileName(inputFilePath);//.Replace('!', '/');
+        var outputFile = Path.Combine(settings.OutputDir, Path.ChangeExtension(fileName, settings.Language.GetExtension()));
+
+        var outputDir = Path.GetDirectoryName(outputFile);
+        Directory.CreateDirectory(outputDir);
+
+        return outputFile;
     }
 
     private static string ResolvePath(string givenPath, ICollection<string> searchPaths)
