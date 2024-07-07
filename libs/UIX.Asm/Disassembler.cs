@@ -14,6 +14,7 @@ public class Disassembler
     private readonly MarkupLoadResult _loadResult;
     private readonly Dictionary<string, string> _importedUris;
     private readonly Dictionary<uint, List<Label>> _offsetLabelMap = new();
+    private static readonly TypeSchema _stringTypeSchema = UIXTypes.MapIDToType(UIXTypeID.String);
 
     private Disassembler(MarkupLoadResult loadResult)
     {
@@ -224,70 +225,10 @@ public class Disassembler
             }
         }
 
-        var stringTypeSchema = UIXTypes.MapIDToType(UIXTypeID.String);
-
         foreach (var (c, typeSchema, constantValue) in constants)
         {
             var constantName = $"const{c:D}";
-            QualifiedTypeName qualifiedTypeName = GetQualifiedName(typeSchema);
-            
-            if (constantValue is IStringEncodable encodable)
-            {
-                var encodedValue = encodable.EncodeString();
-                yield return new StringEncodedConstantDirective(constantName, qualifiedTypeName, encodedValue);
-            }
-            else if (constantValue is Layout.ILayout constantLayout && Layout.PredefinedLayouts.TryConvertToString(constantLayout, out var constantLayoutString))
-            {
-                qualifiedTypeName = GetQualifiedName(UIXTypes.MapIDToType(UIXTypeID.Layout));
-                yield return new StringEncodedConstantDirective(constantName, qualifiedTypeName, constantLayoutString);
-            }
-            else if (typeSchema.SupportsTypeConversion(stringTypeSchema))
-            {
-                var encodedValue = constantValue.ToString();
-                yield return new StringEncodedConstantDirective(constantName, qualifiedTypeName, encodedValue);
-            }
-            else if (typeSchema.SupportsBinaryEncoding)
-            {
-                ByteCodeWriter writer = new();
-                typeSchema.EncodeBinary(writer, constantValue);
-
-                var reader = writer.CreateReader();
-                byte[] encodedBytes = new byte[reader.Size];
-                Marshal.Copy(reader.GetAddress(0), encodedBytes, 0, (int)reader.Size);
-
-                yield return new BinaryEncodedConstantDirective(constantName, qualifiedTypeName, encodedBytes);
-            }
-            else
-            {
-                XName constElemName = qualifiedTypeName.NamespacePrefix is null
-                    ? qualifiedTypeName.TypeName
-                    : XName.Get(qualifiedTypeName.TypeName, qualifiedTypeName.NamespacePrefix);
-                XElement constElem = new(constElemName);
-
-                var defaultConstantValue = typeSchema.ConstructDefault();
-
-                foreach (var prop in typeSchema.Properties)
-                {
-                    // No need to serialize properties that can't be set
-                    if (!prop.CanWrite)
-                        continue;
-
-                    var defaultPropValue = prop.GetValue(defaultConstantValue);
-                    var propValue = prop.GetValue(constantValue);
-
-                    var encodedPropValue = EncodeSimpleConstant(propValue);
-                    var encodedDefaultPropValue = EncodeSimpleConstant(defaultPropValue);
-
-                    // No need to serialize properties that are at their default value
-                    if (encodedPropValue == encodedDefaultPropValue)
-                        continue;
-
-                    constElem.SetAttributeValue(prop.Name, encodedPropValue);
-                }
-
-                var constructor = constElem.ToString(SaveOptions.DisableFormatting);
-                yield return new ConstantDirective(constantName, qualifiedTypeName, constructor);
-            }
+            yield return EncodeConstant(constantValue, constantName, typeSchema);
         }
     }
 
@@ -374,6 +315,78 @@ public class Disassembler
         if (!_offsetLabelMap.TryGetValue(offset, out var labels))
             labels = _offsetLabelMap[offset] = new(1);
         labels.Add(new(labelName));
+    }
+
+    private ConstantDirective EncodeConstant(object constantValue, string constantName, TypeSchema typeSchema)
+    {
+        var qualifiedTypeName = GetQualifiedName(typeSchema);
+
+        // String encodable
+        if (constantValue is IStringEncodable encodable)
+        {
+            var encodedValue = encodable.EncodeString();
+            return new StringEncodedConstantDirective(constantName, qualifiedTypeName, encodedValue);
+        }
+
+        // Custom handling for ILayout
+        if (constantValue is Layout.ILayout constantLayout && Layout.PredefinedLayouts.TryConvertToString(constantLayout, out var constantLayoutString))
+        {
+            qualifiedTypeName = GetQualifiedName(UIXTypes.MapIDToType(UIXTypeID.Layout));
+            return new CanonicalInstanceConstantDirective(constantName, qualifiedTypeName, constantLayoutString);
+        }
+
+        if (typeSchema.SupportsTypeConversion(_stringTypeSchema))
+        {
+            var encodedValue = constantValue.ToString();
+            return new StringEncodedConstantDirective(constantName, qualifiedTypeName, encodedValue);
+        }
+
+        // Binary encodable
+        if (typeSchema.SupportsBinaryEncoding)
+        {
+            ByteCodeWriter writer = new();
+            typeSchema.EncodeBinary(writer, constantValue);
+
+            var reader = writer.CreateReader();
+            byte[] encodedBytes = new byte[reader.Size];
+            Marshal.Copy(reader.GetAddress(0), encodedBytes, 0, (int)reader.Size);
+            reader.Dispose(null);
+
+            return new BinaryEncodedConstantDirective(constantName, qualifiedTypeName, encodedBytes);
+        }
+
+#if DEBUG
+        throw new NotSupportedException($"Unable to encode constant value '{constantValue}' of type '{qualifiedTypeName}'");
+#else
+        XName constElemName = qualifiedTypeName.NamespacePrefix is null
+            ? qualifiedTypeName.TypeName
+            : XName.Get(qualifiedTypeName.TypeName, qualifiedTypeName.NamespacePrefix);
+        XElement constElem = new(constElemName);
+
+        var defaultConstantValue = typeSchema.ConstructDefault();
+
+        foreach (var prop in typeSchema.Properties)
+        {
+            // No need to serialize properties that can't be set
+            if (!prop.CanWrite)
+                continue;
+
+            var defaultPropValue = prop.GetValue(defaultConstantValue);
+            var propValue = prop.GetValue(constantValue);
+
+            var encodedPropValue = EncodeSimpleConstant(propValue);
+            var encodedDefaultPropValue = EncodeSimpleConstant(defaultPropValue);
+
+            // No need to serialize properties that are at their default value
+            if (encodedPropValue == encodedDefaultPropValue)
+                continue;
+
+            constElem.SetAttributeValue(prop.Name, encodedPropValue);
+        }
+
+        var constructor = constElem.ToString(SaveOptions.DisableFormatting);
+        return new ConstantDirective(constantName, qualifiedTypeName, constructor);
+#endif
     }
 
     private static string EncodeSimpleConstant(object value)

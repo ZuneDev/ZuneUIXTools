@@ -87,9 +87,23 @@ partial class Lexer
                     if (!typeNameResult.WasSuccessful)
                         return Result.Failure<IDirective>(input, "Invalid constant directive", ["Expected qualified name of type to construct"]);
 
-                    var binaryEncodingMarkerResult = Parse.String(".bin")(input);
-                    input = binaryEncodingMarkerResult.Remainder;
-                    var binaryEncoded = binaryEncodingMarkerResult.WasSuccessful;
+                    var encodingMarkerResult = Parse.Char('.')(input);
+                    input = encodingMarkerResult.Remainder;
+                    if (!encodingMarkerResult.WasSuccessful)
+                        return Result.Failure<IDirective>(input, "Invalid constant directive", ["Expected '.', followed by the persist mode."]);
+
+                    var persistModeResult = Parse.CharExcept('(').AtLeastOnce().Text().Token()(input);
+                    input = persistModeResult.Remainder;
+                    if (!persistModeResult.WasSuccessful)
+                        return Result.Failure<IDirective>(input, "Invalid constant directive", ["No persist mode was specified."]);
+
+                    Markup.MarkupConstantPersistMode? persistMode = persistModeResult.Value.ToLowerInvariant() switch
+                    {
+                        "bin" => Markup.MarkupConstantPersistMode.Binary,
+                        "str" => Markup.MarkupConstantPersistMode.FromString,
+                        "can" => Markup.MarkupConstantPersistMode.Canonical,
+                        _ => null
+                    };
 
                     var openBracketResult = Parse.Char('(').Token()(input);
                     input = openBracketResult.Remainder;
@@ -109,7 +123,7 @@ partial class Lexer
                     var constantName = constNameResult.Value;
                     var typeName = typeNameResult.Value;
 
-                    if (!binaryEncoded)
+                    if (persistMode == Markup.MarkupConstantPersistMode.FromString)
                     {
                         directive = new StringEncodedConstantDirective(constantName, typeName, contentResult.Value)
                         {
@@ -117,7 +131,15 @@ partial class Lexer
                             Column = column,
                         };
                     }
-                    else
+                    else if (persistMode == Markup.MarkupConstantPersistMode.Canonical)
+                    {
+                        directive = new CanonicalInstanceConstantDirective(constantName, typeName, contentResult.Value)
+                        {
+                            Line = line,
+                            Column = column,
+                        };
+                    }
+                    else if (persistMode == Markup.MarkupConstantPersistMode.Binary)
                     {
                         byte[] constantBytes;
                         var byteParts = contentResult.Value.Split(',');
@@ -155,6 +177,10 @@ partial class Lexer
                             Line = line,
                             Column = column,
                         };
+                    }
+                    else
+                    {
+                        return Result.Failure<IDirective>(input, "Invalid constant directive", [$"'{persistModeResult.Value}' is not a valid persist mode."]);
                     }
                 }
                 break;
