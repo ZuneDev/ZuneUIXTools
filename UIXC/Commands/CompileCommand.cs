@@ -44,18 +44,26 @@ public class CompileCommand : Command<CompileCommand.Settings>
         {
             foreach (ErrorRecord error in errors)
             {
-                var l = Math.Max(0, error.Line);
-                var c = Math.Max(0, error.Column);
+                var l = error.Line;
+                var c = error.Column;
                 var msg = error.Message;
-                var ctx = error.Context;
+                var ctx = error.Context ?? "";
 
-                const string compilerError = "Iris error";
-                var diagnostic = error.Warning ? Diagnostic.Warning(compilerError) : Diagnostic.Error(compilerError);
+                var diagnostic = error.Warning
+                    ? Diagnostic.Warning(msg)
+                    : Diagnostic.Error(msg);
 
-                report.AddDiagnostic(diagnostic
-                    .WithCode("UIX0000")
-                    .WithLabel(new(ctx, new Location(l, c), msg))
-                );
+                if (ctx is not null && error.Line >= 0 && error.Column >= 0)
+                {
+                    Label label = new(ctx, new Location(l, c), "")
+                    {
+                        Color = error.Warning ? Color.Yellow : Color.Red
+                    };
+
+                    diagnostic = diagnostic.WithLabel(label);
+                }
+
+                report.AddDiagnostic(diagnostic);
             }
         };
         TraceSettings.Current.SetCategoryLevel(TraceCategory.Markup, byte.MaxValue);
@@ -69,6 +77,8 @@ public class CompileCommand : Command<CompileCommand.Settings>
         Assembler.RegisterLoader();
 
         var success = MarkupCompiler.Compile(compilands, dataTableInput);
+
+        report.Render(AnsiConsole.Console);
 
         if (!success)
         {
