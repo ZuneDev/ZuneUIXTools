@@ -10,7 +10,7 @@ using System.Runtime.Loader;
 
 namespace UIXC.Commands;
 
-public class DecompileCommand : Command<DecompileCommand.Settings>
+public class DecompileCommand : CompilerCommandBase<DecompileCommand.Settings>
 {
     public override int Execute(CommandContext context, Settings settings)
     {
@@ -32,16 +32,7 @@ public class DecompileCommand : Command<DecompileCommand.Settings>
             };
         }
 
-        ErrorManager.OnErrors += (errors) =>
-        {
-            foreach (ErrorRecord error in errors)
-            {
-                var (color, type) = error.Warning
-                    ? ("yellow", "WARN") : ("red", "ERROR");
-
-                AnsiConsole.MarkupLineInterpolated($"[{color}]{type}: {error.Message}[/]");
-            }
-        };
+        BeginErrorReporting(new IrisSourceRepository(settings.Inputs));
 
         var searchPaths = settings.IncludeDirectories.Prepend(Environment.CurrentDirectory).ToArray();
 

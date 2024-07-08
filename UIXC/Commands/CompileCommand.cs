@@ -1,16 +1,14 @@
-﻿using Errata;
-using Microsoft.Iris;
+﻿using Microsoft.Iris;
 using Microsoft.Iris.Asm;
 using Microsoft.Iris.Debug;
 using Microsoft.Iris.Markup;
-using Microsoft.Iris.Session;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using System.ComponentModel;
 
 namespace UIXC.Commands;
 
-public class CompileCommand : Command<CompileCommand.Settings>
+public class CompileCommand : CompilerCommandBase<CompileCommand.Settings>
 {
     public override int Execute(CommandContext context, Settings settings)
     {
@@ -31,46 +29,18 @@ public class CompileCommand : Command<CompileCommand.Settings>
             };
         }
 
-        CompilerInput dataTableInput = new();
+        CompilerInput? dataTableInput = null;
         if (settings.DataTable is not null)
         {
-            dataTableInput.SourceFileName = settings.DataTable;
-            dataTableInput.OutputFileName = SourceToCompiledPath(settings, settings.DataTable);
+            dataTableInput = new()
+            {
+                SourceFileName = settings.DataTable,
+                OutputFileName = SourceToCompiledPath(settings, settings.DataTable)
+            };
         }
 
         // Configure error and warning messages
-        var report = new Report(new IrisSourceRepository(compilands, default));
-        ErrorManager.OnErrors += (errors) =>
-        {
-            foreach (ErrorRecord error in errors)
-            {
-                var l = error.Line;
-                var c = error.Column;
-                var msg = error.Message;
-                var ctx = error.Context;
-
-                var diagnostic = error.Warning
-                    ? Diagnostic.Warning(msg)
-                    : Diagnostic.Error(msg);
-
-                if (ctx is not null)
-                {
-                    if (error.Line >= 0 && error.Column >= 0)
-                    {
-                        var label = new Label(ctx, new Location(l, c), "")
-                            .WithColor(error.Warning ? Color.Yellow : Color.Red);
-
-                        diagnostic.Labels.Add(label);
-                    }
-                    else
-                    {
-                        diagnostic.Note = ctx;
-                    }
-                }
-
-                report.AddDiagnostic(diagnostic);
-            }
-        };
+        BeginErrorReporting(new IrisSourceRepository(compilands, dataTableInput));
         TraceSettings.Current.SetCategoryLevel(TraceCategory.Markup, byte.MaxValue);
         TraceSettings.Current.SetCategoryLevel(TraceCategory.MarkupCompiler, byte.MaxValue);
         TraceSettings.Current.OnWriteLine += (line) =>
@@ -81,9 +51,11 @@ public class CompileCommand : Command<CompileCommand.Settings>
         MarkupSystem.Startup(true);
         Assembler.RegisterLoader();
 
-        var success = MarkupCompiler.Compile(compilands, dataTableInput);
+        System.Runtime.Loader.AssemblyLoadContext.Default.LoadFromAssemblyPath(@"C:\Program Files\Zune\UIXcontrols.dll");
+        var success = MarkupCompiler.Compile(compilands, dataTableInput ?? default);
 
-        report.Render(AnsiConsole.Console);
+        StopErrorReporting();
+        Report?.Render(AnsiConsole.Console);
         AnsiConsole.WriteLine();
         AnsiConsole.WriteLine();
 
