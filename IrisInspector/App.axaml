@@ -5,7 +5,7 @@
              xmlns:idc="using:Dock.Avalonia.Controls"
              xmlns:idcr="using:Dock.Avalonia.Controls.Recycling"
              xmlns:core="using:Dock.Model.Core"
-             Name="Dock Avalonia Demo"
+             Name="Iris Inspector"
              x:Class="IrisInspector.App">
 
   <Application.DataTemplates>
