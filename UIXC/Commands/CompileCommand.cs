@@ -43,6 +43,7 @@ public class CompileCommand : CompilerCommandBase<CompileCommand.Settings>
         BeginErrorReporting(new IrisSourceRepository(compilands, dataTableInput));
         TraceSettings.Current.SetCategoryLevel(TraceCategory.Markup, byte.MaxValue);
         TraceSettings.Current.SetCategoryLevel(TraceCategory.MarkupCompiler, byte.MaxValue);
+        TraceSettings.Current.SetCategoryLevel(TraceCategory.Tool, byte.MaxValue);
         TraceSettings.Current.OnWriteLine += (line) =>
         {
             AnsiConsole.MarkupLineInterpolated($"[grey]{line}[/]");
