@@ -145,7 +145,12 @@ partial class Lexer
                         var byteParts = contentResult.Value.Split(',');
                         if (byteParts.Length == 1)
                         {
-                            var constantStr = byteParts[0].Trim().TrimStart('0', 'x');
+                            var constantStr = byteParts[0].Trim();
+                            if (constantStr.StartsWith("0x"))
+                            {
+                                constantStr = constantStr[2..];
+                            }
+
                             if (constantStr.Length == 2)
                             {
                                 constantBytes = [byte.Parse(constantStr, NumberStyles.HexNumber)];
@@ -168,7 +173,7 @@ partial class Lexer
                         else
                         {
                             constantBytes = byteParts
-                                .Select(s => byte.Parse(s.TrimStart('0', 'x'), NumberStyles.HexNumber))
+                                .Select(s => byte.Parse(s.Trim().TrimStart('0', 'x'), NumberStyles.HexNumber))
                                 .ToArray();
                         }
 
