@@ -328,6 +328,8 @@ public class Disassembler
             return new StringEncodedConstantDirective(constantName, qualifiedTypeName, encodedValue);
         }
 
+        // TODO: How are canonical instances usually handled? Are they always loaded by
+        // converting the canonical name as a string to the base type?
         // Custom handling for ILayout
         if (constantValue is Layout.ILayout constantLayout && Layout.PredefinedLayouts.TryConvertToString(constantLayout, out var constantLayoutString))
         {

@@ -282,52 +282,64 @@ internal class AsmMarkupLoader
                 foreach (var constant in Program.Body.OfType<ConstantDirective>())
                 {
                     object constantValue, persistData = null;
+                    MarkupConstantPersistMode mode;
+
                     var constantTypeSchema = ResolveTypeFromQualifiedName(constant.TypeName);
 
-                    if (constant is StringEncodedConstantDirective encodedConstant)
+                    if (constant is StringEncodedConstantDirective stringEncodedConstant)
                     {
-                        var parseResult = constantTypeSchema.TypeConverter(encodedConstant.Content, stringTypeSchema, out constantValue);
-                        if (parseResult.Failed)
+                        var stringParseResult = constantTypeSchema.TypeConverter(stringEncodedConstant.Content, stringTypeSchema, out constantValue);
+                        if (stringParseResult.Failed)
                         {
-                            ReportError($"Failed to create an instance of '{constant.TypeName}' from '{encodedConstant.Content}'", constant);
+                            ReportError($"Failed to create an instance of '{constant.TypeName}' from '{stringEncodedConstant.Content}'", constant);
                             continue;
                         }
 
-                        persistData = encodedConstant.Content;
+                        persistData = stringEncodedConstant.Content;
+                        mode = MarkupConstantPersistMode.FromString;
                     }
-                    else
+                    else if (constant is CanonicalInstanceConstantDirective canonicalInstanceConstant)
                     {
-                        var xmlElem = System.Xml.Linq.XElement.Parse(constant.Constructor);
+                        var canonicalName = canonicalInstanceConstant.CanonicalName;
+                        
+                        persistData = canonicalName;
+                        mode = MarkupConstantPersistMode.Canonical;
 
-                        constantValue = constantTypeSchema.ConstructDefault();
+                        constantValue = constantTypeSchema.FindCanonicalInstance(canonicalName);
 
-                        foreach (var attr in xmlElem.Attributes())
+                        if (constantValue is null)
                         {
-                            var propName = attr.Name.LocalName;
-                            var prop = constantTypeSchema.FindProperty(propName);
-
-                            var propConvertResult = prop.PropertyType.TypeConverter(attr.Value, stringTypeSchema, out var propValue);
-                            if (propConvertResult.Failed)
+                            var canonicalParseResult = constantTypeSchema.TypeConverter(canonicalName, stringTypeSchema, out constantValue);
+                            if (canonicalParseResult.Failed)
                             {
-                                ReportError($"Failed to set {constantTypeSchema.Name}.{propName}", constant);
+                                ReportError($"Failed to get canonical instance '{canonicalName}' from '{constant.TypeName}'", constant);
                                 continue;
                             }
-
-                            prop.SetValue(ref constantValue, propValue);
                         }
                     }
-
-                    MarkupConstantPersistMode mode;
-                    if (constantTypeSchema.SupportsBinaryEncoding)
+                    else if (constant is BinaryEncodedConstantDirective binaryEncodedConstant)
                     {
-                        mode = MarkupConstantPersistMode.Binary;
+                        if (!constantTypeSchema.SupportsBinaryEncoding)
+                        {
+                            ReportError($"Constant was binary-encoded, but {constant.TypeName} does not support binary encoding.", constant);
+                            continue;
+                        }
+
+                        var contentBuffer = binaryEncodedConstant.Content;
+
+                        ByteCodeWriter binaryConstantWrtier = new();
+                        binaryConstantWrtier.Write(contentBuffer, (uint)contentBuffer.Length);
+
+                        var binaryConstantReader = binaryConstantWrtier.CreateReader();
+                        constantValue = constantTypeSchema.DecodeBinary(binaryConstantReader);
+
                         persistData = constantValue;
+                        mode = MarkupConstantPersistMode.Binary;
                     }
                     else
                     {
-                        mode = MarkupConstantPersistMode.FromString;
-                        if (persistData is null)
-                            throw new Exception($"{constant.Name} cannot be persisted as a string without persist data.");
+                        ReportError($"Constant of type '{constant.TypeName}' was not encoded in a recognized format.", constant);
+                        continue;
                     }
 
                     var constantIndex = (ushort)constantsTable.Add(constantTypeSchema, constantValue, mode, persistData);
