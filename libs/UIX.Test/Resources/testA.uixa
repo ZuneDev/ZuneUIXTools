@@ -13,12 +13,12 @@
 .import-mbrs UI{Locals, Content}
 .import-mbrs Text{Color, Content, Font}
 
-.constant const0 = Color(255, 255, 0, 0)
-.constant const1 = String(Howdy from Microsoft.Iris!)
-.constant const2 = String(SelectCommand)
-.constant const3 = Color(255, 0, 0, 255)
-.constant const4 = Font(JetBrains Mono)
-.constant const5 = String(This is some blue text)
+.constant const0 = Color.str(255, 255, 0, 0)
+.constant const1 = String.str(Howdy from Microsoft.Iris!)
+.constant const2 = String.str(SelectCommand)
+.constant const3 = Color.str(255, 0, 0, 255)
+.constant const4 = Font.str(JetBrains Mono)
+.constant const5 = String.str(This is some blue text)
 .section object
 
 Default_cont:
