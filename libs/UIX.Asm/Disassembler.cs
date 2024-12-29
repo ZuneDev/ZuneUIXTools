@@ -288,6 +288,8 @@ public class Disassembler
     public string Write()
     {
         _loadResult.FullLoad();
+        if (_loadResult.Status == LoadResultStatus.Error)
+            throw new Exception($"Failed to load '{_loadResult.ErrorContextUri}'");
 
         List<IEnumerable<IBodyItem>> segments = [
             GetExports(),

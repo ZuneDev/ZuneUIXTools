@@ -4,14 +4,21 @@ using Xunit.Abstractions;
 using Microsoft.Iris.Markup;
 using UIX.Test.Fixtures;
 using Microsoft.Iris;
-using Microsoft.Iris.Session;
 using Microsoft.Iris.Debug;
 
 namespace UIX.Test;
 
 [Collection(MarkupSystemCollection.Name)]
-public class Assembly(ITestOutputHelper output)
+public class Assembly
 {
+    private readonly ITestOutputHelper _output;
+
+    public Assembly(ITestOutputHelper output, MarkupSystemFixture markupSystemFixture)
+    {
+        _output = output;
+        markupSystemFixture.SetupDebug(output);
+    }
+
     [Fact]
     public void Parse()
     {
@@ -67,7 +74,7 @@ Alt_locl:
 """;
 
         var ast = Lexer.Program.Parse(code);
-        output.WriteLine(ast.ToString());
+        _output.WriteLine(ast.ToString());
 
         Assert.NotNull(ast);
         Assert.Equal(20, ast.Directives.Count());
@@ -85,14 +92,8 @@ Alt_locl:
         var uibPathAc = Path.ChangeExtension(uibFile.Path, ".g.uib");
 
         // Configure debugging stuff
-        ErrorManager.OnErrors += (errors) =>
-        {
-            foreach (ErrorRecord error in errors)
-                output.WriteLine($"Error at (L{error.Line}, C{error.Column}): {error.Message}");
-        };
         TraceSettings.Current.SetCategoryLevel(TraceCategory.Markup, byte.MaxValue);
         TraceSettings.Current.SetCategoryLevel(TraceCategory.MarkupCompiler, byte.MaxValue);
-        TraceSettings.Current.OnWriteLine += output.WriteLine;
 
         // Disassemble the compiled UIX
         var sourceLoadResult = MarkupSystem.ResolveLoadResult($"file://{uibFile.Path}", MarkupSystem.RootIslandId);
@@ -107,8 +108,8 @@ Alt_locl:
             OutputFileName = uibPathAc
         };
 
-        output.WriteLine($"Expected: {uibFile.Path}");
-        output.WriteLine($"Actual: {compilerInput.OutputFileName}");
+        _output.WriteLine($"Expected: {uibFile.Path}");
+        _output.WriteLine($"Actual: {compilerInput.OutputFileName}");
 
         // Assemble the disassembly result
         var success = MarkupCompiler.Compile([compilerInput], default);
@@ -126,6 +127,7 @@ Alt_locl:
     }
 
     [Theory]
+    [InlineData("text")]
     [InlineData("testA")]
     public async Task ReassembleFromUIX(string fileNameWithoutExtension)
     {
@@ -137,14 +139,8 @@ Alt_locl:
         var uibPathAc = Path.ChangeExtension(uixFile.Path, ".g.uib");
 
         // Configure debugging stuff
-        ErrorManager.OnErrors += (errors) =>
-        {
-            foreach (ErrorRecord error in errors)
-                output.WriteLine($"Error at (L{error.Line}, C{error.Column}): {error.Message}");
-        };
         TraceSettings.Current.SetCategoryLevel(TraceCategory.Markup, byte.MaxValue);
         TraceSettings.Current.SetCategoryLevel(TraceCategory.MarkupCompiler, byte.MaxValue);
-        TraceSettings.Current.OnWriteLine += output.WriteLine;
 
         CompilerInput uixCompilerInput = new()
         {
@@ -157,15 +153,9 @@ Alt_locl:
             OutputFileName = uibPathAc
         };
 
-        output.WriteLine($"Source: {uixFile.Path}");
-        output.WriteLine($"Expected: {uibPathEx}");
-        output.WriteLine($"Actual: {uibPathAc}");
-
-        ErrorManager.OnErrors += (errors) =>
-        {
-            foreach (ErrorRecord error in errors)
-                output.WriteLine($"Error at (L{error.Line}, C{error.Column}): {error.Message}");
-        };
+        _output.WriteLine($"Source: {uixFile.Path}");
+        _output.WriteLine($"Expected: {uibPathEx}");
+        _output.WriteLine($"Actual: {uibPathAc}");
 
         // Compile the UIX source
         var uixSuccess = MarkupCompiler.Compile([uixCompilerInput], default);
@@ -186,14 +176,6 @@ Alt_locl:
         actualLoadResult.FullLoad();
 
         AssertEx.DeepEquivalent(sourceLoadResult, actualLoadResult);
-
-        if (false)
-        {
-            // Compare the original UIB file to the reassembled UIB
-            var uibBytesEx = await File.ReadAllBytesAsync(uibPathEx);
-            var uibBytesAc = await File.ReadAllBytesAsync(asmCompilerInput.OutputFileName);
-            Assert.Equal(uibBytesEx, uibBytesAc);
-        }
     }
 
     [Theory]
@@ -212,16 +194,7 @@ Alt_locl:
         ];
 
         foreach (var compilerInput in compilerInputs)
-            output.WriteLine(compilerInput.OutputFileName);
-
-        ErrorManager.OnErrors += (errors) =>
-        {
-            foreach (ErrorRecord error in errors)
-            {
-                var errorTypeText = error.Warning ? "Warning" : "Error";
-                output.WriteLine($"{errorTypeText} at (L{error.Line}, C{error.Column}): {error.Message}");
-            }
-        };
+            _output.WriteLine(compilerInput.OutputFileName);
 
         var success = MarkupCompiler.Compile(compilerInputs, default);
         Assert.True(success);
@@ -246,6 +219,6 @@ Alt_locl:
         var dis = Disassembler.Load(sourceLoadResult as MarkupLoadResult);
 
         var disText = dis.Write();
-        output.WriteLine(disText);
+        _output.WriteLine(disText);
     }
 }
