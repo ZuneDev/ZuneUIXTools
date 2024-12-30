@@ -66,7 +66,7 @@ public class DecompileCommand : CompilerCommandBase<DecompileCommand.Settings>
             {
                 try
                 {
-                    if (!ResolvePath(input, searchPaths, out var inputPath))
+                    if (!TryResolvePath(input, searchPaths, out var inputPath))
                         inputPath = input;
 
                     if (!inputPath.Contains("://"))
@@ -126,12 +126,12 @@ public class DecompileCommand : CompilerCommandBase<DecompileCommand.Settings>
 
     private static string ResolvePath(string givenPath, ICollection<string> searchPaths)
     {
-        if (!ResolvePath(givenPath, searchPaths, out var assemblyPath))
+        if (!TryResolvePath(givenPath, searchPaths, out var assemblyPath))
             throw new FileNotFoundException(null, givenPath);
         return assemblyPath;
     }
 
-    private static bool ResolvePath(string givenPath, ICollection<string> searchPaths, [NotNullWhen(true)] out string? absolutePath)
+    private static bool TryResolvePath(string givenPath, ICollection<string> searchPaths, [NotNullWhen(true)] out string? absolutePath)
     {
         if (Path.IsPathFullyQualified(givenPath))
         {
