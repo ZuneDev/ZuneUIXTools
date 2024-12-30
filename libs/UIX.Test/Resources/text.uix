@@ -62,4 +62,18 @@
         </Content>
     </UI>
 
+	<UI Name="AligningContent">
+		<!-- This UI provides an example of docking a panel with text to the bottom of a window. -->
+		<Content>
+			<Panel Margins="10">
+				<Layout>
+					<DockLayout DefaultLayoutInput="Bottom"/>
+				</Layout>
+				<Children>
+					<Text Content="This text is at the bottom of the panel."/>
+				</Children>
+			</Panel>
+		</Content>
+	</UI>
+
 </UIX>

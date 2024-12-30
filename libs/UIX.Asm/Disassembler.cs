@@ -323,29 +323,49 @@ public class Disassembler
     {
         var qualifiedTypeName = GetQualifiedName(typeSchema);
 
-        // String encodable
+        // ILayout has a number of derived classes with special named instacnes,
+        // but aren't implemented as canonical instances.
+        if (constantValue is Layout.ILayout constantLayout && Layout.PredefinedLayouts.TryConvertToString(constantLayout, out var constantLayoutString))
+        {
+            qualifiedTypeName = GetQualifiedName(UIXTypes.MapIDToType(UIXTypeID.Layout));
+            return new StringEncodedConstantDirective(constantName, qualifiedTypeName, constantLayoutString);
+        }
+
+        // Instance may be canonical and can be encoded using its name
+        if (constantValue is IHasCanonicalInstances maybeCanonicalValue)
+        {
+            // Attempt to get the canonical name for this instance.
+            // If there isn't one, then fall back to other methods.
+            var canonicalName = maybeCanonicalValue.GetCanonicalName();
+            if (canonicalName is not null)
+                return new CanonicalInstanceConstantDirective(constantName, qualifiedTypeName, canonicalName);
+        }
+
+        // Type supports canonical instances
+        if (typeSchema.SupportsCanonicalInstance && constantValue is string maybeCanonicalName)
+        {
+            // Attempt to get the canonical instance with this name.
+            // If there isn't one, then fall back to the other methods.
+            var canonicalInstance = typeSchema.FindCanonicalInstance(maybeCanonicalName);
+            if (canonicalInstance is not null)
+                return new CanonicalInstanceConstantDirective(constantName, qualifiedTypeName, maybeCanonicalName);
+        }
+        
+        // Instance is explicitly encodable as a string
         if (constantValue is IStringEncodable encodable)
         {
             var encodedValue = encodable.EncodeString();
             return new StringEncodedConstantDirective(constantName, qualifiedTypeName, encodedValue);
         }
 
-        // TODO: How are canonical instances usually handled? Are they always loaded by
-        // converting the canonical name as a string to the base type?
-        // Custom handling for ILayout
-        if (constantValue is Layout.ILayout constantLayout && Layout.PredefinedLayouts.TryConvertToString(constantLayout, out var constantLayoutString))
-        {
-            qualifiedTypeName = GetQualifiedName(UIXTypes.MapIDToType(UIXTypeID.Layout));
-            return new CanonicalInstanceConstantDirective(constantName, qualifiedTypeName, constantLayoutString);
-        }
-
+        // Type supports parsing from string, implicitly encodable as a string
         if (typeSchema.SupportsTypeConversion(_stringTypeSchema))
         {
             var encodedValue = constantValue.ToString();
             return new StringEncodedConstantDirective(constantName, qualifiedTypeName, encodedValue);
         }
 
-        // Binary encodable
+        // Type supports encoding as raw bytes
         if (typeSchema.SupportsBinaryEncoding)
         {
             ByteCodeWriter writer = new();
@@ -359,44 +379,6 @@ public class Disassembler
             return new BinaryEncodedConstantDirective(constantName, qualifiedTypeName, encodedBytes);
         }
 
-#if DEBUG
         throw new NotSupportedException($"Unable to encode constant value '{constantValue}' of type '{qualifiedTypeName}'");
-#else
-        XName constElemName = qualifiedTypeName.NamespacePrefix is null
-            ? qualifiedTypeName.TypeName
-            : XName.Get(qualifiedTypeName.TypeName, qualifiedTypeName.NamespacePrefix);
-        XElement constElem = new(constElemName);
-
-        var defaultConstantValue = typeSchema.ConstructDefault();
-
-        foreach (var prop in typeSchema.Properties)
-        {
-            // No need to serialize properties that can't be set
-            if (!prop.CanWrite)
-                continue;
-
-            var defaultPropValue = prop.GetValue(defaultConstantValue);
-            var propValue = prop.GetValue(constantValue);
-
-            var encodedPropValue = EncodeSimpleConstant(propValue);
-            var encodedDefaultPropValue = EncodeSimpleConstant(defaultPropValue);
-
-            // No need to serialize properties that are at their default value
-            if (encodedPropValue == encodedDefaultPropValue)
-                continue;
-
-            constElem.SetAttributeValue(prop.Name, encodedPropValue);
-        }
-
-        var constructor = constElem.ToString(SaveOptions.DisableFormatting);
-        return new ConstantDirective(constantName, qualifiedTypeName, constructor);
-#endif
-    }
-
-    private static string EncodeSimpleConstant(object value)
-    {
-        return value is IStringEncodable encodable
-            ? encodable.EncodeString()
-            : value.ToString();
     }
 }

@@ -108,6 +108,7 @@ Alt_locl:
             OutputFileName = uibPathAc
         };
 
+        _output.WriteLine($"Disassembly: {uixaPath}");
         _output.WriteLine($"Expected: {uibFile.Path}");
         _output.WriteLine($"Actual: {compilerInput.OutputFileName}");
 
