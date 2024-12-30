@@ -65,7 +65,7 @@ public class DecompileCommand : CompilerCommandBase<DecompileCommand.Settings>
                     if (uibLoadResult.Status != LoadResultStatus.Success)
                         throw new Exception($"Failed to load UIB source ({uibLoadResult.ErrorContextUri})");
 
-                    var disassembler = Disassembler.Load(uibLoadResult as MarkupLoadResult);
+                    var disassembler = Disassembler.Load(uibLoadResult);
                     var asm = disassembler.Write();
 
                     File.WriteAllText(GetOutputPath(settings, input), asm);

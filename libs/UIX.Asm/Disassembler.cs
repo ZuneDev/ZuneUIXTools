@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Xml.Linq;
 
 namespace Microsoft.Iris.Asm;
 
@@ -26,7 +25,13 @@ public class Disassembler
         };
     }
 
-    public static Disassembler Load(MarkupLoadResult loadResult) => new(loadResult);
+    public static Disassembler Load(LoadResult loadResult)
+    {
+        if (loadResult is not MarkupLoadResult markupLoadResult)
+            throw new ArgumentException($"Disassembly can only be performed on markup. Expected '{nameof(MarkupLoadResult)}', got '{loadResult?.GetType().Name}'.");
+        
+        return new(markupLoadResult);
+    }
 
     public IEnumerable<Directive> GetExports()
     {

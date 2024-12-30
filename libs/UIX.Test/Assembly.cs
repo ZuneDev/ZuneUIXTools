@@ -97,7 +97,7 @@ Alt_locl:
 
         // Disassemble the compiled UIX
         var sourceLoadResult = MarkupSystem.ResolveLoadResult($"file://{uibFile.Path}", MarkupSystem.RootIslandId);
-        var disassembly = Disassembler.Load(sourceLoadResult as MarkupLoadResult);
+        var disassembly = Disassembler.Load(sourceLoadResult);
         var disassemblyText = disassembly.Write();
         File.WriteAllText(uixaPath, disassemblyText);
 
@@ -164,7 +164,7 @@ Alt_locl:
 
         // Disassemble the compiled UIX
         var sourceLoadResult = MarkupSystem.ResolveLoadResult($"file://{uixFile.Path}", MarkupSystem.RootIslandId);
-        var disassembly = Disassembler.Load(sourceLoadResult as MarkupLoadResult);
+        var disassembly = Disassembler.Load(sourceLoadResult);
         var disassemblyText = disassembly.Write();
         File.WriteAllText(uixaPath, disassemblyText);
 
@@ -217,7 +217,7 @@ Alt_locl:
         string uri = "file://" + tempFile.Path;
 
         var sourceLoadResult = MarkupSystem.ResolveLoadResult(uri, MarkupSystem.RootIslandId);
-        var dis = Disassembler.Load(sourceLoadResult as MarkupLoadResult);
+        var dis = Disassembler.Load(sourceLoadResult);
 
         var disText = dis.Write();
         _output.WriteLine(disText);
