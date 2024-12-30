@@ -1,5 +1,6 @@
 ﻿using OwlCore.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
+using PathIO = System.IO.Path;
 
 namespace UIX.Test.Helpers;
 
@@ -21,8 +22,11 @@ internal class TempFile : IDisposable, IAsyncInit
     {
         _init = async delegate
         {
+            var fileName = $"uixtest_{PathIO.GetRandomFileName()}";
+            fileName = PathIO.ChangeExtension(fileName.Replace(".", ""), fileExtension);
+            Path = PathIO.Combine(PathIO.GetTempPath(), fileName);
+
             // Copy the test data to a temporary file because Iris can only load from a URI.
-            Path = System.IO.Path.ChangeExtension(System.IO.Path.GetTempFileName(), fileExtension);
             await File.WriteAllBytesAsync(Path, data);
         };
     }
