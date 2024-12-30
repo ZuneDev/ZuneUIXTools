@@ -41,18 +41,25 @@ public class CompileCommand : CompilerCommandBase<CompileCommand.Settings>
 
         // Configure error and warning messages
         BeginErrorReporting(new IrisSourceRepository(compilands, dataTableInput));
-        TraceSettings.Current.SetCategoryLevel(TraceCategory.Markup, byte.MaxValue);
-        TraceSettings.Current.SetCategoryLevel(TraceCategory.MarkupCompiler, byte.MaxValue);
-        TraceSettings.Current.SetCategoryLevel(TraceCategory.Tool, byte.MaxValue);
-        TraceSettings.Current.OnWriteLine += (line) =>
+        
+        if (settings.Verbose)
         {
-            AnsiConsole.MarkupLineInterpolated($"[grey]{line}[/]");
-        };
+            TraceSettings.Current.SetCategoryLevel(TraceCategory.Markup, byte.MaxValue);
+            TraceSettings.Current.SetCategoryLevel(TraceCategory.MarkupCompiler, byte.MaxValue);
+            TraceSettings.Current.SetCategoryLevel(TraceCategory.Tool, byte.MaxValue);
+            TraceSettings.Current.OnWriteLine += (line) =>
+            {
+                AnsiConsole.MarkupLineInterpolated($"[grey]{line}[/]");
+            };
+        }
 
         MarkupSystem.Startup(true);
         Assembler.RegisterLoader();
 
-        System.Runtime.Loader.AssemblyLoadContext.Default.LoadFromAssemblyPath(@"C:\Program Files\Zune\UIXcontrols.dll");
+        var loadAssembliesResult = LoadAssemblies(settings);
+        if (loadAssembliesResult < 0)
+            return loadAssembliesResult;
+        
         var success = MarkupCompiler.Compile(compilands, dataTableInput ?? default);
 
         StopErrorReporting();

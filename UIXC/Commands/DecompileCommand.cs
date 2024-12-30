@@ -34,22 +34,9 @@ public class DecompileCommand : CompilerCommandBase<DecompileCommand.Settings>
 
         BeginErrorReporting(new IrisSourceRepository(settings.Inputs));
 
-        var searchPaths = settings.IncludeDirectories.Prepend(Environment.CurrentDirectory).ToArray();
-
-        foreach (var givenPath in settings.Assemblies ?? [])
-        {
-            try
-            {
-                var assemblyPath = ResolvePath(givenPath, searchPaths);
-                _ = AssemblyLoadContext.Default.LoadFromAssemblyPath(assemblyPath);
-            }
-            catch (Exception ex)
-            {
-                AnsiConsole.WriteException(ex);
-                if (!AnsiConsole.Confirm("Do you want to continue?", false))
-                    return -1;
-            }
-        }
+        var loadAssembliesResult = LoadAssemblies(settings);
+        if (loadAssembliesResult < 0)
+            return loadAssembliesResult;
 
         foreach (var redirectOption in settings.ImportRedirects ?? [])
         {
@@ -66,7 +53,7 @@ public class DecompileCommand : CompilerCommandBase<DecompileCommand.Settings>
             {
                 try
                 {
-                    if (!TryResolvePath(input, searchPaths, out var inputPath))
+                    if (!TryResolvePath(input, GetSearchPaths(settings), out var inputPath))
                         inputPath = input;
 
                     if (!inputPath.Contains("://"))
@@ -118,39 +105,10 @@ public class DecompileCommand : CompilerCommandBase<DecompileCommand.Settings>
         var fileName = Path.GetFileName(inputFilePath);//.Replace('!', '/');
         var outputFile = Path.Combine(settings.OutputDir, Path.ChangeExtension(fileName, settings.Language.GetExtension()));
 
-        var outputDir = Path.GetDirectoryName(outputFile);
+        var outputDir = Path.GetDirectoryName(outputFile)!;
         Directory.CreateDirectory(outputDir);
 
         return outputFile;
-    }
-
-    private static string ResolvePath(string givenPath, ICollection<string> searchPaths)
-    {
-        if (!TryResolvePath(givenPath, searchPaths, out var assemblyPath))
-            throw new FileNotFoundException(null, givenPath);
-        return assemblyPath;
-    }
-
-    private static bool TryResolvePath(string givenPath, ICollection<string> searchPaths, [NotNullWhen(true)] out string? absolutePath)
-    {
-        if (Path.IsPathFullyQualified(givenPath))
-        {
-            absolutePath = givenPath;
-            return Path.Exists(absolutePath);
-        }
-
-        absolutePath = null;
-        if (searchPaths.Count == 0)
-            return false;
-        
-        foreach (var searchPath in searchPaths)
-        {
-            absolutePath = Path.GetFullPath(givenPath, searchPath);
-            if (Path.Exists(absolutePath))
-                return true;
-        }
-
-        return false;
     }
 
     public sealed class Settings : CompilerSettings
