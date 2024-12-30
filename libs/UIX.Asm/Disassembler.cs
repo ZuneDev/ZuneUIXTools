@@ -184,12 +184,13 @@ public class Disassembler
 
     public IEnumerable<ConstantDirective> GetConstants()
     {
-        var constantsTable = _loadResult.ConstantsTable;
-
         List<(int c, TypeSchema typeSchema, object constantValue)> constants = new();
 
-        bool canUsePersistList = constantsTable.PersistList is not null;
-        if (canUsePersistList)
+        var constantsTable = _loadResult.ConstantsTable;
+        bool hasPersistList = constantsTable.PersistList is not null;
+        bool hasSharedBinaryTable = _loadResult.BinaryDataTable?.SharedDependenciesTableWithBinaryDataTable is not null;
+
+        if (hasPersistList)
         {
             var persistedList = _loadResult.ConstantsTable.PersistList;
 
@@ -200,6 +201,11 @@ public class Disassembler
 
                 constants.Add((c, typeSchema, persistedConstant.Data));
             }
+        }
+        else if (hasSharedBinaryTable)
+        {
+            // Constants need to be imported from the shared binary table
+
         }
         else
         {
@@ -260,6 +266,7 @@ public class Disassembler
                     // Refer to the constant by name rather than index
                     var constantIndex = reader.ReadUInt16();
 
+                    // TODO: Only generate name if not using a shared binary table
                     operand = new OperandReference($"const{constantIndex}");
                 }
                 else
