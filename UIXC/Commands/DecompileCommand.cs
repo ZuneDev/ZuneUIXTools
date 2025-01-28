@@ -29,7 +29,24 @@ public class DecompileCommand : CompilerCommandBase<DecompileCommand.Settings>
             };
         }
 
-        BeginErrorReporting(new IrisSourceRepository(settings.Inputs));
+        List<string> enumeratedInputs = new(settings.Inputs.Length);
+        foreach (var inputPath in settings.Inputs)
+        {
+            if (!Directory.Exists(inputPath))
+            {
+                enumeratedInputs.Add(inputPath);
+            }
+            else
+            {
+                var compilableFiles = Directory.EnumerateFiles(inputPath, "*", SearchOption.AllDirectories)
+                    .Where(File.Exists)
+                    .Select(f => f.ToLowerInvariant())
+                    .Where(f => f.EndsWith(".uixa") || f.EndsWith(".uix") || f.EndsWith(".uib"));
+                enumeratedInputs.AddRange(compilableFiles);
+            }
+        }
+
+        BeginErrorReporting(new IrisSourceRepository(enumeratedInputs));
 
         var loadAssembliesResult = LoadAssemblies(settings);
         if (loadAssembliesResult < 0)
@@ -42,6 +59,7 @@ public class DecompileCommand : CompilerCommandBase<DecompileCommand.Settings>
         }
 
         MarkupSystem.Startup(true);
+        Assembler.RegisterLoader();
         bool success = false;
 
         // Load the shared data table if one was specified
@@ -55,7 +73,7 @@ public class DecompileCommand : CompilerCommandBase<DecompileCommand.Settings>
 
         if (settings.Language == SourceLanguage.Asm)
         {
-            foreach (var input in settings.Inputs)
+            foreach (var input in enumeratedInputs)
             {
                 try
                 {
@@ -66,7 +84,10 @@ public class DecompileCommand : CompilerCommandBase<DecompileCommand.Settings>
                     var disassembler = Disassembler.Load(uibLoadResult);
                     var asm = disassembler.Write();
 
-                    File.WriteAllText(GetOutputPath(settings, input), asm);
+                    var output = GetOutputPath(settings, input);
+                    File.WriteAllText(output, asm);
+
+                    AnsiConsole.MarkupLineInterpolated($"[green]Decompiled to '{output}'[/]");
                     success = true;
                 }
                 catch (Exception ex)
