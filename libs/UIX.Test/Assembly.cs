@@ -27,17 +27,20 @@ public class Assembly
 .export Default 0 UI
 .export Alt 0 UI
 
+.import-ns assembly://UIX/Microsoft.Iris as iris
 .import-type UI
 .import-type Dictionary
-.import-ns assembly://UIX/Microsoft.Iris as iris
 .import-type iris:Command
 .import-type String
 .import-type ViewItem
 .import-type Text
 .import-type Color
 .import-type Font
+.import-type generic:List`1[System.String]
 .import-mbrs UI{Locals, Content}
 .import-mbrs Text{Color, Content, Font}
+.import-mbrs SingletonModelItem`1[ZuneUI.TransportControls]{Instance}
+.import-mthd List`1[System.Int32].Add(Int32)
 
 .constant const0 = Color.str(255, 255, 0, 0)
 .constant const1 = String.str(Howdy from Microsoft.Iris!)
@@ -79,7 +82,7 @@ Alt_locl:
         _output.WriteLine(ast.ToString());
 
         Assert.NotNull(ast);
-        Assert.Equal(22, ast.Directives.Count());
+        Assert.Equal(25, ast.Directives.Count());
         Assert.Equal(24, ast.Code.Count());
     }
 

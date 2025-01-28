@@ -72,6 +72,33 @@ public static partial class Lexer
             typeName = typePrefixResult.Value;
         }
 
+        // Capture generic types
+        var genericTypeStartPosition = input.Position;
+        var genericTypeMarkerResult = Parse.Char('`')(input);
+        input = genericTypeMarkerResult.Remainder;
+        if (genericTypeMarkerResult.WasSuccessful)
+        {
+            var genericTypeParameterCountResult = Parse.Number(input);
+            input = genericTypeParameterCountResult.Remainder;
+            if (!genericTypeParameterCountResult.WasSuccessful)
+                return Result.Failure<QualifiedTypeName>(input, "Invalid generic type", ["Expected a type parameter count"]);
+
+            var genericTypeParametersOpenBrace = Parse.Char('[')(input);
+            input = genericTypeParametersOpenBrace.Remainder;
+            if (genericTypeParametersOpenBrace.WasSuccessful)
+            {
+                var genericTypeParametersResult = Parse.AnyChar.Except(Parse.Chars('.', ']')).AtLeastOnce().Text()
+                    .DelimitedBy(Parse.Char('.'))
+                    .Until(Parse.Char(']'))(input);
+                input = genericTypeParametersResult.Remainder;
+                if (!genericTypeParametersResult.WasSuccessful)
+                    return Result.Failure<QualifiedTypeName>(input, "Invalid generic type", ["Expected type parameters"]);
+
+                var genericTypeEndPosition = input.Position;
+                typeName += input.Source[genericTypeStartPosition..genericTypeEndPosition];
+            }
+        }
+
         QualifiedTypeName qualifiedName = new(typePrefix, typeName)
         {
             Line = line,
