@@ -27,7 +27,7 @@ public class ObjectSection
         ByteCodeWriter writer = new();
         _labelOffsetMap = new();
 
-        foreach (var bodyItem in _program.Body)
+        foreach (var bodyItem in _program.Code)
         {
             var offset = writer.DataSize;
 
@@ -36,11 +36,13 @@ public class ObjectSection
                 _labelOffsetMap[label.Name] = offset;
                 continue;
             }
+
             if (bodyItem is not Instruction instruction)
                 continue;
 
             // Add entry to line number table
             _loadResult.LineNumberTable.AddRecord(offset, instruction.Line, instruction.Column);
+            _loadResult.LineNumberTable.AddRecord(offset, instruction.Line, 0);
 
             var opCode = instruction.OpCode;
             writer.WriteByte(opCode);
