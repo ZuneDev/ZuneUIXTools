@@ -1,9 +1,13 @@
 {
-  "profiles": {
-    "UIXC": {
-      "commandName": "Project",
-      "commandLineArgs": "compile \"D:\\Documents\\REProj\\Zune\\UIXA\\UIXControls!ComboBox.uixa\" -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o D:\\Documents\\REProj\\Zune\\UIXA",
-      "workingDirectory": "C:\\Program Files\\Zune"
+    "profiles": {
+        "UIXC": {
+            "commandName": "Project",
+            "commandLineArgs": "compile \"D:\\Documents\\REProj\\Zune\\UIXA\\ZuneShell.dll!_DataTable.uixa\" -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o D:\\Documents\\REProj\\Zune\\UIXA",
+            //"commandLineArgs": "compile \"D:\\Documents\\REProj\\Zune\\UIXA\\ZuneShellResources.dll!_DataTable.uixa\" -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o D:\\Documents\\REProj\\Zune\\UIXA",
+            //"commandLineArgs": "decompile \"res://ZuneShellResources.dll!_DataTable.uib\" -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o D:\\Documents\\REProj\\Zune\\UIXA",
+            //"commandLineArgs": "decompile \"res://ZuneShellResources.dll!TOOLTIP.uix\" -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o D:\\Documents\\REProj\\Zune\\UIXA",
+            //"commandLineArgs": "compile \"D:\\Documents\\REProj\\Zune\\UIXA\\UIXControls!ComboBox.uixa\" -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o D:\\Documents\\REProj\\Zune\\UIXA",
+            "workingDirectory": "C:\\Program Files\\Zune"
+        }
     }
-  }
 }
