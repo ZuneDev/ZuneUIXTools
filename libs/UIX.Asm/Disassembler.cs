@@ -154,9 +154,9 @@ public class Disassembler
         foreach (var typeImport in _loadResult.ImportTables.TypeImports)
         {
             var uri = typeImport.Owner.Uri;
-            if (!_importedUris.TryGetValue(uri, out var baseNamespacePrefix))
+            if (!_importedUris.TryGetValue(uri, out var namespacePrefix))
             {
-                baseNamespacePrefix = uri;
+                var baseNamespacePrefix = uri;
                 var schemeLength = uri.IndexOf("://");
                 if (schemeLength > 0)
                 {
@@ -197,7 +197,7 @@ public class Disassembler
                     continue;
 
                 baseNamespacePrefix = baseNamespacePrefix.Camelize();
-                var namespacePrefix = baseNamespacePrefix;
+                namespacePrefix = baseNamespacePrefix;
                 
                 // Prevent similar imports from generating the same prefix
                 int duplicateCount = 0;
@@ -209,7 +209,7 @@ public class Disassembler
                 yield return new NamespaceImport(uri, namespacePrefix);
             }
 
-            yield return new TypeImport(new(baseNamespacePrefix, typeImport.Name));
+            yield return new TypeImport(new(namespacePrefix, typeImport.Name));
         };
 
         foreach (var constructorImport in _loadResult.ImportTables.ConstructorImports)
