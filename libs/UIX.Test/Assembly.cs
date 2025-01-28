@@ -45,6 +45,8 @@ public class Assembly
 .constant const3 = Color.str(255, 0, 0, 255)
 .constant const4 = Font.str(JetBrains Mono)
 .constant const5 = String.str(This is some blue text)
+.constant const3255 = String.str(({0:X8}))
+.constant const3256 = String("Content\nOn a new line")
 .section object
 
 Default_cont:
@@ -77,7 +79,7 @@ Alt_locl:
         _output.WriteLine(ast.ToString());
 
         Assert.NotNull(ast);
-        Assert.Equal(20, ast.Directives.Count());
+        Assert.Equal(22, ast.Directives.Count());
         Assert.Equal(24, ast.Code.Count());
     }
 

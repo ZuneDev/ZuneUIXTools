@@ -87,45 +87,59 @@ partial class Lexer
                     if (!typeNameResult.WasSuccessful)
                         return Result.Failure<IDirective>(input, "Invalid constant directive", ["Expected qualified name of type to construct"]);
 
+                    Markup.MarkupConstantPersistMode? persistMode = null;
+                    string content = "";
+
                     var encodingMarkerResult = Parse.Char('.')(input);
                     input = encodingMarkerResult.Remainder;
                     if (!encodingMarkerResult.WasSuccessful)
-                        return Result.Failure<IDirective>(input, "Invalid constant directive", ["Expected '.', followed by the persist mode."]);
-
-                    var persistModeResult = Parse.CharExcept('(').AtLeastOnce().Text().Token()(input);
-                    input = persistModeResult.Remainder;
-                    if (!persistModeResult.WasSuccessful)
-                        return Result.Failure<IDirective>(input, "Invalid constant directive", ["No persist mode was specified."]);
-
-                    Markup.MarkupConstantPersistMode? persistMode = persistModeResult.Value.ToLowerInvariant() switch
                     {
-                        "bin" => Markup.MarkupConstantPersistMode.Binary,
-                        "str" => Markup.MarkupConstantPersistMode.FromString,
-                        "can" => Markup.MarkupConstantPersistMode.Canonical,
-                        _ => null
-                    };
+                        // Support defining constants from string literals
+                        var stringLiteralResult = ExpressionInBraces(StringLiteral)(input);
+                        input = stringLiteralResult.Remainder;
+                        if (!stringLiteralResult.WasSuccessful)
+                            return Result.Failure<IDirective>(input, "Invalid constant directive", ["Expected '.', followed by the persist mode."]);
 
-                    var openBracketResult = Parse.Char('(').Token()(input);
-                    input = openBracketResult.Remainder;
-                    if (!openBracketResult.WasSuccessful)
-                        return Result.Failure<IDirective>(input, "Invalid constant directive", ["Expected '('"]);
+                        persistMode = Markup.MarkupConstantPersistMode.FromString;
+                        content = stringLiteralResult.Value[1..^1].Unescape();
+                    }
+                    else
+                    {
+                        var persistModeResult = Parse.CharExcept('(').AtLeastOnce().Text().Token()(input);
+                        input = persistModeResult.Remainder;
+                        if (!persistModeResult.WasSuccessful)
+                            return Result.Failure<IDirective>(input, "Invalid constant directive", ["No persist mode was specified."]);
 
-                    var contentResult = Parse.CharExcept(')').AtLeastOnce().Text().Token()(input);
-                    input = contentResult.Remainder;
-                    if (!contentResult.WasSuccessful)
-                        return Result.Failure<IDirective>(input, "Invalid constant directive", ["Expected constant value"]);
+                        persistMode = persistModeResult.Value.ToLowerInvariant() switch
+                        {
+                            "bin" => Markup.MarkupConstantPersistMode.Binary,
+                            "str" => Markup.MarkupConstantPersistMode.FromString,
+                            "can" => Markup.MarkupConstantPersistMode.Canonical,
+                            _ => null
+                        };
 
-                    var closeBracketResult = Parse.Char(')').Token()(input);
-                    input = closeBracketResult.Remainder;
-                    if (!closeBracketResult.WasSuccessful)
-                        return Result.Failure<IDirective>(input, "Invalid constant directive", ["Expected ')'"]);
+                        var openBracketResult = Parse.Char('(').Token()(input);
+                        input = openBracketResult.Remainder;
+                        if (!openBracketResult.WasSuccessful)
+                            return Result.Failure<IDirective>(input, "Invalid constant directive", ["Expected '('"]);
+
+                        var contentResult = Parse.AnyChar.Until(StatementEnd).Text().Token()(input);
+                        input = contentResult.Remainder;
+                        if (!contentResult.WasSuccessful)
+                            return Result.Failure<IDirective>(input, "Invalid constant directive", ["Expected constant value"]);
+
+                        content = contentResult.Value;
+                        if (content.Length <= 1 || content[^1] != ')')
+                            return Result.Failure<IDirective>(input, "Invalid constant directive", ["Expected ')'"]);
+                        content = content[..^1];
+                    }
 
                     var constantName = constNameResult.Value;
                     var typeName = typeNameResult.Value;
 
                     if (persistMode == Markup.MarkupConstantPersistMode.FromString)
                     {
-                        directive = new StringEncodedConstantDirective(constantName, typeName, contentResult.Value)
+                        directive = new StringEncodedConstantDirective(constantName, typeName, content)
                         {
                             Line = line,
                             Column = column,
@@ -133,7 +147,7 @@ partial class Lexer
                     }
                     else if (persistMode == Markup.MarkupConstantPersistMode.Canonical)
                     {
-                        directive = new CanonicalInstanceConstantDirective(constantName, typeName, contentResult.Value)
+                        directive = new CanonicalInstanceConstantDirective(constantName, typeName, content)
                         {
                             Line = line,
                             Column = column,
@@ -142,7 +156,7 @@ partial class Lexer
                     else if (persistMode == Markup.MarkupConstantPersistMode.Binary)
                     {
                         byte[] constantBytes;
-                        var byteParts = contentResult.Value.Split(',');
+                        var byteParts = content.Split(',');
                         if (byteParts.Length == 1)
                         {
                             var constantStr = byteParts[0].Trim();
@@ -167,7 +181,7 @@ partial class Lexer
                             }
                             else
                             {
-                                return Result.Failure<IDirective>(input, "Invalid constant directive", [$"Expected a 1, 2, or 4 hex number, or a list of bytes."]);
+                                return Result.Failure<IDirective>(input, "Invalid constant directive", [$"Expected a 1-, 2-, or 4-digit hex number, or a list of bytes"]);
                             }
                         }
                         else
@@ -185,7 +199,7 @@ partial class Lexer
                     }
                     else
                     {
-                        return Result.Failure<IDirective>(input, "Invalid constant directive", [$"'{persistModeResult.Value}' is not a valid persist mode."]);
+                        return Result.Failure<IDirective>(input, "Invalid constant directive", [$"Invalid persist mode"]);
                     }
                 }
                 break;

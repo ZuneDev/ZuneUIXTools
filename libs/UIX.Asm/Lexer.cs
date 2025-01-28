@@ -16,6 +16,16 @@ public static partial class Lexer
 
     public static readonly Parser<string> Uri = Parse.LetterOrDigit.Or(Parse.Chars(":/!._-")).AtLeastOnce().Text();
 
+    // https://github.com/apexsharp/apexparser/blob/4eb5983c657b0e6c49ed47bc42a0346e80f9e26d/ApexSharp.ApexParser/Parser/ApexGrammar.cs#L360C9-L367C64
+    public static readonly Parser<string> StringLiteral =
+        from leading in Parse.WhiteSpace.Many()
+        from openQuote in Parse.Char('"')
+        from fragments in Parse.Char('\\').Then(_ => Parse.AnyChar.Select(c => $"\\{c}"))
+            .Or(Parse.CharExcept("\\\"").Many().Text()).Many()
+        from closeQuote in Parse.Char('"')
+        from trailing in Parse.WhiteSpace.Many()
+        select $"\"{string.Join(string.Empty, fragments)}\"";
+
     public static readonly Parser<string> StatementEnd = Parse.Char(';').Return(";").Or(Parse.LineTerminator);
 
     public static readonly Parser<QualifiedTypeName> QualifiedTypeName = ParseQualifiedTypeName;
@@ -70,4 +80,10 @@ public static partial class Lexer
 
         return Result.Success(qualifiedName, input);
     }
+
+    private static Parser<string> ExpressionInBraces(Parser<string> parser, char open = '(', char close = ')') =>
+        from openBrace in Parse.Char(open).Token()
+        from expression in parser.Optional()
+        from closeBrace in Parse.Char(close).Token()
+        select expression.GetOrElse(string.Empty).Trim();
 }

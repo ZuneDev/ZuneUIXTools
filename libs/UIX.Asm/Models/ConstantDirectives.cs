@@ -24,7 +24,7 @@ public record ConstantDirective : Directive
 public record StringEncodedConstantDirective : ConstantDirective
 {
     public StringEncodedConstantDirective(string name, QualifiedTypeName typeName, string content)
-        : base(name, typeName, $"{typeName}.str({content})")
+        : base(name, typeName, $"{typeName}(\"{content.Escape()}\")")
     {
         Content = content;
         PersistMode = MarkupConstantPersistMode.FromString;
