@@ -99,6 +99,12 @@ public static partial class Lexer
             }
         }
 
+        // Capture arrays
+        var arrayMarkerResult = Parse.String("[]")(input);
+        input = arrayMarkerResult.Remainder;
+        if (arrayMarkerResult.WasSuccessful)
+            typeName += "[]";
+
         QualifiedTypeName qualifiedName = new(typePrefix, typeName)
         {
             Line = line,

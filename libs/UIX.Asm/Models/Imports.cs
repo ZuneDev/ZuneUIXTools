@@ -59,7 +59,7 @@ public record ConstructorImport : ImportDirective
 
     public IEnumerable<QualifiedTypeName> ParameterTypes { get; init; }
 
-    public override string ToString() => $"{base.ToString()} {QualifiedName}.({string.Join(", ", ParameterTypes)})";
+    public override string ToString() => $"{base.ToString()} {QualifiedName}({string.Join(", ", ParameterTypes)})";
 }
 
 public record MethodImport : ImportDirective

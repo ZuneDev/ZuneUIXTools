@@ -85,6 +85,16 @@ internal class AsmMarkupLoader
 
         var type = result.FindType(typeName);
 
+        //if (type is null)
+        //{
+        //    foreach (var tryResult in _importedNamespaces.Values)
+        //    {
+        //        type = tryResult.FindType(typeName);
+        //        if (type is not null)
+        //            break;
+        //    }
+        //}
+
         if (type is null)
         {
             ErrorManager.ReportError(qualifiedName.Line, qualifiedName.Column,

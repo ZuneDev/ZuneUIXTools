@@ -153,10 +153,13 @@ public class Disassembler
 
         foreach (var typeImport in _loadResult.ImportTables.TypeImports)
         {
+            var typeName = typeImport.Name;
             var uri = typeImport.Owner.Uri;
             if (!_importedUris.TryGetValue(uri, out var namespacePrefix))
             {
                 var baseNamespacePrefix = uri;
+
+                var ownerUri = uri;
                 var schemeLength = uri.IndexOf("://");
                 if (schemeLength > 0)
                 {
@@ -207,9 +210,13 @@ public class Disassembler
 
                     yield return new NamespaceImport(uri, namespacePrefix);
                 }
+
+                // Ensure that the original, un-normalized URI is saved too
+                if (!_importedUris.ContainsKey(ownerUri))
+                    _importedUris.Add(ownerUri, namespacePrefix);
             }
 
-            yield return new TypeImport(new(namespacePrefix, typeImport.Name));
+            yield return new TypeImport(new(namespacePrefix, typeName));
         };
 
         foreach (var constructorImport in _loadResult.ImportTables.ConstructorImports)

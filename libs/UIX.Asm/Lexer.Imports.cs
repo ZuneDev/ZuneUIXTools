@@ -101,6 +101,7 @@ partial class Lexer
                 if (!ctorMemberTypeNameResult.WasSuccessful)
                     return Result.Failure<IImportDirective>(input, "Invalid constructor import", ["Expected qualified type name"]);
 
+                input = Parse.Char('.').Optional()(input).Remainder;
                 input = Parse.Char('(')(input).Remainder;
 
                 var ctorParameterTypesResult = Parse.Ref(() => QualifiedTypeName).DelimitedBy(Parse.Char(',').Token())(input);

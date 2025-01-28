@@ -73,7 +73,7 @@ public class DecompileCommand : CompilerCommandBase<DecompileCommand.Settings>
 
         if (settings.Language == SourceLanguage.Asm)
         {
-            foreach (var input in enumeratedInputs)
+            foreach (var input in enumeratedInputs.Where(f => !f.EndsWith(".uixa")))
             {
                 try
                 {
