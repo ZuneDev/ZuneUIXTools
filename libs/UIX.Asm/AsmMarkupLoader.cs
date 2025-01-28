@@ -55,7 +55,7 @@ internal class AsmMarkupLoader
 
     public bool HasErrors { get; protected set; }
 
-    private Program Program { get; set; }
+    public Program Program { get; private set; }
 
     public LoadResult FindDependency(string prefix)
     {

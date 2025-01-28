@@ -83,6 +83,52 @@ Alt_locl:
         Assert.Equal(24, ast.Code.Count());
     }
 
+    [Fact]
+    public void ParseWithDataTable()
+    {
+        const string code =
+"""
+.export Default 0 UI
+.export Alt 0 UI
+
+.dataTable res://ZuneShellResources.dll!_DataTable.uib
+
+.section object
+
+Default_cont:
+    COBJ 5
+    PSHC @const0
+    PINI 2
+    PSHC @const1
+    PINI 3
+    PINI 1
+    RETV
+Default_locl:
+    COBJ 2
+    PDAD 0, @const2
+    RETV
+Alt_cont:
+    COBJ 5
+    PSHC @const3
+    PINI 2
+    PSHC @const4
+    PINI 4
+    PSHC @const5
+    PINI 3
+    PINI 1
+    RETV
+Alt_locl:
+    RETV
+""";
+
+        var ast = Lexer.Program.Parse(code);
+        _output.WriteLine(ast.ToString());
+
+        Assert.NotNull(ast);
+        Assert.Equal(4, ast.Directives.Count());
+        Assert.Equal(24, ast.Code.Count());
+    }
+
     [Theory]
     [InlineData("text")]
     public async Task ReassembleFromUIB(string fileNameWithoutExtension)

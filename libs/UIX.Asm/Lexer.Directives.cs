@@ -27,6 +27,22 @@ partial class Lexer
         IDirective directive;
         switch (directiveIdResult.Value.ToUpperInvariant())
         {
+            case "DATATABLE":
+                if (StatementEnd(input).WasSuccessful)
+                    return Result.Failure<IDirective>(input, "Invalid data table import", ["Expected a URI"]);
+
+                var dataTableUriResult = Uri.Token()(input);
+                input = dataTableUriResult.Remainder;
+                if (!dataTableUriResult.WasSuccessful)
+                    return Result.Failure<IDirective>(input, "Invalid data table import", ["Expected a valid data table URI"]);
+
+                directive = new SharedDataTableDirective(dataTableUriResult.Value)
+                {
+                    Line = line,
+                    Column = column,
+                };
+                break;
+
             case "IMPORT":
                 return ParseImportAsDirective(input);
 

@@ -29,6 +29,7 @@ public record Program
         Body = body.Cached();
 
         Directives = body.OfType<IDirective>().Cached();
+        DataTableDirective = Directives.OfType<SharedDataTableDirective>().SingleOrDefault();
         Imports = Directives.OfType<IImportDirective>().Cached();
         Exports = Directives.OfType<ExportDirective>().Cached();
 
@@ -38,6 +39,7 @@ public record Program
     public IEnumerable<IBodyItem> Body { get; }
 
     public IEnumerable<IDirective> Directives { get; }
+    public SharedDataTableDirective DataTableDirective { get; }
     public IEnumerable<IImportDirective> Imports { get; }
     public IEnumerable<ExportDirective> Exports { get; }
 
@@ -49,15 +51,46 @@ public record Program
         const string indent = "    ";
         StringBuilder sb = new();
 
-        sb.AppendJoin(lineEnding, Exports.Select(i => i.ToString()));
-        sb.Append(lineEnding);
-        sb.Append(lineEnding);
-        sb.AppendJoin(lineEnding, Imports.Select(i => i.ToString()));
-        sb.Append(lineEnding);
-        sb.Append(lineEnding);
-        sb.AppendJoin(lineEnding, Directives.Where(d => d is not (IImportDirective or ExportDirective)).Select(i => i.ToString()));
-        sb.Append(lineEnding);
-        sb.Append(lineEnding);
+        if (DataTableDirective is not null)
+        {
+            sb.Append(DataTableDirective);
+            sb.Append(lineEnding);
+            sb.Append(lineEnding);
+        }
+
+        if (Exports.Any())
+        {
+            sb.AppendJoin(lineEnding, Exports.Select(i => i.ToString()));
+            sb.Append(lineEnding);
+            sb.Append(lineEnding);
+        }
+
+        if (Imports.Any())
+        {
+            var sortedImports = Imports
+                .OrderBy(import => import.Type switch
+                {
+                    "ns" => 0,
+                    "type" => 1,
+                    "ctor" => 2,
+                    "mthd" => 3,
+                    "mbrs" => 4,
+                    _ => int.MaxValue
+                })
+                .Select(i => i.ToString());
+
+            sb.AppendJoin(lineEnding, sortedImports);
+            sb.Append(lineEnding);
+            sb.Append(lineEnding);
+        }
+
+        var otherDirectives = Directives.Where(d => d is not (IImportDirective or ExportDirective or SharedDataTableDirective));
+        if (otherDirectives.Any())
+        {
+            sb.AppendJoin(lineEnding, otherDirectives.Select(i => i.ToString()));
+            sb.Append(lineEnding);
+            sb.Append(lineEnding);
+        }
 
         foreach (var bodyItem in Code)
         {

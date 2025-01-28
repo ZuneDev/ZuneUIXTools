@@ -1,12 +1,9 @@
 ﻿using Microsoft.Iris.Asm;
 using Microsoft.Iris.Debug;
 using Microsoft.Iris.Markup;
-using Microsoft.Iris.Session;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
-using System.Runtime.Loader;
 
 namespace UIXC.Commands;
 
@@ -47,23 +44,24 @@ public class DecompileCommand : CompilerCommandBase<DecompileCommand.Settings>
         MarkupSystem.Startup(true);
         bool success = false;
 
+        // Load the shared data table if one was specified
+        LoadResult? dataTableLoadResult = null;
+        if (settings.DataTable is not null)
+        {
+            dataTableLoadResult = LoadIrisFile(settings.DataTable, settings);
+            if (dataTableLoadResult.Status != LoadResultStatus.Success)
+                throw new Exception($"Failed to load data table from {dataTableLoadResult.ErrorContextUri}");
+        }
+
         if (settings.Language == SourceLanguage.Asm)
         {
             foreach (var input in settings.Inputs)
             {
                 try
                 {
-                    if (!TryResolvePath(input, GetSearchPaths(settings), out var inputPath))
-                        inputPath = input;
-
-                    if (!inputPath.Contains("://"))
-                        inputPath = $"file://{inputPath}";
-
-                    var uibLoadResult = MarkupSystem.Load(inputPath, (uint)Random.Shared.Next());
-                    uibLoadResult.FullLoad();
-
+                    var uibLoadResult = LoadIrisFile(input, settings);
                     if (uibLoadResult.Status != LoadResultStatus.Success)
-                        throw new Exception($"Failed to load UIB source ({uibLoadResult.ErrorContextUri})");
+                        throw new Exception($"Failed to load UIB source from {uibLoadResult.ErrorContextUri}");
 
                     var disassembler = Disassembler.Load(uibLoadResult);
                     var asm = disassembler.Write();
@@ -109,6 +107,19 @@ public class DecompileCommand : CompilerCommandBase<DecompileCommand.Settings>
         Directory.CreateDirectory(outputDir);
 
         return outputFile;
+    }
+
+    private LoadResult LoadIrisFile(string input, Settings settings)
+    {
+        if (!TryResolvePath(input, GetSearchPaths(settings), out var inputPath))
+            inputPath = input;
+
+        if (!inputPath.Contains("://"))
+            inputPath = $"file://{inputPath}";
+
+        var uibLoadResult = MarkupSystem.Load(inputPath, (uint)Random.Shared.Next());
+        uibLoadResult.FullLoad();
+        return uibLoadResult;
     }
 
     public sealed class Settings : CompilerSettings

@@ -26,13 +26,12 @@ public abstract record Directive(string Identifier) : AsmItem, IDirective
     public override string ToString() => $".{Identifier}";
 }
 
-public interface IImportDirective : IDirective;
-public abstract record ImportDirective : Directive, IImportDirective
+public interface IImportDirective : IDirective
 {
-    public ImportDirective(string Type) : base($"import-{Type}")
-    {
-    }
-
+    string Type { get; init; }
+}
+public abstract record ImportDirective(string Type) : Directive($"import-{Type}"), IImportDirective
+{
     public override string ToString() => base.ToString();
 }
 

@@ -10,14 +10,24 @@ namespace Microsoft.Iris.Asm;
 
 public class Disassembler
 {
+    private Dictionary<int, string> _constantsTable = [];
+    private Program _program = null;
+
     private readonly MarkupLoadResult _loadResult;
+    private readonly MarkupLoadResult _dataTableLoadResult;
     private readonly Dictionary<string, string> _importedUris;
     private readonly Dictionary<uint, List<Label>> _offsetLabelMap = new();
+    
     private static readonly TypeSchema _stringTypeSchema = UIXTypes.MapIDToType(UIXTypeID.String);
 
-    private Disassembler(MarkupLoadResult loadResult)
+    private Disassembler(MarkupLoadResult loadResult, MarkupLoadResult dataTableLoadResult = null)
     {
         _loadResult = loadResult;
+
+        _dataTableLoadResult = dataTableLoadResult is not null
+            ? dataTableLoadResult
+            : loadResult.BinaryDataTable?.SharedDependenciesTableWithBinaryDataTable?.FirstOrDefault() as MarkupLoadResult;
+
         _importedUris = new()
         {
             [_loadResult.Uri] = "me",
@@ -25,15 +35,58 @@ public class Disassembler
         };
     }
 
-    public static Disassembler Load(LoadResult loadResult)
+    public static Disassembler Load(LoadResult loadResult, LoadResult dataTableLoadResult = null)
     {
         if (loadResult is not MarkupLoadResult markupLoadResult)
-            throw new ArgumentException($"Disassembly can only be performed on markup. Expected '{nameof(MarkupLoadResult)}', got '{loadResult?.GetType().Name}'.");
-        
+            throw new ArgumentException($"Disassembly can only be performed on markup. Expected '{nameof(MarkupLoadResult)}', got '{loadResult?.GetType().Name}'.", nameof(loadResult));
+
+        if (dataTableLoadResult is MarkupLoadResult dataTableMarkupLoadResult)
+            return new(markupLoadResult, dataTableMarkupLoadResult);
+
+        if (dataTableLoadResult is not null)
+            throw new ArgumentException($"Data table must be markup. Expected '{nameof(MarkupLoadResult)}', got '{dataTableLoadResult?.GetType().Name}'.", nameof(dataTableLoadResult));
+
         return new(markupLoadResult);
     }
 
-    public IEnumerable<Directive> GetExports()
+    public Program Disassemble()
+    {
+        if (_program is null)
+        {
+            _loadResult.FullLoad();
+            if (_loadResult.Status == LoadResultStatus.Error)
+                throw new Exception($"Failed to load '{_loadResult.ErrorContextUri}'");
+
+            if (_dataTableLoadResult is not null)
+            {
+                _dataTableLoadResult.FullLoad();
+                if (_dataTableLoadResult.Status == LoadResultStatus.Error)
+                    throw new Exception($"Failed to load '{_dataTableLoadResult.ErrorContextUri}'");
+            }
+
+            List<IEnumerable<IBodyItem>> segments = [
+                GetExports(),
+                GetImports(),
+                GetConstants(),
+                GetCode(),
+            ];
+
+            List<IBodyItem> body = [];
+            foreach (var segment in segments)
+                body.AddRange(segment);
+
+            if (_dataTableLoadResult is not null)
+                body.Add(new SharedDataTableDirective(_dataTableLoadResult.Uri));
+
+            _program = new(body);
+        }
+
+        return _program;
+    }
+
+    public string Write() => Disassemble().ToString();
+
+    private IEnumerable<ExportDirective> GetExports()
     {
         foreach (var typeSchema in _loadResult.ExportTable)
         {
@@ -91,9 +144,9 @@ public class Disassembler
         }
     }
 
-    public IEnumerable<IImportDirective> GetImports() => EnumerateImports().Distinct();
+    private IEnumerable<IImportDirective> GetImports() => EnumerateImports().Distinct();
 
-    public IEnumerable<IImportDirective> EnumerateImports()
+    private IEnumerable<IImportDirective> EnumerateImports()
     {
         // Ues _importedUris to keep track of what has already been imported.
         // Skip self and default UIX namespace.
@@ -101,9 +154,9 @@ public class Disassembler
         foreach (var typeImport in _loadResult.ImportTables.TypeImports)
         {
             var uri = typeImport.Owner.Uri;
-            if (!_importedUris.TryGetValue(uri, out var namespacePrefix))
+            if (!_importedUris.TryGetValue(uri, out var baseNamespacePrefix))
             {
-                namespacePrefix = uri;
+                baseNamespacePrefix = uri;
                 var schemeLength = uri.IndexOf("://");
                 if (schemeLength > 0)
                 {
@@ -116,7 +169,7 @@ public class Disassembler
                         if (nsIndex >= 0)
                         {
                             var importedNamespace = path[(nsIndex + 1)..];
-                            namespacePrefix = importedNamespace.Split('.', '/', '\\', '!')[^1];
+                            baseNamespacePrefix = importedNamespace.Split('.', '/', '\\', '!')[^1];
 
                             System.Reflection.AssemblyName assemblyName = new(path[..nsIndex]);
                             uri = $"assembly://{assemblyName.Name}/{importedNamespace}";
@@ -125,16 +178,16 @@ public class Disassembler
                         {
                             // No namespace was specified, assume we're importing the whole assembly
                             System.Reflection.AssemblyName assemblyName = new(path);
-                            namespacePrefix = assemblyName.Name;
+                            baseNamespacePrefix = assemblyName.Name;
 
-                            uri = $"assembly://{assemblyName.Name}";
+                            uri = $"assembly://{assemblyName.Name}/";
                         }
                     }
                     else
                     {
                         // Assume the URI represents a file,
                         // skip the extension
-                        namespacePrefix = uri.Split('.', '/', '\\', '!')[^2];
+                        baseNamespacePrefix = uri.Split('.', '/', '\\', '!')[^2];
                     }
                 }
 
@@ -143,13 +196,20 @@ public class Disassembler
                 if (_importedUris.ContainsKey(uri))
                     continue;
 
-                namespacePrefix = namespacePrefix.Camelize();
+                baseNamespacePrefix = baseNamespacePrefix.Camelize();
+                var namespacePrefix = baseNamespacePrefix;
+                
+                // Prevent similar imports from generating the same prefix
+                int duplicateCount = 0;
+                while (_importedUris.ContainsValue(namespacePrefix))
+                    namespacePrefix = $"{baseNamespacePrefix}{++duplicateCount}";
+
                 _importedUris.Add(uri, namespacePrefix);
 
                 yield return new NamespaceImport(uri, namespacePrefix);
             }
 
-            yield return new TypeImport(new(namespacePrefix, typeImport.Name));
+            yield return new TypeImport(new(baseNamespacePrefix, typeImport.Name));
         };
 
         foreach (var constructorImport in _loadResult.ImportTables.ConstructorImports)
@@ -187,63 +247,7 @@ public class Disassembler
             yield return new NamedMemberImport(groupedImport.Key, groupedImport.Value);
     }
 
-    public IEnumerable<ConstantDirective> GetConstants()
-    {
-        List<(int c, TypeSchema typeSchema, object constantValue)> constants = new();
-
-        var constantsTable = _loadResult.ConstantsTable;
-        bool hasPersistList = constantsTable.PersistList is not null;
-        bool hasSharedBinaryTable = _loadResult.BinaryDataTable?.SharedDependenciesTableWithBinaryDataTable is not null;
-
-        if (hasPersistList)
-        {
-            var persistedList = _loadResult.ConstantsTable.PersistList;
-
-            for (int c = 0; c < persistedList.Length; c++)
-            {
-                var persistedConstant = persistedList[c];
-                var typeSchema = persistedConstant.Type;
-
-                constants.Add((c, typeSchema, persistedConstant.Data));
-            }
-        }
-        else if (hasSharedBinaryTable)
-        {
-            // Constants need to be imported from the shared binary table
-
-        }
-        else
-        {
-            // UIB doesn't persist constants, so we have to use an alternate, slower method
-            for (int c = 0; ; c++)
-            {
-                object constantValue;
-                try
-                {
-                    constantValue = constantsTable.Get(c);
-                }
-                catch
-                {
-                    break;
-                }
-
-                var runtimeType = constantValue.GetType();
-                var typeSchema = _loadResult.ImportTables.TypeImports.FirstOrDefault(t => t.RuntimeType == runtimeType)
-                    ?? _loadResult.ImportTables.TypeImports.FirstOrDefault(t => t.RuntimeType == runtimeType.BaseType)
-                    ?? throw new Exception($"Failed to find type schema for '{runtimeType.Name}' in {_loadResult.Uri}");
-
-                constants.Add((c, typeSchema, constantValue));
-            }
-        }
-
-        foreach (var (c, typeSchema, constantValue) in constants)
-        {
-            var constantName = $"const{c:D}";
-            yield return EncodeConstant(constantValue, constantName, typeSchema);
-        }
-    }
-
-    public IEnumerable<IBodyItem> GetCode()
+    private IEnumerable<IBodyItem> GetCode()
     {
         var reader = _loadResult.ObjectSection;
 
@@ -297,27 +301,6 @@ public class Disassembler
         yield break;
     }
 
-    public string Write()
-    {
-        _loadResult.FullLoad();
-        if (_loadResult.Status == LoadResultStatus.Error)
-            throw new Exception($"Failed to load '{_loadResult.ErrorContextUri}'");
-
-        List<IEnumerable<IBodyItem>> segments = [
-            GetExports(),
-            GetImports(),
-            GetConstants(),
-            GetCode(),
-        ];
-
-        List<IBodyItem> body = [];
-        foreach (var segment in segments)
-            body.AddRange(segment);
-
-        Program asmProgram = new(body);
-        return asmProgram.ToString();
-    }
-
     private QualifiedTypeName GetQualifiedName(TypeSchema schema)
     {
         _importedUris.TryGetValue(schema.Owner.Uri, out string prefix);
@@ -329,6 +312,78 @@ public class Disassembler
         if (!_offsetLabelMap.TryGetValue(offset, out var labels))
             labels = _offsetLabelMap[offset] = new(1);
         labels.Add(new(labelName));
+    }
+
+    private IEnumerable<ConstantDirective> GetConstants()
+    {
+        if (_dataTableLoadResult is not null)
+        {
+            // Constants have already been disassembled from the shared binary table
+            var asmConstants = _dataTableLoadResult is AsmMarkupLoadResult asmDataTableLoadResult
+                ? asmDataTableLoadResult.Loader.Program.Directives.OfType<ConstantDirective>().ToList()
+                : null;
+
+            foreach (var info in EnumerateConstantInfo(_dataTableLoadResult))
+            {
+                var constantName = asmConstants?[info.Index]?.Name
+                    ?? $"sharedConst{info.Index:D}";
+
+                _constantsTable.Add(info.Index, constantName);
+            }
+
+            yield break;
+        }
+        else
+        {
+            foreach (var info in EnumerateConstantInfo(_loadResult))
+            {
+                var constantName = $"const{info.Index:D}";
+                _constantsTable[info.Index] = constantName;
+                yield return EncodeConstant(info.Value, constantName, info.Type);
+            }
+        }
+    }
+
+    private static IEnumerable<RawConstantInfo> EnumerateConstantInfo(MarkupLoadResult loadResult)
+    {
+        var constantsTable = loadResult.ConstantsTable;
+        bool hasPersistList = constantsTable.PersistList is not null;
+
+        if (hasPersistList)
+        {
+            var persistedList = loadResult.ConstantsTable.PersistList;
+
+            for (int c = 0; c < persistedList.Length; c++)
+            {
+                var persistedConstant = persistedList[c];
+                var typeSchema = persistedConstant.Type;
+
+               yield return new(c, typeSchema, persistedConstant.Data);
+            }
+        }
+        else
+        {
+            // UIB doesn't persist constants, so we have to use an alternate, slower method
+            for (int c = 0; ; c++)
+            {
+                object constantValue;
+                try
+                {
+                    constantValue = constantsTable.Get(c);
+                }
+                catch
+                {
+                    break;
+                }
+
+                var runtimeType = constantValue.GetType();
+                var typeSchema = loadResult.ImportTables.TypeImports.FirstOrDefault(t => t.RuntimeType == runtimeType)
+                    ?? loadResult.ImportTables.TypeImports.FirstOrDefault(t => t.RuntimeType == runtimeType.BaseType)
+                    ?? throw new Exception($"Failed to find type schema for '{runtimeType.Name}' in {loadResult.Uri}");
+
+                yield return new(c, typeSchema, constantValue);
+            }
+        }
     }
 
     private ConstantDirective EncodeConstant(object constantValue, string constantName, TypeSchema typeSchema)
@@ -393,4 +448,6 @@ public class Disassembler
 
         throw new NotSupportedException($"Unable to encode constant value '{constantValue}' of type '{qualifiedTypeName}'");
     }
+
+    private record RawConstantInfo(int Index, TypeSchema Type, object Value);
 }

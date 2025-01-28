@@ -1,7 +1,4 @@
-﻿using System;
-using System.Linq;
-
-namespace Microsoft.Iris.Asm.Models;
+﻿namespace Microsoft.Iris.Asm.Models;
 
 public record SectionDirective : Directive
 {
@@ -13,6 +10,18 @@ public record SectionDirective : Directive
     public string Name { get; init; }
 
     public override string ToString() => $"{base.ToString()} {Name}";
+}
+
+public record SharedDataTableDirective : Directive
+{
+    public SharedDataTableDirective(string dataTableUri) : base("dataTable")
+    {
+        Uri = dataTableUri;
+    }
+
+    public string Uri { get; init; }
+
+    public override string ToString() => $"{base.ToString()} {Uri}";
 }
 
 public record ExportDirective : Directive
