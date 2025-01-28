@@ -191,22 +191,22 @@ public class Disassembler
                     }
                 }
 
-                // Some imports, such as assembly imports, require additional parsing
-                // and might change the URI that actually gets imported.
-                if (_importedUris.ContainsKey(uri))
-                    continue;
-
                 baseNamespacePrefix = baseNamespacePrefix.Camelize();
                 namespacePrefix = baseNamespacePrefix;
-                
-                // Prevent similar imports from generating the same prefix
-                int duplicateCount = 0;
-                while (_importedUris.ContainsValue(namespacePrefix))
-                    namespacePrefix = $"{baseNamespacePrefix}{++duplicateCount}";
 
-                _importedUris.Add(uri, namespacePrefix);
+                // Some imports, such as assembly imports, require additional parsing
+                // and might change the URI that actually gets imported.
+                if (!_importedUris.ContainsKey(uri))
+                {
+                    // Prevent similar imports from generating the same prefix
+                    int duplicateCount = 0;
+                    while (_importedUris.ContainsValue(namespacePrefix))
+                        namespacePrefix = $"{baseNamespacePrefix}{++duplicateCount}";
 
-                yield return new NamespaceImport(uri, namespacePrefix);
+                    _importedUris.Add(uri, namespacePrefix);
+
+                    yield return new NamespaceImport(uri, namespacePrefix);
+                }
             }
 
             yield return new TypeImport(new(namespacePrefix, typeImport.Name));
