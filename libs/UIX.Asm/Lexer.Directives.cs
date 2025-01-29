@@ -3,6 +3,7 @@ using Sprache;
 using System;
 using System.Globalization;
 using System.Linq;
+using System.Text;
 
 namespace Microsoft.Iris.Asm;
 
@@ -86,13 +87,49 @@ partial class Lexer
                 if (!encodingMarkerResult.WasSuccessful)
                 {
                     // Support defining constants from string literals
-                    var stringLiteralResult = ExpressionInBraces(StringLiteral)(input);
-                    input = stringLiteralResult.Remainder;
-                    if (!stringLiteralResult.WasSuccessful)
-                        return stringLiteralResult.ForType<IDirective>();
+
+                    // Skip the opening brace
+                    input = input.Advance();
+                    if (input.Current != '"')
+                        return Result.Failure<IDirective>(input, "Invalid constant", ["Expected a string literal."]);
+
+                    input = input.Advance();
+
+                    StringBuilder literalBuilder = new();
+                    char c;
+                    while (true)
+                    {
+                        c = input.Current;
+                        if (c == '\\')
+                        {
+                            // https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-specification/lexical-structure#unicode-character-escape-sequences
+                            input = input.Advance();
+                            c = input.Current switch
+                            {
+                                '0' => '\0',
+                                'b' => '\b',
+                                'n' => '\n',
+                                'r' => '\r',
+                                't' => '\t',
+                                _ => input.Current
+                            };
+                        }
+
+                        input = input.Advance();
+
+                        if (c == '"')
+                            break;
+
+                        literalBuilder.Append(c);
+                    }
+
+                    if (input.Current != ')')
+                        return Result.Failure<IDirective>(input, "Invalid constant", ["Missing closed brace."]);
+
+                    input = input.Advance();
 
                     persistMode = Markup.MarkupConstantPersistMode.FromString;
-                    content = stringLiteralResult.Value[1..^1].Unescape();
+                    content = literalBuilder.ToString();
                 }
                 else
                 {

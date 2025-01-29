@@ -3,9 +3,9 @@
         "UIXC": {
             "commandName": "Project",
             "commandLineArgs": "decompile C:\\Users\\jjask\\Documents\\Dump\\Zune\\ZuneShellResources -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o C:\\Users\\jjask\\Documents\\Dump\\Zune\\ZuneShellResources_uixa -t C:\\Users\\jjask\\Documents\\Dump\\Zune\\ZuneShellResources_uixa\\_DATATABLE.uixa",
+            //"commandLineArgs": "decompile C:\\Users\\jjask\\Documents\\Dump\\Zune\\ZuneShellResources\\_DATATABLE.UIB -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o C:\\Users\\jjask\\Documents\\Dump\\Zune\\ZuneShellResources_uixa",
             //"commandLineArgs": "compile C:\\Users\\jjask\\Documents\\Dump\\Zune\\ZuneShellResources\\CreatePassport.uixa -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o C:\\Users\\jjask\\Documents\\Dump\\Zune",
             //"commandLineArgs": "compile C:\\Users\\jjask\\Documents\\Dump\\Zune\\_DATATABLE.uixa -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o C:\\Users\\jjask\\Documents\\Dump\\Zune",
-            //"commandLineArgs": "decompile C:\\Users\\jjask\\Documents\\Dump\\Zune\\ZuneShellResources\\_DATATABLE.UIB -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o C:\\Users\\jjask\\Documents\\Dump\\Zune\\ZuneShellResources_uixa",
 
             //"commandLineArgs": "compile \"D:\\Documents\\REProj\\Zune\\UIXA\\ZuneShell.dll!_DataTable.uixa\" -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o D:\\Documents\\REProj\\Zune\\UIXA",
             //"commandLineArgs": "compile \"D:\\Documents\\REProj\\Zune\\UIXA\\ZuneShellResources.dll!_DataTable.uixa\" -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o D:\\Documents\\REProj\\Zune\\UIXA",

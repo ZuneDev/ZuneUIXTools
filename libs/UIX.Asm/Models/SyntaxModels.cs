@@ -27,23 +27,29 @@ public record Program
     public Program(IEnumerable<IBodyItem> body)
     {
         Body = body.Cached();
-
-        Directives = body.OfType<IDirective>().Cached();
-        DataTableDirective = Directives.OfType<SharedDataTableDirective>().SingleOrDefault();
-        Imports = Directives.OfType<IImportDirective>().Cached();
-        Exports = Directives.OfType<ExportDirective>().Cached();
-
-        Code = body.OfType<ICodeItem>().Cached();
     }
 
-    public IEnumerable<IBodyItem> Body { get; }
+    public IEnumerable<IBodyItem> Body { get; private set; }
 
-    public IEnumerable<IDirective> Directives { get; }
-    public SharedDataTableDirective DataTableDirective { get; }
-    public IEnumerable<IImportDirective> Imports { get; }
-    public IEnumerable<ExportDirective> Exports { get; }
+    public IEnumerable<IDirective> Directives => Body.OfType<IDirective>();
 
-    public IEnumerable<ICodeItem> Code { get; }
+    public SharedDataTableDirective DataTableDirective => Body.OfType<SharedDataTableDirective>().SingleOrDefault();
+
+    public IEnumerable<IImportDirective> Imports => Directives.OfType<IImportDirective>();
+
+    public IEnumerable<ExportDirective> Exports => Directives.OfType<ExportDirective>();
+
+    public IEnumerable<ICodeItem> Code => Body.OfType<ICodeItem>();
+
+    public void ImportSharedDataTable(Program dataTable)
+    {
+        List<IBodyItem> newBody = Exports.ToList<IBodyItem>();
+
+        newBody.AddRange(dataTable.Directives.Where(d => d is not ExportDirective));
+        newBody.AddRange(Code);
+
+        Body = newBody.Cached();
+    }
 
     public override string ToString()
     {

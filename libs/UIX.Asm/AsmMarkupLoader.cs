@@ -16,7 +16,8 @@ internal class AsmMarkupLoader
     private readonly AsmMarkupLoadResult _loadResult;
     private LoadPass _currentValidationPass;
     private bool _usingSharedBinaryDataTable;
-    private SourceMarkupImportTables _importTables;
+    private AsmMarkupLoadResult _binaryDataTableLoadResult;
+    private MarkupBinaryDataTable _binaryDataTable;
     private ObjectSection _objectSection;
 
     private readonly Dictionary<string, LoadResult> _importedNamespaces = new();
@@ -70,16 +71,6 @@ internal class AsmMarkupLoader
 
         var type = result.FindType(typeName);
 
-        //if (type is null)
-        //{
-        //    foreach (var tryResult in _importedNamespaces.Values)
-        //    {
-        //        type = tryResult.FindType(typeName);
-        //        if (type is not null)
-        //            break;
-        //    }
-        //}
-
         if (type is null)
         {
             ErrorManager.ReportError(qualifiedName.Line, qualifiedName.Column,
@@ -105,11 +96,11 @@ internal class AsmMarkupLoader
             return;
         _currentValidationPass = currentPass;
 
-        if (_currentValidationPass == LoadPass.DeclareTypes)
-        {
-            if (_asmSource == null)
-                return;
+        if (_asmSource == null)
+            return;
 
+        if (Program is null && !HasErrors)
+        {
             var parseResult = Lexer.Program.TryParse(_asmSource);
             if (parseResult.WasSuccessful)
             {
@@ -123,15 +114,48 @@ internal class AsmMarkupLoader
                 return;
             }
 
-            if (_loadResult.BinaryDataTable != null)
-            {
-                _importTables = _loadResult.BinaryDataTable.SourceMarkupImportTables;
-                _usingSharedBinaryDataTable = true;
+            _usingSharedBinaryDataTable = Program.DataTableDirective is not null;
+            if (_usingSharedBinaryDataTable)
+            {   
+                // Import the shared data table
+                var dataTableUri = Program.DataTableDirective.Uri;
+                var dataTableLoadResult = MarkupSystem.ResolveLoadResult(dataTableUri, _loadResult.IslandReferences);
+                if (dataTableLoadResult is null)
+                {
+                    ReportError($"Unable to load '{dataTableUri}' (shared data table)", Program.DataTableDirective);
+                    return;
+                }
+                
+                if (dataTableLoadResult is not AsmMarkupLoadResult)
+                {
+                    ReportError($"Shared data table at '{dataTableUri}' was not UIXA", Program.DataTableDirective);
+                    return;
+                }
+
+                _binaryDataTableLoadResult = (AsmMarkupLoadResult)dataTableLoadResult;
+                if (_binaryDataTableLoadResult != null)
+                {
+                    _binaryDataTableLoadResult.Load(_currentValidationPass);
+                    _binaryDataTable = _binaryDataTableLoadResult.BinaryDataTable;
+
+                    _binaryDataTable.SharedDependenciesTableWithBinaryDataTable ??= [_binaryDataTableLoadResult];
+                    _loadResult.SetDependenciesTable(_binaryDataTable.SharedDependenciesTableWithBinaryDataTable);
+                }
+                else
+                    MarkHasErrors();
             }
             else
             {
-                _importTables = new SourceMarkupImportTables();
+                _binaryDataTable = new MarkupBinaryDataTable(_loadResult.Uri);
+                _binaryDataTable.SetConstantsTable(new MarkupConstantsTable());
+                _binaryDataTable.SetSourceMarkupImportTables(new SourceMarkupImportTables());
             }
+            
+            _loadResult.SetBinaryDataTable(_binaryDataTable);
+        }
+
+        if (_currentValidationPass == LoadPass.DeclareTypes)
+        {
 
             foreach (var nsImport in Program.Directives.OfType<NamespaceImport>())
             {
@@ -256,9 +280,9 @@ internal class AsmMarkupLoader
                 _loadResult.MarkLoadFailed();
 
             MarkupImportTables importTables = null;
-            if (_importTables != null)
+            if (_binaryDataTable.SourceMarkupImportTables != null)
             {
-                importTables = _importTables.PrepareImportTables();
+                importTables = _binaryDataTable.SourceMarkupImportTables.PrepareImportTables();
                 _loadResult.SetImportTables(importTables);
             }
 
@@ -323,10 +347,10 @@ internal class AsmMarkupLoader
 
                         var contentBuffer = binaryEncodedConstant.Content;
 
-                        ByteCodeWriter binaryConstantWrtier = new();
-                        binaryConstantWrtier.Write(contentBuffer, (uint)contentBuffer.Length);
+                        ByteCodeWriter binaryConstantWriter = new();
+                        binaryConstantWriter.Write(contentBuffer, (uint)contentBuffer.Length);
 
-                        var binaryConstantReader = binaryConstantWrtier.CreateReader();
+                        var binaryConstantReader = binaryConstantWriter.CreateReader();
                         constantValue = constantTypeSchema.DecodeBinary(binaryConstantReader);
 
                         persistData = constantValue;
@@ -395,9 +419,9 @@ internal class AsmMarkupLoader
     {
         LoadResult[] loadResultArray = LoadResult.EmptyList;
         int length = 0;
-        if (_importTables != null)
+        if (_binaryDataTable.SourceMarkupImportTables != null)
         {
-            foreach (LoadResult importedLoadResult in _importTables.ImportedLoadResults)
+            foreach (LoadResult importedLoadResult in _binaryDataTable.SourceMarkupImportTables.ImportedLoadResults)
             {
                 if (importedLoadResult != _loadResult)
                     ++length;
@@ -407,7 +431,7 @@ internal class AsmMarkupLoader
         {
             loadResultArray = new LoadResult[length];
             int index = 0;
-            foreach (LoadResult importedLoadResult in _importTables.ImportedLoadResults)
+            foreach (LoadResult importedLoadResult in _binaryDataTable.SourceMarkupImportTables.ImportedLoadResults)
             {
                 if (importedLoadResult != _loadResult)
                 {
@@ -472,12 +496,14 @@ internal class AsmMarkupLoader
     {
         if (loadResult == MarkupSystem.UIXGlobal)
             return;
-        for (int index = 0; index < _importTables.ImportedLoadResults.Count; ++index)
+        
+        for (int index = 0; index < _binaryDataTable.SourceMarkupImportTables.ImportedLoadResults.Count; ++index)
         {
-            if ((LoadResult)_importTables.ImportedLoadResults[index] == loadResult)
+            if ((LoadResult)_binaryDataTable.SourceMarkupImportTables.ImportedLoadResults[index] == loadResult)
                 return;
         }
-        _importTables.ImportedLoadResults.Add(loadResult);
+
+        _binaryDataTable.SourceMarkupImportTables.ImportedLoadResults.Add(loadResult);
     }
 
     public int TrackImportedType(TypeSchema type)
@@ -485,14 +511,14 @@ internal class AsmMarkupLoader
         if (type is null) return -1;
 
         TrackImportedLoadResult(type.Owner);
-        return TrackImportedSchema(_importTables.ImportedTypes, type);
+        return TrackImportedSchema(_binaryDataTable.SourceMarkupImportTables.ImportedTypes, type);
     }
 
     public int TrackImportedConstructor(ConstructorSchema constructor)
     {
         if (constructor is null) return -1;
 
-        int num = TrackImportedSchema(_importTables.ImportedConstructors, constructor);
+        int num = TrackImportedSchema(_binaryDataTable.SourceMarkupImportTables.ImportedConstructors, constructor);
         TrackImportedType(constructor.Owner);
         foreach (TypeSchema parameterType in constructor.ParameterTypes)
             TrackImportedType(parameterType);
@@ -503,7 +529,7 @@ internal class AsmMarkupLoader
     {
         if (property is null) return -1;
 
-        int num = TrackImportedSchema(_importTables.ImportedProperties, property);
+        int num = TrackImportedSchema(_binaryDataTable.SourceMarkupImportTables.ImportedProperties, property);
         TrackImportedType(property.Owner);
         return num;
     }
@@ -512,7 +538,7 @@ internal class AsmMarkupLoader
     {
         if (method is null) return -1;
 
-        int num = TrackImportedSchema(_importTables.ImportedMethods, method);
+        int num = TrackImportedSchema(_binaryDataTable.SourceMarkupImportTables.ImportedMethods, method);
         TrackImportedType(method.Owner);
         foreach (TypeSchema parameterType in method.ParameterTypes)
             TrackImportedType(parameterType);
@@ -523,7 +549,7 @@ internal class AsmMarkupLoader
     {
         if (evt is null) return -1;
 
-        int num = TrackImportedSchema(_importTables.ImportedEvents, evt);
+        int num = TrackImportedSchema(_binaryDataTable.SourceMarkupImportTables.ImportedEvents, evt);
         TrackImportedType(evt.Owner);
         return num;
     }

@@ -9,6 +9,9 @@ public static class Extensions
 {
     public static void FullLoad(this LoadResult result)
     {
+        if (result.Status is LoadResultStatus.Success)
+            return;
+
         result.Load(LoadPass.DeclareTypes);
         result.Load(LoadPass.PopulatePublicModel);
         result.Load(LoadPass.Full);
@@ -73,6 +76,7 @@ public static class Extensions
                 '\t' => @"\t",
                 '\'' => @"\'",
                 '"' => "\"",
+                '\\' => @"\\",
                 _ => null
             };
 

@@ -130,10 +130,4 @@ public static partial class Lexer
 
         return Result.Success(qualifiedName, input);
     }
-
-    private static Parser<string> ExpressionInBraces(Parser<string> parser, char open = '(', char close = ')') =>
-        from openBrace in Parse.Char(open).Token()
-        from expression in parser.Optional()
-        from closeBrace in Parse.Char(close).Token()
-        select expression.GetOrElse(string.Empty).Trim();
 }

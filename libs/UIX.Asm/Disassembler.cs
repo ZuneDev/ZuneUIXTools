@@ -3,6 +3,7 @@ using Microsoft.Iris.Asm.Models;
 using Microsoft.Iris.Markup;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.InteropServices;
 
@@ -24,9 +25,8 @@ public class Disassembler
     {
         _loadResult = loadResult;
 
-        _dataTableLoadResult = dataTableLoadResult is not null
-            ? dataTableLoadResult
-            : loadResult.BinaryDataTable?.SharedDependenciesTableWithBinaryDataTable?.FirstOrDefault() as MarkupLoadResult;
+        _dataTableLoadResult = dataTableLoadResult
+            ?? loadResult.BinaryDataTable?.SharedDependenciesTableWithBinaryDataTable?.FirstOrDefault() as MarkupLoadResult;
 
         _importedUris = new()
         {
@@ -57,7 +57,7 @@ public class Disassembler
             if (_loadResult.Status == LoadResultStatus.Error)
                 throw new Exception($"Failed to load '{_loadResult.ErrorContextUri}'");
 
-            if (_dataTableLoadResult is not null)
+            if (UseSharedDataTable)
             {
                 _dataTableLoadResult.FullLoad();
                 if (_dataTableLoadResult.Status == LoadResultStatus.Error)
@@ -75,7 +75,7 @@ public class Disassembler
             foreach (var segment in segments)
                 body.AddRange(segment);
 
-            if (_dataTableLoadResult is not null)
+            if (UseSharedDataTable)
                 body.Add(new SharedDataTableDirective(_dataTableLoadResult.Uri));
 
             _program = new(body);
@@ -85,6 +85,9 @@ public class Disassembler
     }
 
     public string Write() => Disassemble().ToString();
+
+    [MemberNotNullWhen(true, nameof(_dataTableLoadResult))]
+    private bool UseSharedDataTable => _dataTableLoadResult is not null;
 
     private IEnumerable<ExportDirective> GetExports()
     {
@@ -148,6 +151,9 @@ public class Disassembler
 
     private IEnumerable<IImportDirective> EnumerateImports()
     {
+        if (UseSharedDataTable)
+            yield break;
+
         // Ues _importedUris to keep track of what has already been imported.
         // Skip self and default UIX namespace.
 
@@ -323,7 +329,7 @@ public class Disassembler
 
     private IEnumerable<ConstantDirective> GetConstants()
     {
-        if (_dataTableLoadResult is not null)
+        if (UseSharedDataTable)
         {
             // Constants have already been disassembled from the shared binary table
             var asmConstants = _dataTableLoadResult is AsmMarkupLoadResult asmDataTableLoadResult
@@ -333,9 +339,9 @@ public class Disassembler
             foreach (var info in EnumerateConstantInfo(_dataTableLoadResult))
             {
                 var constantName = asmConstants?[info.Index]?.Name
-                    ?? $"sharedConst{info.Index:D}";
+                    ?? info.GenerateDefaultName();
 
-                _constantsTable.Add(info.Index, constantName);
+                _constantsTable[info.Index] = constantName;
             }
 
             yield break;
@@ -344,7 +350,7 @@ public class Disassembler
         {
             foreach (var info in EnumerateConstantInfo(_loadResult))
             {
-                var constantName = $"const{info.Index:D}";
+                var constantName = info.GenerateDefaultName();
                 _constantsTable[info.Index] = constantName;
                 yield return EncodeConstant(info.Value, constantName, info.Type);
             }
@@ -397,7 +403,7 @@ public class Disassembler
     {
         var qualifiedTypeName = GetQualifiedName(typeSchema);
 
-        // ILayout has a number of derived classes with special named instacnes,
+        // ILayout has a number of derived classes with special named instances,
         // but aren't implemented as canonical instances.
         if (constantValue is Layout.ILayout constantLayout && Layout.PredefinedLayouts.TryConvertToString(constantLayout, out var constantLayoutString))
         {
@@ -456,5 +462,8 @@ public class Disassembler
         throw new NotSupportedException($"Unable to encode constant value '{constantValue}' of type '{qualifiedTypeName}'");
     }
 
-    private record RawConstantInfo(int Index, TypeSchema Type, object Value);
+    private record RawConstantInfo(int Index, TypeSchema Type, object Value)
+    {
+        public string GenerateDefaultName() => $"const{Index:D}";
+    }
 }
