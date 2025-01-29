@@ -17,7 +17,7 @@ internal class Program
 
             config.AddCommand<DecompileCommand>("decompile")
                 .WithAlias("d")
-                .WithDescription("Decompiles the given compiled UIX to a source langauge.");
+                .WithDescription("Decompiles the given compiled UIX to a source language.");
 
 #if DEBUG
             config.PropagateExceptions();

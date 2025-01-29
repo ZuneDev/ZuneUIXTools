@@ -46,7 +46,10 @@ public class DecompileCommand : CompilerCommandBase<DecompileCommand.Settings>
             }
         }
 
-        BeginErrorReporting(new IrisSourceRepository(enumeratedInputs));
+        var repoSources = enumeratedInputs.ToList();
+        if (settings.DataTable is not null)
+            repoSources.Add(settings.DataTable);
+        BeginErrorReporting(new IrisSourceRepository(repoSources));
 
         var loadAssembliesResult = LoadAssemblies(settings);
         if (loadAssembliesResult < 0)
@@ -68,7 +71,10 @@ public class DecompileCommand : CompilerCommandBase<DecompileCommand.Settings>
         {
             dataTableLoadResult = LoadIrisFile(settings.DataTable, settings);
             if (dataTableLoadResult.Status != LoadResultStatus.Success)
-                throw new Exception($"Failed to load data table from {dataTableLoadResult.ErrorContextUri}");
+            {
+                AnsiConsole.MarkupLineInterpolated($"[red]Failed to load shared data table from {dataTableLoadResult.ErrorContextUri}[/]");
+                goto done;
+            }
         }
 
         if (settings.Language == SourceLanguage.Asm)
@@ -105,6 +111,12 @@ public class DecompileCommand : CompilerCommandBase<DecompileCommand.Settings>
         {
             AnsiConsole.MarkupLine($"[red]{settings.Language} is not currently a supported decompilation target.[/]");
         }
+
+        done:
+        StopErrorReporting();
+        Report?.Render(AnsiConsole.Console);
+        AnsiConsole.WriteLine();
+        AnsiConsole.WriteLine();
 
         if (!success)
         {
