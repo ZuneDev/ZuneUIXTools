@@ -12,9 +12,12 @@ partial class Lexer
         var line = input.Line;
         var column = input.Column;
 
-        var directiveResult = ParseDirective(input);
-        if (directiveResult.WasSuccessful)
+        if (input.Current == '.')
         {
+            var directiveResult = ParseDirective(input);
+            if (!directiveResult.WasSuccessful)
+                return directiveResult;
+            
             input = directiveResult.Remainder;
             var directive = directiveResult.Value;
             if (directive is not IBodyItem directiveBodyItem)
@@ -27,7 +30,7 @@ partial class Lexer
 
         var identifierResult = Identifier.Invoke(input);
         if (!identifierResult.WasSuccessful)
-            return Result.Failure<IBodyItem>(input, "Invalid code", []);
+            return identifierResult.ForType<IBodyItem>();
 
         input = identifierResult.Remainder;
         var identifier = identifierResult.Value;

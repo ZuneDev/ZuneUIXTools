@@ -1,5 +1,6 @@
 ﻿using Microsoft.Iris.Asm.Models;
 using Sprache;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Microsoft.Iris.Asm;
@@ -36,9 +37,25 @@ public static partial class Lexer
 
     public static readonly Parser<IBodyItem> BodyItem = ParseBodyItem;
 
-    public static readonly Parser<Program> Program =
-        from body in BodyItem.Many()
-        select new Program(body);
+    public static readonly Parser<Program> Program = ParseProgram;
+
+    private static IResult<Program> ParseProgram(IInput input)
+    {
+        List<IBodyItem> body = [];
+
+        while (!input.AtEnd)
+        {
+            var bodyItemResult = BodyItem(input);
+            input = bodyItemResult.Remainder;
+            if (!bodyItemResult.WasSuccessful && !ConsumeWhitespace(input).AtEnd)
+                return bodyItemResult.ForType<Program>();
+
+            body.Add(bodyItemResult.Value);
+        }
+
+        Program program = new(body);
+        return Result.Success(program, input);
+    }
 
     private static IInput ConsumeWhitespace(IInput input) => Parse.WhiteSpace.Many()(input).Remainder;
 

@@ -36,21 +36,6 @@ internal class AsmMarkupLoader
         if (resource.Length > 3 && (*(uint*)data & 0x00FFFFFF) == 0x00BFBBEF)
             sourceStartOffset = 3;
         _asmSource = Encoding.UTF8.GetString(data + sourceStartOffset, (int)(resource.Length - sourceStartOffset));
-
-        var parseResult = Lexer.Program.TryParse(_asmSource);
-        if (parseResult.WasSuccessful)
-        {
-            Program = parseResult.Value;
-        }
-        else
-        {
-            MarkHasErrors();    // Who's Mark?
-
-            StringBuilder errorMessageBuilder = new(parseResult.Message);
-            errorMessageBuilder.Append(": ");
-            errorMessageBuilder.AppendJoin(", ", parseResult.Expectations);
-            ErrorManager.ReportError(errorMessageBuilder.ToString());
-        }
     }
 
     public bool HasErrors { get; protected set; }
@@ -134,7 +119,8 @@ internal class AsmMarkupLoader
             else
             {
                 foreach (var errors in parseResult.Expectations)
-                    ReportError(errors, -1, -1);
+                    ReportError(errors, parseResult.Remainder.Line, parseResult.Remainder.Column);
+                return;
             }
 
             if (_loadResult.BinaryDataTable != null)

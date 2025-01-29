@@ -34,7 +34,7 @@ partial class Lexer
                 var dataTableUriResult = Uri.Token()(input);
                 input = dataTableUriResult.Remainder;
                 if (!dataTableUriResult.WasSuccessful)
-                    return Result.Failure<IDirective>(input, "Invalid data table import", ["Expected a valid data table URI"]);
+                    return dataTableUriResult.ForType<IDirective>();
 
                 directive = new SharedDataTableDirective(dataTableUriResult.Value)
                 {
@@ -64,19 +64,19 @@ partial class Lexer
 
             case "CONSTANT":
                 if (StatementEnd(input).WasSuccessful)
-                    return Result.Failure<IDirective>(input, "Invalid constant directive", ["Expected a consant declaration"]);
+                    return Result.Failure<IDirective>(input, "Invalid constant directive", ["Expected a constant declaration"]);
 
                 var constNameResult = Identifier.Token()(input);
                 input = constNameResult.Remainder;
                 if (!constNameResult.WasSuccessful)
-                    return Result.Failure<IDirective>(input, "Invalid constant directive", ["Expected a name for the constant"]);
+                    return constNameResult.ForType<IDirective>();
 
                 input = Parse.Char('=').Token()(input).Remainder;
 
                 var typeNameResult = QualifiedTypeName.Token()(input);
                 input = typeNameResult.Remainder;
                 if (!typeNameResult.WasSuccessful)
-                    return Result.Failure<IDirective>(input, "Invalid constant directive", ["Expected qualified name of type to construct"]);
+                    return typeNameResult.ForType<IDirective>();
 
                 Markup.MarkupConstantPersistMode? persistMode = null;
                 string content = "";
@@ -89,7 +89,7 @@ partial class Lexer
                     var stringLiteralResult = ExpressionInBraces(StringLiteral)(input);
                     input = stringLiteralResult.Remainder;
                     if (!stringLiteralResult.WasSuccessful)
-                        return Result.Failure<IDirective>(input, "Invalid constant directive", ["Expected '.', followed by the persist mode."]);
+                        return stringLiteralResult.ForType<IDirective>();
 
                     persistMode = Markup.MarkupConstantPersistMode.FromString;
                     content = stringLiteralResult.Value[1..^1].Unescape();
@@ -99,7 +99,7 @@ partial class Lexer
                     var persistModeResult = Parse.CharExcept('(').AtLeastOnce().Text().Token()(input);
                     input = persistModeResult.Remainder;
                     if (!persistModeResult.WasSuccessful)
-                        return Result.Failure<IDirective>(input, "Invalid constant directive", ["No persist mode was specified."]);
+                        return persistModeResult.ForType<IDirective>("No constant persist mode was specified");
 
                     persistMode = persistModeResult.Value.ToLowerInvariant() switch
                     {
@@ -117,7 +117,7 @@ partial class Lexer
                     var contentResult = Parse.AnyChar.Until(StatementEnd).Text().Token()(input);
                     input = contentResult.Remainder;
                     if (!contentResult.WasSuccessful)
-                        return Result.Failure<IDirective>(input, "Invalid constant directive", ["Expected constant value"]);
+                        return contentResult.ForType<IDirective>();
 
                     content = contentResult.Value;
                     if (content.Length <= 1 || content[^1] != ')')
@@ -201,7 +201,7 @@ partial class Lexer
                 var labelPrefixResult = Identifier.Token()(input);
                 input = labelPrefixResult.Remainder;
                 if (!labelPrefixResult.WasSuccessful)
-                    return Result.Failure<IDirective>(input, "Invalid export directive", ["Expected prefix of labels to export"]);
+                    return labelPrefixResult.ForType<IDirective>();
 
                 var listenerCountResult = WholeNumber.Token()(input);
                 input = listenerCountResult.Remainder;

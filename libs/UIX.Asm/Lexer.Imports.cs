@@ -1,5 +1,6 @@
 ﻿using Microsoft.Iris.Asm.Models;
 using Sprache;
+using System.Collections.Generic;
 
 namespace Microsoft.Iris.Asm;
 
@@ -38,7 +39,7 @@ partial class Lexer
                 var uriResult = Uri.Token()(input);
                 input = uriResult.Remainder;
                 if (!uriResult.WasSuccessful)
-                    return Result.Failure<IImportDirective>(input, "Invalid URI", ["Expected a valid URI"]);
+                    return uriResult.ForType<IImportDirective>();
 
                 input = Parse.String("as").Token()(input).Remainder;
 
@@ -60,7 +61,7 @@ partial class Lexer
                 var typeNameResult = ParseQualifiedTypeName(input);
                 input = typeNameResult.Remainder;
                 if (!typeNameResult.WasSuccessful)
-                    return Result.Failure<IImportDirective>(input, "Invalid type import", ["Expected qualified type name"]);
+                    return typeNameResult.ForType<IImportDirective>();
 
                 import = new TypeImport(typeNameResult.Value)
                 {
@@ -75,14 +76,14 @@ partial class Lexer
                 var memberTypeNameResult = ParseQualifiedTypeName(input);
                 input = memberTypeNameResult.Remainder;
                 if (!memberTypeNameResult.WasSuccessful)
-                    return Result.Failure<IImportDirective>(input, "Invalid member import", ["Expected qualified type name"]);
+                    return memberTypeNameResult.ForType<IImportDirective>();
 
                 input = Parse.Char('{')(input).Remainder;
 
                 var memberNamesResult = Parse.Ref(() => Identifier).DelimitedBy(Parse.Char(',').Token())(input);
                 input = memberNamesResult.Remainder;
                 if (!memberNamesResult.WasSuccessful)
-                    return Result.Failure<IImportDirective>(input, "Invalid member import", ["Expected list of members to import"]);
+                    return memberNamesResult.ForType<IImportDirective>();
 
                 input = Parse.Char('}')(input).Remainder;
 
@@ -99,7 +100,7 @@ partial class Lexer
                 var ctorMemberTypeNameResult = ParseQualifiedTypeName(input);
                 input = ctorMemberTypeNameResult.Remainder;
                 if (!ctorMemberTypeNameResult.WasSuccessful)
-                    return Result.Failure<IImportDirective>(input, "Invalid constructor import", ["Expected qualified type name"]);
+                    return ctorMemberTypeNameResult.ForType<IImportDirective>();
 
                 input = Parse.Char('.').Optional()(input).Remainder;
                 input = Parse.Char('(')(input).Remainder;
@@ -107,7 +108,7 @@ partial class Lexer
                 var ctorParameterTypesResult = Parse.Ref(() => QualifiedTypeName).DelimitedBy(Parse.Char(',').Token())(input);
                 input = ctorParameterTypesResult.Remainder;
                 if (!ctorParameterTypesResult.WasSuccessful)
-                    return Result.Failure<IImportDirective>(input, "Invalid constructor import", ["Expected constructor parameter types"]);
+                    return ctorParameterTypesResult.ForType<IImportDirective>();
 
                 input = Parse.Char(')')(input).Remainder;
 
@@ -124,25 +125,36 @@ partial class Lexer
                 var mthdMemberTypeNameResult = ParseQualifiedTypeName(input);
                 input = mthdMemberTypeNameResult.Remainder;
                 if (!mthdMemberTypeNameResult.WasSuccessful)
-                    return Result.Failure<IImportDirective>(input, "Invalid method import", ["Expected qualified type name"]);
+                    return mthdMemberTypeNameResult.ForType<IImportDirective>();
 
                 input = Parse.Char('.')(input).Remainder;
 
                 var mthdNameResult = Identifier(input);
                 input = mthdNameResult.Remainder;
                 if (!mthdNameResult.WasSuccessful)
-                    return Result.Failure<IImportDirective>(input, "Invalid method import", ["Expected method name"]);
+                    return mthdNameResult.ForType<IImportDirective>();
 
                 input = Parse.Char('(')(input).Remainder;
 
-                var mthdParameterTypesResult = Parse.Ref(() => QualifiedTypeName).DelimitedBy(Parse.Char(',').Token())(input);
-                input = mthdParameterTypesResult.Remainder;
-                if (!mthdParameterTypesResult.WasSuccessful)
-                    return Result.Failure<IImportDirective>(input, "Invalid constructor import", ["Expected constructor parameter types"]);
+                IEnumerable<QualifiedTypeName> mthdParameterTypes;
+                if (input.Current == ')')
+                {
+                    input = input.Advance();
+                    mthdParameterTypes = [];
+                }
+                else
+                {
+                    var mthdParameterTypesResult = Parse.Ref(() => QualifiedTypeName)
+                        .DelimitedBy(Parse.Char(',').Token(), 0, null)(input);
+                    input = mthdParameterTypesResult.Remainder;
+                    if (!mthdParameterTypesResult.WasSuccessful)
+                        return mthdParameterTypesResult.ForType<IImportDirective>();
 
-                input = Parse.Char(')')(input).Remainder;
+                    input = Parse.Char(')')(input).Remainder;
+                    mthdParameterTypes = mthdParameterTypesResult.Value;
+                }
 
-                import = new MethodImport(mthdMemberTypeNameResult.Value, mthdNameResult.Value, mthdParameterTypesResult.Value)
+                import = new MethodImport(mthdMemberTypeNameResult.Value, mthdNameResult.Value, mthdParameterTypes)
                 {
                     Line = line,
                     Column = col,
@@ -150,7 +162,7 @@ partial class Lexer
                 break;
 
             default:
-                return Result.Failure<IImportDirective>(input, $"Unknown import type '{importTypeResult.Value}'", ["Expected 'ns', 'type'"]);
+                return Result.Failure<IImportDirective>(input, $"Unknown import type '{importTypeResult.Value}'", ["Expected 'ns', 'type', 'ctor', 'mbrs', 'mthd'"]);
         }
 
         return Result.Success(import, input);

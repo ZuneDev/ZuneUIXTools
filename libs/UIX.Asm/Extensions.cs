@@ -85,6 +85,18 @@ public static class Extensions
         return sb.ToString();
     }
 
+    public static Sprache.IResult<TNew> ForType<TNew>(this Sprache.IResult<object> result, string parentMessage = null)
+    {
+        if (result.WasSuccessful)
+            throw new ArgumentException("Successful results cannot be safely converted for different types.");
+
+        var message = result.Message;
+        if (parentMessage is not null)
+            message = $"{parentMessage}; {message}";
+
+        return Sprache.Result.Failure<TNew>(result.Remainder, message, result.Expectations);
+    }
+
 #if NETSTANDARD
 
     internal static StringBuilder AppendJoin<T>(this StringBuilder sb, string? separator, IEnumerable<T> values)
