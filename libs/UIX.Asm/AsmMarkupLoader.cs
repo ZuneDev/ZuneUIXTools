@@ -209,11 +209,8 @@ internal class AsmMarkupLoader
             //foreach (ValidateClass validateClass in _parseResult.ClassList)
             //    validateClass.TypeExport?.BuildProperties();
         }
-        else
+        else if (_currentValidationPass != LoadPass.Full)
         {
-            if (_currentValidationPass != LoadPass.Full)
-                return;
-
             if (HasErrors)
                 _loadResult.MarkLoadFailed();
 
