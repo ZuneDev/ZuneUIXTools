@@ -142,7 +142,9 @@ internal class AsmMarkupLoader
                     _loadResult.SetDependenciesTable(_binaryDataTable.SharedDependenciesTableWithBinaryDataTable);
                 }
                 else
+                {
                     MarkHasErrors();
+                }
             }
             else
             {
@@ -156,7 +158,6 @@ internal class AsmMarkupLoader
 
         if (_currentValidationPass == LoadPass.DeclareTypes)
         {
-
             foreach (var nsImport in Program.Directives.OfType<NamespaceImport>())
             {
                 LoadResult loadResult;
@@ -190,72 +191,9 @@ internal class AsmMarkupLoader
             }
         }
 
-        if (Program != null && currentPass != LoadPass.Done)
+        if (Program != null && _currentValidationPass == LoadPass.Full)
         {
-            //foreach (ValidateClass validateClass in _program.ClassList)
-            //    validateClass.Validate(_currentValidationPass);
-
-            //foreach (ValidateDataMapping dataMapping in _program.DataMappingList)
-            //    dataMapping.Validate(_currentValidationPass);
-
-            //foreach (ValidateAlias alias in _program.AliasList)
-            //    alias.Validate(_currentValidationPass);
-
-            if (_currentValidationPass == LoadPass.Full)
-            {
-                foreach (var import in Program.Imports)
-                {
-                    if (import is TypeImport typeImport)
-                    {
-                        var typeSchema = ResolveTypeFromQualifiedName(typeImport.QualifiedName);
-                        TrackImportedType(typeSchema);
-                    }
-                    else if (import is NamespaceImport nsImport)
-                    {
-                        if (!_referencedNamespaces.Contains(nsImport.Name))
-                            ErrorManager.ReportWarning(nsImport.Line, nsImport.Column, $"Unreferenced namespace '{nsImport.Name}'");
-                    }
-                    else if (import is ConstructorImport ctorImport)
-                    {
-                        var typeSchema = ResolveTypeFromQualifiedName(ctorImport.QualifiedName);
-                        var ctorParamTypes = ctorImport.ParameterTypes.Select(ResolveTypeFromQualifiedName).ToArray();
-
-                        var ctorSchema = typeSchema.FindConstructor(ctorParamTypes);
-
-                        TrackImportedConstructor(ctorSchema);
-                    }
-                    else if (import is MethodImport mthdImport)
-                    {
-                        var typeSchema = ResolveTypeFromQualifiedName(mthdImport.QualifiedName);
-                        var mthdParamTypes = mthdImport.ParameterTypes.Select(ResolveTypeFromQualifiedName).ToArray();
-
-                        var mthdSchema = typeSchema.FindMethod(mthdImport.MethodName, mthdParamTypes);
-
-                        TrackImportedMethod(mthdSchema);
-                    }
-                    else if (import is NamedMemberImport mbrsImport)
-                    {
-                        var typeSchema = ResolveTypeFromQualifiedName(mbrsImport.QualifiedName);
-                        
-                        foreach (var memberName in mbrsImport.MemberNames)
-                        {
-                            var propMember = typeSchema.FindProperty(memberName);
-                            if (propMember is not null)
-                            {
-                                TrackImportedProperty(propMember);
-                                continue;
-                            }
-
-                            var eventMember = typeSchema.FindEvent(memberName);
-                            if (eventMember is not null)
-                            {
-                                TrackImportedEvent(eventMember);
-                                continue;
-                            }
-                        }
-                    }
-                }
-            }
+            TrackImports();
         }
 
         if (_currentValidationPass == LoadPass.DeclareTypes)
@@ -386,9 +324,62 @@ internal class AsmMarkupLoader
 
             if (!MarkupSystem.TrackAdditionalMetadata)
                 Program = null;
+        }
+    }
 
-            //foreach (DisposableObject validateObject in _validateObjects)
-            //    validateObject.Dispose(this);
+    private void TrackImports()
+    {
+        foreach (var import in Program.Imports)
+        {
+            if (import is TypeImport typeImport)
+            {
+                var typeSchema = ResolveTypeFromQualifiedName(typeImport.QualifiedName);
+                TrackImportedType(typeSchema);
+            }
+            else if (import is NamespaceImport nsImport)
+            {
+                if (!_referencedNamespaces.Contains(nsImport.Name))
+                    ErrorManager.ReportWarning(nsImport.Line, nsImport.Column, $"Unreferenced namespace '{nsImport.Name}'");
+            }
+            else if (import is ConstructorImport ctorImport)
+            {
+                var typeSchema = ResolveTypeFromQualifiedName(ctorImport.QualifiedName);
+                var ctorParamTypes = ctorImport.ParameterTypes.Select(ResolveTypeFromQualifiedName).ToArray();
+
+                var ctorSchema = typeSchema.FindConstructor(ctorParamTypes);
+
+                TrackImportedConstructor(ctorSchema);
+            }
+            else if (import is MethodImport mthdImport)
+            {
+                var typeSchema = ResolveTypeFromQualifiedName(mthdImport.QualifiedName);
+                var mthdParamTypes = mthdImport.ParameterTypes.Select(ResolveTypeFromQualifiedName).ToArray();
+
+                var mthdSchema = typeSchema.FindMethod(mthdImport.MethodName, mthdParamTypes);
+
+                TrackImportedMethod(mthdSchema);
+            }
+            else if (import is NamedMemberImport mbrsImport)
+            {
+                var typeSchema = ResolveTypeFromQualifiedName(mbrsImport.QualifiedName);
+
+                foreach (var memberName in mbrsImport.MemberNames)
+                {
+                    var propMember = typeSchema.FindProperty(memberName);
+                    if (propMember is not null)
+                    {
+                        TrackImportedProperty(propMember);
+                        continue;
+                    }
+
+                    var eventMember = typeSchema.FindEvent(memberName);
+                    if (eventMember is not null)
+                    {
+                        TrackImportedEvent(eventMember);
+                        continue;
+                    }
+                }
+            }
         }
     }
 
