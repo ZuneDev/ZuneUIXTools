@@ -2,7 +2,9 @@
     "profiles": {
         "UIXC": {
             "commandName": "Project",
-            "commandLineArgs": "decompile C:\\Users\\jjask\\Documents\\Dump\\Zune\\ZuneShellResources -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o C:\\Users\\jjask\\Documents\\Dump\\Zune\\ZuneShellResources_uixa -t C:\\Users\\jjask\\Documents\\Dump\\Zune\\ZuneShellResources_uixa\\_DATATABLE.uixa",
+            "commandLineArgs": "decompile C:\\Users\\jjask\\Documents\\Dump\\Zune\\ZuneShellResources\\AboutDialog.uix -l xml -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o C:\\Users\\jjask\\Documents\\Dump\\Zune\\ZuneShellResources_xml -t C:\\Users\\jjask\\Documents\\Dump\\Zune\\ZuneShellResources\\_DATATABLE.uib",
+
+            //"commandLineArgs": "decompile C:\\Users\\jjask\\Documents\\Dump\\Zune\\ZuneShellResources -l xml -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o C:\\Users\\jjask\\Documents\\Dump\\Zune\\ZuneShellResources_xml -t C:\\Users\\jjask\\Documents\\Dump\\Zune\\ZuneShellResources\\_DATATABLE.uib",
             //"commandLineArgs": "decompile C:\\Users\\jjask\\Documents\\Dump\\Zune\\ZuneShellResources\\_DATATABLE.UIB -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o C:\\Users\\jjask\\Documents\\Dump\\Zune\\ZuneShellResources_uixa",
             //"commandLineArgs": "compile C:\\Users\\jjask\\Documents\\Dump\\Zune\\ZuneShellResources\\CreatePassport.uixa -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o C:\\Users\\jjask\\Documents\\Dump\\Zune",
             //"commandLineArgs": "compile C:\\Users\\jjask\\Documents\\Dump\\Zune\\_DATATABLE.uixa -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o C:\\Users\\jjask\\Documents\\Dump\\Zune",

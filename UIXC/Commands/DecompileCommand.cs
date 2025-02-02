@@ -1,5 +1,6 @@
 ﻿using Microsoft.Iris.Asm;
 using Microsoft.Iris.Debug;
+using Microsoft.Iris.DecompXml;
 using Microsoft.Iris.Markup;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -77,42 +78,54 @@ public class DecompileCommand : CompilerCommandBase<DecompileCommand.Settings>
             }
         }
 
+        Func<LoadResult, string> decompilerMethod; 
+
         if (settings.Language == SourceLanguage.Asm)
         {
-            foreach (var input in enumeratedInputs.Where(f => !f.EndsWith(".uixa")))
+            decompilerMethod = loadResult =>
             {
-                try
-                {
-                    var uibLoadResult = LoadIrisFile(input, settings);
-                    if (uibLoadResult.Status != LoadResultStatus.Success)
-                        throw new Exception($"Failed to load UIB source from {uibLoadResult.ErrorContextUri}");
-
-                    var disassembler = Disassembler.Load(uibLoadResult);
-                    var asm = disassembler.Write();
-
-                    var output = GetOutputPath(settings, input);
-                    File.WriteAllText(output, asm);
-
-                    AnsiConsole.MarkupLineInterpolated($"[green]Decompiled to '{output}'[/]");
-                    success = true;
-                }
-                catch (Exception ex)
-                {
-                    AnsiConsole.WriteException(ex);
-                    success = false;
-                }
-            }
+                var disassembler = Disassembler.Load(loadResult);
+                return disassembler.Write();
+            };
         }
         else if (settings.Language == SourceLanguage.Xml)
         {
-            AnsiConsole.MarkupLine("[red]UIX XML is not currently a supported decompilation target.[/]");
+            decompilerMethod = loadResult =>
+            {
+                var decompiler = Decompiler.Load(loadResult);
+                return decompiler.DecompileToSource();
+            };
         }
         else
         {
             AnsiConsole.MarkupLine($"[red]{settings.Language} is not currently a supported decompilation target.[/]");
+            goto done;
         }
 
-        done:
+        foreach (var input in enumeratedInputs)//.Where(f => !f.EndsWith(settings.Language.GetExtension())))
+        {
+            try
+            {
+                var uibLoadResult = LoadIrisFile(input, settings);
+                if (uibLoadResult.Status != LoadResultStatus.Success)
+                    throw new Exception($"Failed to load UIB source from {uibLoadResult.ErrorContextUri}");
+
+                var decompiledSource = decompilerMethod(uibLoadResult);
+
+                var output = GetOutputPath(settings, input);
+                File.WriteAllText(output, decompiledSource);
+
+                AnsiConsole.MarkupLineInterpolated($"[green]Decompiled to '{output}'[/]");
+                success = true;
+            }
+            catch (Exception ex)
+            {
+                AnsiConsole.WriteException(ex);
+                success = false;
+            }
+        }
+
+    done:
         StopErrorReporting();
         Report?.Render(AnsiConsole.Console);
         AnsiConsole.WriteLine();
