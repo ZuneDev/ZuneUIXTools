@@ -9,6 +9,8 @@
         <AssemblyOriginatorKeyFile>..\libs\MicrosoftIris\36MSApp1024.snk</AssemblyOriginatorKeyFile>
         <DelaySign>True</DelaySign>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+        <GeminiVersion>1.0.76-beta</GeminiVersion>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -22,11 +24,11 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="GeminiWpf" Version="1.0.76-beta" />
-        <PackageReference Include="Gemini.Modules.Output" Version="1.0.76-beta" />
-        <PackageReference Include="Gemini.Modules.ErrorList" Version="1.0.76-beta" />
-        <PackageReference Include="Gemini.Modules.CodeEditor" Version="1.0.76-beta" />
-		<PackageReference Include="Gemini.Modules.Inspector" Version="1.0.76-beta" />
+        <PackageReference Include="GeminiWpf" Version="$(GeminiVersion)" />
+        <PackageReference Include="Gemini.Modules.Output" Version="$(GeminiVersion)" />
+        <PackageReference Include="Gemini.Modules.ErrorList" Version="$(GeminiVersion)" />
+        <PackageReference Include="Gemini.Modules.CodeEditor" Version="$(GeminiVersion)" />
+        <PackageReference Include="Gemini.Modules.Inspector" Version="$(GeminiVersion)" />
         <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="8.0.0" />
         <PackageReference Include="WPFHexaEditor" Version="2.1.7" />
         <ProjectReference Include="..\libs\MicrosoftIris\UIX\UIX.csproj" />
@@ -34,7 +36,6 @@
 
     <ItemGroup>
         <LibFiles Include="lib\**\*.*" />
-        <None Update="lib\UIX.renderapi.dll" />
         <None Update="lib\UIXrender.dll" />
         <None Update="lib\UIXsup.dll" />
     </ItemGroup>
