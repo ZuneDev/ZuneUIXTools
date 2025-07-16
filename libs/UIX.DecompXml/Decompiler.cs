@@ -1,6 +1,7 @@
 ﻿using Humanizer;
 using Microsoft.Iris.Asm;
 using Microsoft.Iris.Asm.Models;
+using Microsoft.Iris.DecompXml.Mock;
 using Microsoft.Iris.Markup;
 using System;
 using System.Collections.Generic;
@@ -18,6 +19,7 @@ public class Decompiler
     private readonly MarkupLoadResult _dataTableLoadResult;
     private readonly Dictionary<string, XNamespace> _namespaces;
     private readonly Dictionary<string, string> _uriAliasMap;
+    private Instruction[] _instructions;
 
     private Decompiler(MarkupLoadResult loadResult, MarkupLoadResult dataTableLoadResult = null)
     {
@@ -68,6 +70,10 @@ public class Decompiler
 
         GetNamespaces();
 
+        _instructions = ObjectSection.Decode(_loadResult.ObjectSection)
+            .OfType<Instruction>()
+            .ToArray();
+
         XNamespace nsUix = XNamespace.Get("http://schemas.microsoft.com/2007/uix");
         XElement xRoot = new(nsUix + "UIX", new XAttribute("xmlns", nsUix));
 
@@ -82,6 +88,16 @@ public class Decompiler
                 new XAttribute("Name", name),
                 new XAttribute("Base", baseTypeName));
 
+            var initPropOffset = export.InitializePropertiesOffset;
+
+            var defaultType = export.ConstructDefault();
+            var initializedType = export.ConstructDefault();
+            try
+            {
+                export.InitializeInstance(ref initializedType);
+            }
+            catch { }
+
             var propertyElements = new XElement[export.Properties.Length];
             for (int i = 0; i < export.Properties.Length; i++)
             {
@@ -91,6 +107,11 @@ public class Decompiler
                 // TODO: Decode object section to get default property assignments
                 XElement xProperty = new(typeName,
                     new XAttribute("Name", property.Name));
+
+                var defaultValue = property.GetValue(defaultType);
+                var initializedValue = property.GetValue(initializedType);
+                if (defaultValue != initializedValue)
+                    xProperty.Add(new XAttribute("TODO_DEFAULT", initializedValue));
 
                 propertyElements[i] = xProperty;
             }
