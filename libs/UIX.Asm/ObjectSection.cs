@@ -88,4 +88,52 @@ public class ObjectSection
 
         return writer.CreateReader();
     }
+
+    public static IEnumerable<ICodeItem> Decode(ByteCodeReader reader, Dictionary<uint, List<Label>> offsetLabelMap = null)
+    {
+        while (reader.CurrentOffset < reader.Size)
+        {
+            var offset = reader.CurrentOffset;
+            if (offsetLabelMap?.TryGetValue(offset, out var labels) ?? false)
+                foreach (var label in labels)
+                    yield return label;
+
+            var opCode = (OpCode)reader.ReadByte();
+
+            var instSchema = InstructionSet.InstructionSchema[opCode];
+            Operand[] operands = new Operand[instSchema.Length];
+
+            for (int i = 0; i < instSchema.Length; i++)
+            {
+                var operandDataType = instSchema[i];
+                Operand operand;
+
+                if (operandDataType == LiteralDataType.ConstantIndex)
+                {
+                    // Refer to the constant by name rather than index
+                    var constantIndex = reader.ReadUInt16();
+
+                    // TODO: Only generate name if not using a shared binary table
+                    operand = new OperandReference($"const{constantIndex}", constantIndex);
+                }
+                else
+                {
+                    object literalValue = OperandLiteral.ReduceDataType(operandDataType) switch
+                    {
+                        LiteralDataType.Byte => reader.ReadByte(),
+                        LiteralDataType.UInt16 => reader.ReadUInt16(),
+                        LiteralDataType.UInt32 => reader.ReadUInt32(),
+                        LiteralDataType.Int32 => reader.ReadInt32(),
+                        _ => throw new InvalidOperationException($"Unexpected operand data type '{operandDataType}'")
+                    };
+
+                    operand = new OperandLiteral(literalValue, operandDataType);
+                }
+
+                operands[i] = operand;
+            }
+
+            yield return new Instruction(opCode, operands, offset);
+        }
+    }
 }

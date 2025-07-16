@@ -49,11 +49,14 @@ public record OperandLiteral : Operand
 
 public record OperandReference : Operand
 {
-    public OperandReference(string constantName) : base(constantName, constantName)
+    public OperandReference(string constantName, int index = -1) : base(constantName, constantName)
     {
+        Index = index;
     }
 
     public string ConstantName => Content;
+
+    public int Index { get; }
 
     public override string ToString() => $"@{base.ToString()}";
 }

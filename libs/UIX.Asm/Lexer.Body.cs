@@ -110,7 +110,7 @@ partial class Lexer
                 }
             }
 
-            bodyItem = new Instruction(identifier, operands ?? [])
+            bodyItem = new Instruction(identifier, operands ?? [], 0)
             {
                 Line = line,
                 Column = column,
