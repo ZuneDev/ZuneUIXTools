@@ -1,7 +1,6 @@
 ﻿using Humanizer;
 using Microsoft.Iris.Asm;
 using Microsoft.Iris.Asm.Models;
-using Microsoft.Iris.DecompXml.Mock;
 using Microsoft.Iris.Markup;
 using System;
 using System.Collections.Generic;
@@ -20,6 +19,7 @@ public class Decompiler
     private readonly Dictionary<string, XNamespace> _namespaces;
     private readonly Dictionary<string, string> _uriAliasMap;
     private Instruction[] _instructions;
+    private Disassembler.RawConstantInfo[] _constants;
 
     private Decompiler(MarkupLoadResult loadResult, MarkupLoadResult dataTableLoadResult = null)
     {
@@ -74,6 +74,8 @@ public class Decompiler
             .OfType<Instruction>()
             .ToArray();
 
+        _constants = Disassembler.EnumerateConstantInfo(_loadResult).ToArray();
+
         XNamespace nsUix = XNamespace.Get("http://schemas.microsoft.com/2007/uix");
         XElement xRoot = new(nsUix + "UIX", new XAttribute("xmlns", nsUix));
 
@@ -88,36 +90,65 @@ public class Decompiler
                 new XAttribute("Name", name),
                 new XAttribute("Base", baseTypeName));
 
-            var initPropOffset = export.InitializePropertiesOffset;
-
-            var defaultType = export.ConstructDefault();
-            var initializedType = export.ConstructDefault();
-            try
-            {
-                export.InitializeInstance(ref initializedType);
-            }
-            catch { }
+            var initPropsOffset = export.InitializePropertiesOffset;
+            var initPropsBody = _instructions
+                .SkipWhile(i => i.Offset < initPropsOffset)
+                .OrderBy(i => i.Offset)
+                .TakeWhile(i => i.OpCode is not (OpCode.ReturnValue or OpCode.ReturnVoid))
+                .OrderBy(i => i.Offset)
+                .ToArray();
 
             var propertyElements = new XElement[export.Properties.Length];
-            for (int i = 0; i < export.Properties.Length; i++)
+
+            Stack<XNode> xStack = new([xExport]);
+            Stack<Disassembler.RawConstantInfo> constantsStack = new();
+
+            for (int i = 0; i < initPropsBody.Length; i++)
             {
-                PropertySchema property = export.Properties[i];
-                var typeName = GetXName(property.PropertyType);
+                var instruction = initPropsBody[i];
 
-                // TODO: Decode object section to get default property assignments
-                XElement xProperty = new(typeName,
-                    new XAttribute("Name", property.Name));
+                if (instruction.OpCode is OpCode.JumpIfDictionaryContains)
+                {
+                }
+                else if (instruction.OpCode is OpCode.PushConstant)
+                {
+                    var constantOperand = (OperandReference)instruction.Operands.First();
+                    var constant = _constants[constantOperand.Index];
+                    constantsStack.Push(constant);
+                    //xStack.Push(IntoXNode(constant.Value));
+                }
+                else if (instruction.OpCode is OpCode.PushNull)
+                {
+                    constantsStack.Push(null);
+                    //xStack.Push(IntoXNode(null));
+                }
+                else if (instruction.OpCode is OpCode.PropertyDictionaryAdd)
+                {
+                    var targetProperty = _loadResult.ImportTables.PropertyImports[(ushort)instruction.Operands.ElementAt(0).Value];
 
-                var defaultValue = property.GetValue(defaultType);
-                var initializedValue = property.GetValue(initializedType);
-                if (defaultValue != initializedValue)
-                    xProperty.Add(new XAttribute("TODO_DEFAULT", initializedValue));
+                    var keyReference = (OperandReference)instruction.Operands.ElementAt(1);
+                    var key = _constants[keyReference.Index].Value.ToString();
 
-                propertyElements[i] = xProperty;
+                    //var xValue = xStack.Pop();
+                    var value = constantsStack.Pop();
+
+                    var targetInstance = xStack.Peek() as XElement;
+                    var xDictionary = GetOrCreateElement(targetInstance, nsUix + targetProperty.Name);
+
+                    XElement xDictionaryEntry = new(GetXName(value.Type));
+                    xDictionaryEntry.SetAttributeValue("Name", key);
+                    xDictionary.Add(xDictionaryEntry);
+
+                    if (value.Value is IStringEncodable valStrEnc)
+                    {
+                        xDictionaryEntry.SetAttributeValue(value.Type.Name, valStrEnc);
+                    }
+                    else
+                    {
+                        xDictionaryEntry.SetAttributeValue(value.Type.Name, value.Value.ToString());
+                    }
+                }
             }
-
-            XElement xProperties = new(nsUix + "Properties", propertyElements);
-            xExport.Add(xProperties);
 
             xRoot.Add(xExport);
         }
@@ -237,6 +268,33 @@ public class Decompiler
         _uriAliasMap.TryGetValue(schema.Owner.Uri, out string prefix);
         var ns = _namespaces[prefix ?? ""];
         return ns + schema.Name; 
+    }
+
+    private XElement GetOrCreateElement(XElement parent, XName name)
+    {
+        var elem = parent.Element(name);
+
+        if (elem is null)
+        {
+            elem = new XElement(name);
+            parent.Add(elem);
+        }
+
+        return elem;
+    }
+
+    private XNode IntoXNode(object obj)
+    {
+        if (obj is null)
+            return new XText("{null}");
+
+        return obj switch
+        {
+            string str => new XText(str),
+            IStringEncodable strEnc => new XText(strEnc.EncodeString()),
+
+            _ => throw new InvalidOperationException($"Cannot convert type '{obj.GetType().Name}' to an XNode")
+        };
     }
 
     [MemberNotNullWhen(true, nameof(_dataTableLoadResult))]

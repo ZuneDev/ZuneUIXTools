@@ -14,7 +14,7 @@ public static class SourceLanguageEx
             SourceLanguage.Xml => ".uix",
             SourceLanguage.Asm => ".uixa",
 
-            _ => throw new ArgumentException("Invalid source langauge", nameof(sourceLanguage)),
+            _ => throw new ArgumentException("Invalid source language", nameof(sourceLanguage)),
         };
     }
 }

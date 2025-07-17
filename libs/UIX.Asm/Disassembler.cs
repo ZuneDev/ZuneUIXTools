@@ -314,7 +314,7 @@ public class Disassembler
         }
     }
 
-    private static IEnumerable<RawConstantInfo> EnumerateConstantInfo(MarkupLoadResult loadResult)
+    public static IEnumerable<RawConstantInfo> EnumerateConstantInfo(MarkupLoadResult loadResult)
     {
         var constantsTable = loadResult.ConstantsTable;
         bool hasPersistList = constantsTable.PersistList is not null;
@@ -419,7 +419,7 @@ public class Disassembler
         throw new NotSupportedException($"Unable to encode constant value '{constantValue}' of type '{qualifiedTypeName}'");
     }
 
-    private record RawConstantInfo(int Index, TypeSchema Type, object Value)
+    public record RawConstantInfo(int Index, TypeSchema Type, object Value)
     {
         public string GenerateDefaultName() => $"const{Index:D}";
     }

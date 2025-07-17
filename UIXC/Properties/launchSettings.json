@@ -2,7 +2,12 @@
     "profiles": {
         "UIXC": {
             "commandName": "Project",
-            "commandLineArgs": "decompile C:\\Users\\jjask\\Documents\\Dump\\Zune\\ZuneShellResources\\AboutDialog.uix -l xml -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o C:\\Users\\jjask\\Documents\\Dump\\Zune\\ZuneShellResources_xml -t C:\\Users\\jjask\\Documents\\Dump\\Zune\\ZuneShellResources\\_DATATABLE.uib",
+
+            "commandLineArgs": "decompile E:\\Repos\\ZuneDev\\ZuneUIXTools\\test\\ABOUTDIALOG.31_48.UIB -l xml -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o E:\\Repos\\ZuneDev\\ZuneUIXTools\\test",
+            //"commandLineArgs": "compile E:\\Repos\\ZuneDev\\ZuneUIXTools\\test\\ADDTOCOLLECTION.31_48.UIX -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o E:\\Repos\\ZuneDev\\ZuneUIXTools\\test",
+
+            //"commandLineArgs": "decompile E:\\Documents\\REProj\\Zune\\Resources\\ZuneShellResources48\\ABOUTDIALOG.UIX -l xml -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o E:\\Documents\\REProj\\Zune\\Resources\\ZuneShellResources48_xml -t E:\\Documents\\REProj\\Zune\\Resources\\ZuneShellResources48\\_DATATABLE.uib",
+            //"commandLineArgs": "decompile C:\\Users\\jjask\\Documents\\Dump\\Zune\\ZuneShellResources\\AboutDialog.uix -l xml -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o C:\\Users\\jjask\\Documents\\Dump\\Zune\\ZuneShellResources_xml -t C:\\Users\\jjask\\Documents\\Dump\\Zune\\ZuneShellResources\\_DATATABLE.uib",
 
             //"commandLineArgs": "decompile C:\\Users\\jjask\\Documents\\Dump\\Zune\\ZuneShellResources -l xml -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o C:\\Users\\jjask\\Documents\\Dump\\Zune\\ZuneShellResources_xml -t C:\\Users\\jjask\\Documents\\Dump\\Zune\\ZuneShellResources\\_DATATABLE.uib",
             //"commandLineArgs": "decompile C:\\Users\\jjask\\Documents\\Dump\\Zune\\ZuneShellResources\\_DATATABLE.UIB -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o C:\\Users\\jjask\\Documents\\Dump\\Zune\\ZuneShellResources_uixa",
