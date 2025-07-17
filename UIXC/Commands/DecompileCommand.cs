@@ -146,8 +146,9 @@ public class DecompileCommand : CompilerCommandBase<DecompileCommand.Settings>
 
     private static string GetOutputPath(Settings settings, string inputFilePath)
     {
-        var fileName = Path.GetFileName(inputFilePath);//.Replace('!', '/');
-        var outputFile = Path.Combine(settings.OutputDir, Path.ChangeExtension(fileName, settings.Language.GetExtension()));
+        var fileName = Path.GetFileNameWithoutExtension(inputFilePath);//.Replace('!', '/');
+        var newFileName = $"{fileName}_decomp{settings.Language.GetExtension()}";
+        var outputFile = Path.Combine(settings.OutputDir, newFileName);
 
         var outputDir = Path.GetDirectoryName(outputFile)!;
         Directory.CreateDirectory(outputDir);
