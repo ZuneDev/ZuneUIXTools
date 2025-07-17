@@ -3,12 +3,10 @@ using Microsoft.Iris.Asm;
 using Microsoft.Iris.Asm.Models;
 using Microsoft.Iris.DecompXml.Mock;
 using Microsoft.Iris.Markup;
-using Microsoft.Iris.Markup.Validation;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Text;
 using System.Xml;
 using System.Xml.Linq;
@@ -17,9 +15,11 @@ namespace Microsoft.Iris.DecompXml;
 
 public class Decompiler
 {
-    private readonly MarkupLoadResult _loadResult;
+    internal readonly MarkupLoadResult _loadResult;
     private readonly MarkupLoadResult _dataTableLoadResult;
+    private readonly XNamespace _nsUix = XNamespace.Get("http://schemas.microsoft.com/2007/uix");
     private readonly Dictionary<string, XNamespace> _namespaces;
+    private readonly HashSet<string> _usedNamespacePrefixes;
     private readonly Dictionary<string, string> _uriAliasMap;
     private Instruction[] _instructions;
     private Disassembler.RawConstantInfo[] _constants;
@@ -42,6 +42,8 @@ public class Decompiler
             ["me"] = "Me",
             [""] = "http://schemas.microsoft.com/2007/uix"
         };
+
+        _usedNamespacePrefixes = [];
     }
 
     public static Decompiler Load(LoadResult loadResult, LoadResult dataTableLoadResult = null)
@@ -79,8 +81,7 @@ public class Decompiler
 
         _constants = Disassembler.EnumerateConstantInfo(_loadResult).ToArray();
 
-        XNamespace nsUix = XNamespace.Get("http://schemas.microsoft.com/2007/uix");
-        XElement xRoot = new(nsUix + "UIX", new XAttribute("xmlns", nsUix));
+        XElement xRoot = new(_nsUix + "UIX", new XAttribute("xmlns", _nsUix));
 
         foreach (var export in _loadResult.ExportTable.Cast<MarkupTypeSchema>())
         {
@@ -89,7 +90,7 @@ public class Decompiler
             var baseType = export.MarkupTypeBase;
             var baseTypeName = GetQualifiedName(baseType);
 
-            XElement xExport = new(nsUix + export.MarkupType.ToString(),
+            XElement xExport = new(_nsUix + export.MarkupType.ToString(),
                 new XAttribute("Name", name),
                 new XAttribute("Base", baseTypeName));
 
@@ -126,7 +127,7 @@ public class Decompiler
                 {
                     var type = _loadResult.ImportTables.TypeImports[(ushort)instruction.Operands.ElementAt(0).Value];
                     var xObj = new XElement(GetXName(type));
-                    stack.Push(xObj);
+                    stack.Push(new IrisObject(xObj, type));
                 }
                 else if (instruction.OpCode is OpCode.MethodInvokeStatic)
                 {
@@ -137,17 +138,7 @@ public class Decompiler
                     for (parameterCount--; parameterCount >= 0; parameterCount--)
                         parameters[parameterCount] = stack.Pop();
 
-                    var callExpression = new IrisMethodCallExpression(method, null, parameters.Select(p =>
-                    {
-                        return p switch
-                        {
-                            null => Expression.Constant(null),
-                            Expression expr => expr,
-                            Disassembler.RawConstantInfo constantInfo => new IrisConstantExpression(constantInfo.Value, constantInfo.Type),
-
-                            _ => throw new NotImplementedException()
-                        };
-                    }));
+                    var callExpression = new IrisMethodCallExpression(method, null, parameters.Select(IrisExpression.ToExpression));
 
                     stack.Push(callExpression);
                 }
@@ -155,25 +146,13 @@ public class Decompiler
                 {
                     var property = _loadResult.ImportTables.PropertyImports[(ushort)instruction.Operands.ElementAt(0).Value];
                     var value = stack.Pop();
-                    var xTarget = (XElement)stack.Peek();
 
-                    if (value is XElement xValue)
-                    {
-                        var xProperty = new XElement(property.Name);
-                        xProperty.Add(xValue);
-                        xTarget.Add(xProperty);
-                    }
-                    else
-                    {
-                        string strValue = value switch
-                        {
-                            IStringEncodable strEnc => strEnc.EncodeString(),
-                            IrisExpression irisExpr => irisExpr.Decompile(this),
-                            _ => value.ToString()
-                        };
+                    var target = stack.Pop();
+                    var xTarget = (XElement)ToXmlFriendlyObject(target);
 
-                        xTarget.SetAttributeValue(property.Name, strValue);
-                    }
+                    PropertyAssignOnXElement(xTarget, property, IrisObject.Create(value, property.PropertyType, this));
+
+                    stack.Push(new IrisObject(xTarget, property.Owner));
                 }
                 else if (instruction.OpCode is OpCode.PropertyDictionaryAdd)
                 {
@@ -185,39 +164,8 @@ public class Decompiler
                     var value = stack.Pop();
 
                     var targetInstance = stack.Peek() as XElement;
-                    var xDictionary = GetOrCreateElement(targetInstance, nsUix + targetProperty.Name);
 
-                    XElement xDictionaryEntry;
-
-                    if (value is Disassembler.RawConstantInfo constantValue)
-                    {
-                        xDictionaryEntry = new(GetXName(constantValue.Type));
-                        if (constantValue.Value is IStringEncodable valStrEnc)
-                        {
-                            xDictionaryEntry.SetAttributeValue(constantValue.Type.Name, valStrEnc);
-                        }
-                        else
-                        {
-                            xDictionaryEntry.SetAttributeValue(constantValue.Type.Name, constantValue.Value.ToString());
-                        }
-                    }
-                    else if (value is XElement xValue)
-                    {
-                        xDictionaryEntry = xValue;
-                    }
-                    else if (value is IrisExpression exprValue and IReturnValueProvider exprWithReturnValue)
-                    {
-                        var returnType = exprWithReturnValue.ReturnType;
-                        xDictionaryEntry = new(GetXName(returnType));
-                        xDictionaryEntry.SetAttributeValue(returnType.Name, exprValue.Decompile(this));
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException();
-                    }
-
-                    xDictionaryEntry.SetAttributeValue("Name", key);
-                    xDictionary.Add(xDictionaryEntry);
+                    PropertyDictionaryAddOnXElement(targetInstance, targetProperty, IrisObject.Create(value, null, this), key);
                 }
             }
 
@@ -227,16 +175,12 @@ public class Decompiler
         XDocument xDoc = new(xRoot);
 
         // Add all namespaces to root element
-        foreach (var pair in _namespaces)
-        {
-            var prefix = pair.Key;
-            var ns = pair.Value;
+        var xNamespaceDeclarations = _namespaces
+            .Where(p => _usedNamespacePrefixes.Contains(p.Key) && !string.IsNullOrEmpty(p.Key))
+            .Select(p => new XAttribute(XNamespace.Xmlns + p.Key, p.Value));
 
-            if (string.IsNullOrEmpty(prefix))
-                continue;
+        xDoc.Root.Add(xNamespaceDeclarations.ToArray());
 
-            xDoc.Root.SetAttributeValue(XNamespace.Xmlns + prefix, ns);
-        }
         return xDoc;
     }
 
@@ -328,20 +272,27 @@ public class Decompiler
         };
     }
 
+    internal string MapNamespaceToPrefix(string uri)
+    {
+        _uriAliasMap.TryGetValue(uri, out string prefix);
+        _usedNamespacePrefixes.Add(prefix);
+        return prefix;
+    }
+
     internal QualifiedTypeName GetQualifiedName(TypeSchema schema)
     {
-        _uriAliasMap.TryGetValue(schema.Owner.Uri, out string prefix);
+        var prefix = MapNamespaceToPrefix(schema.Owner.Uri);
         return new(prefix, schema.Name);
     }
 
     private XName GetXName(TypeSchema schema)
     {
-        _uriAliasMap.TryGetValue(schema.Owner.Uri, out string prefix);
+        var prefix = MapNamespaceToPrefix(schema.Owner.Uri);
         var ns = _namespaces[prefix ?? ""];
         return ns + schema.Name; 
     }
 
-    private XElement GetOrCreateElement(XElement parent, XName name)
+    private static XElement GetOrCreateElement(XElement parent, XName name)
     {
         var elem = parent.Element(name);
 
@@ -354,18 +305,81 @@ public class Decompiler
         return elem;
     }
 
-    private XNode IntoXNode(object obj)
+    private object ToXmlFriendlyObject(object obj)
     {
-        if (obj is null)
-            return new XText("{null}");
+        if (obj is Disassembler.RawConstantInfo rci)
+            obj = rci.Value;
+        else if (obj is IrisObject irisObj)
+            obj = irisObj.Object;
 
         return obj switch
         {
-            string str => new XText(str),
-            IStringEncodable strEnc => new XText(strEnc.EncodeString()),
+            string str => str,
+            IStringEncodable strEnc => strEnc.EncodeString(),
+            null => "{null}",
+            IrisExpression expr => '{' + expr.Decompile(this) + '}',
 
-            _ => throw new InvalidOperationException($"Cannot convert type '{obj.GetType().Name}' to an XNode")
+            XElement xElem => xElem,
+
+            _ => throw new InvalidOperationException($"Cannot convert type '{obj.GetType().Name}' to an XML object")
         };
+    }
+
+    private XObject PropertyAssignOnXElement(XElement xTarget, PropertySchema property, IrisObject value)
+    {
+        object xfValue = ToXmlFriendlyObject(value.Object);
+
+        XObject xObject;
+
+        switch (xfValue)
+        {
+            case XElement xValue:
+                var xProperty = GetOrCreateElement(xTarget, property.Name);
+                xProperty.Add(xValue);
+                xObject = xProperty;
+                break;
+
+            case string strValue:
+                xObject = new XAttribute(property.Name, strValue);
+                break;
+
+            default:
+                throw new InvalidOperationException();
+        }
+
+        xTarget.Add(xObject);
+        return xObject;
+    }
+
+    private XElement PropertyDictionaryAddOnXElement(XElement xTarget, PropertySchema property, IrisObject value, string key)
+    {
+        var xDictionary = GetOrCreateElement(xTarget, _nsUix + property.Name);
+        return PropertyDictionaryAddOnXElement(xDictionary, value, key);
+    }
+
+    private XElement PropertyDictionaryAddOnXElement(XElement xDictionary, IrisObject value, string key)
+    {
+        object xValue = ToXmlFriendlyObject(value.Object);
+
+        XElement xDictionaryEntry;
+
+        switch (xValue)
+        {
+            case string strValue:
+                xDictionaryEntry = new(GetXName(value.Type));
+                xDictionaryEntry.SetAttributeValue(value.Type.Name, strValue);
+                break;
+            case XElement xValueELem:
+                xDictionaryEntry = xValueELem;
+                break;
+            default:
+                throw new InvalidOperationException();
+        }
+
+        xDictionaryEntry.SetAttributeValue("Name", key);
+        xDictionary.Add(xDictionaryEntry);
+
+        return xDictionaryEntry;
     }
 
     [MemberNotNullWhen(true, nameof(_dataTableLoadResult))]

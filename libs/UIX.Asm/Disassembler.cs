@@ -347,13 +347,18 @@ public class Disassembler
                 }
 
                 var runtimeType = constantValue.GetType();
-                var typeSchema = loadResult.ImportTables.TypeImports.FirstOrDefault(t => t.RuntimeType == runtimeType)
-                    ?? loadResult.ImportTables.TypeImports.FirstOrDefault(t => t.RuntimeType == runtimeType.BaseType)
-                    ?? throw new Exception($"Failed to find type schema for '{runtimeType.Name}' in {loadResult.Uri}");
+                var typeSchema = GuessTypeSchema(runtimeType, loadResult);
 
                 yield return new(c, typeSchema, constantValue);
             }
         }
+    }
+
+    public static TypeSchema GuessTypeSchema(Type runtimeType, MarkupLoadResult loadResult)
+    {
+        return loadResult.ImportTables.TypeImports.FirstOrDefault(t => t.RuntimeType == runtimeType)
+            ?? loadResult.ImportTables.TypeImports.FirstOrDefault(t => t.RuntimeType == runtimeType.BaseType)
+            ?? throw new Exception($"Failed to find type schema for '{runtimeType.Name}' in {loadResult.Uri}");
     }
 
     private ConstantDirective EncodeConstant(object constantValue, string constantName, TypeSchema typeSchema)
