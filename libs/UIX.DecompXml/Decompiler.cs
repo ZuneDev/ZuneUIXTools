@@ -92,58 +92,60 @@ public class Decompiler
         {
             var instruction = methodBody[i];
 
-            if (instruction.OpCode is OpCode.PushConstant)
+            switch (instruction.OpCode)
             {
-                var constant = _context.GetConstant(instruction.Operands.First());
-                stack.Push(constant);
-            }
-            else if (instruction.OpCode is OpCode.PushNull)
-            {
-                stack.Push(null);
-            }
-            else if (instruction.OpCode is OpCode.ConstructObject)
-            {
-                var type = _context.GetImportedType(instruction.Operands.ElementAt(0));
-                var xObj = new XElement(_context.GetXName(type));
-                stack.Push(new IrisObject(xObj, type));
-            }
-            else if (instruction.OpCode is OpCode.MethodInvokeStatic)
-            {
-                var method = _context.GetImportedMethod(instruction.Operands.First());
+                case OpCode.PushConstant:
+                    var constant = _context.GetConstant(instruction.Operands.First());
+                    stack.Push(constant);
+                    break;
 
-                int parameterCount = method.ParameterTypes.Length;
-                object[] parameters = new object[parameterCount];
-                for (parameterCount--; parameterCount >= 0; parameterCount--)
-                    parameters[parameterCount] = stack.Pop();
+                case OpCode.PushNull:
+                    stack.Push(null);
+                    break;
 
-                var callExpression = new IrisMethodCallExpression(method, null, parameters.Select(IrisExpression.ToExpression));
+                case OpCode.ConstructObject:
+                    var type = _context.GetImportedType(instruction.Operands.ElementAt(0));
+                    var xObj = new XElement(_context.GetXName(type));
+                    stack.Push(new IrisObject(xObj, type));
+                    break;
 
-                stack.Push(callExpression);
-            }
-            else if (instruction.OpCode is OpCode.PropertyInitialize)
-            {
-                var property = _context.GetImportedProperty(instruction.Operands.ElementAt(0));
-                var value = stack.Pop();
+                case OpCode.MethodInvokeStatic:
+                    var method = _context.GetImportedMethod(instruction.Operands.First());
 
-                var target = stack.Pop();
-                var xTarget = (XElement)ToXmlFriendlyObject(target);
+                    int parameterCount = method.ParameterTypes.Length;
+                    object[] parameters = new object[parameterCount];
+                    for (parameterCount--; parameterCount >= 0; parameterCount--)
+                        parameters[parameterCount] = stack.Pop();
 
-                PropertyAssignOnXElement(xTarget, property, IrisObject.Create(value, property.PropertyType, _context));
+                    var callExpression = new IrisMethodCallExpression(method, null, parameters.Select(IrisExpression.ToExpression));
 
-                stack.Push(new IrisObject(xTarget, property.Owner));
-            }
-            else if (instruction.OpCode is OpCode.PropertyDictionaryAdd)
-            {
-                var targetProperty = _context.GetImportedProperty(instruction.Operands.ElementAt(0));
+                    stack.Push(callExpression);
+                    break;
 
-                var keyReference = instruction.Operands.ElementAt(1);
-                var key = _context.GetConstant(keyReference).Value.ToString();
+                case OpCode.PropertyInitialize:
+                    var property = _context.GetImportedProperty(instruction.Operands.ElementAt(0));
+                    var propValue = stack.Pop();
 
-                var value = stack.Pop();
+                    var target = stack.Pop();
+                    var xTarget = (XElement)ToXmlFriendlyObject(target);
 
-                var targetInstance = stack.Peek() as XElement;
+                    PropertyAssignOnXElement(xTarget, property, IrisObject.Create(propValue, property.PropertyType, _context));
 
-                PropertyDictionaryAddOnXElement(targetInstance, targetProperty, IrisObject.Create(value, null, _context), key);
+                    stack.Push(new IrisObject(xTarget, property.Owner));
+                    break;
+
+                case OpCode.PropertyDictionaryAdd:
+                    var targetProperty = _context.GetImportedProperty(instruction.Operands.ElementAt(0));
+
+                    var keyReference = instruction.Operands.ElementAt(1);
+                    var key = _context.GetConstant(keyReference).Value.ToString();
+
+                    var dictValue = stack.Pop();
+
+                    var targetInstance = stack.Peek() as XElement;
+
+                    PropertyDictionaryAddOnXElement(targetInstance, targetProperty, IrisObject.Create(dictValue, null, _context), key);
+                    break;
             }
         }
 
