@@ -212,7 +212,7 @@ AddToCollection_prop:
     JMPD 0, 5, 486
     COBJ 3
     PDAD 0, @const5
-    
+
     JMPD 0, 6, 501
     PSHN
     PDAD 0, @const6
@@ -220,18 +220,24 @@ AddToCollection_prop:
 AddToCollection_locl:
     PSHN
     PDAD 1, @const7
+
     COBJ 3
     PDAD 1, @const8
+
     COBJ 3
     PDAD 1, @const9
+
     COBJ 1
     PDAD 1, @const10
+
     COBJ 8
     PSHC @const11
     PINI 2
     INIT 8
     PDAD 1, @const12
+
     PSHC @const11
     PDAD 1, @const13
+    
     CLIS 8
     RETV
