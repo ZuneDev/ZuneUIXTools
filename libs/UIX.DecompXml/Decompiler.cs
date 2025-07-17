@@ -3,6 +3,7 @@ using Microsoft.Iris.DecompXml.Mock;
 using Microsoft.Iris.Markup;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Xml;
@@ -224,7 +225,7 @@ public class Decompiler
             bool b => b ? "true" : "false",
             IStringEncodable strEnc => strEnc.EncodeString(),
             IrisExpression expr => '{' + expr.Decompile(_context) + '}',
-            Enum en => en.ToString(),
+            IFormattable formattable => formattable.ToString(null, CultureInfo.InvariantCulture),
 
             Layout.ILayout layoutObj
                 when Layout.PredefinedLayouts.TryConvertToString(layoutObj, out var layoutName)
@@ -264,7 +265,7 @@ public class Decompiler
         switch (xfValue)
         {
             case XElement xValue:
-                var xProperty = GetOrCreateElement(xTarget, property.Name);
+                var xProperty = GetOrCreateElement(xTarget, _nsUix + property.Name);
                 xProperty.Add(xValue);
                 return xProperty;
 

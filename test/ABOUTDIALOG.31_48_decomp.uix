@@ -9,21 +9,21 @@
     </Properties>
   </Class>
   <UI Name="AboutDialogContentUI" Base="dialog:DialogContentUI">
-    <Content xmlns="">
-      <Panel MaximumSize="360, 0" xmlns="http://schemas.microsoft.com/2007/uix">
-        <Layout xmlns="">
-          <FlowLayout DefaultChildAlignment="Near" Orientation="Vertical" xmlns="http://schemas.microsoft.com/2007/uix" />
+    <Content>
+      <Panel MaximumSize="360, 0">
+        <Layout>
+          <FlowLayout DefaultChildAlignment="Near" Orientation="Vertical" />
         </Layout>
         <Children>
           <Panel Margins="10">
-            <Layout xmlns="">
-              <FlowLayout Orientation="Horizontal" xmlns="http://schemas.microsoft.com/2007/uix" />
+            <Layout>
+              <FlowLayout Orientation="Horizontal" />
             </Layout>
             <Children>
               <Graphic Content="{styles:Styles.IconZuneAbout}" StretchingPolicy="Uniform" SizingPolicy="SizeToContent" />
               <Panel Margins="10, 10, 0, 10">
-                <Layout xmlns="">
-                  <DockLayout DefaultLayoutInput="Top" xmlns="http://schemas.microsoft.com/2007/uix" />
+                <Layout>
+                  <DockLayout DefaultLayoutInput="Top" />
                 </Layout>
                 <Children>
                   <label:Label Content="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_ABOUTDIALOG_COPYRIGHT_LINE1)}" Style="{styles:SharedStyles.DialogTextStyle}" />
