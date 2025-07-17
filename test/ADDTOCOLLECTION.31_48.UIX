@@ -1,0 +1,116 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<UIX
+  xmlns="http://schemas.microsoft.com/2007/uix"
+  xmlns:zune="assembly://ZuneShell/ZuneUI"
+  xmlns:svc="assembly://ZuneDBApi/Microsoft.Zune.Service"
+  xmlns:zuneshell="assembly://ZuneShell/Microsoft.Zune.Shell"  
+  xmlns:data="res://ZuneShellResources!LibraryData.schema.xml"
+  xmlns:signin="res://ZuneShellResources!SignInDialog.uix">
+
+  
+  
+  
+  
+  
+  <Class Name="AddToCollection">
+    <Properties>      
+      
+      
+      <List  Name="Items" List="{null}"/>
+      <Int32 Name="PlaylistId" Int32="-1"/>
+
+      
+      <Command Name="Start"/>
+      <Command Name="OnSuccess" Command="{null}"/>
+    </Properties>
+
+    <Locals>
+      
+      <signin:SignInDialog Name="SignInDialog" SignInDialog="{null}"/>
+
+      
+      <Command Name="BuildAddListPhase"/>
+      <Command Name="AddPhase"/>
+
+      <List Name="AddList"/>
+      
+      <data:LibraryPlaylistContentQuery Name="Query" Enabled="false"/>
+      <Boolean Name="ContentNotInLibrary" Boolean="false"/>
+    </Locals>
+
+    <Scripts>
+      <Script>
+        [DeclareTrigger(Start.Invoked)]
+
+        AddList.Clear();
+        
+        
+        if (Items != null)
+        {
+          
+          BuildAddListPhase.Invoke();
+        }
+        else if (PlaylistId != -1)
+        {
+          
+          Query.PlaylistId = PlaylistId;
+          Query.Refresh();
+        }
+      </Script>
+      
+      <Script>
+        [DeclareTrigger(Query.Result)]
+        
+        if (Query.Result != null)
+        {
+          
+          Items = Query.Result.Items;
+          BuildAddListPhase.Invoke();
+        }
+      </Script>
+      
+      
+      <Script> 
+        [DeclareTrigger(BuildAddListPhase.Invoked)]
+                
+        foreach(data:PlaylistContentItem item in Items)
+        {
+          if (!zuneshell:ZuneApplication.Service.InVisibleCollection(item.ZuneMediaId, svc:EContentType.MusicTrack) &amp;&amp;
+              !zune:Download.Instance.IsDownloadingOrPending(item.ZuneMediaId, svc:EContentType.MusicTrack))
+          { 
+            AddList.Add(item);
+          }
+        }
+        
+        if (AddList.Count > 0 &amp;&amp; !zune:SignIn.Instance.SignedIn)
+        {
+          if (SignInDialog == null) SignInDialog = new signin:SignInDialog();
+          SignInDialog.OnSuccess = AddPhase;
+          SignInDialog.Helper.Show();
+        }
+        else
+        {
+          AddPhase.Invoke();
+        }
+      </Script>
+
+      
+      <Script>
+        [DeclareTrigger(AddPhase.Invoked)]
+        
+        zune:Download.Instance.AddToCollection(AddList);
+        
+        if (OnSuccess != null)
+        {
+          OnSuccess.Invoke();
+        }
+        
+        
+        Items = null;
+        PlaylistId = -1;
+      </Script>
+
+    </Scripts>
+  </Class>
+
+</UIX>

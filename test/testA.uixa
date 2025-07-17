@@ -1,18 +1,41 @@
-COBJ 2
-PSHC 0
-PINI 1
-PSHC 1
-PINI 2
-PINI 0
-RETV 
-RETV 
-COBJ 2
-PSHC 2
-PINI 1
-PSHC 3
-PINI 3
-PSHC 4
-PINI 2
-PINI 0
-RETV 
-RETV 
+.export Default 0 UI
+.export Alt 0 UI
+
+.import-type UI
+.import-type ViewItem
+.import-type Text
+.import-type Color
+.import-type String
+.import-type Font
+.import-mbrs UI{Content}
+.import-mbrs Text{Color, Content, Font}
+
+.constant const0 = Color("255, 255, 0, 0")
+.constant const1 = String("Howdy from Microsoft.Iris!")
+.constant const2 = Color("255, 0, 0, 255")
+.constant const3 = Font("JetBrains Mono, 12")
+.constant const4 = String("This is some blue text")
+.section object
+
+Default_cont:
+    COBJ 2
+    PSHC @const0
+    PINI 1
+    PSHC @const1
+    PINI 2
+    PINI 0
+    RETV
+Default_locl:
+    RETV
+Alt_cont:
+    COBJ 2
+    PSHC @const2
+    PINI 1
+    PSHC @const3
+    PINI 3
+    PSHC @const4
+    PINI 2
+    PINI 0
+    RETV
+Alt_locl:
+    RETV

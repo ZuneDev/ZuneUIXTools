@@ -1,0 +1,319 @@
+.export AboutDialog 0 Class
+.export AboutDialogContentUI 0 UI
+
+.import-ns res://UIXControls!Dialog.uix as dialog
+.import-ns assembly://UIX/Microsoft.Iris as iris
+.import-ns assembly://ZuneShell/ZuneUI as zuneUI
+.import-ns assembly://System.Private.CoreLib/System as system
+.import-ns res://ZuneShellResources!Styles.uix as styles
+.import-ns res://UIXControls!Label.uix as label
+.import-ns res://UIXControls!Style.uix as style
+.import-ns res://ZuneShellResources!LinkButtons.uix as linkButtons
+.import-ns res://UIXControls!Button.uix as button
+.import-type Class
+.import-type UI
+.import-type dialog:Dialog
+.import-type String
+.import-type iris:Command
+.import-type zuneUI:WebHelpCommand
+.import-type dialog:DialogContentUI
+.import-type me:AboutDialog
+.import-type Dictionary
+.import-type system:String
+.import-type zuneUI:Shell
+.import-type zuneUI:StringId
+.import-type ViewItem
+.import-type Panel
+.import-type Size
+.import-type Layout
+.import-type FlowLayout
+.import-type ItemAlignment
+.import-type Orientation
+.import-type List
+.import-type Inset
+.import-type Graphic
+.import-type Image
+.import-type styles:Styles
+.import-type StretchingPolicy
+.import-type SizingPolicy
+.import-type DockLayout
+.import-type DockLayoutInput
+.import-type label:Label
+.import-type label:LabelBase
+.import-type style:Style
+.import-type styles:SharedStyles
+.import-type zuneUI:ZuneShell
+.import-type zuneUI:Management
+.import-type zuneUI:SoftwareUpdates
+.import-type Boolean
+.import-type linkButtons:ExternalLink
+.import-type button:Button
+.import-type button:ButtonBase
+.import-type button:LabelButtonWithBackground
+.import-type Object
+.import-type iris:Application
+.import-type iris:RenderingType
+.import-mthd zuneUI:Shell.LoadString(zuneUI:StringId)
+.import-mthd List.Add(Object)
+.import-mbrs Class{Properties}
+.import-mbrs iris:Command{Description}
+.import-mbrs zuneUI:WebHelpCommand{Description, Url}
+.import-mbrs UI{Properties, Content}
+.import-mbrs ViewItem{MaximumSize, Layout, Margins, Name, Visible}
+.import-mbrs FlowLayout{DefaultChildAlignment, Orientation}
+.import-mbrs Panel{Children}
+.import-mbrs Graphic{Content, StretchingPolicy, SizingPolicy}
+.import-mbrs styles:Styles{IconZuneAbout}
+.import-mbrs DockLayout{DefaultLayoutInput}
+.import-mbrs label:LabelBase{Content, Style, WordWrap}
+.import-mbrs styles:SharedStyles{DialogTextStyle}
+.import-mbrs zuneUI:ZuneShell{DefaultInstance, Management}
+.import-mbrs zuneUI:Management{BuildNumber}
+.import-mbrs zuneUI:SoftwareUpdates{PID}
+.import-mbrs button:Button{Model}
+.import-mbrs me:AboutDialog{TechSupportLink, Cancel}
+.import-mbrs button:ButtonBase{ToolTipEnabled}
+.import-mbrs button:LabelButtonWithBackground{TileMinSize}
+.import-mbrs iris:Application{RenderingType}
+
+.constant const0 = String("ContentUI")
+.constant const1 = String("res://ZuneShellResources!AboutDialog.uix#AboutDialogContentUI")
+.constant const2 = String("Cancel")
+.constant const3 = zuneUI:StringId.bin(0x0000A7F9)
+.constant const4 = String("TechSupportLink")
+.constant const5 = zuneUI:StringId.bin(0x0000A80E)
+.constant const6 = zuneUI:StringId.bin(0x00008F32)
+.constant const7 = String("AccessibleDescription")
+.constant const8 = zuneUI:StringId.bin(0x0000A807)
+.constant const9 = iris:RenderingType.bin(0x00000000)
+.constant const10 = Boolean("True")
+.constant const11 = zuneUI:StringId.bin(0x0000A836)
+.constant const12 = Size("360, 0")
+.constant const13 = ItemAlignment("Near")
+.constant const14 = Orientation("Vertical")
+.constant const15 = Inset("10")
+.constant const16 = Orientation("Horizontal")
+.constant const17 = StretchingPolicy("Uniform")
+.constant const18 = SizingPolicy("SizeToContent")
+.constant const19 = Inset("10, 10, 0, 10")
+.constant const20 = DockLayoutInput.can(Top)
+.constant const21 = zuneUI:StringId.bin(0x0000A808)
+.constant const22 = zuneUI:StringId.bin(0x0000A809)
+.constant const23 = zuneUI:StringId.bin(0x0000A80A)
+.constant const24 = Layout("HorizontalFlow")
+.constant const25 = zuneUI:StringId.bin(0x0000A80B)
+.constant const26 = Inset("5, 0, 0, 0")
+.constant const27 = zuneUI:StringId.bin(0x0000A80C)
+.constant const28 = String("GDIModeLabel")
+.constant const29 = Boolean("False")
+.constant const30 = zuneUI:StringId.bin(0x0000A80D)
+.constant const31 = Size("160, 16")
+.constant const32 = Inset("0, 10, 0, 0")
+.section object
+
+AboutDialog_prop:
+    JMPD 0, 0, 17
+    PSHC @const1
+    PDAD 0, @const0
+
+    JMPD 0, 2, 43
+    COBJ 4
+    PSHC @const3
+    MINVT 0
+    PINI 1
+    PDAD 0, @const2
+
+    JMPD 0, 4, 78
+    COBJ 5
+    PSHC @const5
+    MINVT 0
+    PINI 2
+    PSHC @const6
+    MINVT 0
+    PINI 3
+    PDAD 0, @const4
+    
+    JMPD 0, 7, 98
+    PSHC @const8
+    MINVT 0
+    PDAD 0, @const7
+    RETV
+AboutDialog_locl:
+    RETV
+AboutDialogContentUI_cont0:
+    PSHC @const8
+    MINVT 0
+    WSYMP 1
+    DIS
+    RETV
+AboutDialogContentUI_cont1:
+    COBJ 19
+    WSYMP 2
+    DIS
+    LSYM 2
+    LSYM 0
+    PGET 31
+    MINV 1
+    LSYM 0
+    PGET 31
+    WSYMP 3
+    DIS
+    LSYM 0
+    PGET 31
+    WSYMP 4
+    DIS
+    RETV
+AboutDialogContentUI_cont2:
+    PGETT 32
+    PSHC @const9
+    OPR 42, 8
+    JMPF 189
+    PSHC @const10
+    LSYM 5
+    PASS 25
+    DIS
+    PSHC @const11
+    MINVT 0
+    LSYM 5
+    PASS 17
+    DIS
+    RETV
+AboutDialogContentUI_prop:
+    RETV
+AboutDialogContentUI_cont:
+    COBJ 13
+    PSHC @const12
+    PINI 6
+    COBJ 16
+    PSHC @const13
+    PINI 8
+    PSHC @const14
+    PINI 9
+    PINI 7
+    COBJ 13
+    PSHC @const15
+    PINI 11
+    COBJ 16
+    PSHC @const16
+    PINI 9
+    PINI 7
+    COBJ 21
+    PGETT 13
+    PINI 12
+    PSHC @const17
+    PINI 14
+    PSHC @const18
+    PINI 15
+    PLAD 10
+    COBJ 13
+    PSHC @const19
+    PINI 11
+    COBJ 26
+    PSHC @const20
+    PINI 16
+    PINI 7
+    COBJ 28
+    PSHC @const21
+    MINVT 0
+    PINI 17
+    PGETT 19
+    PINI 18
+    INIT 28
+    PLAD 10
+    COBJ 28
+    PSHC @const22
+    MINVT 0
+    PINI 17
+    PGETT 19
+    PINI 18
+    INIT 28
+    PLAD 10
+    COBJ 28
+    PSHC @const23
+    MINVT 0
+    PINI 17
+    PGETT 19
+    PINI 18
+    INIT 28
+    PLAD 10
+    COBJ 13
+    PSHC @const24
+    PINI 7
+    COBJ 28
+    PSHC @const25
+    MINVT 0
+    PINI 17
+    PGETT 19
+    PINI 18
+    INIT 28
+    PLAD 10
+    COBJ 28
+    PGETT 20
+    PGET 21
+    PGET 22
+    PINI 17
+    PSHC @const26
+    PINI 11
+    PGETT 19
+    PINI 18
+    INIT 28
+    PLAD 10
+    PLAD 10
+    COBJ 13
+    PSHC @const24
+    PINI 7
+    COBJ 28
+    PSHC @const27
+    MINVT 0
+    PINI 17
+    PGETT 19
+    PINI 18
+    INIT 28
+    PLAD 10
+    COBJ 28
+    PGETT 23
+    PINI 17
+    PSHC @const26
+    PINI 11
+    PGETT 19
+    PINI 18
+    INIT 28
+    PLAD 10
+    PLAD 10
+    COBJ 28
+    PSHC @const28
+    PINI 24
+    PSHC @const29
+    PINI 25
+    PGETT 19
+    PINI 18
+    INIT 28
+    PLAD 10
+    PLAD 10
+    PLAD 10
+    COBJ 28
+    PSHC @const30
+    MINVT 0
+    PINI 17
+    PGETT 19
+    PINI 18
+    PSHC @const10
+    PINI 26
+    INIT 28
+    PLAD 10
+    COBJ 36
+    LSYM 0
+    PGET 28
+    PINI 27
+    PSHC @const29
+    PINI 29
+    PSHC @const31
+    PINI 30
+    PSHC @const32
+    PINI 11
+    INIT 36
+    PLAD 10
+    PINI 5
+    RETV
+AboutDialogContentUI_locl:
+    RETV

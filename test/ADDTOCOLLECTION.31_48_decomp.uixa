@@ -1,0 +1,237 @@
+.export AddToCollection 8 Class
+
+.import-ns res://ZuneShellResources!SignInDialog.uix as signInDialog
+.import-ns res://ZuneShellResources!LibraryData.schema.xml as schema
+.import-ns assembly://ZuneShell/Microsoft.Zune.Shell as shell
+.import-ns assembly://ZuneDBApi/Microsoft.Zune.Service as service
+.import-ns assembly://System.Private.CoreLib/System as system
+.import-ns assembly://ZuneShell/ZuneUI as zuneUI
+.import-ns res://UIXControls!Dialog.uix as dialog
+.import-ns assembly://UIXControls/UIXControls as uIXControls
+.import-ns assembly://System.Private.CoreLib/System.Collections as collections
+.import-type Class
+.import-type List
+.import-type Int32
+.import-type Command
+.import-type Dictionary
+.import-type String
+.import-type Null
+.import-type signInDialog:SignInDialog
+.import-type schema:LibraryPlaylistContentQuery
+.import-type Boolean
+.import-type schema:PlaylistContentList
+.import-type schema:PlaylistContentItem
+.import-type shell:ZuneApplication
+.import-type service:EContentType
+.import-type service:Service
+.import-type system:Guid
+.import-type system:Boolean
+.import-type zuneUI:Download
+.import-type Object
+.import-type Enumerator
+.import-type zuneUI:SignIn
+.import-type dialog:Dialog
+.import-type uIXControls:DialogHelper
+.import-type collections:IList
+.import-mthd List.Clear()
+.import-mthd Command.Invoke()
+.import-mthd schema:LibraryPlaylistContentQuery.Refresh()
+.import-mthd List.GetEnumerator()
+.import-mthd service:Service.InVisibleCollection(system:Guid, service:EContentType)
+.import-mthd zuneUI:Download.IsDownloadingOrPending(system:Guid, service:EContentType)
+.import-mthd List.Add(Object)
+.import-mthd Enumerator.MoveNext()
+.import-mthd uIXControls:DialogHelper.Show()
+.import-mthd zuneUI:Download.AddToCollection(collections:IList)
+.import-mbrs Class{Properties, Locals}
+.import-mbrs schema:LibraryPlaylistContentQuery{Enabled, PlaylistId, Result}
+.import-mbrs schema:PlaylistContentList{Items}
+.import-mbrs shell:ZuneApplication{Service}
+.import-mbrs schema:PlaylistContentItem{ZuneMediaId}
+.import-mbrs zuneUI:Download{Instance}
+.import-mbrs Enumerator{Current}
+.import-mbrs List{Count}
+.import-mbrs zuneUI:SignIn{Instance, SignedIn}
+.import-mbrs signInDialog:SignInDialog{OnSuccess}
+.import-mbrs dialog:Dialog{Helper}
+.import-mbrs Command{Invoked}
+
+.constant const0 = Int32("-1")
+.constant const1 = service:EContentType.bin(0x00000000)
+.constant const2 = Int32("0")
+.constant const3 = String("Items")
+.constant const4 = String("PlaylistId")
+.constant const5 = String("Start")
+.constant const6 = String("OnSuccess")
+.constant const7 = String("SignInDialog")
+.constant const8 = String("BuildAddListPhase")
+.constant const9 = String("AddPhase")
+.constant const10 = String("AddList")
+.constant const11 = Boolean("False")
+.constant const12 = String("Query")
+.constant const13 = String("ContentNotInLibrary")
+.section object
+
+    LSYM 1
+    MINV 0
+    LSYM 2
+    PSHN
+    OPR 1, 9
+    JMPF 30
+    LSYM 3
+    MINV 1
+    JMP 61
+    LSYM 4
+    PSHC @const0
+    OPR 2, 9
+    JMPF 61
+    LSYM 4
+    LSYM 5
+    PASS 3
+    DIS
+    LSYM 5
+    MINV 2
+    RETV
+    LSYM 5
+    PGET 4
+    PSHN
+    OPR 10, 9
+    JMPF 97
+    LSYM 5
+    PGET 4
+    PGET 5
+    WSYMP 2
+    DIS
+    LSYM 3
+    MINV 1
+    RETV
+    LSYM 2
+    MINV 3
+    MINVP 7
+    JMPF 187
+    PGETP 9
+    VTC 11
+    WSYM 6
+    PGETT 6
+    LSYM 6
+    PGET 7
+    PSHC @const1
+    MINV 4
+    OPR 16, 15
+    JMPFP 168
+    PGETT 8
+    LSYM 6
+    PGET 7
+    PSHC @const1
+    MINV 5
+    OPR 16, 15
+    OPR 9, 6
+    JMPF 182
+    LSYM 1
+    LSYM 6
+    MINV 6
+    JMP 104
+    DIS
+    CSYM 6
+    LSYM 1
+    PGET 10
+    PSHC @const2
+    OPR 2, 11
+    JMPFP 223
+    PGETT 11
+    PGET 12
+    OPR 16, 15
+    OPR 9, 6
+    JMPF 276
+    LSYM 7
+    PSHN
+    OPR 7, 8
+    JMPF 251
+    COBJ 7
+    INIT 7
+    WSYMP 7
+    DIS
+    LSYM 8
+    LSYM 7
+    PASS 13
+    DIS
+    LSYM 7
+    PGET 14
+    MINV 8
+    DIS
+    JMP 282
+    LSYM 8
+    MINV 1
+    RETV
+    PGETT 8
+    LSYM 1
+    MINV 9
+    DIS
+    LSYM 9
+    PSHN
+    OPR 3, 9
+    JMPF 312
+    LSYM 9
+    MINV 1
+    PSHN
+    WSYMP 2
+    DIS
+    PSHC @const0
+    WSYMP 4
+    DIS
+    RETV
+AddToCollection_rfsh_0:
+    LISD 0, 2, 0, 4294967295, 134218053
+    LSYM 0
+    LIS 1, 1, 0, 134217728
+    RETV
+AddToCollection_rfsh_1:
+    LISD 2, 2, 5, 134217790, 134218081
+    LSYM 5
+    LIS 3, 0, 4, 134217790
+    RETV
+AddToCollection_rfsh_2:
+    LISD 4, 2, 3, 4294967295, 134218109
+    LSYM 3
+    LIS 5, 1, 0, 134217826
+    RETV
+AddToCollection_rfsh_3:
+    LISD 6, 2, 8, 4294967295, 134218137
+    LSYM 8
+    LIS 7, 1, 0, 134218011
+    RETV
+AddToCollection_prop:
+    JMPD 0, 3, 452
+    PSHN
+    PDAD 0, @const3
+
+    JMPD 0, 4, 469
+    PSHC @const0
+    PDAD 0, @const4
+
+    JMPD 0, 5, 486
+    COBJ 3
+    PDAD 0, @const5
+    
+    JMPD 0, 6, 501
+    PSHN
+    PDAD 0, @const6
+    RETV
+AddToCollection_locl:
+    PSHN
+    PDAD 1, @const7
+    COBJ 3
+    PDAD 1, @const8
+    COBJ 3
+    PDAD 1, @const9
+    COBJ 1
+    PDAD 1, @const10
+    COBJ 8
+    PSHC @const11
+    PINI 2
+    INIT 8
+    PDAD 1, @const12
+    PSHC @const11
+    PDAD 1, @const13
+    CLIS 8
+    RETV
