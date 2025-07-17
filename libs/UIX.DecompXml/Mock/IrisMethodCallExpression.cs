@@ -29,11 +29,11 @@ internal class IrisMethodCallExpression : IrisExpression, IArgumentProvider, IRe
 
     public Expression GetArgument(int index) => _arguments[index];
 
-    public override string Decompile(Decompiler decompiler)
+    public override string Decompile(DecompileContext context)
     {
         StringBuilder sb = new();
 
-        var qfn = decompiler.GetQualifiedName(Method.Owner);
+        var qfn = context.GetQualifiedName(Method.Owner);
         sb.Append(qfn);
         sb.Append('.');
         sb.Append(Method.Name);
@@ -47,7 +47,7 @@ internal class IrisMethodCallExpression : IrisExpression, IArgumentProvider, IRe
         string exprToString(Expression x)
         {
             return x is IrisExpression irisExpr
-                ? irisExpr.Decompile(decompiler)
+                ? irisExpr.Decompile(context)
                 : x.ToString();
         }
     }

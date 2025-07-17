@@ -1,15 +1,11 @@
 ﻿using Microsoft.Iris.Asm;
 using Microsoft.Iris.Markup;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Xml.Linq;
 
 namespace Microsoft.Iris.DecompXml.Mock;
 
 internal record IrisObject(object Object, TypeSchema Type)
 {
-    public static IrisObject Create(object objIn, TypeSchema type, Decompiler decompiler)
+    public static IrisObject Create(object objIn, TypeSchema type, DecompileContext context)
     {
         object obj = objIn;
 
@@ -31,7 +27,7 @@ internal record IrisObject(object Object, TypeSchema Type)
             type ??= hasReturnValue.ReturnType;
         }
 
-        type ??= Disassembler.GuessTypeSchema(obj.GetType(), decompiler._loadResult);
+        type ??= Disassembler.GuessTypeSchema(obj.GetType(), context.LoadResult);
 
         return new(obj, type);
     }

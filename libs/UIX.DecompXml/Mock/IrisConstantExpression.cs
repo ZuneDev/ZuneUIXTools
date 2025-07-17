@@ -19,10 +19,10 @@ internal class IrisConstantExpression : IrisExpression, IReturnValueProvider
 
     public TypeSchema ReturnType => TypeSchema;
 
-    public override string Decompile(Decompiler decompiler)
+    public override string Decompile(DecompileContext context)
     {
         if (TypeSchema.IsEnum)
-            return $"{decompiler.GetQualifiedName(TypeSchema)}.{Value}";
+            return $"{context.GetQualifiedName(TypeSchema)}.{Value}";
 
         return Value switch
         {
