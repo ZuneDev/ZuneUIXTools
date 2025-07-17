@@ -33,22 +33,23 @@ internal class IrisMethodCallExpression : IrisExpression, IArgumentProvider, IRe
     {
         StringBuilder sb = new();
 
-        var qfn = context.GetQualifiedName(Method.Owner);
-        sb.Append(qfn);
+        if (Target is null)
+        {
+            var qfn = context.GetQualifiedName(Method.Owner);
+            sb.Append(qfn);
+        }
+        else
+        {
+            sb.Append(Decompile(Target, context));
+        }
+
         sb.Append('.');
         sb.Append(Method.Name);
+
         sb.Append('(');
-
-        sb.Append(string.Join(", ", _arguments.Select(exprToString)));
-
+        sb.Append(string.Join(", ", _arguments.Select(x => Decompile(x, context))));
         sb.Append(')');
-        return sb.ToString();
 
-        string exprToString(Expression x)
-        {
-            return x is IrisExpression irisExpr
-                ? irisExpr.Decompile(context)
-                : x.ToString();
-        }
+        return sb.ToString();
     }
 }
