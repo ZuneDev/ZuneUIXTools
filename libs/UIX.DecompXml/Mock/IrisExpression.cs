@@ -15,6 +15,7 @@ internal class IrisExpression : Expression
             null => Constant(null),
             Expression expr => expr,
             Disassembler.RawConstantInfo constantInfo => new IrisConstantExpression(constantInfo.Value, constantInfo.Type),
+            Markup.SymbolReference symbolRef => Constant(symbolRef),
 
             _ => throw new NotImplementedException($"Unable to wrap '{p}' in an expression")
         };

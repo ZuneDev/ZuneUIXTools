@@ -47,7 +47,11 @@ public class Decompiler
                 new XAttribute("Name", name),
                 new XAttribute("Base", baseTypeName));
 
-            AnalyzeMethodForInit(export.InitializePropertiesOffset, xExport);
+            if (export.InitializePropertiesOffset is not uint.MaxValue)
+                AnalyzeMethodForInit(export.InitializePropertiesOffset, xExport, export, name + "_prop");
+
+            if (export.InitializeContentOffset is not uint.MaxValue)
+                AnalyzeMethodForInit(export.InitializeContentOffset, xExport, export, name + "_cont");
 
             xRoot.Add(xExport);
         }
@@ -82,7 +86,7 @@ public class Decompiler
         return sb.ToString();
     }
 
-    private Stack<object> AnalyzeMethodForInit(uint startOffset, XElement elemToInit)
+    private Stack<object> AnalyzeMethodForInit(uint startOffset, XElement elemToInit, MarkupTypeSchema initType, string methodName = "")
     {
         var methodBody = _context.GetMethodBody(startOffset);
 
@@ -92,60 +96,97 @@ public class Decompiler
         {
             var instruction = methodBody[i];
 
-            switch (instruction.OpCode)
+            try
             {
-                case OpCode.PushConstant:
-                    var constant = _context.GetConstant(instruction.Operands.First());
-                    stack.Push(constant);
-                    break;
+                switch (instruction.OpCode)
+                {
+                    case OpCode.PushConstant:
+                        var constant = _context.GetConstant(instruction.Operands.First());
+                        stack.Push(constant);
+                        break;
 
-                case OpCode.PushNull:
-                    stack.Push(null);
-                    break;
+                    case OpCode.PushNull:
+                        stack.Push(null);
+                        break;
 
-                case OpCode.ConstructObject:
-                    var type = _context.GetImportedType(instruction.Operands.ElementAt(0));
-                    var xObj = new XElement(_context.GetXName(type));
-                    stack.Push(new IrisObject(xObj, type));
-                    break;
+                    case OpCode.ConstructObject:
+                        var typeToCtor = _context.GetImportedType(instruction.Operands.ElementAt(0));
+                        var xObj = new XElement(_context.GetXName(typeToCtor));
+                        stack.Push(new IrisObject(xObj, typeToCtor));
+                        break;
 
-                case OpCode.MethodInvokeStatic:
-                    var method = _context.GetImportedMethod(instruction.Operands.First());
+                    case OpCode.LookupSymbol:
+                        var symbolIndex = (ushort)instruction.Operands.ElementAt(0).Value;
+                        var symbol = initType.SymbolReferenceTable[symbolIndex];
+                        stack.Push(symbol);
+                        break;
 
-                    int parameterCount = method.ParameterTypes.Length;
-                    object[] parameters = new object[parameterCount];
-                    for (parameterCount--; parameterCount >= 0; parameterCount--)
-                        parameters[parameterCount] = stack.Pop();
+                    case OpCode.MethodInvokeStatic:
+                        var method = _context.GetImportedMethod(instruction.Operands.First());
 
-                    var callExpression = new IrisMethodCallExpression(method, null, parameters.Select(IrisExpression.ToExpression));
+                        int parameterCount = method.ParameterTypes.Length;
+                        object[] parameters = new object[parameterCount];
+                        for (parameterCount--; parameterCount >= 0; parameterCount--)
+                            parameters[parameterCount] = stack.Pop();
 
-                    stack.Push(callExpression);
-                    break;
+                        var callExpression = new IrisMethodCallExpression(method, null, parameters.Select(IrisExpression.Wrap));
 
-                case OpCode.PropertyInitialize:
-                    var property = _context.GetImportedProperty(instruction.Operands.ElementAt(0));
-                    var propValue = stack.Pop();
+                        stack.Push(callExpression);
+                        break;
 
-                    var target = stack.Pop();
-                    var xTarget = (XElement)ToXmlFriendlyObject(target);
+                    case OpCode.PropertyGet:
+                    case OpCode.PropertyGetPeek:
+                    case OpCode.PropertyGetStatic:
+                        var propToGet = _context.GetImportedProperty(instruction.Operands.ElementAt(0));
 
-                    PropertyAssignOnXElement(xTarget, property, IrisObject.Create(propValue, property.PropertyType, _context));
+                        var propTarget = instruction.OpCode switch
+                        {
+                            OpCode.PropertyGet => IrisExpression.Wrap(stack.Pop()),
+                            OpCode.PropertyGetPeek => IrisExpression.Wrap(stack.Peek()),
+                            _ => null,
+                        };
 
-                    stack.Push(new IrisObject(xTarget, property.Owner));
-                    break;
+                        var propertyGetExpression = new IrisPropertyExpression(propToGet, propTarget);
+                        stack.Push(propertyGetExpression);
+                        break;
 
-                case OpCode.PropertyDictionaryAdd:
-                    var targetProperty = _context.GetImportedProperty(instruction.Operands.ElementAt(0));
+                    case OpCode.PropertyInitialize:
+                        var propertyToInit = _context.GetImportedProperty(instruction.Operands.ElementAt(0));
+                        var newPropValue = stack.Pop();
 
-                    var keyReference = instruction.Operands.ElementAt(1);
-                    var key = _context.GetConstant(keyReference).Value.ToString();
+                        var target = stack.Pop();
+                        var xTarget = (XElement)ToXmlFriendlyObject(target);
 
-                    var dictValue = stack.Pop();
+                        PropertyAssignOnXElement(xTarget, propertyToInit, IrisObject.Create(newPropValue, propertyToInit.PropertyType, _context));
 
-                    var targetInstance = stack.Peek() as XElement;
+                        stack.Push(new IrisObject(xTarget, propertyToInit.Owner));
+                        break;
 
-                    PropertyDictionaryAddOnXElement(targetInstance, targetProperty, IrisObject.Create(dictValue, null, _context), key);
-                    break;
+                    case OpCode.PropertyDictionaryAdd:
+                        var targetDictProperty = _context.GetImportedProperty(instruction.Operands.ElementAt(0));
+
+                        var keyReference = instruction.Operands.ElementAt(1);
+                        var key = _context.GetConstant(keyReference).Value.ToString();
+
+                        var dictValue = stack.Pop();
+
+                        var targetInstance = (XElement)stack.Peek();
+
+                        PropertyDictionaryAddOnXElement(targetInstance, targetDictProperty, IrisObject.Create(dictValue, null, _context), key);
+                        break;
+
+                    case OpCode.PropertyListAdd:
+                        var targetListProperty = _context.GetImportedProperty(instruction.Operands.ElementAt(0));
+                        var valueToAdd = stack.Pop();
+                        var targetInstance2 = (XElement)ToXmlFriendlyObject(stack.Peek());
+
+                        PropertyListAddOnXElement(targetInstance2, targetListProperty, IrisObject.Create(valueToAdd, null, _context));
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to analyze instruction `{instruction}` @ 0x{instruction.Offset:X}, {methodName}[{i}]", ex);
             }
         }
 
@@ -165,50 +206,106 @@ public class Decompiler
         return elem;
     }
 
-    private object ToXmlFriendlyObject(object obj)
+    private object ToXmlFriendlyObject(object obj, TypeSchema type = null)
     {
         if (obj is Disassembler.RawConstantInfo rci)
+        {
             obj = rci.Value;
+        }
         else if (obj is IrisObject irisObj)
+        {
             obj = irisObj.Object;
+        }
 
         return obj switch
         {
             string str => str,
-            IStringEncodable strEnc => strEnc.EncodeString(),
             null => "{null}",
+            bool b => b ? "true" : "false",
+            IStringEncodable strEnc => strEnc.EncodeString(),
             IrisExpression expr => '{' + expr.Decompile(_context) + '}',
+            Enum en => en.ToString(),
+
+            Layout.ILayout layoutObj
+                when Layout.PredefinedLayouts.TryConvertToString(layoutObj, out var layoutName)
+                => layoutName,
 
             XElement xElem => xElem,
 
-            _ => throw new InvalidOperationException($"Cannot convert type '{obj.GetType().Name}' to an XML object")
+            _ => SerializeToXml(obj)
         };
+    }
+
+    private XElement SerializeToXml(object obj)
+    {
+        var type = Disassembler.GuessTypeSchema(obj.GetType(), _context.LoadResult);
+
+        XElement xObj = new(_context.GetXName(type));
+        var defaultObj = type.ConstructDefault();
+
+        foreach (var prop in type.Properties)
+        {
+            var defaultPropValue = prop.GetValue(defaultObj);
+            var propValue = prop.GetValue(obj);
+
+            if (propValue == defaultPropValue || propValue.Equals(defaultPropValue))
+                continue;
+
+            PropertyAssignOnXElement(xObj, prop, new(propValue, prop.PropertyType));
+        }
+
+        return xObj;
     }
 
     private XObject PropertyAssignOnXElement(XElement xTarget, PropertySchema property, IrisObject value)
     {
-        object xfValue = ToXmlFriendlyObject(value.Object);
-
-        XObject xObject;
+        object xfValue = ToXmlFriendlyObject(value.Object, value.Type);
 
         switch (xfValue)
         {
             case XElement xValue:
                 var xProperty = GetOrCreateElement(xTarget, property.Name);
                 xProperty.Add(xValue);
-                xObject = xProperty;
-                break;
+                return xProperty;
 
             case string strValue:
-                xObject = new XAttribute(property.Name, strValue);
-                break;
+                var xAttr = new XAttribute(property.Name, strValue);
+                xTarget.Add(xAttr);
+                return xAttr;
 
             default:
                 throw new InvalidOperationException();
         }
+    }
 
-        xTarget.Add(xObject);
-        return xObject;
+    private XElement PropertyListAddOnXElement(XElement xTarget, PropertySchema property, IrisObject value)
+    {
+        var xDictionary = GetOrCreateElement(xTarget, _nsUix + property.Name);
+        return PropertyListAddOnXElement(xDictionary, value);
+    }
+
+    private XElement PropertyListAddOnXElement(XElement xList, IrisObject value)
+    {
+        object xValue = ToXmlFriendlyObject(value.Object, value.Type);
+
+        XElement xListEntry;
+
+        switch (xValue)
+        {
+            case string strValue:
+                xListEntry = new(_context.GetXName(value.Type));
+                xListEntry.SetAttributeValue(value.Type.Name, strValue);
+                break;
+            case XElement xValueELem:
+                xListEntry = xValueELem;
+                break;
+            default:
+                throw new InvalidOperationException();
+        }
+
+        xList.Add(xListEntry);
+
+        return xListEntry;
     }
 
     private XElement PropertyDictionaryAddOnXElement(XElement xTarget, PropertySchema property, IrisObject value, string key)
@@ -219,26 +316,8 @@ public class Decompiler
 
     private XElement PropertyDictionaryAddOnXElement(XElement xDictionary, IrisObject value, string key)
     {
-        object xValue = ToXmlFriendlyObject(value.Object);
-
-        XElement xDictionaryEntry;
-
-        switch (xValue)
-        {
-            case string strValue:
-                xDictionaryEntry = new(_context.GetXName(value.Type));
-                xDictionaryEntry.SetAttributeValue(value.Type.Name, strValue);
-                break;
-            case XElement xValueELem:
-                xDictionaryEntry = xValueELem;
-                break;
-            default:
-                throw new InvalidOperationException();
-        }
-
+        var xDictionaryEntry = PropertyListAddOnXElement(xDictionary, value);
         xDictionaryEntry.SetAttributeValue("Name", key);
-        xDictionary.Add(xDictionaryEntry);
-
         return xDictionaryEntry;
     }
 }

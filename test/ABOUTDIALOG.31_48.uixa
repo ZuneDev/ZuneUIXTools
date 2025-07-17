@@ -132,7 +132,7 @@ AboutDialog_prop:
     MINVT 0
     PINI 3
     PDAD 0, @const4
-    
+
     JMPD 0, 7, 98
     PSHC @const8
     MINVT 0
@@ -235,7 +235,7 @@ AboutDialogContentUI_cont:
     PGETT 19
     PINI 18
     INIT 28
-    PLAD 10
+    PLAD 10 ;
     COBJ 13
     PSHC @const24
     PINI 7
