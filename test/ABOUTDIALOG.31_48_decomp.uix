@@ -2,10 +2,10 @@
 <UIX xmlns="http://schemas.microsoft.com/2007/uix" xmlns:me="Me" xmlns:dialog="res://UIXControls!Dialog.uix" xmlns:iris="assembly://UIX/Microsoft.Iris" xmlns:zuneUI="assembly://ZuneShell/ZuneUI" xmlns:system="assembly://System.Private.CoreLib/System" xmlns:styles="res://ZuneShellResources!Styles.uix" xmlns:label="res://UIXControls!Label.uix" xmlns:style="res://UIXControls!Style.uix" xmlns:linkButtons="res://ZuneShellResources!LinkButtons.uix" xmlns:button="res://UIXControls!Button.uix">
   <Class Name="AboutDialog" Base="dialog:Dialog">
     <Properties>
-      <String Name="ContentUI" String="res://ZuneShellResources!AboutDialog.uix#AboutDialogContentUI" />
-      <zuneUI:StringId Name="Cancel" StringId="IDS_DIALOG_OK" />
-      <zuneUI:StringId Name="TechSupportLink" StringId="IDS_WWW_ZUNE_NET_SUPPORT_URL" />
-      <zuneUI:StringId Name="AccessibleDescription" StringId="IDS_ABOUTDIALOG_TITLE" />
+      <String String="res://ZuneShellResources!AboutDialog.uix#AboutDialogContentUI" Name="ContentUI" />
+      <iris:Command Description="zuneUI:Shell.LoadString(zuneUI:StringId.IDS_DIALOG_OK)" Name="Cancel" />
+      <zuneUI:WebHelpCommand Description="zuneUI:Shell.LoadString(zuneUI:StringId.IDS_ABOUTDIALOG_TECHNICAL_SUPPORT_INFORMATION)" Url="zuneUI:Shell.LoadString(zuneUI:StringId.IDS_WWW_ZUNE_NET_SUPPORT_URL)" Name="TechSupportLink" />
+      <system:String String="zuneUI:Shell.LoadString(zuneUI:StringId.IDS_ABOUTDIALOG_TITLE)" Name="AccessibleDescription" />
     </Properties>
   </Class>
   <UI Name="AboutDialogContentUI" Base="dialog:DialogContentUI" />

@@ -1,11 +1,14 @@
 ﻿using Humanizer;
 using Microsoft.Iris.Asm;
 using Microsoft.Iris.Asm.Models;
+using Microsoft.Iris.DecompXml.Mock;
 using Microsoft.Iris.Markup;
+using Microsoft.Iris.Markup.Validation;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Xml;
 using System.Xml.Linq;
@@ -100,8 +103,7 @@ public class Decompiler
 
             var propertyElements = new XElement[export.Properties.Length];
 
-            Stack<XNode> xStack = new([xExport]);
-            Stack<Disassembler.RawConstantInfo> constantsStack = new();
+            Stack<object> stack = new([xExport]);
 
             for (int i = 0; i < initPropsBody.Length; i++)
             {
@@ -114,13 +116,64 @@ public class Decompiler
                 {
                     var constantOperand = (OperandReference)instruction.Operands.First();
                     var constant = _constants[constantOperand.Index];
-                    constantsStack.Push(constant);
-                    //xStack.Push(IntoXNode(constant.Value));
+                    stack.Push(constant);
                 }
                 else if (instruction.OpCode is OpCode.PushNull)
                 {
-                    constantsStack.Push(null);
-                    //xStack.Push(IntoXNode(null));
+                    stack.Push(null);
+                }
+                else if (instruction.OpCode is OpCode.ConstructObject)
+                {
+                    var type = _loadResult.ImportTables.TypeImports[(ushort)instruction.Operands.ElementAt(0).Value];
+                    var xObj = new XElement(GetXName(type));
+                    stack.Push(xObj);
+                }
+                else if (instruction.OpCode is OpCode.MethodInvokeStatic)
+                {
+                    var method = _loadResult.ImportTables.MethodImports[(ushort)instruction.Operands.First().Value];
+
+                    int parameterCount = method.ParameterTypes.Length;
+                    object[] parameters = new object[parameterCount];
+                    for (parameterCount--; parameterCount >= 0; parameterCount--)
+                        parameters[parameterCount] = stack.Pop();
+
+                    var callExpression = new IrisMethodCallExpression(method, null, parameters.Select(p =>
+                    {
+                        return p switch
+                        {
+                            null => Expression.Constant(null),
+                            Expression expr => expr,
+                            Disassembler.RawConstantInfo constantInfo => new IrisConstantExpression(constantInfo.Value, constantInfo.Type),
+
+                            _ => throw new NotImplementedException()
+                        };
+                    }));
+
+                    stack.Push(callExpression);
+                }
+                else if (instruction.OpCode is OpCode.PropertyInitialize)
+                {
+                    var property = _loadResult.ImportTables.PropertyImports[(ushort)instruction.Operands.ElementAt(0).Value];
+                    var value = stack.Pop();
+                    var xTarget = (XElement)stack.Peek();
+
+                    if (value is XElement xValue)
+                    {
+                        var xProperty = new XElement(property.Name);
+                        xProperty.Add(xValue);
+                        xTarget.Add(xProperty);
+                    }
+                    else
+                    {
+                        string strValue = value switch
+                        {
+                            IStringEncodable strEnc => strEnc.EncodeString(),
+                            IrisExpression irisExpr => irisExpr.Decompile(this),
+                            _ => value.ToString()
+                        };
+
+                        xTarget.SetAttributeValue(property.Name, strValue);
+                    }
                 }
                 else if (instruction.OpCode is OpCode.PropertyDictionaryAdd)
                 {
@@ -129,24 +182,42 @@ public class Decompiler
                     var keyReference = (OperandReference)instruction.Operands.ElementAt(1);
                     var key = _constants[keyReference.Index].Value.ToString();
 
-                    //var xValue = xStack.Pop();
-                    var value = constantsStack.Pop();
+                    var value = stack.Pop();
 
-                    var targetInstance = xStack.Peek() as XElement;
+                    var targetInstance = stack.Peek() as XElement;
                     var xDictionary = GetOrCreateElement(targetInstance, nsUix + targetProperty.Name);
 
-                    XElement xDictionaryEntry = new(GetXName(value.Type));
-                    xDictionaryEntry.SetAttributeValue("Name", key);
-                    xDictionary.Add(xDictionaryEntry);
+                    XElement xDictionaryEntry;
 
-                    if (value.Value is IStringEncodable valStrEnc)
+                    if (value is Disassembler.RawConstantInfo constantValue)
                     {
-                        xDictionaryEntry.SetAttributeValue(value.Type.Name, valStrEnc);
+                        xDictionaryEntry = new(GetXName(constantValue.Type));
+                        if (constantValue.Value is IStringEncodable valStrEnc)
+                        {
+                            xDictionaryEntry.SetAttributeValue(constantValue.Type.Name, valStrEnc);
+                        }
+                        else
+                        {
+                            xDictionaryEntry.SetAttributeValue(constantValue.Type.Name, constantValue.Value.ToString());
+                        }
+                    }
+                    else if (value is XElement xValue)
+                    {
+                        xDictionaryEntry = xValue;
+                    }
+                    else if (value is IrisExpression exprValue and IReturnValueProvider exprWithReturnValue)
+                    {
+                        var returnType = exprWithReturnValue.ReturnType;
+                        xDictionaryEntry = new(GetXName(returnType));
+                        xDictionaryEntry.SetAttributeValue(returnType.Name, exprValue.Decompile(this));
                     }
                     else
                     {
-                        xDictionaryEntry.SetAttributeValue(value.Type.Name, value.Value.ToString());
+                        throw new InvalidOperationException();
                     }
+
+                    xDictionaryEntry.SetAttributeValue("Name", key);
+                    xDictionary.Add(xDictionaryEntry);
                 }
             }
 
@@ -257,7 +328,7 @@ public class Decompiler
         };
     }
 
-    private QualifiedTypeName GetQualifiedName(TypeSchema schema)
+    internal QualifiedTypeName GetQualifiedName(TypeSchema schema)
     {
         _uriAliasMap.TryGetValue(schema.Owner.Uri, out string prefix);
         return new(prefix, schema.Name);
