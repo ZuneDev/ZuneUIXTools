@@ -20,7 +20,9 @@ partial class Decompiler
     {
         var methodBody = _context.GetMethodBody(startOffset);
 
-        List<StatementSyntax> topStatements = [];
+        Stack<BlockSyntax> blockStack = [];
+        blockStack.Push(Block());
+
         Stack<object> stack = new();
 
         for (int i = 0; i < methodBody.Length; i++)
@@ -48,7 +50,7 @@ partial class Decompiler
                     case OpCode.ConstructObject:
                         var typeToCtor = _context.GetImportedType(instruction.Operands.First());
                         stack.Push(ObjectCreationExpression(
-                            IdentifierName(_context.GetQualifiedName(typeToCtor).ToString()),
+                            IrisExpression.ToSyntax(typeToCtor, _context),
                             ArgumentList(),
                             null
                         ));
@@ -56,21 +58,22 @@ partial class Decompiler
 
                     case OpCode.LookupSymbol:
                         var symbolIndex = (ushort)instruction.Operands.First().Value;
-                        stack.Push(IdentifierName(export.SymbolReferenceTable[symbolIndex].Symbol));
+                        stack.Push(IrisExpression.ToSyntax(export.SymbolReferenceTable[symbolIndex]));
                         break;
 
                     case OpCode.WriteSymbol:
                     case OpCode.WriteSymbolPeek:
                         var writeSymbolIndex = (ushort)instruction.Operands.First().Value;
-                        var writeSymbolExpr = IdentifierName(export.SymbolReferenceTable[writeSymbolIndex].Symbol);
 
                         var newSymbolValue = opCode is OpCode.WriteSymbolPeek
                             ? stack.Peek() : stack.Pop();
 
                         var symbolAssignmentExpr = AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
-                            writeSymbolExpr, IrisExpression.ToSyntax(newSymbolValue, _context));
+                            IrisExpression.ToSyntax(export.SymbolReferenceTable[writeSymbolIndex]),
+                            IrisExpression.ToSyntax(newSymbolValue, _context)
+                        );
 
-                        topStatements.Add(ExpressionStatement(symbolAssignmentExpr));
+                        AddStatementToBlock(blockStack, ExpressionStatement(symbolAssignmentExpr));
                         break;
 
                     case OpCode.MethodInvoke:
@@ -102,7 +105,8 @@ partial class Decompiler
 
                         var methodExpression = MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
                             IrisExpression.ToSyntax(targetObj, _context),
-                            IdentifierName(methodSchema.Name));
+                            IdentifierName(methodSchema.Name)
+                        );
 
                         var methodResult = InvocationExpression(methodExpression, ArgumentList([.. parameters]));
 
@@ -112,7 +116,7 @@ partial class Decompiler
                         }
                         else
                         {
-                            topStatements.Add(ExpressionStatement(methodResult));
+                            AddStatementToBlock(blockStack, ExpressionStatement(methodResult));
                         }
 
                         if (pushLastParam)
@@ -135,7 +139,8 @@ partial class Decompiler
 
                         var propertyGetExpression = MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
                             IrisExpression.ToSyntax(propTarget, _context),
-                            IdentifierName(propToGet.Name));
+                            IdentifierName(propToGet.Name)
+                        );
 
                         stack.Push(propertyGetExpression);
                         break;
@@ -180,9 +185,17 @@ partial class Decompiler
             }
         }
 
+        if (blockStack.Count > 1)
+            throw new InvalidOperationException($"Failed to decompile script for {export.Name}, more than one top-level code block");
+        else if (blockStack.Count < 0)
+            throw new InvalidOperationException($"Failed to decompile script for {export.Name}, no top-level code blocks");
+
+        // Unwrap top-most block to avoid extra curly braces around entire script
+        var topBlock = blockStack.Pop();
+
         return SyntaxTree(
             CompilationUnit().WithMembers(
-                [..topStatements.Select(GlobalStatement)]
+                [..topBlock.Statements.Select(GlobalStatement)]
             )
         );
     }
@@ -195,5 +208,12 @@ partial class Decompiler
             .SyntaxTree
             .GetText(token)
             .ToString();
+    }
+
+    private static void AddStatementToBlock(Stack<BlockSyntax> blockStack, StatementSyntax statement)
+    {
+        var block = blockStack.Pop();
+        block = block.AddStatements(statement);
+        blockStack.Push(block);
     }
 }

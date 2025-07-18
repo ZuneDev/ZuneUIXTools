@@ -46,8 +46,8 @@ internal abstract class IrisExpression : Expression
             IStringEncodable strEnc => ParseExpression(strEnc.EncodeString()),
 
             Disassembler.RawConstantInfo constantInfo => new IrisConstantExpression(constantInfo.Value, constantInfo.Type).ToSyntax(context),
-            SymbolReference symbolRef => IdentifierName(symbolRef.Symbol),
-            TypeSchema typeSchema => IdentifierName(context.GetQualifiedName(typeSchema).ToString()),
+            SymbolReference symbolRef => ToSyntax(symbolRef),
+            TypeSchema typeSchema => ToSyntax(typeSchema, context),
 
             IrisExpression irisExpr => irisExpr.ToSyntax(context),
             Expression expr => ParseExpression(expr.ToString()),
@@ -56,4 +56,10 @@ internal abstract class IrisExpression : Expression
             _ => IdentifierName(obj.ToString())
         };
     }
+
+    public static IdentifierNameSyntax ToSyntax(TypeSchema type, DecompileContext context) =>
+        IdentifierName(context.GetQualifiedName(type).ToString());
+
+    public static IdentifierNameSyntax ToSyntax(SymbolReference symbolRef) =>
+        IdentifierName(symbolRef.Symbol);
 }
