@@ -1,8 +1,10 @@
-﻿using Microsoft.Iris.Markup;
+﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.Iris.Markup;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
+
+using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace Microsoft.Iris.DecompXml.Mock;
 
@@ -29,27 +31,22 @@ internal class IrisMethodCallExpression : IrisExpression, IArgumentProvider, IRe
 
     public Expression GetArgument(int index) => _arguments[index];
 
-    public override string Decompile(DecompileContext context)
+    public override ExpressionSyntax ToSyntax(DecompileContext context)
     {
-        StringBuilder sb = new();
-
-        if (Target is null)
+        var targetExpression = Target switch
         {
-            var qfn = context.GetQualifiedName(Method.Owner);
-            sb.Append(qfn);
-        }
-        else
-        {
-            sb.Append(Decompile(Target, context));
-        }
+            null => IdentifierName(context.GetQualifiedName(Method.Owner).ToString()),
+            IrisExpression irisExpr => irisExpr.ToSyntax(context),
+            _ => IdentifierName(Target.ToString())
+        };
 
-        sb.Append('.');
-        sb.Append(Method.Name);
+        var methodExpression = MemberAccessExpression(CodeAnalysis.CSharp.SyntaxKind.SimpleMemberAccessExpression,
+            targetExpression, IdentifierName(Method.Name));
 
-        sb.Append('(');
-        sb.Append(string.Join(", ", _arguments.Select(x => Decompile(x, context))));
-        sb.Append(')');
+        var argumentExpressions = _arguments
+            .Select(expr => ToSyntax(expr, context))
+            .Select(Argument);
 
-        return sb.ToString();
+        return InvocationExpression(methodExpression, ArgumentList([..argumentExpressions]));
     }
 }

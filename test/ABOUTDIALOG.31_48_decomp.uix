@@ -9,6 +9,14 @@
     </Properties>
   </Class>
   <UI Name="AboutDialogContentUI" Base="dialog:DialogContentUI">
+    <Scripts>
+      <Script>DialogTitle = zuneUI:Shell.LoadString(zuneUI:StringId.IDS_ABOUTDIALOG_TITLE);</Script>
+      <Script>ButtonCommands = new List();
+ButtonCommands.Add(Dialog.Cancel);
+DefaultButtonModel = Dialog.Cancel;
+ButtonModelToFocus = Dialog.Cancel;</Script>
+      <Script></Script>
+    </Scripts>
     <Content>
       <Panel MaximumSize="360, 0">
         <Layout>

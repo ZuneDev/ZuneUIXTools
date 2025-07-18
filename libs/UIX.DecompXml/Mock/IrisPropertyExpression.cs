@@ -1,6 +1,8 @@
-﻿using Microsoft.Iris.Markup;
+﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.Iris.Markup;
 using System.Linq.Expressions;
-using System.Text;
+
+using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace Microsoft.Iris.DecompXml.Mock;
 
@@ -20,24 +22,18 @@ internal class IrisPropertyExpression : IrisExpression, IReturnValueProvider
 
     public TypeSchema ReturnType => Property.PropertyType;
 
-
-    public override string Decompile(DecompileContext context)
+    public override ExpressionSyntax ToSyntax(DecompileContext context)
     {
-        StringBuilder sb = new();
-
-        if (Target is null)
+        var targetExpression = Target switch
         {
-            var qfn = context.GetQualifiedName(Property.Owner);
-            sb.Append(qfn);
-        }
-        else
-        {
-            sb.Append(Decompile(Target, context));
-        }
+            null => IdentifierName(context.GetQualifiedName(Property.Owner).ToString()),
+            IrisExpression irisExpr => irisExpr.ToSyntax(context),
+            _ => IdentifierName(Target.ToString())
+        };
 
-        sb.Append('.');
-        sb.Append(Property.Name);
+        var propertyAccessExpression = MemberAccessExpression(CodeAnalysis.CSharp.SyntaxKind.SimpleMemberAccessExpression,
+            targetExpression, IdentifierName(Property.Name));
 
-        return sb.ToString();
+        return propertyAccessExpression;
     }
 }

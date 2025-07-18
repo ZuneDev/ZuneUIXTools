@@ -11,7 +11,7 @@ using System.Xml.Linq;
 
 namespace Microsoft.Iris.DecompXml;
 
-public class Decompiler
+public partial class Decompiler
 {
     private static readonly XNamespace _nsUix = XNamespace.Get("http://schemas.microsoft.com/2007/uix");
     private readonly DecompileContext _context;
@@ -50,6 +50,22 @@ public class Decompiler
 
             if (export.InitializePropertiesOffset is not uint.MaxValue)
                 AnalyzeMethodForInit(export.InitializePropertiesOffset, xExport, export, name + "_prop");
+
+            if (export.InitialEvaluateOffsets is { Length: > 0 })
+            {
+                XElement xScripts = new(_nsUix + "Scripts");
+
+                foreach (var offset in export.InitialEvaluateOffsets)
+                {
+                    var syntaxTree = DecompileScript(offset, export);
+                    var scriptText = FormatScript(syntaxTree);
+
+                    XElement xScript = new(_nsUix + "Script", scriptText);
+                    xScripts.Add(xScript);
+                }
+
+                xExport.Add(xScripts);
+            }
 
             if (export.InitializeContentOffset is not uint.MaxValue)
                 AnalyzeMethodForInit(export.InitializeContentOffset, xExport, export, name + "_cont");

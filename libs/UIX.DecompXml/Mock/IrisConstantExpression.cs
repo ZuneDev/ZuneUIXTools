@@ -1,5 +1,10 @@
-﻿using Microsoft.Iris.Markup;
+﻿using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.Iris.Markup;
+using System;
 using System.Linq.Expressions;
+
+using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace Microsoft.Iris.DecompXml.Mock;
 
@@ -19,16 +24,17 @@ internal class IrisConstantExpression : IrisExpression, IReturnValueProvider
 
     public TypeSchema ReturnType => TypeSchema;
 
-    public override string Decompile(DecompileContext context)
+    public override ExpressionSyntax ToSyntax(DecompileContext context)
     {
-        if (TypeSchema.IsEnum)
-            return $"{context.GetQualifiedName(TypeSchema)}.{Value}";
-
         return Value switch
         {
-            string str => str,
-            IStringEncodable strEnc => strEnc.EncodeString(),
-            _ => Value?.ToString() ?? "null",
+            Enum enumValue => MemberAccessExpression(
+                SyntaxKind.SimpleMemberAccessExpression,
+                IdentifierName(context.GetQualifiedName(TypeSchema).ToString()),
+                IdentifierName(Value.ToString())
+            ),
+
+            _ => ToSyntax(Value, context)
         };
     }
 }

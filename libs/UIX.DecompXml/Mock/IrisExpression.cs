@@ -1,12 +1,20 @@
-﻿using Microsoft.Iris.Asm;
+﻿using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.Iris.Asm;
+using Microsoft.Iris.Markup;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Linq.Expressions;
 
+using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
+
 namespace Microsoft.Iris.DecompXml.Mock;
 
-internal class IrisExpression : Expression
+internal abstract class IrisExpression : Expression
 {
-    public virtual string Decompile(DecompileContext context) => ToString();
+    public virtual string Decompile(DecompileContext context) => ToSyntax(context).ToString();
+
+    public abstract ExpressionSyntax ToSyntax(DecompileContext context);
 
     public static Expression Wrap(object p)
     {
@@ -15,7 +23,7 @@ internal class IrisExpression : Expression
             null => Constant(null),
             Expression expr => expr,
             Disassembler.RawConstantInfo constantInfo => new IrisConstantExpression(constantInfo.Value, constantInfo.Type),
-            Markup.SymbolReference symbolRef => Constant(symbolRef),
+            SymbolReference symbolRef => Constant(symbolRef),
 
             _ => throw new NotImplementedException($"Unable to wrap '{p}' in an expression")
         };
@@ -26,5 +34,26 @@ internal class IrisExpression : Expression
         return expr is IrisExpression irisExpr
             ? irisExpr.Decompile(context)
             : expr.ToString();
+    }
+
+    public static ExpressionSyntax ToSyntax(object obj, DecompileContext context)
+    {
+        return obj switch
+        {
+            null => LiteralExpression(SyntaxKind.NullLiteralExpression),
+            int intValue => LiteralExpression(SyntaxKind.NumericLiteralExpression, Literal(intValue)),
+            string strValue => LiteralExpression(SyntaxKind.StringLiteralExpression, Literal(strValue)),
+            IStringEncodable strEnc => ParseExpression(strEnc.EncodeString()),
+
+            Disassembler.RawConstantInfo constantInfo => new IrisConstantExpression(constantInfo.Value, constantInfo.Type).ToSyntax(context),
+            SymbolReference symbolRef => IdentifierName(symbolRef.Symbol),
+            TypeSchema typeSchema => IdentifierName(context.GetQualifiedName(typeSchema).ToString()),
+
+            IrisExpression irisExpr => irisExpr.ToSyntax(context),
+            Expression expr => ParseExpression(expr.ToString()),
+            ExpressionSyntax exprSyn => exprSyn,
+
+            _ => IdentifierName(obj.ToString())
+        };
     }
 }
