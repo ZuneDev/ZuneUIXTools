@@ -18,16 +18,36 @@ partial class Decompiler
 {
     private SyntaxTree DecompileScript(uint startOffset, MarkupTypeSchema export)
     {
-        var methodBody = _context.GetMethodBody(startOffset);
+        var methodBody = _context.GetMethodBody(startOffset).ToArray();
 
-        Stack<BlockSyntax> blockStack = [];
-        blockStack.Push(Block());
+        Stack<CodeBlockInfo> blockStack = [];
+        blockStack.Push(new(0, methodBody[^1].Offset, SyntaxKind.Block, null));
 
         Stack<object> stack = new();
 
         for (int i = 0; i < methodBody.Length; i++)
         {
             var instruction = methodBody[i];
+
+            // TODO: Handle for loops
+            if (instruction.Offset == blockStack.Peek().EndOffset)
+            {
+                // Make sure there is only one top-level block
+                if (blockStack.Count > 1)
+                {
+                    var currentBlock = blockStack.Pop();
+                    currentBlock.FinalizeBlock(blockStack.Peek());
+                }
+                else
+                {
+                    // End of function
+                    if (i + 1 != methodBody.Length)
+                        throw new InvalidOperationException("Expected end of function!");
+
+                    break;
+                }
+            }
+                
             var opCode = instruction.OpCode;
 
             try
@@ -73,7 +93,7 @@ partial class Decompiler
                             IrisExpression.ToSyntax(newSymbolValue, _context)
                         );
 
-                        AddStatementToBlock(blockStack, ExpressionStatement(symbolAssignmentExpr));
+                        blockStack.Peek().Statements.Add(ExpressionStatement(symbolAssignmentExpr));
                         break;
 
                     case OpCode.MethodInvoke:
@@ -116,7 +136,7 @@ partial class Decompiler
                         }
                         else
                         {
-                            AddStatementToBlock(blockStack, ExpressionStatement(methodResult));
+                            blockStack.Peek().Statements.Add(ExpressionStatement(methodResult));
                         }
 
                         if (pushLastParam)
@@ -130,7 +150,7 @@ partial class Decompiler
                     case OpCode.PropertyGetStatic:
                         var propToGet = _context.GetImportedProperty(instruction.Operands.First());
 
-                        var propTarget = instruction.OpCode switch
+                        var propGetTarget = instruction.OpCode switch
                         {
                             OpCode.PropertyGet => stack.Pop(),
                             OpCode.PropertyGetPeek => stack.Peek(),
@@ -138,26 +158,36 @@ partial class Decompiler
                         };
 
                         var propertyGetExpression = MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
-                            IrisExpression.ToSyntax(propTarget, _context),
+                            IrisExpression.ToSyntax(propGetTarget, _context),
                             IdentifierName(propToGet.Name)
                         );
 
                         stack.Push(propertyGetExpression);
                         break;
 
-                    case OpCode.PropertyInitialize:
-                        var propertyToInit = _context.GetImportedProperty(instruction.Operands.First());
-                        var newPropValue = stack.Pop();
+                    case OpCode.PropertyAssign:
+                    case OpCode.PropertyAssignStatic:
+                        var propToSet = _context.GetImportedProperty(instruction.Operands.First());
 
-                        var target = stack.Pop();
-                        var xTarget = (XElement)ToXmlFriendlyObject(target);
+                        var propSetTarget = opCode is OpCode.PropertyAssignStatic
+                            ? propToSet.Owner
+                            : stack.Pop();
 
-                        PropertyAssignOnXElement(xTarget, propertyToInit, IrisObject.Create(newPropValue, propertyToInit.PropertyType, _context));
+                        var newPropValue = IrisExpression.ToSyntax(stack.Peek(), _context);
 
-                        stack.Push(new IrisObject(xTarget, propertyToInit.Owner));
+                        var propertySetExpression = AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+                            MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
+                                IrisExpression.ToSyntax(propSetTarget, _context),
+                                IdentifierName(propToSet.Name)
+                            ),
+                            newPropValue
+                        );
+
+                        blockStack.Peek().Statements.Add(ExpressionStatement(propertySetExpression));
                         break;
 
                     case OpCode.PropertyDictionaryAdd:
+                        // TODO
                         var targetDictProperty = _context.GetImportedProperty(instruction.Operands.ElementAt(0));
 
                         var keyReference = instruction.Operands.ElementAt(1);
@@ -171,11 +201,73 @@ partial class Decompiler
                         break;
 
                     case OpCode.PropertyListAdd:
+                        // TODO
                         var targetListProperty = _context.GetImportedProperty(instruction.Operands.First());
                         var valueToAdd = stack.Pop();
                         var targetInstance2 = (XElement)ToXmlFriendlyObject(stack.Peek());
 
                         PropertyListAddOnXElement(targetInstance2, targetListProperty, IrisObject.Create(valueToAdd, null, _context));
+                        break;
+
+                    case OpCode.JumpIfFalse:
+                    case OpCode.JumpIfFalsePeek:
+                    case OpCode.JumpIfTruePeek:
+                        var jumpToOffset = (uint)instruction.Operands.First().Value;
+
+                        // TODO: What about for loops?
+                        if (instruction.Offset > jumpToOffset)
+                        {
+                            throw new NotImplementedException();
+                        }
+
+                        var isPeek = opCode is OpCode.JumpIfFalsePeek or OpCode.JumpIfTruePeek or OpCode.JumpIfNullPeek;
+                        var rawJumpCondition = IrisExpression.ToSyntax(isPeek ? stack.Peek() : stack.Pop(), _context);
+
+                        var jumpCondition = opCode switch
+                        {
+                            OpCode.JumpIfFalse or
+                            OpCode.JumpIfFalsePeek => PrefixUnaryExpression(SyntaxKind.LogicalNotExpression, rawJumpCondition),
+
+                            OpCode.JumpIfTruePeek => rawJumpCondition,
+
+                            OpCode.JumpIfNullPeek => BinaryExpression(SyntaxKind.EqualsExpression,
+                                rawJumpCondition,
+                                LiteralExpression(SyntaxKind.NullLiteralExpression)),
+
+                            _ => throw new NotImplementedException()
+                        };
+
+                        var ifBlock = new CodeBlockInfo(instruction.Offset, jumpToOffset, SyntaxKind.IfStatement, jumpCondition);
+                        blockStack.Push(ifBlock);
+                        break;
+
+                    case OpCode.Operation:
+                        var opHost = _context.GetImportedType(instruction.Operands.ElementAt(0));
+
+                        var op = (OperationType)(int)(byte)instruction.Operands.ElementAt(1).Value;
+                        var isUnary = TypeSchema.IsUnaryOperation(op);
+                        var opSyntax = OperationToSyntaxKind(op);
+
+                        ExpressionSyntax operationExpr;
+
+                        if (isUnary)
+                        {
+                            var left = IrisExpression.ToSyntax(stack.Pop(), _context);
+                            var isPostfix = op is OperationType.PostIncrement or OperationType.PostDecrement;
+
+                            operationExpr = isPostfix
+                                ? PostfixUnaryExpression(opSyntax, left)
+                                : PrefixUnaryExpression(opSyntax, left);
+                        }
+                        else
+                        {
+                            var right = IrisExpression.ToSyntax(stack.Pop(), _context);
+                            var left = IrisExpression.ToSyntax(stack.Pop(), _context);
+
+                            operationExpr = BinaryExpression(opSyntax, left, right);
+                        }
+
+                        stack.Push(operationExpr);
                         break;
                 }
             }
@@ -215,5 +307,35 @@ partial class Decompiler
         var block = blockStack.Pop();
         block = block.AddStatements(statement);
         blockStack.Push(block);
+    }
+
+    private static SyntaxKind OperationToSyntaxKind(OperationType operation)
+    {
+        return operation switch
+        {
+            OperationType.MathAdd                       => SyntaxKind.AddExpression,
+            OperationType.MathSubtract                  => SyntaxKind.SubtractExpression,
+            OperationType.MathMultiply                  => SyntaxKind.MultiplyExpression,
+            OperationType.MathDivide                    => SyntaxKind.DivideExpression,
+            OperationType.MathModulus                   => SyntaxKind.ModuloExpression,
+            OperationType.MathNegate                    => SyntaxKind.UnaryMinusExpression,
+
+            OperationType.LogicalAnd                    => SyntaxKind.LogicalAndExpression,
+            OperationType.LogicalOr                     => SyntaxKind.LogicalOrExpression,
+            OperationType.LogicalNot                    => SyntaxKind.LogicalNotExpression,
+
+            OperationType.RelationalEquals              => SyntaxKind.EqualsExpression,
+            OperationType.RelationalNotEquals           => SyntaxKind.NotEqualsExpression,
+            OperationType.RelationalLessThan            => SyntaxKind.LessThanExpression,
+            OperationType.RelationalGreaterThan         => SyntaxKind.GreaterThanExpression,
+            OperationType.RelationalLessThanEquals      => SyntaxKind.LessThanOrEqualExpression,
+            OperationType.RelationalGreaterThanEquals   => SyntaxKind.GreaterThanOrEqualExpression,
+            OperationType.RelationalIs                  => SyntaxKind.IsExpression,
+
+            OperationType.PostIncrement                 => SyntaxKind.PostIncrementExpression,
+            OperationType.PostDecrement                 => SyntaxKind.PostDecrementExpression,
+
+            _ => throw new ArgumentException($"Invalid operation type '{operation}'", nameof(operation))
+        };
     }
 }

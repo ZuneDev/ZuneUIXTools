@@ -78,14 +78,14 @@ internal class DecompileContext
 
     public PropertySchema GetImportedProperty(Operand op) => ImportTables.PropertyImports[(ushort)op.Value];
 
-    public Instruction[] GetMethodBody(uint startOffset)
+    public IEnumerable<Instruction> GetMethodBody(uint startOffset)
     {
-        return Instructions
-            .SkipWhile(i => i.Offset < startOffset)
-            .OrderBy(i => i.Offset)
-            .TakeWhile(i => i.OpCode is not (OpCode.ReturnValue or OpCode.ReturnVoid))
-            .OrderBy(i => i.Offset)
-            .ToArray();
+        foreach (var instruction in Instructions.SkipWhile(i => i.Offset < startOffset))
+        {
+            yield return instruction;
+            if (instruction.OpCode is OpCode.ReturnValue or OpCode.ReturnVoid)
+                yield break;
+        }
     }
 
     public IEnumerable<KeyValuePair<string, XNamespace>> GetUsedNamespaces()

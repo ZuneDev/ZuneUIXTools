@@ -15,7 +15,11 @@
 ButtonCommands.Add(Dialog.Cancel);
 DefaultButtonModel = Dialog.Cancel;
 ButtonModelToFocus = Dialog.Cancel;</Script>
-      <Script></Script>
+      <Script>if (!iris:Application.RenderingType == iris:RenderingType.GDI)
+{
+    GDIModeLabel.Visible = True;
+    GDIModeLabel.Content = zuneUI:Shell.LoadString(zuneUI:StringId.IDS_ABOUTDIALOG_GDI_MODE_NOTICE);
+}</Script>
     </Scripts>
     <Content>
       <Panel MaximumSize="360, 0">

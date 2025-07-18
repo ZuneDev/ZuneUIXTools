@@ -105,7 +105,7 @@ public partial class Decompiler
 
     private Stack<object> AnalyzeMethodForInit(uint startOffset, XElement elemToInit, MarkupTypeSchema initType, string methodName = "")
     {
-        var methodBody = _context.GetMethodBody(startOffset);
+        var methodBody = _context.GetMethodBody(startOffset).ToArray();
 
         Stack<object> stack = new([elemToInit]);
 

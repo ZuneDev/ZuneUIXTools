@@ -2,7 +2,6 @@
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Iris.Asm;
 using Microsoft.Iris.Markup;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Linq.Expressions;
 
