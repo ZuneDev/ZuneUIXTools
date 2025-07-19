@@ -40,14 +40,14 @@ public partial class Decompiler
         foreach (var export in _context.LoadResult.ExportTable.Cast<MarkupTypeSchema>())
         {
             var name = export.Name;
-            
+
             XElement xExport = new(_nsUix + export.MarkupType.ToString(),
                 new XAttribute("Name", name));
             
             var baseType = export.MarkupTypeBase;
             if (baseType is not null)
             {
-            var baseTypeName = _context.GetQualifiedName(baseType);
+                var baseTypeName = _context.GetQualifiedName(baseType);
                 xExport.SetAttributeValue("Base", baseTypeName);
             }
 
@@ -189,10 +189,13 @@ public partial class Decompiler
                         var key = _context.GetConstant(keyReference).Value.ToString();
 
                         var dictValue = stack.Pop();
+                        var dictValueType = initType.InheritableSymbolsTable?
+                            .FirstOrDefault(s => s.Name == key)?
+                            .Type;
 
                         var targetInstance = (XElement)stack.Peek();
 
-                        PropertyDictionaryAddOnXElement(targetInstance, targetDictProperty, IrisObject.Create(dictValue, null, _context), key);
+                        PropertyDictionaryAddOnXElement(targetInstance, targetDictProperty, IrisObject.Create(dictValue, dictValueType, _context), key);
                         break;
 
                     case OpCode.PropertyListAdd:
@@ -226,7 +229,7 @@ public partial class Decompiler
         return elem;
     }
 
-    private object ToXmlFriendlyObject(object obj, TypeSchema type = null)
+    private object ToXmlFriendlyObject(object obj)
     {
         if (obj is Disassembler.RawConstantInfo rci)
         {
@@ -279,7 +282,7 @@ public partial class Decompiler
 
     private XObject PropertyAssignOnXElement(XElement xTarget, PropertySchema property, IrisObject value)
     {
-        object xfValue = ToXmlFriendlyObject(value.Object, value.Type);
+        object xfValue = ToXmlFriendlyObject(value);
 
         switch (xfValue)
         {
@@ -300,13 +303,9 @@ public partial class Decompiler
 
     private XElement PropertyListAddOnXElement(XElement xTarget, PropertySchema property, IrisObject value)
     {
-        var xDictionary = GetOrCreateElement(xTarget, _nsUix + property.Name);
-        return PropertyListAddOnXElement(xDictionary, value);
-    }
+        var xList = GetOrCreateElement(xTarget, _nsUix + property.Name);
 
-    private XElement PropertyListAddOnXElement(XElement xList, IrisObject value)
-    {
-        object xValue = ToXmlFriendlyObject(value.Object, value.Type);
+        object xValue = ToXmlFriendlyObject(value);
 
         XElement xListEntry;
 
@@ -330,13 +329,7 @@ public partial class Decompiler
 
     private XElement PropertyDictionaryAddOnXElement(XElement xTarget, PropertySchema property, IrisObject value, string key)
     {
-        var xDictionary = GetOrCreateElement(xTarget, _nsUix + property.Name);
-        return PropertyDictionaryAddOnXElement(xDictionary, value, key);
-    }
-
-    private XElement PropertyDictionaryAddOnXElement(XElement xDictionary, IrisObject value, string key)
-    {
-        var xDictionaryEntry = PropertyListAddOnXElement(xDictionary, value);
+        var xDictionaryEntry = PropertyListAddOnXElement(xTarget, property, value);
         xDictionaryEntry.SetAttributeValue("Name", key);
         return xDictionaryEntry;
     }
