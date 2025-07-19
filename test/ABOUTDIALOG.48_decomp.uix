@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-16"?>
+<UIX xmlns="http://schemas.microsoft.com/2007/uix" xmlns:me="Me" xmlns:dialog="res://UIXControls!Dialog.uix" xmlns:iris="assembly://UIX/Microsoft.Iris" xmlns:zuneUI="assembly://ZuneShell/ZuneUI" xmlns:system="assembly://System.Private.CoreLib/System" xmlns:label="res://UIXControls!Label.uix" xmlns:styles="res://ZuneShellResources!Styles.uix" xmlns:linkButtons="res://ZuneShellResources!LinkButtons.uix" xmlns:button="res://UIXControls!Button.uix">
+  <Class Name="AboutDialog" Base="dialog:Dialog">
+    <Properties>
+      <String String="res://ZuneShellResources!AboutDialog.uix#AboutDialogContentUI" Name="ContentUI" />
+      <iris:Command Description="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_DIALOG_OK)}" Name="Cancel" />
+      <zuneUI:WebHelpCommand Description="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_ABOUTDIALOG_TECHNICAL_SUPPORT_INFORMATION)}" Url="http://www.zune.net/support/" Name="TechSupportLink" />
+      <system:String String="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_ABOUTDIALOG_TITLE)}" Name="AccessibleDescription" />
+    </Properties>
+  </Class>
+  <UI Name="AboutDialogContentUI" Base="dialog:DialogContentUI">
+    <Properties>
+      <me:AboutDialog Name="Dialog" />
+    </Properties>
+    <Scripts>
+      <Script>if (!iris:Application.RenderingType == iris:RenderingType.GDI)
+{
+    GDIModeLabel.Visible = True;
+    GDIModeLabel.Content = zuneUI:Shell.LoadString(zuneUI:StringId.IDS_ABOUTDIALOG_GDI_MODE_NOTICE);
+}</Script>
+    </Scripts>
+    <Content>
+      <Panel Navigation="ContainAll, WrapAll" MaximumSize="360, 0" Margins="10">
+        <Layout>
+          <FlowLayout Orientation="Vertical" />
+        </Layout>
+        <Children>
+          <label:Label Content="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_ABOUTDIALOG_TITLE)}" Style="{styles:SharedStyles.DialogHeaderStyle}" WordWrap="true" />
+          <Panel Margins="10">
+            <Layout>
+              <FlowLayout Orientation="Horizontal" />
+            </Layout>
+            <Children>
+              <Graphic Content="res://ZuneShellResources!ZuneColorLogo.png" StretchingPolicy="Uniform" SizingPolicy="SizeToContent" />
+              <Panel Margins="10">
+                <Layout>
+                  <DockLayout DefaultLayoutInput="Top" />
+                </Layout>
+                <Children>
+                  <label:Label Content="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_ABOUTDIALOG_COPYRIGHT_LINE1)}" Style="{styles:SharedStyles.DialogTextStyle}" />
+                  <label:Label Content="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_ABOUTDIALOG_COPYRIGHT_LINE2)}" Style="{styles:SharedStyles.DialogTextStyle}" />
+                  <label:Label Content="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_ABOUTDIALOG_COPYRIGHT_LINE3)}" Style="{styles:SharedStyles.DialogTextStyle}" />
+                  <Panel Layout="HorizontalFlow">
+                    <Children>
+                      <label:Label Content="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_ABOUTDIALOG_VERSION_HEADER)}" Style="{styles:SharedStyles.DialogTextStyle}" />
+                      <label:Label Content="{zuneUI:ZuneShell.DefaultInstance.Management.BuildNumber}" Margins="5, 0, 0, 0" Style="{styles:SharedStyles.DialogTextStyle}" />
+                    </Children>
+                  </Panel>
+                  <Panel Layout="HorizontalFlow">
+                    <Children>
+                      <label:Label Content="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_ABOUTDIALOG_PRODUCT_ID)}" Style="{styles:SharedStyles.DialogTextStyle}" />
+                      <label:Label Content="{zuneUI:SoftwareUpdates.PID}" Margins="5, 0, 0, 0" Style="{styles:SharedStyles.DialogTextStyle}" />
+                    </Children>
+                  </Panel>
+                  <label:Label Name="GDIModeLabel" Visible="false" Style="{styles:SharedStyles.DialogTextStyle}" />
+                </Children>
+              </Panel>
+            </Children>
+          </Panel>
+          <label:Label Content="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_ABOUTDIALOG_WARNING)}" Style="{styles:SharedStyles.DialogTextStyle}" WordWrap="true" />
+          <Panel Layout="VerticalFlow" Margins="0, 10, 0, 0">
+            <Children>
+              <linkButtons:ExternalLink Model="{Dialog.TechSupportLink}" ToolTipEnabled="false" TileMinSize="160, 16" />
+              <button:BigActionButton Model="{Dialog.Cancel}" Margins="0, 10, 0, 0" ToolTipEnabled="false" FocusOrder="0" />
+            </Children>
+          </Panel>
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+</UIX>
