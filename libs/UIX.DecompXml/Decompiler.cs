@@ -54,6 +54,9 @@ public partial class Decompiler
             if (export.InitializePropertiesOffset is not uint.MaxValue)
                 AnalyzeMethodForInit(export.InitializePropertiesOffset, xExport, export, name + "_prop");
 
+            if (export.InitializeLocalsInputOffset is not uint.MaxValue)
+                AnalyzeMethodForInit(export.InitializeLocalsInputOffset, xExport, export, name + "_locl");
+
             if (export.InitialEvaluateOffsets is { Length: > 0 })
             {
                 XElement xScripts = new(_nsUix + "Scripts");
@@ -204,6 +207,10 @@ public partial class Decompiler
                         var targetInstance2 = (XElement)ToXmlFriendlyObject(stack.Peek());
 
                         PropertyListAddOnXElement(targetInstance2, targetListProperty, IrisObject.Create(valueToAdd, null, _context));
+                        break;
+
+                    case OpCode.ConstructListenerStorage:
+                        var listenerCount = (ushort)instruction.Operands.First().Value;
                         break;
                 }
             }
