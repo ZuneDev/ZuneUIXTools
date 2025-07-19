@@ -41,12 +41,15 @@ public partial class Decompiler
         {
             var name = export.Name;
             
-            var baseType = export.MarkupTypeBase;
-            var baseTypeName = _context.GetQualifiedName(baseType);
-
             XElement xExport = new(_nsUix + export.MarkupType.ToString(),
-                new XAttribute("Name", name),
-                new XAttribute("Base", baseTypeName));
+                new XAttribute("Name", name));
+            
+            var baseType = export.MarkupTypeBase;
+            if (baseType is not null)
+            {
+            var baseTypeName = _context.GetQualifiedName(baseType);
+                xExport.SetAttributeValue("Base", baseTypeName);
+            }
 
             if (export.InitializePropertiesOffset is not uint.MaxValue)
                 AnalyzeMethodForInit(export.InitializePropertiesOffset, xExport, export, name + "_prop");
