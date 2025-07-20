@@ -672,6 +672,7 @@
         </Source>
       </List>
       <Int32 Int32="0" Name="DefaultBackgroundIndex" />
+      <Image Source="{this.GetDefaultFrameBackground()}" Name="DefaultBackgroundImage" />
       <Image Source="res://ZuneShellResources!FirstRunBackground.png" Name="FirstLaunchBackground" />
       <Image Source="res://ZuneShellResources!FirstConnectBackground.png" Name="FirstConnectBackground" />
       <Image Source="res://ZuneShellResources!FrameBorderLeft.png" NineGrid="0, 2, 0, 2" Name="FrameBorderLeft" />

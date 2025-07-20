@@ -224,6 +224,10 @@ partial class Decompiler
 
         switch (opCode)
         {
+            case OpCode.PushThis:
+                stack.Push(ThisExpression());
+                break;
+
             case OpCode.ConstructObject:
             case OpCode.ConstructObjectParam:
                 var typeToCtor = _context.GetImportedType(instruction.Operands.First());

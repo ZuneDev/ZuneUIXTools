@@ -152,10 +152,6 @@ public partial class Decompiler
                         stack.Push(null);
                         break;
 
-                    case OpCode.PushThis:
-                        stack.Push(elemToInit);
-                        break;
-
                     case OpCode.ConstructObject:
                         var typeToCtor = _context.GetImportedType(instruction.Operands.ElementAt(0));
                         var xObj = new XElement(_context.GetXName(typeToCtor));
@@ -245,6 +241,7 @@ public partial class Decompiler
                         break;
 
                     case OpCode.ConstructObjectParam:
+                    case OpCode.PushThis:
                     case OpCode.MethodInvoke:
                     case OpCode.MethodInvokePeek:
                     case OpCode.MethodInvokeStatic:
