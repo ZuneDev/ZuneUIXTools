@@ -41,6 +41,7 @@ internal abstract class IrisExpression : Expression
         {
             null => LiteralExpression(SyntaxKind.NullLiteralExpression),
             int intValue => LiteralExpression(SyntaxKind.NumericLiteralExpression, Literal(intValue)),
+            bool boolValue => LiteralExpression(boolValue ? SyntaxKind.TrueLiteralExpression : SyntaxKind.FalseLiteralExpression),
             string strValue => LiteralExpression(SyntaxKind.StringLiteralExpression, Literal(strValue)),
             IStringEncodable strEnc => ParseExpression(strEnc.EncodeString()),
 
