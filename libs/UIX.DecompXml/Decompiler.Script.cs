@@ -164,10 +164,7 @@ partial class Decompiler
                         blockStack.Push(ifBlock);
                         break;
 
-                    case OpCode.ReturnVoid:
-                        break;
-
-                    default:
+                    case not OpCode.ReturnVoid:
                         if (!TryDecompileExpression(instruction, stack, blockStack))
                             throw new NotImplementedException();
                         break;
@@ -212,13 +209,6 @@ partial class Decompiler
             .SyntaxTree
             .GetText(token)
             .ToString();
-    }
-
-    private static void AddStatementToBlock(Stack<BlockSyntax> blockStack, StatementSyntax statement)
-    {
-        var block = blockStack.Pop();
-        block = block.AddStatements(statement);
-        blockStack.Push(block);
     }
 
     private bool TryDecompileExpression(Instruction instruction, Stack<object> stack, Stack<CodeBlockInfo> blockStack = null)
