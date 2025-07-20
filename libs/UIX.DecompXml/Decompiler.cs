@@ -168,11 +168,7 @@ public partial class Decompiler
                         var newPropValue = stack.Pop();
 
                         var target = stack.Pop();
-                        var xTarget = ToXmlFriendlyObject(target) as XElement;
-                        if (xTarget is null)
-                        {
-
-                        }
+                        var xTarget = (XElement)ToXmlFriendlyObject(target);
 
                         PropertyAssignOnXElement(xTarget, propertyToInit, IrisObject.Create(newPropValue, propertyToInit.PropertyType, _context));
 
@@ -190,11 +186,7 @@ public partial class Decompiler
                             .FirstOrDefault(s => s.Name == key)?
                             .Type;
 
-                        var targetInstance = stack.Peek() as XElement;
-                        if (targetInstance is null)
-                        {
-
-                        }
+                        var targetInstance = (XElement)stack.Peek();
 
                         PropertyDictionaryAddOnXElement(targetInstance, targetDictProperty, IrisObject.Create(dictValue, dictValueType, _context), key);
                         break;
