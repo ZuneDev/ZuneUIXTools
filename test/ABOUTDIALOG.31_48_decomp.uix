@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-16"?>
-<UIX xmlns="http://schemas.microsoft.com/2007/uix" xmlns:dialog="res://UIXControls!Dialog.uix" xmlns:iris="assembly://UIX/Microsoft.Iris" xmlns:zuneUI="assembly://ZuneShell/ZuneUI" xmlns:system="assembly://System.Private.CoreLib/System" xmlns:styles="res://ZuneShellResources!Styles.uix" xmlns:label="res://UIXControls!Label.uix" xmlns:linkButtons="res://ZuneShellResources!LinkButtons.uix">
+<UIX xmlns="http://schemas.microsoft.com/2007/uix" xmlns:dialog="res://UIXControls!Dialog.uix" xmlns:iris="assembly://UIX/Microsoft.Iris" xmlns:zuneUI="assembly://ZuneShell/ZuneUI" xmlns:styles="res://ZuneShellResources!Styles.uix" xmlns:label="res://UIXControls!Label.uix" xmlns:linkButtons="res://ZuneShellResources!LinkButtons.uix">
   <Class Name="AboutDialog" Base="dialog:Dialog">
     <Properties>
       <String String="res://ZuneShellResources!AboutDialog.uix#AboutDialogContentUI" Name="ContentUI" />
       <iris:Command Description="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_DIALOG_OK)}" Name="Cancel" />
       <zuneUI:WebHelpCommand Description="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_ABOUTDIALOG_TECHNICAL_SUPPORT_INFORMATION)}" Url="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_WWW_ZUNE_NET_SUPPORT_URL)}" Name="TechSupportLink" />
-      <system:String String="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_ABOUTDIALOG_TITLE)}" Name="AccessibleDescription" />
+      <String String="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_ABOUTDIALOG_TITLE)}" Name="AccessibleDescription" />
     </Properties>
   </Class>
   <UI Name="AboutDialogContentUI" Base="dialog:DialogContentUI">
@@ -15,7 +15,7 @@
 ButtonCommands.Add(Dialog.Cancel);
 DefaultButtonModel = Dialog.Cancel;
 ButtonModelToFocus = Dialog.Cancel;</Script>
-      <Script>if (!iris:Application.RenderingType == iris:RenderingType.GDI)
+      <Script>if (iris:Application.RenderingType == iris:RenderingType.GDI)
 {
     GDIModeLabel.Visible = True;
     GDIModeLabel.Content = zuneUI:Shell.LoadString(zuneUI:StringId.IDS_ABOUTDIALOG_GDI_MODE_NOTICE);
