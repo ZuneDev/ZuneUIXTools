@@ -15,6 +15,10 @@ internal record IrisObject(object Object, TypeSchema Type)
                 ? (irisObj with { Type = type })
                 : irisObj;
         }
+        else if (objIn is null)
+        {
+            type ??= UIXTypes.MapIDToType(UIXTypeID.Null);
+        }
 
         if (objIn is Disassembler.RawConstantInfo constantInfo)
         {

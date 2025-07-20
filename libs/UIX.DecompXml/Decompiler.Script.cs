@@ -1,6 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.Iris.Asm.Models;
 using Microsoft.Iris.DecompXml.Mock;
 using Microsoft.Iris.Markup;
 using Microsoft.Iris.Markup.UIX;
@@ -67,18 +68,9 @@ partial class Decompiler
                         stack.Pop();
                         break;
 
-                    case OpCode.ConstructObject:
-                        var typeToCtor = _context.GetImportedType(instruction.Operands.First());
-                        stack.Push(ObjectCreationExpression(
-                            IrisExpression.ToSyntax(typeToCtor, _context),
-                            ArgumentList(),
-                            null
-                        ));
-                        break;
-
                     case OpCode.LookupSymbol:
-                        var symbolIndex = (ushort)instruction.Operands.First().Value;
-                        stack.Push(IrisExpression.ToSyntax(export.SymbolReferenceTable[symbolIndex]));
+                        var symbolIndex = (ushort)instruction.Operands.ElementAt(0).Value;
+                        stack.Push(export.SymbolReferenceTable[symbolIndex]);
                         break;
 
                     case OpCode.WriteSymbol:
@@ -94,75 +86,6 @@ partial class Decompiler
                         );
 
                         blockStack.Peek().Statements.Add(ExpressionStatement(symbolAssignmentExpr));
-                        break;
-
-                    case OpCode.MethodInvoke:
-                    case OpCode.MethodInvokePeek:
-                    case OpCode.MethodInvokeStatic:
-                    case OpCode.MethodInvokePushLastParam:
-                    case OpCode.MethodInvokeStaticPushLastParam:
-                        var methodSchema = _context.GetImportedMethod(instruction.Operands.First());
-
-                        int parameterCount = methodSchema.ParameterTypes.Length;
-                        var parameters = new ArgumentSyntax[parameterCount];
-                        for (parameterCount--; parameterCount >= 0; parameterCount--)
-                        {
-                            var parameter = IrisExpression.ToSyntax(stack.Pop(), _context);
-                            parameters[parameterCount] = Argument(parameter);
-                        }
-
-                        bool isStatic = opCode is OpCode.MethodInvokeStatic or OpCode.MethodInvokeStaticPushLastParam;
-                        bool peek = opCode is OpCode.MethodInvokePeek;
-                        bool pushLastParam = opCode is OpCode.MethodInvokePushLastParam or OpCode.MethodInvokeStaticPushLastParam;
-
-                        var targetObj = opCode switch
-                        {
-                            OpCode.MethodInvokeStatic or
-                            OpCode.MethodInvokeStaticPushLastParam => methodSchema.Owner,
-                            _ when peek => stack.Peek(),
-                            _ => stack.Pop(),
-                        };
-
-                        var methodExpression = MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
-                            IrisExpression.ToSyntax(targetObj, _context),
-                            IdentifierName(methodSchema.Name)
-                        );
-
-                        var methodResult = InvocationExpression(methodExpression, ArgumentList([.. parameters]));
-
-                        if (methodSchema.ReturnType != VoidSchema.Type)
-                        {
-                            stack.Push(methodResult);
-                        }
-                        else
-                        {
-                            blockStack.Peek().Statements.Add(ExpressionStatement(methodResult));
-                        }
-
-                        if (pushLastParam)
-                        {
-                            stack.Push(parameters[^1].Expression);
-                        }
-                        break;
-
-                    case OpCode.PropertyGet:
-                    case OpCode.PropertyGetPeek:
-                    case OpCode.PropertyGetStatic:
-                        var propToGet = _context.GetImportedProperty(instruction.Operands.First());
-
-                        var propGetTarget = instruction.OpCode switch
-                        {
-                            OpCode.PropertyGet => stack.Pop(),
-                            OpCode.PropertyGetPeek => stack.Peek(),
-                            _ => propToGet.Owner,
-                        };
-
-                        var propertyGetExpression = MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
-                            IrisExpression.ToSyntax(propGetTarget, _context),
-                            IdentifierName(propToGet.Name)
-                        );
-
-                        stack.Push(propertyGetExpression);
                         break;
 
                     case OpCode.PropertyAssign:
@@ -241,33 +164,9 @@ partial class Decompiler
                         blockStack.Push(ifBlock);
                         break;
 
-                    case OpCode.Operation:
-                        var opHost = _context.GetImportedType(instruction.Operands.ElementAt(0));
-
-                        var op = (OperationType)(int)(byte)instruction.Operands.ElementAt(1).Value;
-                        var isUnary = TypeSchema.IsUnaryOperation(op);
-                        var opSyntax = OperationToSyntaxKind(op);
-
-                        ExpressionSyntax operationExpr;
-
-                        if (isUnary)
-                        {
-                            var left = IrisExpression.ToSyntax(stack.Pop(), _context);
-                            var isPostfix = op is OperationType.PostIncrement or OperationType.PostDecrement;
-
-                            operationExpr = isPostfix
-                                ? PostfixUnaryExpression(opSyntax, left)
-                                : PrefixUnaryExpression(opSyntax, left);
-                        }
-                        else
-                        {
-                            var right = IrisExpression.ToSyntax(stack.Pop(), _context);
-                            var left = IrisExpression.ToSyntax(stack.Pop(), _context);
-
-                            operationExpr = BinaryExpression(opSyntax, left, right);
-                        }
-
-                        stack.Push(operationExpr);
+                    default:
+                        if (!TryDecompileExpression(instruction, stack, blockStack))
+                            throw new NotImplementedException();
                         break;
                 }
             }
@@ -292,6 +191,16 @@ partial class Decompiler
         );
     }
 
+    public static string FormatInlineExpression(ExpressionSyntax expr, CancellationToken token = default)
+    {
+        var exprStr = expr
+            .NormalizeWhitespace()
+            .SyntaxTree
+            .GetText(token)
+            .ToString();
+        return '{' + exprStr + '}';
+    }
+
     public static string FormatScript(SyntaxTree tree, CancellationToken token = default)
     {
         return tree
@@ -307,6 +216,150 @@ partial class Decompiler
         var block = blockStack.Pop();
         block = block.AddStatements(statement);
         blockStack.Push(block);
+    }
+
+    private bool TryDecompileExpression(Instruction instruction, Stack<object> stack, Stack<CodeBlockInfo> blockStack = null)
+    {
+        var opCode = instruction.OpCode;
+
+        switch (opCode)
+        {
+            case OpCode.ConstructObject:
+            case OpCode.ConstructObjectParam:
+                var typeToCtor = _context.GetImportedType(instruction.Operands.First());
+
+                List<ArgumentSyntax> ctorParameters = [];
+                if (opCode is OpCode.ConstructObjectParam)
+                {
+                    var ctorSchema = _context.GetImportedConstructor(instruction.Operands.ElementAt(1));
+
+                    int ctorParameterCount = ctorSchema.ParameterTypes.Length;
+                    ctorParameters.Capacity = ctorParameterCount;
+
+                    for (ctorParameterCount--; ctorParameterCount >= 0; ctorParameterCount--)
+                    {
+                        var parameter = IrisExpression.ToSyntax(stack.Pop(), _context);
+                        ctorParameters.Add(Argument(parameter));
+                    }
+                    ctorParameters.Reverse();
+                }
+
+                stack.Push(ObjectCreationExpression(
+                    IrisExpression.ToSyntax(typeToCtor, _context),
+                    ArgumentList([..ctorParameters]),
+                    null
+                ));
+                break;
+
+            case OpCode.MethodInvoke:
+            case OpCode.MethodInvokePeek:
+            case OpCode.MethodInvokeStatic:
+            case OpCode.MethodInvokePushLastParam:
+            case OpCode.MethodInvokeStaticPushLastParam:
+                var methodSchema = _context.GetImportedMethod(instruction.Operands.First());
+
+                int parameterCount = methodSchema.ParameterTypes.Length;
+                var parameters = new ArgumentSyntax[parameterCount];
+                for (parameterCount--; parameterCount >= 0; parameterCount--)
+                {
+                    var parameter = IrisExpression.ToSyntax(stack.Pop(), _context);
+                    parameters[parameterCount] = Argument(parameter);
+                }
+
+                bool isStatic = opCode is OpCode.MethodInvokeStatic or OpCode.MethodInvokeStaticPushLastParam;
+                bool peek = opCode is OpCode.MethodInvokePeek;
+                bool pushLastParam = opCode is OpCode.MethodInvokePushLastParam or OpCode.MethodInvokeStaticPushLastParam;
+
+                var targetObj = opCode switch
+                {
+                    OpCode.MethodInvokeStatic or
+                    OpCode.MethodInvokeStaticPushLastParam => methodSchema.Owner,
+                    _ when peek => stack.Peek(),
+                    _ => stack.Pop(),
+                };
+
+                var methodExpression = MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
+                    IrisExpression.ToSyntax(targetObj, _context),
+                    IdentifierName(methodSchema.Name)
+                );
+
+                var methodResult = InvocationExpression(methodExpression, ArgumentList([.. parameters]));
+
+                if (methodSchema.ReturnType != VoidSchema.Type)
+                {
+                    stack.Push(methodResult);
+                }
+                else
+                {
+                    blockStack?.Peek().Statements.Add(ExpressionStatement(methodResult));
+                }
+
+                if (pushLastParam)
+                {
+                    stack.Push(parameters[^1].Expression);
+                }
+                break;
+
+            case OpCode.PropertyGet:
+            case OpCode.PropertyGetPeek:
+            case OpCode.PropertyGetStatic:
+                var propToGet = _context.GetImportedProperty(instruction.Operands.First());
+
+                var propGetTarget = instruction.OpCode switch
+                {
+                    OpCode.PropertyGet => stack.Pop(),
+                    OpCode.PropertyGetPeek => stack.Peek(),
+                    _ => propToGet.Owner,
+                };
+
+                var propertyGetExpression = MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
+                    IrisExpression.ToSyntax(propGetTarget, _context),
+                    IdentifierName(propToGet.Name)
+                );
+
+                stack.Push(propertyGetExpression);
+                break;
+
+            case OpCode.Operation:
+                DecompileOperation(instruction, stack);
+                break;
+
+            default:
+                return false;
+        }
+
+        return true;
+    }
+
+    private ExpressionSyntax DecompileOperation(Instruction instruction, Stack<object> stack)
+    {
+        var opHost = _context.GetImportedType(instruction.Operands.ElementAt(0));
+
+        var op = (OperationType)(int)(byte)instruction.Operands.ElementAt(1).Value;
+        var isUnary = TypeSchema.IsUnaryOperation(op);
+        var opSyntax = OperationToSyntaxKind(op);
+
+        ExpressionSyntax operationExpr;
+
+        if (isUnary)
+        {
+            var left = IrisExpression.ToSyntax(stack.Pop(), _context);
+            var isPostfix = op is OperationType.PostIncrement or OperationType.PostDecrement;
+
+            operationExpr = isPostfix
+                ? PostfixUnaryExpression(opSyntax, left)
+                : PrefixUnaryExpression(opSyntax, left);
+        }
+        else
+        {
+            var right = IrisExpression.ToSyntax(stack.Pop(), _context);
+            var left = IrisExpression.ToSyntax(stack.Pop(), _context);
+
+            operationExpr = BinaryExpression(opSyntax, left, right);
+        }
+
+        stack.Push(operationExpr);
+        return operationExpr;
     }
 
     private static SyntaxKind OperationToSyntaxKind(OperationType operation)

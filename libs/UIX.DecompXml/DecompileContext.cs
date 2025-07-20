@@ -78,6 +78,8 @@ internal class DecompileContext
 
     public PropertySchema GetImportedProperty(Operand op) => ImportTables.PropertyImports[(ushort)op.Value];
 
+    public ConstructorSchema GetImportedConstructor(Operand op) => ImportTables.ConstructorImports[(ushort)op.Value];
+
     public IEnumerable<Instruction> GetMethodBody(uint startOffset)
     {
         foreach (var instruction in Instructions.SkipWhile(i => i.Offset < startOffset))
@@ -111,7 +113,14 @@ internal class DecompileContext
     {
         var prefix = MapNamespaceToPrefix(schema.Owner.Uri);
         var ns = _namespaces[prefix ?? ""];
-        return ns + schema.Name;
+
+        // Strip potential generic type parameters
+        var name = schema.Name;
+        var genericIndex = name.IndexOf('`');
+        if (genericIndex > 0)
+            name = name[..genericIndex];
+
+        return ns + name;
     }
 
     private void GenerateNamespaces()
