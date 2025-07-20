@@ -26,11 +26,6 @@ internal record IrisObject(object Object, TypeSchema Type)
             type ??= constantInfo.Type;
         }
 
-        if (objIn is IReturnValueProvider hasReturnValue)
-        {
-            type ??= hasReturnValue.ReturnType;
-        }
-
         type ??= Disassembler.GuessTypeSchema(obj.GetType(), context.LoadResult);
 
         return new(obj, type);

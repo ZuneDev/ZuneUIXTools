@@ -349,15 +349,12 @@ public partial class Decompiler
             obj = irisObj.Object;
         }
 
-        
-
         return obj switch
         {
             string str => str,
             null => "{null}",
             bool b => b ? "true" : "false",
             IStringEncodable strEnc => strEnc.EncodeString(),
-            IrisExpression expr => '{' + expr.Decompile(_context) + '}',
             ExpressionSyntax expr => FormatInlineExpression(expr),
             SymbolReference symRef => '{' + symRef.Symbol + '}',
             IFormattable formattable => formattable.ToString(null, CultureInfo.InvariantCulture),

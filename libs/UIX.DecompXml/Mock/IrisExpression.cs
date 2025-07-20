@@ -3,38 +3,13 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Iris.Asm;
 using Microsoft.Iris.Markup;
 using System;
-using System.Linq.Expressions;
 
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace Microsoft.Iris.DecompXml.Mock;
 
-internal abstract class IrisExpression : Expression
+internal static class IrisExpression
 {
-    public virtual string Decompile(DecompileContext context) => ToSyntax(context).ToString();
-
-    public abstract ExpressionSyntax ToSyntax(DecompileContext context);
-
-    public static Expression Wrap(object p)
-    {
-        return p switch
-        {
-            null => Constant(null),
-            Expression expr => expr,
-            Disassembler.RawConstantInfo constantInfo => new IrisConstantExpression(constantInfo.Value, constantInfo.Type),
-            SymbolReference symbolRef => Constant(symbolRef),
-
-            _ => throw new NotImplementedException($"Unable to wrap '{p}' in an expression")
-        };
-    }
-
-    public static string Decompile(Expression expr, DecompileContext context)
-    {
-        return expr is IrisExpression irisExpr
-            ? irisExpr.Decompile(context)
-            : expr.ToString();
-    }
-
     public static ExpressionSyntax ToSyntax(object obj, DecompileContext context)
     {
         return obj switch
@@ -45,12 +20,11 @@ internal abstract class IrisExpression : Expression
             string strValue => LiteralExpression(SyntaxKind.StringLiteralExpression, Literal(strValue)),
             IStringEncodable strEnc => ParseExpression(strEnc.EncodeString()),
 
-            Disassembler.RawConstantInfo constantInfo => new IrisConstantExpression(constantInfo.Value, constantInfo.Type).ToSyntax(context),
+            Disassembler.RawConstantInfo constantInfo => ToSyntax(constantInfo.Value, constantInfo.Type, context),
+            IrisObject irisObj => ToSyntax(irisObj.Object, irisObj.Type, context),
             SymbolReference symbolRef => ToSyntax(symbolRef),
             TypeSchema typeSchema => ToSyntax(typeSchema, context),
 
-            IrisExpression irisExpr => irisExpr.ToSyntax(context),
-            Expression expr => ParseExpression(expr.ToString()),
             ExpressionSyntax exprSyn => exprSyn,
 
             _ => IdentifierName(obj.ToString())
@@ -62,4 +36,18 @@ internal abstract class IrisExpression : Expression
 
     public static IdentifierNameSyntax ToSyntax(SymbolReference symbolRef) =>
         IdentifierName(symbolRef.Symbol);
+
+    public static ExpressionSyntax ToSyntax(object obj, TypeSchema type, DecompileContext context)
+    {
+        return obj switch
+        {
+            Enum _ => MemberAccessExpression(
+                SyntaxKind.SimpleMemberAccessExpression,
+                IdentifierName(context.GetQualifiedName(type).ToString()),
+                IdentifierName(obj.ToString())
+            ),
+
+            _ => ToSyntax(obj, context),
+        };
+    }
 }
