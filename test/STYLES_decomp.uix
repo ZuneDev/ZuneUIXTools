@@ -826,7 +826,7 @@
       <Script>string GetDefaultFrameBackground()
 {
     source = null;
-    if (!zuneUI:ZuneShell.DefaultInstance.CurrentPage is zuneUI:QuickplayPage)
+    if (zuneUI:ZuneShell.DefaultInstance.CurrentPage is not zuneUI:QuickplayPage)
     {
         if (zuneUI:ZuneShell.DefaultInstance.CurrentPage is zuneUI:StartupPage)
         {

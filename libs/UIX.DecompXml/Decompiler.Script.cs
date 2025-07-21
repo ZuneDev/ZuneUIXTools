@@ -405,6 +405,12 @@ partial class Decompiler
 
     private static ExpressionSyntax LogicalNotOf(ExpressionSyntax originalExpression)
     {
+        if (originalExpression is IsPatternExpressionSyntax isPatternExpression)
+        {
+            var baseTypePattern = isPatternExpression.Pattern;
+            return isPatternExpression.WithPattern(UnaryPattern(baseTypePattern));
+        }
+
         if (originalExpression is not BinaryExpressionSyntax binaryExpression)
             goto defaultCase;
 
