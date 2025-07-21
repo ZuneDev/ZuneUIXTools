@@ -850,12 +850,14 @@
         {
             // Unsupported instruction: CSYM 63
             ;
+            return source;
         } // TODO: JMP 170
     }// Unsupported instruction: VTC 960
     ;
     source = FrameBackgrounds.get_Item(DefaultBackgroundIndex).Value;
     // Unsupported instruction: CSYM 63
     ;
+    return source;
 }</Script>
     </Scripts>
   </Class>

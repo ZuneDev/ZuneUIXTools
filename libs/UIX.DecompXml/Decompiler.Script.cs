@@ -55,8 +55,6 @@ partial class Decompiler
                     // End of function
                     if (i + 1 != methodBody.Length)
                         throw new InvalidOperationException("Expected end of function!");
-
-                    break;
                 }
             }
 
@@ -184,6 +182,11 @@ partial class Decompiler
                             Block(List([..statementsJumpedTo]))
                             .WithTrailingTrivia(EndOfLine(Environment.NewLine), Comment($"// TODO: {instruction}"))
                         );
+                        break;
+
+                    case OpCode.ReturnValue:
+                        var returnStatement = ReturnStatement(IrisExpression.ToSyntax(stack.Pop(), _context));
+                        blockStack.Peek().Statements.Add(returnStatement);
                         break;
 
                     case not OpCode.ReturnVoid:
