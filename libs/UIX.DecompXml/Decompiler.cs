@@ -79,6 +79,26 @@ public partial class Decompiler
                 }
             }
 
+            if (export.FinalEvaluateOffsets is { Length: > 0 })
+            {
+                throw new NotImplementedException();
+            }
+
+            if (export.Methods is { Length: > 0 })
+            {
+                var xScripts = GetOrCreateElement(xExport, _nsUix + "Scripts");
+
+                foreach (var method in export.Methods.OfType<MarkupMethodSchema>())
+                {
+                    var methodSyntax = DecompileMethodDeclaration(method, export);
+                    var scriptText = FormatScript(methodSyntax.SyntaxTree);
+
+                    XElement xScript = new(_nsUix + "Script", scriptText);
+
+                    xScripts.Add(xScript);
+                }
+            }
+
             if (export.RefreshGroupOffsets is { Length: > 0 })
             {
                 var xScripts = GetOrCreateElement(xExport, _nsUix + "Scripts");
@@ -287,12 +307,7 @@ public partial class Decompiler
                         if (instruction.OpCode is OpCode.DestructiveListen)
                             refreshOffset = (uint)instruction.Operands.ElementAt(4).Value;
 
-                        MarkupTypeSchema markupTypeSchema = initType;
-                        uint num = scriptId >> 27;
-                        while (num != markupTypeSchema.TypeDepth)
-                            markupTypeSchema = markupTypeSchema.MarkupTypeBase;
-
-                        var scriptOffset = scriptId & 0x07FFFFFFU;
+                        var markupTypeSchema = initType.ResolveScriptId(scriptId, out var scriptOffset);
 
                         string watch = null;
                         InstructionObjectSource watchSource = InstructionObjectSource.Dynamic;

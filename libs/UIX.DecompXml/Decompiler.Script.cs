@@ -19,6 +19,17 @@ partial class Decompiler
 {
     private SyntaxTree DecompileScript(uint startOffset, MarkupTypeSchema export)
     {
+        var statements = DecompileMethod(startOffset, export);
+
+        return SyntaxTree(
+            CompilationUnit().WithMembers(
+                [..statements.Select(GlobalStatement)]
+            )
+        );
+    }
+
+    public List<StatementSyntax> DecompileMethod(uint startOffset, MarkupTypeSchema export)
+    {
         var methodBody = _context.GetMethodBody(startOffset).ToArray();
 
         Stack<CodeBlockInfo> blockStack = [];
@@ -48,7 +59,7 @@ partial class Decompiler
                     break;
                 }
             }
-                
+
             var opCode = instruction.OpCode;
 
             try
@@ -164,9 +175,23 @@ partial class Decompiler
                         blockStack.Push(ifBlock);
                         break;
 
+                    case OpCode.Jump:
+                        var jumpOffset = (uint)instruction.Operands.First().Value;
+                        var statementsJumpedTo = DecompileMethod(jumpOffset, export);
+
+                        // TODO
+                        blockStack.Peek().Statements.Add(
+                            Block(List([..statementsJumpedTo]))
+                            .WithTrailingTrivia(EndOfLine(Environment.NewLine), Comment($"// TODO: {instruction}"))
+                        );
+                        break;
+
                     case not OpCode.ReturnVoid:
                         if (!TryDecompileExpression(instruction, stack, blockStack))
-                            throw new NotImplementedException();
+                        {
+                            var unsupportedComment = Comment($"// Unsupported instruction: {instruction}");
+                            blockStack.Peek().Statements.Add(EmptyStatement().WithLeadingTrivia(unsupportedComment));
+                        }
                         break;
                 }
             }
@@ -182,13 +207,22 @@ partial class Decompiler
             throw new InvalidOperationException($"Failed to decompile script for {export.Name}, no top-level code blocks");
 
         // Unwrap top-most block to avoid extra curly braces around entire script
-        var topBlock = blockStack.Pop();
+        return blockStack.Pop().Statements;
+    }
 
-        return SyntaxTree(
-            CompilationUnit().WithMembers(
-                [..topBlock.Statements.Select(GlobalStatement)]
-            )
-        );
+    private MethodDeclarationSyntax DecompileMethodDeclaration(MarkupMethodSchema method, MarkupTypeSchema export)
+    {
+        var targetType = export.ResolveScriptId(method.CodeOffset, out var offset);
+        var methodBody = DecompileMethod(offset, export);
+
+        var parameters = method.ParameterTypes
+            .Zip(method.ParameterNames, (t, n) => Parameter(Identifier(n)).WithType(IrisExpression.ToSyntax(t, _context)));
+
+        return MethodDeclaration(
+            IrisExpression.ToSyntax(method.ReturnType, _context),
+            method.Name)
+            .WithParameterList(ParameterList([..parameters]))
+            .WithBody(Block(methodBody));
     }
 
     public static string FormatInlineExpression(ExpressionSyntax expr, CancellationToken token = default)
@@ -319,6 +353,16 @@ partial class Decompiler
 
             case OpCode.Operation:
                 DecompileOperation(instruction, stack);
+                break;
+
+            case OpCode.IsCheck:
+                var typeToCheckFor = _context.GetImportedType(instruction.Operands.First());
+                var objToCheck = stack.Pop();
+
+                stack.Push(IsPatternExpression(
+                    IrisExpression.ToSyntax(objToCheck, _context),
+                    TypePattern(IrisExpression.ToSyntax(typeToCheckFor, _context))
+                ));
                 break;
 
             default:

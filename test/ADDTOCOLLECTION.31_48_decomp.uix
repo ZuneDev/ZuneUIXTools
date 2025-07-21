@@ -15,5 +15,11 @@
       <schema:LibraryPlaylistContentQuery Enabled="false" Name="Query" />
       <Boolean Boolean="false" Name="ContentNotInLibrary" />
     </Locals>
+    <Scripts>
+      <Script></Script>
+      <Script></Script>
+      <Script></Script>
+      <Script></Script>
+    </Scripts>
   </Class>
 </UIX>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-16"?>
-<UIX xmlns="http://schemas.microsoft.com/2007/uix" xmlns:iris="assembly://UIX/Microsoft.Iris" xmlns:style="res://UIXControls!Style.uix" xmlns:zuneUI="assembly://ZuneShell/ZuneUI" xmlns:imageStyle="res://UIXControls!ImageStyle.uix" xmlns:styles="res://ZuneShellResources!Styles.uix" xmlns:styles1="res://UIXControls!Styles.uix" xmlns:generic="assembly://System.Private.CoreLib/System.Collections.Generic">
+<UIX xmlns="http://schemas.microsoft.com/2007/uix" xmlns:iris="assembly://UIX/Microsoft.Iris" xmlns:style="res://UIXControls!Style.uix" xmlns:zuneUI="assembly://ZuneShell/ZuneUI" xmlns:imageStyle="res://UIXControls!ImageStyle.uix" xmlns:styles="res://ZuneShellResources!Styles.uix" xmlns:styles1="res://UIXControls!Styles.uix" xmlns:generic="assembly://System.Private.CoreLib/System.Collections.Generic" xmlns:configuration="assembly://ZuneDBApi/Microsoft.Zune.Configuration">
   <Class Name="Styles" Shared="true">
     <Properties>
       <zuneUI:FontLoader Resource="ZuneShellResources.dll" Name="FontLoader">
@@ -818,6 +818,46 @@
       <Image Source="res://ZuneShellResources!WindowsPhoneEnergyBar.png" Name="WindowsPhoneEnergyBar" />
       <Image Source="res://ZuneShellResources!WindowsPhoneAppList.png" Name="WindowsPhoneAppList" />
     </Properties>
+    <Scripts>
+      <Script>void UpdateDefaultFrameBackground()
+{
+    DefaultBackgroundImage = new Image(this.GetDefaultFrameBackground());
+}</Script>
+      <Script>string GetDefaultFrameBackground()
+{
+    source = null;
+    if (!zuneUI:ZuneShell.DefaultInstance.CurrentPage is zuneUI:QuickplayPage)
+    {
+        if (zuneUI:ZuneShell.DefaultInstance.CurrentPage is zuneUI:StartupPage)
+        {
+        }
+
+        if (zuneUI:ZuneShell.DefaultInstance.CurrentPage is zuneUI:StartupPage &amp;&amp; string.IsNullOrEmpty(zuneUI:Shell.SessionStartupPath))
+        {
+        }
+    }
+
+    if (!zuneUI:ZuneShell.DefaultInstance.CurrentPage is zuneUI:QuickplayPage || zuneUI:ZuneShell.DefaultInstance.CurrentPage is zuneUI:StartupPage &amp;&amp; string.IsNullOrEmpty(zuneUI:Shell.SessionStartupPath) &amp;&amp; configuration:ClientConfiguration.Shell.StartupPage == zuneUI:Shell.MainFrame.Quickplay.DefaultUIPath)
+    {
+        if (zuneUI:ZuneShell.DefaultInstance.CurrentPage is zuneUI:StartupPage)
+        {
+        }
+    }
+
+    if (zuneUI:ZuneShell.DefaultInstance.CurrentPage is zuneUI:QuickplayPage || zuneUI:ZuneShell.DefaultInstance.CurrentPage is zuneUI:StartupPage &amp;&amp; string.IsNullOrEmpty(zuneUI:Shell.SessionStartupPath) &amp;&amp; configuration:ClientConfiguration.Shell.StartupPage == zuneUI:Shell.MainFrame.Quickplay.DefaultUIPath || zuneUI:ZuneShell.DefaultInstance.CurrentPage is zuneUI:StartupPage &amp;&amp; zuneUI:Shell.SessionStartupPath == zuneUI:Shell.MainFrame.Quickplay.DefaultUIPath)
+    {
+        source = QuickplayFrameBackground.Value;
+        {
+            // Unsupported instruction: CSYM 63
+            ;
+        } // TODO: JMP 170
+    }// Unsupported instruction: VTC 960
+    ;
+    source = FrameBackgrounds.get_Item(DefaultBackgroundIndex).Value;
+    // Unsupported instruction: CSYM 63
+    ;
+}</Script>
+    </Scripts>
   </Class>
   <Class Name="SharedStyles" Shared="true">
     <Properties>

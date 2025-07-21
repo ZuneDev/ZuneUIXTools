@@ -3,13 +3,15 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Iris.Asm;
 using Microsoft.Iris.Markup;
 using System;
-
+using System.Collections.Generic;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace Microsoft.Iris.DecompXml.Mock;
 
 internal static class IrisExpression
 {
+    private static Dictionary<ulong, SyntaxKind> _predefinedTypeMap = null;
+
     public static ExpressionSyntax ToSyntax(object obj, DecompileContext context)
     {
         return obj switch
@@ -31,8 +33,13 @@ internal static class IrisExpression
         };
     }
 
-    public static IdentifierNameSyntax ToSyntax(TypeSchema type, DecompileContext context) =>
-        IdentifierName(context.GetQualifiedName(type).ToString());
+    public static TypeSyntax ToSyntax(TypeSchema type, DecompileContext context)
+    {
+        if (TryMapPredefinedType(type, out var kind))
+            return PredefinedType(Token(kind));
+
+        return IdentifierName(context.GetQualifiedName(type).ToString());
+    }
 
     public static IdentifierNameSyntax ToSyntax(SymbolReference symbolRef) =>
         IdentifierName(symbolRef.Symbol);
@@ -49,5 +56,19 @@ internal static class IrisExpression
 
             _ => ToSyntax(obj, context),
         };
+    }
+
+    private static bool TryMapPredefinedType(TypeSchema type, out SyntaxKind kind)
+    {
+        _predefinedTypeMap ??= new()
+        {
+            [UIXTypes.MapIDToType(UIXTypeID.Void).UniqueId] = SyntaxKind.VoidKeyword,
+            [UIXTypes.MapIDToType(UIXTypeID.Int32).UniqueId] = SyntaxKind.IntKeyword,
+            [UIXTypes.MapIDToType(UIXTypeID.Int64).UniqueId] = SyntaxKind.LongKeyword,
+            [UIXTypes.MapIDToType(UIXTypeID.String).UniqueId] = SyntaxKind.StringKeyword,
+            [UIXTypes.MapIDToType(UIXTypeID.Boolean).UniqueId] = SyntaxKind.BoolKeyword,
+        };
+
+        return _predefinedTypeMap.TryGetValue(type.UniqueId, out kind);
     }
 }
