@@ -826,37 +826,27 @@
       <Script>string GetDefaultFrameBackground()
 {
     source = null;
+    /* UIB_001B */
     if (zuneUI:ZuneShell.DefaultInstance.CurrentPage is not zuneUI:QuickplayPage)
-    {
-        if (zuneUI:ZuneShell.DefaultInstance.CurrentPage is zuneUI:StartupPage)
-        {
-        }
-
-        if (zuneUI:ZuneShell.DefaultInstance.CurrentPage is zuneUI:StartupPage &amp;&amp; string.IsNullOrEmpty(zuneUI:Shell.SessionStartupPath))
-        {
-        }
-    }
-
+        goto UIB_0058;
+    /* UIB_0029 */
+    if (zuneUI:ZuneShell.DefaultInstance.CurrentPage is zuneUI:StartupPage)
+        goto UIB_0038;
+    /* UIB_0038 */
+    if (zuneUI:ZuneShell.DefaultInstance.CurrentPage is zuneUI:StartupPage &amp;&amp; string.IsNullOrEmpty(zuneUI:Shell.SessionStartupPath))
+        goto UIB_0054;
+    /* UIB_0058 */
     if (zuneUI:ZuneShell.DefaultInstance.CurrentPage is not zuneUI:QuickplayPage &amp;&amp; zuneUI:ZuneShell.DefaultInstance.CurrentPage is not zuneUI:StartupPage || !(string.IsNullOrEmpty(zuneUI:Shell.SessionStartupPath)) || configuration:ClientConfiguration.Shell.StartupPage != zuneUI:Shell.MainFrame.Quickplay.DefaultUIPath)
-    {
-        if (zuneUI:ZuneShell.DefaultInstance.CurrentPage is zuneUI:StartupPage)
-        {
-        }
-    }
-
+        goto UIB_0083;
+    /* UIB_0066 */
+    if (zuneUI:ZuneShell.DefaultInstance.CurrentPage is zuneUI:StartupPage)
+        goto UIB_007F;
+    /* UIB_0083 */
     if (zuneUI:ZuneShell.DefaultInstance.CurrentPage is zuneUI:QuickplayPage || zuneUI:ZuneShell.DefaultInstance.CurrentPage is zuneUI:StartupPage &amp;&amp; string.IsNullOrEmpty(zuneUI:Shell.SessionStartupPath) &amp;&amp; configuration:ClientConfiguration.Shell.StartupPage == zuneUI:Shell.MainFrame.Quickplay.DefaultUIPath || zuneUI:ZuneShell.DefaultInstance.CurrentPage is zuneUI:StartupPage &amp;&amp; zuneUI:Shell.SessionStartupPath == zuneUI:Shell.MainFrame.Quickplay.DefaultUIPath)
-    {
-        source = QuickplayFrameBackground.Value;
-        {
-            // Unsupported instruction: CSYM 63
-            ;
-            return source;
-        } // TODO: JMP 170
-    }// Unsupported instruction: VTC 960
-    ;
-    source = FrameBackgrounds.get_Item(DefaultBackgroundIndex).Value;
-    // Unsupported instruction: CSYM 63
-    ;
+        goto UIB_0097;
+    source = QuickplayFrameBackground.Value;
+    goto UIB_00AA;
+    source = (zuneUI:NamedStringOption)FrameBackgrounds.get_Item(DefaultBackgroundIndex).Value;
     return source;
 }</Script>
     </Scripts>

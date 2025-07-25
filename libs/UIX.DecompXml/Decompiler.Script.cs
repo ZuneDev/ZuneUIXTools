@@ -118,27 +118,14 @@ partial class Decompiler
                         blockStack.Peek().Statements.Add(ExpressionStatement(propertySetExpression));
                         break;
 
-                    case OpCode.PropertyDictionaryAdd:
-                        // TODO
-                        var targetDictProperty = _context.GetImportedProperty(instruction.Operands.ElementAt(0));
+                    case OpCode.VerifyTypeCast:
+                        var objToCast = stack.Pop();
+                        var typeToCastTo = _context.GetImportedType(instruction.Operands.First());
 
-                        var keyReference = instruction.Operands.ElementAt(1);
-                        var key = _context.GetConstant(keyReference).Value.ToString();
-
-                        var dictValue = stack.Pop();
-
-                        var targetInstance = (XElement)stack.Peek();
-
-                        PropertyDictionaryAddOnXElement(targetInstance, targetDictProperty, IrisObject.Create(dictValue, null, _context), key);
-                        break;
-
-                    case OpCode.PropertyListAdd:
-                        // TODO
-                        var targetListProperty = _context.GetImportedProperty(instruction.Operands.First());
-                        var valueToAdd = stack.Pop();
-                        var targetInstance2 = (XElement)ToXmlFriendlyObject(stack.Peek());
-
-                        PropertyListAddOnXElement(targetInstance2, targetListProperty, IrisObject.Create(valueToAdd, null, _context));
+                        stack.Push(CastExpression(
+                            IrisExpression.ToSyntax(typeToCastTo, _context),
+                            IrisExpression.ToSyntax(objToCast, _context)
+                        ));
                         break;
 
                     case OpCode.JumpIfFalse:
@@ -149,7 +136,6 @@ partial class Decompiler
                         // TODO: What about for loops?
                         if (instruction.Offset > jumpToOffset)
                         {
-                            throw new NotImplementedException();
                         }
 
                         var isPeek = opCode is OpCode.JumpIfFalsePeek or OpCode.JumpIfTruePeek or OpCode.JumpIfNullPeek;
@@ -169,19 +155,21 @@ partial class Decompiler
                             _ => throw new NotImplementedException()
                         };
 
-                        var ifBlock = new CodeBlockInfo(instruction.Offset, jumpToOffset, SyntaxKind.IfStatement, jumpCondition);
-                        blockStack.Push(ifBlock);
+                        //var ifBlock = new CodeBlockInfo(instruction.Offset, jumpToOffset, SyntaxKind.IfStatement, jumpCondition);
+                        //blockStack.Push(ifBlock);
+
+                        var ifBlock = IfStatement(jumpCondition,
+                            GotoStatement(SyntaxKind.GotoStatement, IdentifierName($"UIB_{jumpToOffset:X4}")))
+                            .WithLeadingTrivia(Comment($"/* UIB_{instruction.Offset:X4} */"));
+                        blockStack.Peek().Statements.Add(ifBlock);
+
                         break;
 
                     case OpCode.Jump:
                         var jumpOffset = (uint)instruction.Operands.First().Value;
-                        var statementsJumpedTo = DecompileMethod(jumpOffset, export);
 
                         // TODO
-                        blockStack.Peek().Statements.Add(
-                            Block(List([..statementsJumpedTo]))
-                            .WithTrailingTrivia(EndOfLine(Environment.NewLine), Comment($"// TODO: {instruction}"))
-                        );
+                        blockStack.Peek().Statements.Add(GotoStatement(SyntaxKind.GotoStatement, IdentifierName($"UIB_{jumpOffset:X4}")));
                         break;
 
                     case OpCode.ReturnValue:
@@ -189,7 +177,18 @@ partial class Decompiler
                         blockStack.Peek().Statements.Add(returnStatement);
                         break;
 
-                    case not OpCode.ReturnVoid:
+                    case OpCode.ReturnVoid:
+                        // Include return statement when we're not in the main block (which would return anyway)
+                        // or when we're not at the end of the function
+                        if (blockStack.Count > 1 || i + 1 < methodBody.Length)
+                            blockStack.Peek().Statements.Add(ReturnStatement());
+                        break;
+
+                    case OpCode.ClearSymbol:
+                        // Ignore these instructions
+                        break;
+
+                    default:
                         if (!TryDecompileExpression(instruction, stack, blockStack))
                         {
                             var unsupportedComment = Comment($"// Unsupported instruction: {instruction}");
