@@ -413,51 +413,51 @@ partial class Decompiler
             return isPatternExpression.WithPattern(UnaryPattern(baseTypePattern));
         }
 
-        if (originalExpression is not BinaryExpressionSyntax binaryExpression)
-            goto defaultCase;
-
-        SyntaxKind notOperatorToken;
-        var operatorToken = binaryExpression.OperatorToken.Kind();
-
-        switch (operatorToken)
+        if (originalExpression is BinaryExpressionSyntax binaryExpression)
         {
-            case SyntaxKind.EqualsEqualsToken:
-                notOperatorToken = SyntaxKind.ExclamationEqualsToken;
-                break;
+            SyntaxKind notOperatorToken;
+            var operatorToken = binaryExpression.OperatorToken.Kind();
 
-            case SyntaxKind.LessThanToken:
-                notOperatorToken = SyntaxKind.GreaterThanEqualsToken;
-                break;
+            switch (operatorToken)
+            {
+                case SyntaxKind.EqualsEqualsToken:
+                    notOperatorToken = SyntaxKind.ExclamationEqualsToken;
+                    break;
 
-            case SyntaxKind.GreaterThanToken:
-                notOperatorToken = SyntaxKind.LessThanEqualsToken;
-                break;
+                case SyntaxKind.LessThanToken:
+                    notOperatorToken = SyntaxKind.GreaterThanEqualsToken;
+                    break;
 
-            case SyntaxKind.LessThanEqualsToken:
-                notOperatorToken = SyntaxKind.GreaterThanToken;
-                break;
+                case SyntaxKind.GreaterThanToken:
+                    notOperatorToken = SyntaxKind.LessThanEqualsToken;
+                    break;
 
-            case SyntaxKind.GreaterThanEqualsToken:
-                notOperatorToken = SyntaxKind.LessThanToken;
-                break;
+                case SyntaxKind.LessThanEqualsToken:
+                    notOperatorToken = SyntaxKind.GreaterThanToken;
+                    break;
 
-            case SyntaxKind.AmpersandAmpersandToken:
-            case SyntaxKind.BarBarToken:
-                // Apply De Morgan's laws
-                notOperatorToken = operatorToken is SyntaxKind.AmpersandAmpersandToken
-                    ? SyntaxKind.LogicalOrExpression : SyntaxKind.LogicalAndExpression;
-                return BinaryExpression(notOperatorToken,
-                    LogicalNotOf(binaryExpression.Left),
-                    LogicalNotOf(binaryExpression.Right));
+                case SyntaxKind.GreaterThanEqualsToken:
+                    notOperatorToken = SyntaxKind.LessThanToken;
+                    break;
 
-            default:
-                goto defaultCase;
+                case SyntaxKind.AmpersandAmpersandToken:
+                case SyntaxKind.BarBarToken:
+                    // Apply De Morgan's laws
+                    notOperatorToken = operatorToken is SyntaxKind.AmpersandAmpersandToken
+                        ? SyntaxKind.LogicalOrExpression : SyntaxKind.LogicalAndExpression;
+                    return BinaryExpression(notOperatorToken,
+                        LogicalNotOf(binaryExpression.Left),
+                        LogicalNotOf(binaryExpression.Right));
+
+                default:
+                    goto defaultCase;
+            }
+
+            return binaryExpression.WithOperatorToken(Token(notOperatorToken));
         }
 
-        return binaryExpression.WithOperatorToken(Token(notOperatorToken));
-
-    defaultCase:
-        return PrefixUnaryExpression(SyntaxKind.LogicalNotExpression, ParenthesizedExpression(originalExpression));
+        defaultCase:
+            return PrefixUnaryExpression(SyntaxKind.LogicalNotExpression, ParenthesizedExpression(originalExpression));
     }
 
     private static SyntaxKind OperationToSyntaxKind(OperationType operation)
