@@ -418,7 +418,9 @@ partial class Decompiler
             goto defaultCase;
 
         SyntaxKind notOperatorToken;
-        switch (binaryExpression.OperatorToken.Kind())
+        var operatorToken = binaryExpression.OperatorToken.Kind();
+
+        switch (operatorToken)
         {
             case SyntaxKind.EqualsEqualsToken:
                 notOperatorToken = SyntaxKind.ExclamationEqualsToken;
@@ -440,6 +442,15 @@ partial class Decompiler
                 notOperatorToken = SyntaxKind.LessThanToken;
                 break;
 
+            case SyntaxKind.AmpersandAmpersandToken:
+            case SyntaxKind.BarBarToken:
+                // Apply De Morgan's laws
+                notOperatorToken = operatorToken is SyntaxKind.AmpersandAmpersandToken
+                    ? SyntaxKind.LogicalOrExpression : SyntaxKind.LogicalAndExpression;
+                return BinaryExpression(notOperatorToken,
+                    LogicalNotOf(binaryExpression.Left),
+                    LogicalNotOf(binaryExpression.Right));
+
             default:
                 goto defaultCase;
         }
@@ -447,7 +458,7 @@ partial class Decompiler
         return binaryExpression.WithOperatorToken(Token(notOperatorToken));
 
     defaultCase:
-        return PrefixUnaryExpression(SyntaxKind.LogicalNotExpression, originalExpression);
+        return PrefixUnaryExpression(SyntaxKind.LogicalNotExpression, ParenthesizedExpression(originalExpression));
     }
 
     private static SyntaxKind OperationToSyntaxKind(OperationType operation)

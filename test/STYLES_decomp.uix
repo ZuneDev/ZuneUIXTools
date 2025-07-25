@@ -837,7 +837,7 @@
         }
     }
 
-    if (!zuneUI:ZuneShell.DefaultInstance.CurrentPage is zuneUI:QuickplayPage || zuneUI:ZuneShell.DefaultInstance.CurrentPage is zuneUI:StartupPage &amp;&amp; string.IsNullOrEmpty(zuneUI:Shell.SessionStartupPath) &amp;&amp; configuration:ClientConfiguration.Shell.StartupPage == zuneUI:Shell.MainFrame.Quickplay.DefaultUIPath)
+    if (zuneUI:ZuneShell.DefaultInstance.CurrentPage is not zuneUI:QuickplayPage &amp;&amp; zuneUI:ZuneShell.DefaultInstance.CurrentPage is not zuneUI:StartupPage || !(string.IsNullOrEmpty(zuneUI:Shell.SessionStartupPath)) || configuration:ClientConfiguration.Shell.StartupPage != zuneUI:Shell.MainFrame.Quickplay.DefaultUIPath)
     {
         if (zuneUI:ZuneShell.DefaultInstance.CurrentPage is zuneUI:StartupPage)
         {
