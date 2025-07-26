@@ -40,7 +40,7 @@ internal static class InstructionSet
         ("MUL", OperationType.MathMultiply),
         ("DIV", OperationType.MathDivide),
         ("MOD", OperationType.MathModulus),
-        ("NEG", OperationType.MathModulus),
+        ("NEG", OperationType.MathNegate),
         ("AND", OperationType.LogicalAnd),
         ("ORR", OperationType.LogicalOr),
         ("NOT", OperationType.LogicalNot),
