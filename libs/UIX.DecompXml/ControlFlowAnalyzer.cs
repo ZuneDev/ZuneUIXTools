@@ -14,6 +14,10 @@ public static class ControlFlowAnalyzer
         OpCode.JumpIfDictionaryContains, OpCode.JumpIfNullPeek, OpCode.Jump,
     ];
 
+    private static readonly ImmutableHashSet<OpCode> _unconditionalJumpOpCodes = [
+        OpCode.ReturnValue, OpCode.ReturnVoid, OpCode.Jump,
+    ];
+
     public static List<ControlFlowBlock> CreateGraph(Instruction[] instructions)
     {
         // See slide 15 (page 8) of https://www.cs.utexas.edu/~lin/cs380c/handout03.pdf
@@ -52,7 +56,22 @@ public static class ControlFlowAnalyzer
                 body.Add(instruction);
             }
 
-            ControlFlowBlock block = new(leaderOffset, body[^1].Offset, body);
+            var lastInstruction = body[^1];
+
+            var jumpOffset = _jumpOpCodes.Contains(lastInstruction.OpCode)
+                ? (uint)lastInstruction.Operands.First().Value
+                : uint.MaxValue;
+
+            var nextOffset = uint.MaxValue;
+            if (!_unconditionalJumpOpCodes.Contains(lastInstruction.OpCode))
+            {
+                nextOffset = instructions
+                    .SkipWhile(i => i.Offset <= lastInstruction.Offset)
+                    .FirstOrDefault()?.Offset
+                    ?? uint.MaxValue;
+            }
+
+            ControlFlowBlock block = new(leaderOffset, lastInstruction.Offset, body, nextOffset, jumpOffset);
             blocks.Add(block);
         }
 
@@ -61,15 +80,28 @@ public static class ControlFlowAnalyzer
         {
             var block = blocks[b];
 
-            var leaderInstruction = block.Body[^1];
-            var jumpOffset = (uint)leaderInstruction.Operands.First().Value;
-            leaderOffsets.Add(jumpOffset);
+            if (block.NextOffset is not uint.MaxValue)
+                block = block with { Next = blocks[IndexOfBlockFromStartOffset(block.NextOffset)] };
 
-            if (leaderInstruction.OpCode is not OpCode.Jump)
-                leaderOffsets.Add(instructions[i + 1].Offset);
+            if (block.BranchTargetOffset is not uint.MaxValue)
+                block = block with { BranchTarget = blocks[IndexOfBlockFromStartOffset(block.BranchTargetOffset)] };
+
+            blocks[b] = block;
         }
 
         return blocks;
+
+        int IndexOfBlockFromStartOffset(uint startOffset)
+        {
+            for (int b = 0; b <= blocks.Count; b++)
+            {
+                var block = blocks[b];
+                if (block.StartOffset == startOffset)
+                    return b;
+            }
+
+            return -1;
+        }
     }
 
     public static string SerializeToGraphviz(IEnumerable<ControlFlowBlock> blocks)
@@ -78,9 +110,31 @@ public static class ControlFlowAnalyzer
         StringBuilder sb = new();
 
         sb.AppendLine("digraph G {");
-        sb.AppendLine("    node [shape=record];");
+        sb.AppendLine("    splines=polyline;");
+        sb.AppendLine("    node [shape=none];");
 
+        var rank = 0;
+        foreach (var block in blocks)
+        {
+            var nodeId = block.StartOffset;
 
+            sb.AppendLine($"    {nodeId} [label=<");
+            sb.AppendLine($"        <table border=\"0\" cellborder=\"1\" cellspacing=\"0\">");
+
+            foreach (var instruction in block.Body)
+            {
+                sb.AppendLine($"            <tr><td align=\"left\">0x{instruction.Offset:X4}</td><td align=\"left\">{instruction}</td></tr>");
+            }
+            
+            sb.AppendLine($"        </table>");
+            sb.AppendLine($"    >];");
+
+            if (block.NextOffset is not uint.MaxValue)
+                sb.AppendLine($"    {nodeId} -> {block.NextOffset};");
+
+            if (block.BranchTargetOffset is not uint.MaxValue)
+                sb.AppendLine($"    {nodeId} -> {block.BranchTargetOffset} [color=red];");
+        }
 
         sb.AppendLine("}");
 

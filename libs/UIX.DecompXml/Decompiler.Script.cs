@@ -32,6 +32,7 @@ partial class Decompiler
         var methodBody = _context.GetMethodBody(startOffset).ToArray();
 
         var controlBlocks = ControlFlowAnalyzer.CreateGraph(methodBody);
+        var dotGraph = ControlFlowAnalyzer.SerializeToGraphviz(controlBlocks);
 
         Stack<CodeBlockInfo> blockStack = [];
         blockStack.Push(new(0, methodBody[^1].Offset, SyntaxKind.Block, null));
