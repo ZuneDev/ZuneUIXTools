@@ -9,7 +9,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using System.Xml.Linq;
 
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
@@ -31,6 +30,8 @@ partial class Decompiler
     public List<StatementSyntax> DecompileMethod(uint startOffset, MarkupTypeSchema export)
     {
         var methodBody = _context.GetMethodBody(startOffset).ToArray();
+
+        var controlBlocks = ControlFlowAnalyzer.CreateGraph(methodBody);
 
         Stack<CodeBlockInfo> blockStack = [];
         blockStack.Push(new(0, methodBody[^1].Offset, SyntaxKind.Block, null));
