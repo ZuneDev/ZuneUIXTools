@@ -846,7 +846,7 @@
         goto UIB_0097;
     source = QuickplayFrameBackground.Value;
     goto UIB_00AA;
-    source = (zuneUI:NamedStringOption)FrameBackgrounds.get_Item(DefaultBackgroundIndex).Value;
+    source = (zuneUI:NamedStringOption)FrameBackgrounds[DefaultBackgroundIndex].Value;
     return source;
 }</Script>
     </Scripts>

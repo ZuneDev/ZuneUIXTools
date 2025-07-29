@@ -16,6 +16,9 @@ namespace Microsoft.Iris.DecompXml;
 
 partial class Decompiler
 {
+    private static readonly TypeSchema _listType = UIXTypes.MapIDToType(UIXTypeID.List);
+    private static readonly TypeSchema _dictionaryType = UIXTypes.MapIDToType(UIXTypeID.Dictionary);
+
     private SyntaxTree DecompileScript(uint startOffset, MarkupTypeSchema export)
     {
         var statements = DecompileMethod(startOffset, export);
@@ -313,12 +316,22 @@ partial class Decompiler
                     _ => stack.Pop(),
                 };
 
+                var methodTargetExpression = IrisExpression.ToSyntax(targetObj, _context);
+
+                ExpressionSyntax methodResult;
+                if ((methodSchema.Owner == _listType || methodSchema.Owner == _dictionaryType) && methodSchema.Name == "get_Item")
+                {
+                    // Use brackets for list and dictionary indexing
+                    methodResult = ElementAccessExpression(methodTargetExpression, BracketedArgumentList([.. parameters]));
+                }
+                else
+                {
                 var methodExpression = MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
-                    IrisExpression.ToSyntax(targetObj, _context),
+                        methodTargetExpression,
                     IdentifierName(methodSchema.Name)
                 );
-
-                var methodResult = InvocationExpression(methodExpression, ArgumentList([.. parameters]));
+                    methodResult = InvocationExpression(methodExpression, ArgumentList([.. parameters]));
+                }
 
                 if (methodSchema.ReturnType != VoidSchema.Type)
                 {
