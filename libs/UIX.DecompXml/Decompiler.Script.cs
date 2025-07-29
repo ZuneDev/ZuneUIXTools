@@ -36,6 +36,7 @@ partial class Decompiler
 
         var controlBlocks = ControlFlowAnalyzer.CreateGraph(methodBody);
         var dotGraph = ControlFlowAnalyzer.SerializeToGraphviz(controlBlocks);
+        Console.WriteLine(dotGraph);
 
         Stack<CodeBlockInfo> blockStack = [];
         blockStack.Push(new(0, methodBody[^1].Offset, SyntaxKind.Block, null));
@@ -338,10 +339,10 @@ partial class Decompiler
                 }
                 else
                 {
-                var methodExpression = MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
+                    var methodExpression = MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
                         methodTargetExpression,
-                    IdentifierName(methodSchema.Name)
-                );
+                        IdentifierName(methodSchema.Name)
+                    );
                     methodResult = InvocationExpression(methodExpression, ArgumentList([.. parameters]));
                 }
 
@@ -403,8 +404,6 @@ partial class Decompiler
 
     private ExpressionSyntax DecompileOperation(Instruction instruction, Stack<object> stack)
     {
-        var opHost = _context.GetImportedType(instruction.Operands.ElementAt(0));
-
         var op = (OperationType)(int)(byte)instruction.Operands.ElementAt(1).Value;
         var isUnary = TypeSchema.IsUnaryOperation(op);
         var opSyntax = OperationToSyntaxKind(op);
@@ -413,7 +412,7 @@ partial class Decompiler
 
         if (isUnary)
         {
-            var left = IrisExpression.ToSyntax(stack.Pop(), _context);
+            var left = ParenthesizedExpression(IrisExpression.ToSyntax(stack.Pop(), _context));
             var isPostfix = op is OperationType.PostIncrement or OperationType.PostDecrement;
 
             operationExpr = isPostfix
@@ -425,7 +424,10 @@ partial class Decompiler
             var right = IrisExpression.ToSyntax(stack.Pop(), _context);
             var left = IrisExpression.ToSyntax(stack.Pop(), _context);
 
-            operationExpr = BinaryExpression(opSyntax, left, right);
+            operationExpr = BinaryExpression(opSyntax,
+                ParenthesizedExpression(left),
+                ParenthesizedExpression(right)
+            );
         }
 
         stack.Push(operationExpr);
@@ -434,15 +436,21 @@ partial class Decompiler
 
     private static ExpressionSyntax LogicalNotOf(ExpressionSyntax originalExpression)
     {
-        if (originalExpression is IsPatternExpressionSyntax isPatternExpression)
+        ExpressionSyntax negatedExpression = null;
+        var innerExpression = originalExpression;
+
+        if (originalExpression is ParenthesizedExpressionSyntax parenthesizedExpression)
+            innerExpression = parenthesizedExpression.Expression;
+
+        if (innerExpression is IsPatternExpressionSyntax isPatternExpression)
         {
             var baseTypePattern = isPatternExpression.Pattern;
-            return isPatternExpression.WithPattern(UnaryPattern(baseTypePattern));
+            negatedExpression = isPatternExpression.WithPattern(UnaryPattern(baseTypePattern));
         }
 
-        if (originalExpression is BinaryExpressionSyntax binaryExpression)
+        if (innerExpression is BinaryExpressionSyntax binaryExpression)
         {
-            SyntaxKind notOperatorToken;
+            var notOperatorToken = SyntaxKind.None;
             var operatorToken = binaryExpression.OperatorToken.Kind();
 
             switch (operatorToken)
@@ -470,21 +478,23 @@ partial class Decompiler
                 case SyntaxKind.AmpersandAmpersandToken:
                 case SyntaxKind.BarBarToken:
                     // Apply De Morgan's laws
-                    notOperatorToken = operatorToken is SyntaxKind.AmpersandAmpersandToken
+                    var invertedOperatorToken = operatorToken is SyntaxKind.AmpersandAmpersandToken
                         ? SyntaxKind.LogicalOrExpression : SyntaxKind.LogicalAndExpression;
-                    return BinaryExpression(notOperatorToken,
+                    negatedExpression = BinaryExpression(invertedOperatorToken,
                         LogicalNotOf(binaryExpression.Left),
                         LogicalNotOf(binaryExpression.Right));
-
-                default:
-                    goto defaultCase;
+                    break;
             }
 
-            return binaryExpression.WithOperatorToken(Token(notOperatorToken));
+            negatedExpression ??= binaryExpression.WithOperatorToken(Token(notOperatorToken));
         }
 
-        defaultCase:
-            return PrefixUnaryExpression(SyntaxKind.LogicalNotExpression, ParenthesizedExpression(originalExpression));
+        negatedExpression ??= PrefixUnaryExpression(SyntaxKind.LogicalNotExpression, ParenthesizedExpression(originalExpression));
+
+        if (originalExpression is ParenthesizedExpressionSyntax)
+            negatedExpression = ParenthesizedExpression(negatedExpression);
+
+        return negatedExpression;
     }
 
     private static SyntaxKind OperationToSyntaxKind(OperationType operation)

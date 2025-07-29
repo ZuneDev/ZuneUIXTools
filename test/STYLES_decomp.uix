@@ -358,7 +358,7 @@
       <Inset Inset="{styles1:Styles.CellPadding}" Name="CellPadding" />
       <Int32 Int32="11" Name="PrimaryPivotSpacing" />
       <Int32 Int32="13" Name="SecondaryPivotSpacing" />
-      <Int32 Int32="{SecondaryPivotSpacing + 10}" Name="SecondaryPivotSpacingCDLand" />
+      <Int32 Int32="{(SecondaryPivotSpacing) + (10)}" Name="SecondaryPivotSpacingCDLand" />
       <Single Single="0.3" Name="ContentTypesFilterAlpha" />
       <Int32 Int32="5000" Name="PressEscapeToExitTimeout" />
       <Image Source="res://ZuneShellResources!transparent.png" Name="TransparentPixel" />
@@ -833,16 +833,16 @@
     if (zuneUI:ZuneShell.DefaultInstance.CurrentPage is zuneUI:StartupPage)
         goto UIB_0038;
     /* UIB_0038 */
-    if (zuneUI:ZuneShell.DefaultInstance.CurrentPage is zuneUI:StartupPage &amp;&amp; string.IsNullOrEmpty(zuneUI:Shell.SessionStartupPath))
+    if ((zuneUI:ZuneShell.DefaultInstance.CurrentPage is zuneUI:StartupPage) &amp;&amp; (string.IsNullOrEmpty(zuneUI:Shell.SessionStartupPath)))
         goto UIB_0054;
     /* UIB_0058 */
-    if (zuneUI:ZuneShell.DefaultInstance.CurrentPage is not zuneUI:QuickplayPage &amp;&amp; zuneUI:ZuneShell.DefaultInstance.CurrentPage is not zuneUI:StartupPage || !(string.IsNullOrEmpty(zuneUI:Shell.SessionStartupPath)) || configuration:ClientConfiguration.Shell.StartupPage != zuneUI:Shell.MainFrame.Quickplay.DefaultUIPath)
+    if ((zuneUI:ZuneShell.DefaultInstance.CurrentPage is not zuneUI:QuickplayPage) &amp;&amp; (((zuneUI:ZuneShell.DefaultInstance.CurrentPage is not zuneUI:StartupPage) || (!((string.IsNullOrEmpty(zuneUI:Shell.SessionStartupPath))))) || ((configuration:ClientConfiguration.Shell.StartupPage) != (zuneUI:Shell.MainFrame.Quickplay.DefaultUIPath))))
         goto UIB_0083;
     /* UIB_0066 */
     if (zuneUI:ZuneShell.DefaultInstance.CurrentPage is zuneUI:StartupPage)
         goto UIB_007F;
     /* UIB_0083 */
-    if (zuneUI:ZuneShell.DefaultInstance.CurrentPage is zuneUI:QuickplayPage || zuneUI:ZuneShell.DefaultInstance.CurrentPage is zuneUI:StartupPage &amp;&amp; string.IsNullOrEmpty(zuneUI:Shell.SessionStartupPath) &amp;&amp; configuration:ClientConfiguration.Shell.StartupPage == zuneUI:Shell.MainFrame.Quickplay.DefaultUIPath || zuneUI:ZuneShell.DefaultInstance.CurrentPage is zuneUI:StartupPage &amp;&amp; zuneUI:Shell.SessionStartupPath == zuneUI:Shell.MainFrame.Quickplay.DefaultUIPath)
+    if (((zuneUI:ZuneShell.DefaultInstance.CurrentPage is zuneUI:QuickplayPage) || (((zuneUI:ZuneShell.DefaultInstance.CurrentPage is zuneUI:StartupPage) &amp;&amp; (string.IsNullOrEmpty(zuneUI:Shell.SessionStartupPath))) &amp;&amp; ((configuration:ClientConfiguration.Shell.StartupPage) == (zuneUI:Shell.MainFrame.Quickplay.DefaultUIPath)))) || ((zuneUI:ZuneShell.DefaultInstance.CurrentPage is zuneUI:StartupPage) &amp;&amp; ((zuneUI:Shell.SessionStartupPath) == (zuneUI:Shell.MainFrame.Quickplay.DefaultUIPath))))
         goto UIB_0097;
     source = QuickplayFrameBackground.Value;
     goto UIB_00AA;
@@ -2636,7 +2636,7 @@ Default.Color = styles:Styles.NowPlayingMarketplaceColor;</Script>
       <Boolean Name="AntialiasEdges" />
     </Properties>
     <Scripts>
-      <Script>AntialiasEdges = iris:Application.RenderingType != iris:RenderingType.GDI;</Script>
+      <Script>AntialiasEdges = (iris:Application.RenderingType) != (iris:RenderingType.GDI);</Script>
     </Scripts>
   </Class>
   <Class Name="SyncBulletStyle" Base="style:StyleSet">
