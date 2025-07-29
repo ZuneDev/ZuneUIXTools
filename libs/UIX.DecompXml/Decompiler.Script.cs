@@ -225,11 +225,23 @@ partial class Decompiler
         var parameters = method.ParameterTypes
             .Zip(method.ParameterNames, (t, n) => Parameter(Identifier(n)).WithType(IrisExpression.ToSyntax(t, _context)));
 
-        return MethodDeclaration(
+        var modifiers = new SyntaxTokenList();
+        
+        // See ValidateMethod for handling of virtual and override keywords
+        if (method.IsVirtual)
+            modifiers.Add(Token(SyntaxKind.VirtualKeyword));
+        else if (((MarkupTypeSchema)method.Owner).VirtualMethods.Contains(method))
+            modifiers.Add(Token(SyntaxKind.OverrideKeyword));
+
+        var methodDeclaration = MethodDeclaration(
             IrisExpression.ToSyntax(method.ReturnType, _context),
-            method.Name)
+            method.Name
+        );
+
+        return methodDeclaration
             .WithParameterList(ParameterList([..parameters]))
-            .WithBody(Block(methodBody));
+            .WithBody(Block(methodBody))
+            .WithModifiers(modifiers);
     }
 
     public static string FormatInlineExpression(ExpressionSyntax expr, CancellationToken token = default)
