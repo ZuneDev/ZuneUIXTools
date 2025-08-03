@@ -396,6 +396,21 @@ partial class Decompiler
                 ));
                 break;
 
+            case OpCode.TypeOf:
+                var typeOfSchema = _context.GetImportedType(instruction.Operands.First());
+                var typeOfExpr = TypeOfExpression(IrisExpression.ToSyntax(typeOfSchema, _context));
+                stack.Push(typeOfExpr);
+                break;
+
+            case OpCode.ConvertType:
+                var destinationTypeSchema = _context.GetImportedType(instruction.Operands.First());
+                var typeCastExpr = CastExpression(
+                    IrisExpression.ToSyntax(destinationTypeSchema, _context),
+                    Parenthesize(IrisExpression.ToSyntax(stack.Pop(), _context))
+                );
+                stack.Push(typeCastExpr);
+                break;
+
             default:
                 return false;
         }

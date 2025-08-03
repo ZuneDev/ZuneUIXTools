@@ -263,6 +263,8 @@ public partial class Decompiler
                     case OpCode.PropertyGetPeek:
                     case OpCode.PropertyGetStatic:
                     case OpCode.Operation:
+                    case OpCode.TypeOf:
+                    case OpCode.ConvertType:
                         // These instructions only appear in initializers as inline expressions
                         if (!TryDecompileExpression(instruction, stack))
                             throw new NotImplementedException();
