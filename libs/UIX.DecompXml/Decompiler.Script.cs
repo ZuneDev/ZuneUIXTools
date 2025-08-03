@@ -476,6 +476,10 @@ partial class Decompiler
                     notOperatorToken = SyntaxKind.ExclamationEqualsToken;
                     break;
 
+                case SyntaxKind.ExclamationEqualsToken:
+                    notOperatorToken = SyntaxKind.EqualsEqualsToken;
+                    break;
+
                 case SyntaxKind.LessThanToken:
                     notOperatorToken = SyntaxKind.GreaterThanEqualsToken;
                     break;
