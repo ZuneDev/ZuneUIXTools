@@ -81,7 +81,17 @@ public partial class Decompiler
 
             if (export.FinalEvaluateOffsets is { Length: > 0 })
             {
-                throw new NotImplementedException();
+                var xScripts = GetOrCreateElement(xExport, _nsUix + "Scripts");
+
+                foreach (var offset in export.FinalEvaluateOffsets)
+                {
+                    var syntaxTree = DecompileScript(offset, export);
+                    var scriptText = FormatScript(syntaxTree);
+
+                    XElement xScript = new(_nsUix + "Script", scriptText);
+                    xScripts.Add(new XComment("TODO: FinalEvaluateOffsets"));
+                    xScripts.Add(xScript);
+                }
             }
 
             if (export.Methods is { Length: > 0 })
