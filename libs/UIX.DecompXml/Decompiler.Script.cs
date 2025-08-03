@@ -1,5 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Extensions;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Iris.Asm.Models;
 using Microsoft.Iris.DecompXml.Mock;
@@ -164,7 +165,7 @@ partial class Decompiler
                         //var ifBlock = new CodeBlockInfo(instruction.Offset, jumpToOffset, SyntaxKind.IfStatement, jumpCondition);
                         //blockStack.Push(ifBlock);
 
-                        var ifBlock = IfStatement(jumpCondition,
+                        var ifBlock = IfStatement(SimplifyExpression(jumpCondition),
                             GotoStatement(SyntaxKind.GotoStatement, IdentifierName($"UIB_{jumpToOffset:X4}")))
                             .WithLeadingTrivia(Comment($"/* UIB_{instruction.Offset:X4} */"));
                         blockStack.Peek().Statements.Add(ifBlock);
@@ -412,7 +413,7 @@ partial class Decompiler
 
         if (isUnary)
         {
-            var left = ParenthesizedExpression(IrisExpression.ToSyntax(stack.Pop(), _context));
+            var left = Parenthesize(IrisExpression.ToSyntax(stack.Pop(), _context));
             var isPostfix = op is OperationType.PostIncrement or OperationType.PostDecrement;
 
             operationExpr = isPostfix
@@ -425,11 +426,12 @@ partial class Decompiler
             var left = IrisExpression.ToSyntax(stack.Pop(), _context);
 
             operationExpr = BinaryExpression(opSyntax,
-                ParenthesizedExpression(left),
-                ParenthesizedExpression(right)
+                Parenthesize(left),
+                Parenthesize(right)
             );
         }
 
+        operationExpr = SimplifyExpression(operationExpr);
         stack.Push(operationExpr);
         return operationExpr;
     }
@@ -486,16 +488,63 @@ partial class Decompiler
                     break;
             }
 
-            negatedExpression ??= binaryExpression.WithOperatorToken(Token(notOperatorToken));
+            if (negatedExpression is null)
+            {
+                if (notOperatorToken is SyntaxKind.None)
+                    throw new Exception($"Cannot take logical not of expression:\r\n{originalExpression}");
+                negatedExpression = binaryExpression.WithOperatorToken(Token(notOperatorToken));
+            }
         }
 
-        negatedExpression ??= PrefixUnaryExpression(SyntaxKind.LogicalNotExpression, ParenthesizedExpression(originalExpression));
+        negatedExpression ??= PrefixUnaryExpression(SyntaxKind.LogicalNotExpression, Parenthesize(originalExpression));
 
         if (originalExpression is ParenthesizedExpressionSyntax)
-            negatedExpression = ParenthesizedExpression(negatedExpression);
+            negatedExpression = Parenthesize(negatedExpression);
 
         return negatedExpression;
+
+        //dynamic zuneUI = "";
+        //dynamic configuration = "";
+        //if ((zuneUI.ZuneShell.DefaultInstance.CurrentPage is QuickplayPage)
+        //    || ((zuneUI.ZuneShell.DefaultInstance.CurrentPage is StartupPage) && string.IsNullOrEmpty(zuneUI.Shell.SessionStartupPath) && (configuration.ClientConfiguration.Shell.StartupPage == zuneUI.Shell.MainFrame.Quickplay.DefaultUIPath))
+        //    || ((zuneUI.ZuneShell.DefaultInstance.CurrentPage is StartupPage) && (zuneUI.Shell.SessionStartupPath == zuneUI.Shell.MainFrame.Quickplay.DefaultUIPath)))
+        //{
+
+        //}
     }
+
+    private static ExpressionSyntax Parenthesize(ExpressionSyntax expression)
+    {
+        var parenExpression = ParenthesizedExpression(expression);
+        return SimplifyExpression(parenExpression);
+    }
+
+    private static ExpressionSyntax SimplifyExpression(ExpressionSyntax expression)
+    {
+        if (expression is PrefixUnaryExpressionSyntax prefixedExpression)
+        {
+            expression = prefixedExpression.WithOperand(SimplifyExpression(prefixedExpression.Operand));
+        }
+        else if (expression is PostfixUnaryExpressionSyntax postfixedExpression)
+        {
+            expression = postfixedExpression.WithOperand(SimplifyExpression(postfixedExpression.Operand));
+        }
+        else if (expression is BinaryExpressionSyntax binaryExpression)
+        {
+            expression = binaryExpression
+                .WithLeft(SimplifyExpression(binaryExpression.Left))
+                .WithRight(SimplifyExpression(binaryExpression.Right));
+        }
+
+        if (expression is ParenthesizedExpressionSyntax parenExpression
+            && parenExpression.CanRemoveParentheses(null, default))
+            return SimplifyExpression(parenExpression.Expression);
+
+        return expression;
+    }
+
+    private record QuickplayPage;
+    private record StartupPage;
 
     private static SyntaxKind OperationToSyntaxKind(OperationType operation)
     {
