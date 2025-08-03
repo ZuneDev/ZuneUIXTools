@@ -1,4 +1,7 @@
-﻿using Microsoft.Iris.Asm;
+﻿using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.Iris.Asm;
+using Microsoft.Iris.Asm.Models;
 using Microsoft.Iris.Markup;
 
 namespace Microsoft.Iris.DecompXml.Mock;
@@ -19,6 +22,10 @@ internal record IrisObject(object Object, TypeSchema Type)
         {
             type ??= UIXTypes.MapIDToType(UIXTypeID.Null);
         }
+        else if (objIn is ExpressionSyntax expr)
+        {
+            type ??= GuessExpressionReturnType(expr, context);
+        }
 
         if (objIn is Disassembler.RawConstantInfo constantInfo)
         {
@@ -29,5 +36,24 @@ internal record IrisObject(object Object, TypeSchema Type)
         type ??= Disassembler.GuessTypeSchema(obj.GetType(), context.LoadResult);
 
         return new(obj, type);
+    }
+
+    private static TypeSchema GuessExpressionReturnType(ExpressionSyntax expr, DecompileContext ctx)
+    {
+        if (expr is MemberAccessExpressionSyntax memberAccessExpression)
+        {
+            // TODO: Handle member access on instance methods
+            var sourceExpr = (IdentifierNameSyntax)memberAccessExpression.Expression;
+            var sourceTypeName = QualifiedTypeName.Parse(sourceExpr.ToString());
+            var sourceType = ctx.GetImportedType(sourceTypeName);
+
+            var memberName = memberAccessExpression.TryGetInferredMemberName();
+
+            var property = sourceType.FindPropertyDeep(memberName);
+            if (property is not null)
+                return property.PropertyType;
+        }
+
+        return null;
     }
 }

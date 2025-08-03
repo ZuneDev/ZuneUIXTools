@@ -20,6 +20,14 @@ public record QualifiedTypeName(string NamespacePrefix, string TypeName) : AsmIt
         else
             return $"{NamespacePrefix}:{TypeName}";
     }
+
+    public static QualifiedTypeName Parse(string str)
+    {
+        var separatorIndex = str.IndexOf(':');
+        return separatorIndex < 0
+            ? new(null, str)
+            : new(str[0..separatorIndex], str[(separatorIndex + 1)..]);
+    }
 }
 
 public record Program

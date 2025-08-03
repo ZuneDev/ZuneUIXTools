@@ -74,6 +74,15 @@ internal class DecompileContext
 
     public TypeSchema GetImportedType(Operand op) => ImportTables.TypeImports[(ushort)op.Value];
 
+    public TypeSchema GetImportedType(QualifiedTypeName typeName)
+    {
+        var uri = MapPrefixToNamespace(typeName.NamespacePrefix);
+        return ImportTables.TypeImports
+            .Where(t =>  t.Name == typeName.TypeName || t.AlternateName == typeName.TypeName)
+            .OrderBy(t => t.Owner.Uri == uri ? 0 : 1)
+            .First();
+    }
+
     public MethodSchema GetImportedMethod(Operand op) => ImportTables.MethodImports[(ushort)op.Value];
 
     public PropertySchema GetImportedProperty(Operand op) => ImportTables.PropertyImports[(ushort)op.Value];
@@ -101,6 +110,11 @@ internal class DecompileContext
         _uriAliasMap.TryGetValue(uri, out string prefix);
         _usedNamespacePrefixes.Add(prefix);
         return prefix;
+    }
+
+    public string MapPrefixToNamespace(string prefix)
+    {
+        return _uriAliasMap.First(kvp => kvp.Value == prefix).Key;
     }
 
     public QualifiedTypeName GetQualifiedName(TypeSchema schema)
