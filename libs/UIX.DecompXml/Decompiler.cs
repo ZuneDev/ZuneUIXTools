@@ -85,11 +85,10 @@ public partial class Decompiler
 
                 foreach (var offset in export.FinalEvaluateOffsets)
                 {
-                    var syntaxTree = DecompileScript(offset, export);
+                    var syntaxTree = DecompileScript(offset, export, "FinalEvaluate");
                     var scriptText = FormatScript(syntaxTree);
 
                     XElement xScript = new(_nsUix + "Script", scriptText);
-                    xScripts.Add(new XComment("TODO: FinalEvaluateOffsets"));
                     xScripts.Add(xScript);
                 }
             }

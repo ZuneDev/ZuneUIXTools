@@ -20,24 +20,19 @@ partial class Decompiler
     private static readonly TypeSchema _listType = UIXTypes.MapIDToType(UIXTypeID.List);
     private static readonly TypeSchema _dictionaryType = UIXTypes.MapIDToType(UIXTypeID.Dictionary);
 
-    private SyntaxTree DecompileScript(uint startOffset, MarkupTypeSchema export)
+    private SyntaxTree DecompileScript(uint startOffset, MarkupTypeSchema export, string? attributeName = null)
     {
-        var statements = DecompileMethod(startOffset, export);
-
-        return SyntaxTree(
-            CompilationUnit().WithMembers(
-                [..statements.Select(GlobalStatement)]
-            )
-        );
+        var statements = DecompileMethod(startOffset, export, attributeName);
+        return CreateTree(statements);
     }
 
-    public List<StatementSyntax> DecompileMethod(uint startOffset, MarkupTypeSchema export)
+    public List<StatementSyntax> DecompileMethod(uint startOffset, MarkupTypeSchema export, string? attributeName = null)
     {
         var methodBody = _context.GetMethodBody(startOffset).ToArray();
 
         var controlBlocks = ControlFlowAnalyzer.CreateGraph(methodBody);
         var dotGraph = ControlFlowAnalyzer.SerializeToGraphviz(controlBlocks);
-        Console.WriteLine(dotGraph);
+        //Console.WriteLine(dotGraph);
 
         Stack<CodeBlockInfo> blockStack = [];
         blockStack.Push(new(0, methodBody[^1].Offset, SyntaxKind.Block, null));
@@ -81,7 +76,10 @@ partial class Decompiler
                         break;
 
                     case OpCode.DiscardValue:
-                        stack.Pop();
+                        var value = stack.Pop();
+                        if ((value is InvocationExpressionSyntax)
+                            && methodBody.Skip(i).Any(m => m.OpCode is not (OpCode.DiscardValue or OpCode.ReturnValue)))
+                            blockStack.Peek().Statements.Add(ExpressionStatement((ExpressionSyntax)value));
                         break;
 
                     case OpCode.LookupSymbol:
@@ -216,7 +214,16 @@ partial class Decompiler
             throw new InvalidOperationException($"Failed to decompile script for {export.Name}, no top-level code blocks");
 
         // Unwrap top-most block to avoid extra curly braces around entire script
-        return blockStack.Pop().Statements;
+        var statements = blockStack.Pop().Statements;
+
+        if (attributeName is not null)
+        {
+            var scriptAttribute = Attribute(IdentifierName(attributeName));
+            statements[0] = statements[0]
+                .WithAttributeLists(SingletonList(AttributeList([scriptAttribute])));
+        }
+
+        return statements;
     }
 
     private MethodDeclarationSyntax DecompileMethodDeclaration(MarkupMethodSchema method, MarkupTypeSchema export)
@@ -246,20 +253,24 @@ partial class Decompiler
             .WithModifiers(modifiers);
     }
 
-    public static string FormatInlineExpression(ExpressionSyntax expr, CancellationToken token = default)
+    public static SyntaxTree CreateTree(IEnumerable<StatementSyntax> statements)
     {
-        var exprStr = expr
-            .NormalizeWhitespace()
-            .SyntaxTree
-            .GetText(token)
-            .ToString();
-        return '{' + exprStr + '}';
+        return SyntaxTree(
+            CompilationUnit().WithMembers(
+                [.. statements.Select(GlobalStatement)]
+            )
+        );
     }
 
-    public static string FormatScript(SyntaxTree tree, CancellationToken token = default)
+    public static string FormatInlineExpression(ExpressionSyntax expr, CancellationToken token = default) => '{' + FormatSyntaxNode(expr, token) + '}';
+
+    public static string FormatScript(SyntaxTree tree, CancellationToken token = default) => FormatSyntaxNode(tree.GetRoot(token), token);
+
+    public static string FormatScript(IEnumerable<StatementSyntax> statements, CancellationToken token = default) => FormatScript(CreateTree(statements), token);
+
+    public static string FormatSyntaxNode(SyntaxNode root, CancellationToken token = default)
     {
-        return tree
-            .GetRoot(token)
+        return root
             .NormalizeWhitespace()
             .SyntaxTree
             .GetText(token)
