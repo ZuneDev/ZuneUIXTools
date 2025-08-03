@@ -260,6 +260,17 @@ public partial class Decompiler
                         // These instructions are inconsequential for determining how objects are initialized
                         break;
 
+                    case OpCode.Jump:
+                    case OpCode.JumpIfFalse:
+                    case OpCode.JumpIfFalsePeek:
+                    case OpCode.JumpIfTruePeek:
+                        Console.WriteLine($"Suspicious instruction: {instruction}");
+
+                        // Ensure stack is in valid state
+                        var isPeek = instruction.OpCode is OpCode.JumpIfFalsePeek or OpCode.JumpIfTruePeek or OpCode.JumpIfNullPeek;
+                        var rawJumpCondition = IrisExpression.ToSyntax(isPeek ? stack.Peek() : stack.Pop(), _context);
+                        break;
+
                     case OpCode.ConstructObjectParam:
                     case OpCode.PushThis:
                     case OpCode.MethodInvoke:
@@ -316,6 +327,10 @@ public partial class Decompiler
                         var refreshOffset = uint.MaxValue;
                         if (instruction.OpCode is OpCode.DestructiveListen)
                             refreshOffset = (uint)instruction.Operands.ElementAt(4).Value;
+
+                        // What does this mean?
+                        if (scriptId is uint.MaxValue)
+                            break;
 
                         var markupTypeSchema = initType.ResolveScriptId(scriptId, out var scriptOffset);
 
