@@ -178,6 +178,14 @@ public partial class Decompiler
                         stack.Push(new IrisObject(xObj, typeToCtor));
                         break;
 
+                    case OpCode.ConstructFromString:
+                        var typeFromStringSchema = _context.GetImportedType(instruction.Operands.ElementAt(0));
+                        var fromString = _context.GetConstant(instruction.Operands.ElementAt(1));
+
+                        var fromStringObj = IrisObject.Create(fromString, typeFromStringSchema, _context);
+                        stack.Push(fromStringObj);
+                        break;
+
                     case OpCode.LookupSymbol:
                         var symbolIndex = (ushort)instruction.Operands.ElementAt(0).Value;
                         stack.Push(initType.SymbolReferenceTable[symbolIndex]);
