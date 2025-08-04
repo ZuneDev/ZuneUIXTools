@@ -77,9 +77,13 @@ partial class Decompiler
 
                     case OpCode.DiscardValue:
                         var value = stack.Pop();
-                        if ((value is InvocationExpressionSyntax)
-                            && methodBody.Skip(i).Any(m => m.OpCode is not (OpCode.DiscardValue or OpCode.ReturnValue)))
-                            blockStack.Peek().Statements.Add(ExpressionStatement((ExpressionSyntax)value));
+                        if (value is ExpressionSyntax expr)
+                        {
+                            var lastStatement = blockStack.Peek().Statements[^1];
+
+                            if (!lastStatement.DescendantNodes().Any(n => n.IsEquivalentTo(expr)))
+                                blockStack.Peek().Statements.Add(ExpressionStatement(expr));
+                        }
                         break;
 
                     case OpCode.LookupSymbol:
