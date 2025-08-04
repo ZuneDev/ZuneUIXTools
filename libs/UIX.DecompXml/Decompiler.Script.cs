@@ -253,6 +253,107 @@ partial class Decompiler
             .WithModifiers(modifiers);
     }
 
+    private void AnalyzeRefreshMethod(uint startOffset, MarkupTypeSchema initType, string methodName = "")
+    {
+        var methodBody = _context.GetMethodBody(startOffset).ToArray();
+
+        Stack<object> stack = new();
+        stack.Push(initType);
+
+        for (int i = 0; i < methodBody.Length; i++)
+        {
+            var instruction = methodBody[i];
+
+            try
+            {
+                switch (instruction.OpCode)
+                {
+                    case OpCode.LookupSymbol:
+                        var symbolIndex = (ushort)instruction.Operands.ElementAt(0).Value;
+                        stack.Push(initType.SymbolReferenceTable[symbolIndex]);
+                        break;
+
+                    case OpCode.Listen:
+                    case OpCode.DestructiveListen:
+                        var listenerIndex = (ushort)instruction.Operands.ElementAt(0).Value;
+                        var listenerType = (ListenerType)(byte)instruction.Operands.ElementAt(1).Value;
+                        var watchIndex = (ushort)instruction.Operands.ElementAt(2).Value;
+                        var scriptId = (uint)instruction.Operands.ElementAt(3).Value;
+
+                        var refreshOffset = uint.MaxValue;
+                        if (instruction.OpCode is OpCode.DestructiveListen)
+                            refreshOffset = (uint)instruction.Operands.ElementAt(4).Value;
+
+                        string watch = null;
+                        switch (listenerType)
+                        {
+                            case ListenerType.Property:
+                                watch = _context.ImportTables.PropertyImports[watchIndex].Name;
+                                break;
+
+                            case ListenerType.Event:
+                                watch = _context.ImportTables.EventImports[watchIndex].Name;
+                                break;
+
+                            case ListenerType.Symbol:
+                                watch = initType.SymbolReferenceTable[watchIndex].Symbol;
+                                break;
+                        }
+
+                        // What does this mean?
+                        if (scriptId is uint.MaxValue)
+                            break;
+
+                        object handlerObj = stack.Peek();
+
+                        try
+                        {
+                            var markupTypeSchema = initType.ResolveScriptId(scriptId, out var scriptOffset);
+                            var scriptContent = _context.GetScriptContent(initType, scriptOffset);
+                            var scriptRoot = scriptContent.GetRoot();
+
+                            var nodesDbg = scriptRoot.DescendantNodes()
+                                .OfType<MemberAccessExpressionSyntax>()
+                                .Select(m => $"{m.Expression}.{m.Name}")
+                                .ToArray();
+
+                            SyntaxNode node = scriptRoot
+                                .DescendantNodes()
+                                .OfType<MemberAccessExpressionSyntax>()
+                                .FirstOrDefault(n => n.Expression.ToString() == $"{handlerObj}" && n.Name.ToString() == watch);
+
+                            if (node is not null)
+                            {
+                                var octothorpeTrivia = SkippedTokensTrivia()
+                                    .AddTokens(BadToken(TriviaList(), "#", TriviaList()));
+
+                                SyntaxNode newNode = node
+                                    .WithLeadingTrivia(TriviaList(Trivia(octothorpeTrivia)))
+                                    .WithTrailingTrivia(TriviaList(Trivia(octothorpeTrivia)));
+
+                                SyntaxNode? parent = node.Parent;
+                                while (parent is not null)
+                                {
+                                    newNode = node.Parent.ReplaceNode(node, newNode);
+                                    node = node.Parent;
+                                    parent = node.Parent;
+                                }
+
+                                _context.SetScriptContent(initType, scriptOffset, newNode.SyntaxTree);
+                            }
+                        }
+                        catch { }
+
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to analyze instruction `{instruction}` @ 0x{instruction.Offset:X}, {methodName}[{i}]", ex);
+            }
+        }
+    }
+
     public static SyntaxTree CreateTree(IEnumerable<StatementSyntax> statements)
     {
         return SyntaxTree(

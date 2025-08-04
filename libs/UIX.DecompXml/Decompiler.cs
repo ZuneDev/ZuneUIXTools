@@ -1,6 +1,6 @@
-﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Iris.Asm;
-using Microsoft.Iris.Debug.Data;
 using Microsoft.Iris.DecompXml.Mock;
 using Microsoft.Iris.Markup;
 using System;
@@ -65,61 +65,40 @@ public partial class Decompiler
             if (export.InitializeLocalsInputOffset is not uint.MaxValue)
                 AnalyzeMethodForInit(export.InitializeLocalsInputOffset, xExport, export, name + "_locl");
 
-            if (export.InitialEvaluateOffsets is { Length: > 0 })
+            foreach (var offset in export.InitialEvaluateOffsets ?? [])
             {
-                var xScripts = GetOrCreateElement(xExport, _nsUix + "Scripts");
-
-                foreach (var offset in export.InitialEvaluateOffsets)
-                {
-                    var syntaxTree = DecompileScript(offset, export);
-                    var scriptText = FormatScript(syntaxTree);
-
-                    XElement xScript = new(_nsUix + "Script", scriptText);
-                    xScripts.Add(xScript);
-                }
+                var syntaxTree = DecompileScript(offset, export);
+                _context.SetScriptContent(export, offset, syntaxTree);
             }
 
-            if (export.FinalEvaluateOffsets is { Length: > 0 })
+            foreach (var offset in export.FinalEvaluateOffsets ?? [])
             {
-                var xScripts = GetOrCreateElement(xExport, _nsUix + "Scripts");
-
-                foreach (var offset in export.FinalEvaluateOffsets)
-                {
-                    var syntaxTree = DecompileScript(offset, export, "FinalEvaluate");
-                    var scriptText = FormatScript(syntaxTree);
-
-                    XElement xScript = new(_nsUix + "Script", scriptText);
-                    xScripts.Add(xScript);
-                }
+                var syntaxTree = DecompileScript(offset, export, "FinalEvaluate");
+                _context.SetScriptContent(export, offset, syntaxTree);
             }
 
-            if (export.Methods is { Length: > 0 })
+            foreach (var method in export.Methods.OfType<MarkupMethodSchema>())
             {
-                var xScripts = GetOrCreateElement(xExport, _nsUix + "Scripts");
-
-                foreach (var method in export.Methods.OfType<MarkupMethodSchema>())
-                {
-                    var methodSyntax = DecompileMethodDeclaration(method, export);
-                    var scriptText = FormatScript(methodSyntax.SyntaxTree);
-
-                    XElement xScript = new(_nsUix + "Script", scriptText);
-
-                    xScripts.Add(xScript);
-                }
+                var methodSyntax = DecompileMethodDeclaration(method, export);
+                _context.SetScriptContent(export, method.CodeOffset, methodSyntax.SyntaxTree);
             }
 
-            if (export.RefreshGroupOffsets is { Length: > 0 })
+            foreach (var offset in export.RefreshGroupOffsets ?? [])
             {
-                var xScripts = GetOrCreateElement(xExport, _nsUix + "Scripts");
-                
-                foreach (var offset in export.RefreshGroupOffsets)
-                {
-                    var scriptText = AnalyzeRefreshMethod(offset, export, $"{name}_rfsh_0x{offset:X}");
-
-                    XElement xScript = new(_nsUix + "Script", scriptText);
-                    xScripts.Add(xScript);
-                }
+                AnalyzeRefreshMethod(offset, export, $"{name}_rfsh_0x{offset:X}");
             }
+            
+            XElement xScripts = GetOrCreateElement(xExport, _nsUix + "Scripts");
+
+            foreach (var syntaxTree in _context.GetScriptContents(export))
+            {
+                var scriptText = FormatScript(syntaxTree);
+                XElement xScript = new(_nsUix + "Script", scriptText);
+                xScripts.Add(xScript);
+            }
+
+            if (!xScripts.HasElements)
+                xScripts.Remove();
 
             if (export.InitializeContentOffset is not uint.MaxValue)
                 AnalyzeMethodForInit(export.InitializeContentOffset, xExport, export, name + "_cont");
@@ -310,68 +289,6 @@ public partial class Decompiler
         }
 
         return stack;
-    }
-
-    private string AnalyzeRefreshMethod(uint startOffset, MarkupTypeSchema initType, string methodName = "")
-    {
-        var methodBody = _context.GetMethodBody(startOffset).ToArray();
-
-        Stack<object> stack = new();
-
-        for (int i = 0; i < methodBody.Length; i++)
-        {
-            var instruction = methodBody[i];
-
-            try
-            {
-                switch (instruction.OpCode)
-                {
-                    case OpCode.Listen:
-                    case OpCode.DestructiveListen:
-                        var listenerIndex = (ushort)instruction.Operands.ElementAt(0).Value;
-                        var listenerType = (ListenerType)(byte)instruction.Operands.ElementAt(1).Value;
-                        var watchIndex = (ushort)instruction.Operands.ElementAt(2).Value;
-                        var scriptId = (uint)instruction.Operands.ElementAt(3).Value;
-
-                        var refreshOffset = uint.MaxValue;
-                        if (instruction.OpCode is OpCode.DestructiveListen)
-                            refreshOffset = (uint)instruction.Operands.ElementAt(4).Value;
-
-                        // What does this mean?
-                        if (scriptId is uint.MaxValue)
-                            break;
-
-                        var markupTypeSchema = initType.ResolveScriptId(scriptId, out var scriptOffset);
-
-                        string watch = null;
-                        InstructionObjectSource watchSource = InstructionObjectSource.Dynamic;
-                        switch (listenerType)
-                        {
-                            case ListenerType.Property:
-                                watch = _context.ImportTables.PropertyImports[watchIndex].Name;
-                                watchSource = InstructionObjectSource.PropertyImports;
-                                break;
-                            case ListenerType.Event:
-                                watch = _context.ImportTables.EventImports[watchIndex].Name;
-                                watchSource = InstructionObjectSource.EventImports;
-                                break;
-                            case ListenerType.Symbol:
-                                watch = initType.SymbolReferenceTable[watchIndex].Symbol;
-                                watchSource = InstructionObjectSource.SymbolReference;
-                                break;
-                        }
-
-                        //object handlerObj = stack.Peek();
-                        break;
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Failed to analyze instruction `{instruction}` @ 0x{instruction.Offset:X}, {methodName}[{i}]", ex);
-            }
-        }
-
-        return "";
     }
 
     private static XElement GetOrCreateElement(XElement parent, XName name)

@@ -1,4 +1,5 @@
 ﻿using Humanizer;
+using Microsoft.CodeAnalysis;
 using Microsoft.Iris.Asm;
 using Microsoft.Iris.Asm.Models;
 using Microsoft.Iris.Markup;
@@ -14,6 +15,7 @@ internal class DecompileContext
 {
     private readonly MarkupLoadResult _loadResult;
     private readonly MarkupLoadResult _dataTableLoadResult;
+    private readonly Dictionary<(ulong, uint), SyntaxTree> _scriptMap;
     private readonly Dictionary<string, XNamespace> _namespaces;
     private readonly HashSet<string> _usedNamespacePrefixes;
     private readonly Dictionary<string, string> _uriAliasMap;
@@ -53,6 +55,8 @@ internal class DecompileContext
         }
 
         GenerateNamespaces();
+
+        _scriptMap = [];
 
         _instructions = ObjectSection.Decode(_loadResult.ObjectSection)
             .OfType<Instruction>()
@@ -98,6 +102,12 @@ internal class DecompileContext
                 yield break;
         }
     }
+
+    public void SetScriptContent(TypeSchema type, uint startOffset, SyntaxTree tree) => _scriptMap[(type.UniqueId, startOffset)] = tree;
+
+    public SyntaxTree GetScriptContent(TypeSchema type, uint startOffset) => _scriptMap[(type.UniqueId, startOffset)];
+
+    public IEnumerable<SyntaxTree> GetScriptContents(TypeSchema type) => _scriptMap.Where(k => k.Key.Item1 == type.UniqueId).Select(k => k.Value);
 
     public IEnumerable<KeyValuePair<string, XNamespace>> GetUsedNamespaces()
     {
