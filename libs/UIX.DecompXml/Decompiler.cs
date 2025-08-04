@@ -77,12 +77,6 @@ public partial class Decompiler
                 _context.SetScriptContent(export, offset, syntaxTree);
             }
 
-            foreach (var method in export.Methods.OfType<MarkupMethodSchema>())
-            {
-                var methodSyntax = DecompileMethodDeclaration(method, export);
-                _context.SetScriptContent(export, method.CodeOffset, methodSyntax.SyntaxTree);
-            }
-
             foreach (var offset in export.RefreshGroupOffsets ?? [])
             {
                 AnalyzeRefreshMethod(offset, export, $"{name}_rfsh_0x{offset:X}");
@@ -99,6 +93,23 @@ public partial class Decompiler
 
             if (!xScripts.HasElements)
                 xScripts.Remove();
+
+            List<string> methodsContent = [];
+
+            foreach (var method in export.Methods.OfType<MarkupMethodSchema>())
+            {
+                var methodSyntax = DecompileMethodDeclaration(method, export);
+                methodsContent.Add(FormatSyntaxNode(methodSyntax));
+            }
+
+            if (methodsContent.Count > 0)
+            {
+                var methodsContentStr = Environment.NewLine
+                    + string.Join(Environment.NewLine + Environment.NewLine, methodsContent)
+                    + Environment.NewLine;
+                XElement xMethods = new(_nsUix + "Methods", new XCData(methodsContentStr));
+                xExport.Add(xMethods);
+            }
 
             if (export.InitializeContentOffset is not uint.MaxValue)
                 AnalyzeMethodForInit(export.InitializeContentOffset, xExport, export, name + "_cont");
