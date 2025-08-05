@@ -73,8 +73,9 @@ public partial class Decompiler
 
             foreach (var offset in export.FinalEvaluateOffsets ?? [])
             {
-                var syntaxTree = DecompileScript(offset, export, "FinalEvaluate");
-                _context.SetScriptContent(export, offset, syntaxTree);
+                var statements = DecompileMethod(offset, export);
+                AddMethodAttribute(statements, "FinalEvaluate");
+                _context.SetScriptContent(export, offset, CreateTree(statements));
             }
 
             foreach (var offset in export.RefreshGroupOffsets ?? [])

@@ -20,13 +20,13 @@ partial class Decompiler
     private static readonly TypeSchema _listType = UIXTypes.MapIDToType(UIXTypeID.List);
     private static readonly TypeSchema _dictionaryType = UIXTypes.MapIDToType(UIXTypeID.Dictionary);
 
-    private SyntaxTree DecompileScript(uint startOffset, MarkupTypeSchema export, string? attributeName = null)
+    private SyntaxTree DecompileScript(uint startOffset, MarkupTypeSchema export)
     {
-        var statements = DecompileMethod(startOffset, export, attributeName);
+        var statements = DecompileMethod(startOffset, export);
         return CreateTree(statements);
     }
 
-    public List<StatementSyntax> DecompileMethod(uint startOffset, MarkupTypeSchema export, string? attributeName = null)
+    public List<StatementSyntax> DecompileMethod(uint startOffset, MarkupTypeSchema export)
     {
         var methodBody = _context.GetMethodBody(startOffset).ToArray();
 
@@ -80,10 +80,14 @@ partial class Decompiler
                         var value = stack.Pop();
                         if (value is ExpressionSyntax expr)
                         {
-                            var lastStatement = blockStack.Peek().Statements[^1];
+                            if (expr is ParenthesizedExpressionSyntax parenExpr)
+                                expr = parenExpr.Expression;
 
-                            if (!lastStatement.DescendantNodes().Any(n => n.IsEquivalentTo(expr)))
-                                blockStack.Peek().Statements.Add(ExpressionStatement(expr));
+                            var lastStatement = blockStack.Peek().Statements[^1];
+                            if (lastStatement.DescendantNodes().Any(n => n.IsEquivalentTo(expr)))
+                                break;
+
+                            blockStack.Peek().Statements.Add(ExpressionStatement(expr));
                         }
                         break;
 
@@ -244,16 +248,7 @@ partial class Decompiler
             throw new InvalidOperationException($"Failed to decompile script for {export.Name}, no top-level code blocks");
 
         // Unwrap top-most block to avoid extra curly braces around entire script
-        var statements = blockStack.Pop().Statements;
-
-        if (attributeName is not null)
-        {
-            var scriptAttribute = Attribute(IdentifierName(attributeName));
-            statements[0] = statements[0]
-                .WithAttributeLists(SingletonList(AttributeList([scriptAttribute])));
-        }
-
-        return statements;
+        return blockStack.Pop().Statements;
     }
 
     private MethodDeclarationSyntax DecompileMethodDeclaration(MarkupMethodSchema method, MarkupTypeSchema export)
@@ -283,6 +278,13 @@ partial class Decompiler
             .WithModifiers(modifiers);
     }
 
+    private void AddMethodAttribute(List<StatementSyntax> statements, string attributeName)
+    {
+        var attribute = Attribute(IdentifierName(attributeName));
+        statements[0] = statements[0]
+            .AddAttributeLists(AttributeList([attribute]));
+    }
+
     private void AnalyzeRefreshMethod(uint startOffset, MarkupTypeSchema initType, string methodName = "")
     {
         var methodBody = _context.GetMethodBody(startOffset).ToArray();
@@ -301,6 +303,25 @@ partial class Decompiler
                     case OpCode.LookupSymbol:
                         var symbolIndex = (ushort)instruction.Operands.ElementAt(0).Value;
                         stack.Push(initType.SymbolReferenceTable[symbolIndex]);
+                        break;
+
+                    case OpCode.PropertyGet:
+                    case OpCode.PropertyGetStatic:
+                        var propToGet = _context.GetImportedProperty(instruction.Operands.First());
+
+                        var propGetTarget = instruction.OpCode switch
+                        {
+                            OpCode.PropertyGet => stack.Pop(),
+                            OpCode.PropertyGetPeek => stack.Peek(),
+                            _ => propToGet.Owner,
+                        };
+
+                        var propertyGetExpression = MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
+                            IrisExpression.ToSyntax(propGetTarget, _context),
+                            IdentifierName(propToGet.Name)
+                        );
+
+                        stack.Push(propertyGetExpression);
                         break;
 
                     case OpCode.Listen:
@@ -336,44 +357,81 @@ partial class Decompiler
 
                         object handlerObj = stack.Peek();
 
-                        try
+                        var markupTypeSchema = initType.ResolveScriptId(scriptId, out var scriptOffset);
+
+                        if (!_context.TryGetScriptContent(initType, scriptOffset, out var scriptContent))
                         {
-                            var markupTypeSchema = initType.ResolveScriptId(scriptId, out var scriptOffset);
-                            var scriptContent = _context.GetScriptContent(initType, scriptOffset);
-                            var scriptRoot = scriptContent.GetRoot();
+                            var statements = DecompileMethod(scriptOffset, initType);
 
-                            var nodesDbg = scriptRoot.DescendantNodes()
-                                .OfType<MemberAccessExpressionSyntax>()
-                                .Select(m => $"{m.Expression}.{m.Name}")
-                                .ToArray();
+                            scriptContent = CreateTree(statements);
+                            _context.SetScriptContent(initType, scriptOffset, scriptContent);
+                        }
 
-                            SyntaxNode node = scriptRoot
-                                .DescendantNodes()
-                                .OfType<MemberAccessExpressionSyntax>()
-                                .FirstOrDefault(n => n.Expression.ToString() == $"{handlerObj}" && n.Name.ToString() == watch);
+                        var scriptRoot = scriptContent.GetRoot();
 
-                            if (node is not null)
+                        if (listenerType is not ListenerType.Symbol)
+                        {
+                            var memberAccessExpr = (MemberAccessExpressionSyntax)ParseExpression($"{handlerObj}.{watch}");
+                            var attributeArgument = AttributeArgument(memberAccessExpr);
+                            var attributeName = IdentifierName("DeclareTrigger");
+                            
+                            var firstStatement = scriptRoot.DescendantNodes().OfType<StatementSyntax>().First();
+
+                            // Avoid adding duplicate triggers
+                            var existingTriggers = firstStatement.AttributeLists
+                                .SelectMany(al => al.Attributes)
+                                .Where(a => a.Name.IsEquivalentTo(attributeName))
+                                .SelectMany(a => a.ArgumentList.Arguments)
+                                .ToList();
+
+                            var hasDuplicateTrigger = existingTriggers
+                                .Any(arg => arg.IsEquivalentTo(attributeArgument)
+                                    || (arg.Expression is MemberAccessExpressionSyntax argExpr && argExpr.Expression.IsEquivalentTo(memberAccessExpr)));
+
+                            if (!hasDuplicateTrigger)
                             {
-                                var octothorpeTrivia = SkippedTokensTrivia()
-                                    .AddTokens(BadToken(TriviaList(), "#", TriviaList()));
+                                // Remove redundant triggers. For example, if we're adding `Management.ScreenGraphicsSlider.ChosenValue`
+                                // we don't need to trigger on `Management.ScreenGraphicsSlider`.
+                                var precursorTriggers = existingTriggers
+                                    .Select(argExpr =>  argExpr.Expression)
+                                    .OfType<MemberAccessExpressionSyntax>()
+                                    .Where(memberAccessExpr.Expression.IsEquivalentTo)
+                                    .Select(e => (AttributeArgumentSyntax)e.Parent)
+                                    .ToList();
 
-                                SyntaxNode newNode = node
-                                    .WithLeadingTrivia(TriviaList(Trivia(octothorpeTrivia)))
-                                    .WithTrailingTrivia(TriviaList(Trivia(octothorpeTrivia)));
+                                foreach (var precursorTrigger in precursorTriggers)
+                                    existingTriggers.Remove(precursorTrigger);
+                                existingTriggers.Add(attributeArgument);
 
-                                SyntaxNode? parent = node.Parent;
-                                while (parent is not null)
-                                {
-                                    newNode = node.Parent.ReplaceNode(node, newNode);
-                                    node = node.Parent;
-                                    parent = node.Parent;
-                                }
+                                // Reconstruct existing and new attributes
+                                var attributes = existingTriggers
+                                    .Select(arg => Attribute(attributeName, AttributeArgumentList(SingletonSeparatedList(arg))));
 
-                                _context.SetScriptContent(initType, scriptOffset, newNode.SyntaxTree);
+                                var newFirstStatement = firstStatement
+                                    .WithAttributeLists(SingletonList(AttributeList(SeparatedList(attributes))));
+                                scriptRoot = RecursiveReplaceNode(firstStatement, newFirstStatement);
                             }
                         }
-                        catch { }
 
+                        SyntaxNode node = scriptRoot
+                            .DescendantNodes()
+                            .OfType<MemberAccessExpressionSyntax>()
+                            .Where(expr => expr.Parent is not AttributeArgumentSyntax)
+                            .FirstOrDefault(n => n.Expression.ToString() == $"{handlerObj}" && n.Name.ToString() == watch);
+
+                        if (node is not null)
+                        {
+                            var octothorpeTrivia = SkippedTokensTrivia()
+                                .AddTokens(BadToken(TriviaList(), "#", TriviaList()));
+
+                            SyntaxNode newNode = node
+                                .WithLeadingTrivia(TriviaList(Trivia(octothorpeTrivia)))
+                                .WithTrailingTrivia(TriviaList(Trivia(octothorpeTrivia)));
+
+                            scriptRoot = RecursiveReplaceNode(node, newNode);
+                        }
+
+                        _context.SetScriptContent(initType, scriptOffset, scriptRoot.SyntaxTree);
                         break;
                 }
             }
@@ -382,6 +440,18 @@ partial class Decompiler
                 throw new Exception($"Failed to analyze instruction `{instruction}` @ 0x{instruction.Offset:X}, {methodName}[{i}]", ex);
             }
         }
+    }
+
+    private static SyntaxNode RecursiveReplaceNode(SyntaxNode oldNode, SyntaxNode newNode)
+    {
+        var parent = oldNode.Parent;
+        while (parent is not null)
+        {
+            newNode = oldNode.Parent.ReplaceNode(oldNode, newNode);
+            oldNode = oldNode.Parent;
+            parent = oldNode.Parent;
+        }
+        return newNode;
     }
 
     public static SyntaxTree CreateTree(IEnumerable<StatementSyntax> statements)

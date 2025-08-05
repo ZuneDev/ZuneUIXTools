@@ -107,6 +107,15 @@ internal class DecompileContext
 
     public SyntaxTree GetScriptContent(TypeSchema type, uint startOffset) => _scriptMap[(type.UniqueId, startOffset)];
 
+    public bool TryGetScriptContent(TypeSchema type, uint startOffset, [NotNullWhen(true)] out SyntaxTree tree)
+    {
+        if (_scriptMap.TryGetValue((type.UniqueId, startOffset), out tree))
+            return true;
+
+        tree = null;
+        return false;
+    }
+
     public IEnumerable<SyntaxTree> GetScriptContents(TypeSchema type) => _scriptMap.Where(k => k.Key.Item1 == type.UniqueId).Select(k => k.Value);
 
     public IEnumerable<KeyValuePair<string, XNamespace>> GetUsedNamespaces()
