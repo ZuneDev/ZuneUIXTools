@@ -37,6 +37,7 @@ partial class Decompiler
         Stack<CodeBlockInfo> blockStack = [];
         blockStack.Push(new(0, methodBody[^1].Offset, SyntaxKind.Block, null));
 
+        HashSet<string> scopedLocals = [];
         Stack<object> stack = new();
 
         for (int i = 0; i < methodBody.Length; i++)
@@ -98,12 +99,36 @@ partial class Decompiler
                         var newSymbolValue = opCode is OpCode.WriteSymbolPeek
                             ? stack.Peek() : stack.Pop();
 
-                        var symbolAssignmentExpr = AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
-                            IrisExpression.ToSyntax(export.SymbolReferenceTable[writeSymbolIndex]),
-                            IrisExpression.ToSyntax(newSymbolValue, _context)
-                        );
+                        var symbolRef = export.SymbolReferenceTable[writeSymbolIndex];
+                        var symbolIdentifierExpr = IrisExpression.ToSyntax(symbolRef);
+                        var newSymbolValueExpr = IrisExpression.ToSyntax(newSymbolValue, _context);
 
-                        blockStack.Peek().Statements.Add(ExpressionStatement(symbolAssignmentExpr));
+                        StatementSyntax symbolWriteExpr;
+
+                        if (symbolRef.Origin is SymbolOrigin.ScopedLocal && !scopedLocals.Contains(symbolRef.Symbol))
+                        {
+                            // Scoped locals need to be declared the first time they're assigned
+                            var newSymbolIrisObj = IrisObject.Create(newSymbolValue, null, _context);
+                            var typeSchema = newSymbolIrisObj.Type ?? UIXTypes.MapIDToType(UIXTypeID.Object);
+
+                            symbolWriteExpr = LocalDeclarationStatement(VariableDeclaration(
+                                IrisExpression.ToSyntax(typeSchema, _context),
+                                SingletonSeparatedList(
+                                    VariableDeclarator(symbolRef.Symbol)
+                                        .WithInitializer(EqualsValueClause(newSymbolValueExpr))
+                                )
+                            ));
+                        }
+                        else
+                        {
+                            var symbolAssignmentExpr = AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+                                symbolIdentifierExpr,
+                                newSymbolValueExpr
+                            );
+                            symbolWriteExpr = ExpressionStatement(symbolAssignmentExpr);
+                        }
+
+                        blockStack.Peek().Statements.Add(symbolWriteExpr);
                         break;
 
                     case OpCode.PropertyAssign:

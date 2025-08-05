@@ -25,6 +25,7 @@ internal record IrisObject(object Object, TypeSchema Type)
         else if (objIn is ExpressionSyntax expr)
         {
             type ??= GuessExpressionReturnType(expr, context);
+            return new(obj, type);
         }
 
         if (objIn is Disassembler.RawConstantInfo constantInfo)
@@ -40,6 +41,9 @@ internal record IrisObject(object Object, TypeSchema Type)
 
     private static TypeSchema GuessExpressionReturnType(ExpressionSyntax expr, DecompileContext ctx)
     {
+        if (expr is ParenthesizedExpressionSyntax parenExpr)
+            expr = parenExpr.Expression;
+
         if (expr is MemberAccessExpressionSyntax memberAccessExpression)
         {
             // TODO: Handle member access on instance methods
