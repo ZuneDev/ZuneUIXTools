@@ -57,6 +57,11 @@ internal record IrisObject(object Object, TypeSchema Type)
             if (property is not null)
                 return property.PropertyType;
         }
+        else if (expr is CastExpressionSyntax castExpr)
+        {
+            var castTargetName = QualifiedTypeName.Parse(castExpr.Type.ToString());
+            return ctx.GetImportedType(castTargetName);
+        }
 
         return null;
     }

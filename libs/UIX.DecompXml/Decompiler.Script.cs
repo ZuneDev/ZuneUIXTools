@@ -32,7 +32,7 @@ partial class Decompiler
 
         var controlBlocks = ControlFlowAnalyzer.CreateGraph(methodBody);
         var dotGraph = ControlFlowAnalyzer.SerializeToGraphviz(controlBlocks);
-        //Console.WriteLine(dotGraph);
+        Console.WriteLine(dotGraph);
 
         Stack<CodeBlockInfo> blockStack = [];
         blockStack.Push(new(0, methodBody[^1].Offset, SyntaxKind.Block, null));
@@ -101,7 +101,7 @@ partial class Decompiler
 
                         var symbolRef = export.SymbolReferenceTable[writeSymbolIndex];
                         var symbolIdentifierExpr = IrisExpression.ToSyntax(symbolRef);
-                        var newSymbolValueExpr = IrisExpression.ToSyntax(newSymbolValue, _context);
+                        var newSymbolValueExpr = SimplifyExpression(IrisExpression.ToSyntax(newSymbolValue, _context), true);
 
                         StatementSyntax symbolWriteExpr;
 
@@ -175,14 +175,15 @@ partial class Decompiler
                         var isPeek = opCode is OpCode.JumpIfFalsePeek or OpCode.JumpIfTruePeek or OpCode.JumpIfNullPeek;
                         var rawJumpCondition = IrisExpression.ToSyntax(isPeek ? stack.Peek() : stack.Pop(), _context);
 
+                        // TODO: Invert jump condition when decompiling to blocks instead of gotos
                         var jumpCondition = opCode switch
                         {
                             OpCode.JumpIfFalse or
-                            OpCode.JumpIfFalsePeek => rawJumpCondition,
+                            OpCode.JumpIfFalsePeek => LogicalNotOf(rawJumpCondition),
 
-                            OpCode.JumpIfTruePeek => LogicalNotOf(rawJumpCondition),
+                            OpCode.JumpIfTruePeek => rawJumpCondition,
 
-                            OpCode.JumpIfNullPeek => BinaryExpression(SyntaxKind.ExclamationEqualsToken,
+                            OpCode.JumpIfNullPeek => BinaryExpression(SyntaxKind.EqualsEqualsToken,
                                 rawJumpCondition,
                                 LiteralExpression(SyntaxKind.NullLiteralExpression)),
 

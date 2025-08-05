@@ -130,10 +130,10 @@ public static class ControlFlowAnalyzer
             sb.AppendLine($"    >];");
 
             if (block.NextOffset is not uint.MaxValue)
-                sb.AppendLine($"    {nodeId} -> {block.NextOffset};");
+                sb.AppendLine($"    {nodeId}:s -> {block.NextOffset}:n;");
 
             if (block.BranchTargetOffset is not uint.MaxValue)
-                sb.AppendLine($"    {nodeId} -> {block.BranchTargetOffset} [color=red];");
+                sb.AppendLine($"    {nodeId}:s -> {block.BranchTargetOffset}:n [color=red];");
         }
 
         sb.AppendLine("}");
