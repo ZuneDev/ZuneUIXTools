@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-16"?>
+<UIX xmlns="http://schemas.microsoft.com/2007/uix" xmlns:iris="assembly://UIX/Microsoft.Iris" xmlns:zuneUI="assembly://ZuneShell/ZuneUI" xmlns:styles="res://ZuneShellResources!Styles.uix" xmlns:radioButton="res://UIXControls!RadioButton.uix" xmlns:label="res://UIXControls!Label.uix" xmlns:checkbox="res://UIXControls!Checkbox.uix" xmlns:slider="res://UIXControls!Slider.uix" xmlns:management="res://ZuneShellResources!Management.uix">
+  <UI Name="Default">
+    <Properties>
+      <zuneUI:CategoryPage CategoryPage="$Required" Name="Page" />
+    </Properties>
+    <Locals>
+      <iris:Choice Options="{styles:Styles.FrameBackgrounds}" ChosenIndex="{styles:Styles.DefaultBackgroundIndex}" Name="BackgroundChoice" />
+      <iris:Command Name="AccelerationButtonModel" />
+      <iris:Command Name="RenderingQualityButtonModel" />
+      <styles:LabelStyle Color="{styles:Styles.TextActive}" Font="{styles:Styles.SettingsText}" Name="StyleWarn" />
+      <styles:LabelStyle Color="{styles:Styles.SettingsTextActive}" Font="{styles:Styles.SettingsText}" Name="SliderText" />
+      <zuneUI:Management Management="{zuneUI:ZuneShell.DefaultInstance.Management}" Name="Management" />
+      <String String="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_SCREEN_GRAPHICS_HEADER)}" Name="ScreenGraphicsHeader" />
+    </Locals>
+    <Scripts>
+      <Script>string backgroundImage = Management.BackgroundImage;
+/* UIB_0019 */
+if (!((List)BackgroundChoice.Options).GetEnumerator().MoveNext())
+    goto UIB_0048;
+zuneUI:NamedStringOption option = (zuneUI:NamedStringOption)((List)BackgroundChoice.Options).GetEnumerator().Current;
+/* UIB_0034 */
+if (option.Value != backgroundImage)
+    goto UIB_0043;
+BackgroundChoice.ChosenValue = option;
+goto UIB_0016;
+((List)BackgroundChoice.Options).GetEnumerator();</Script>
+      <Script>[DeclareTrigger(Management.ScreenGraphicsSlider.ChosenValue)]
+ScreenGraphicsSliderText.Content = ((iris:Command)#Management.ScreenGraphicsSlider #.ChosenValue #).Description;</Script>
+      <Script>[DeclareTrigger(BackgroundChoice.ChosenValue)]
+zuneUI:BackgroundOption backgroundOption = (zuneUI:BackgroundOption)#BackgroundChoice.ChosenValue #;
+Management.BackgroundImage = backgroundOption.Value;
+Management.BackgroundColor = backgroundOption.Color;</Script>
+    </Scripts>
+    <Content>
+      <Panel>
+        <Layout>
+          <FlowLayout Orientation="Vertical" Spacing="6, 0" />
+        </Layout>
+        <Children>
+          <management:Label Content="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_BACKGROUND_TITLE)}" Margins="0, -1, 0, 0" />
+          <radioButton:RadioGroup AccessibleDescription="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_BACKGROUND_TITLE)}" Model="{BackgroundChoice}" />
+          <management:Label Content="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_SHOW_NOWPLAYING_ON_IDLE_TITLE)}" Margins="0, 15, 0, 3" />
+          <checkbox:CheckBox Model="{zuneUI:ZuneShell.DefaultInstance.Management.ShowNowPlayingBackgroundOnIdle}" LabelFont="{styles:Styles.SettingsText}" LabelColor="{styles:Styles.SettingsTextActive}" Padding="0, 0, 0, 10" />
+          <management:Label Content="{ScreenGraphicsHeader}" WordWrap="false" />
+          <slider:LabeledChoiceSlider AccessibleDescription="{ScreenGraphicsHeader}" Model="{Management.ScreenGraphicsSlider}" FilledBackgroundImage="{styles:Styles.SliderFill}" MinValueString="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_SCREEN_QUALITY_MIN)}" MaxValueString="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_SCREEN_QUALITY_MAX)}" TextStyle="{styles:SharedStyles.SettingsBodyStyle}" />
+          <label:Label Name="ScreenGraphicsSliderText" Style="{SliderText}" WordWrap="true" />
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+</UIX>

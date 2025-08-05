@@ -59,6 +59,18 @@ public partial class Decompiler
                     xExport.SetAttributeValue("Shared", true);
             }
 
+            // TODO: Combine this with InitializePropertiesOffset
+            if (export.Properties is { Length: > 0 })
+            {
+                XElement xProperties = GetOrCreateElement(xExport, _nsUix + "Properties");
+
+                foreach (var property in export.Properties.Where(p => p.RequiredForCreation))
+                {
+                    IrisObject value = new("$Required", property.PropertyType);
+                    PropertyDictionaryAddOnXElement(xProperties, value, property.Name);
+                }
+            }
+
             if (export.InitializePropertiesOffset is not uint.MaxValue)
                 AnalyzeMethodForInit(export.InitializePropertiesOffset, xExport, export, name + "_prop");
 
