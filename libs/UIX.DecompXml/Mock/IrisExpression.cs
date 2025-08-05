@@ -63,12 +63,29 @@ internal static class IrisExpression
         _predefinedTypeMap ??= new()
         {
             [UIXTypes.MapIDToType(UIXTypeID.Void).UniqueId] = SyntaxKind.VoidKeyword,
+            [UIXTypes.MapIDToType(UIXTypeID.Object).UniqueId] = SyntaxKind.ObjectKeyword,
+            [UIXTypes.MapIDToType(UIXTypeID.Boolean).UniqueId] = SyntaxKind.BoolKeyword,
+            [UIXTypes.MapIDToType(UIXTypeID.Byte).UniqueId] = SyntaxKind.ByteKeyword,
             [UIXTypes.MapIDToType(UIXTypeID.Int32).UniqueId] = SyntaxKind.IntKeyword,
             [UIXTypes.MapIDToType(UIXTypeID.Int64).UniqueId] = SyntaxKind.LongKeyword,
+            [UIXTypes.MapIDToType(UIXTypeID.Single).UniqueId] = SyntaxKind.FloatKeyword,
+            [UIXTypes.MapIDToType(UIXTypeID.Double).UniqueId] = SyntaxKind.DoubleKeyword,
+            [UIXTypes.MapIDToType(UIXTypeID.Char).UniqueId] = SyntaxKind.CharKeyword,
             [UIXTypes.MapIDToType(UIXTypeID.String).UniqueId] = SyntaxKind.StringKeyword,
-            [UIXTypes.MapIDToType(UIXTypeID.Boolean).UniqueId] = SyntaxKind.BoolKeyword,
         };
 
-        return _predefinedTypeMap.TryGetValue(type.UniqueId, out kind);
+        if (_predefinedTypeMap.TryGetValue(type.UniqueId, out kind))
+            return true;
+
+        if (type.Equivalents is null)
+            return false;
+
+        foreach (var equivalentType in type.Equivalents)
+        {
+            if (_predefinedTypeMap.TryGetValue(equivalentType.UniqueId, out kind))
+                return true;
+        }
+
+        return false;
     }
 }
