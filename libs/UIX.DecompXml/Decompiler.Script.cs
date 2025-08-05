@@ -131,10 +131,10 @@ partial class Decompiler
                         var objToCast = stack.Pop();
                         var typeToCastTo = _context.GetImportedType(instruction.Operands.First());
 
-                        stack.Push(CastExpression(
+                        stack.Push(Parenthesize(CastExpression(
                             IrisExpression.ToSyntax(typeToCastTo, _context),
                             IrisExpression.ToSyntax(objToCast, _context)
-                        ));
+                        )));
                         break;
 
                     case OpCode.JumpIfFalse:
@@ -524,7 +524,7 @@ partial class Decompiler
                     IrisExpression.ToSyntax(destinationTypeSchema, _context),
                     Parenthesize(IrisExpression.ToSyntax(stack.Pop(), _context))
                 );
-                stack.Push(typeCastExpr);
+                stack.Push(Parenthesize(typeCastExpr));
                 break;
 
             default:
@@ -557,8 +557,8 @@ partial class Decompiler
             var left = IrisExpression.ToSyntax(stack.Pop(), _context);
 
             operationExpr = BinaryExpression(opSyntax,
-                Parenthesize(left),
-                Parenthesize(right)
+                ParenthesizedExpression(left),
+                ParenthesizedExpression(right)
             );
         }
 
@@ -650,32 +650,61 @@ partial class Decompiler
 
     private static ExpressionSyntax Parenthesize(ExpressionSyntax expression)
     {
-        var parenExpression = ParenthesizedExpression(expression);
-        return SimplifyExpression(parenExpression);
+        //if (expression is LiteralExpressionSyntax or IdentifierNameSyntax)
+        //    return expression;
+
+        return ParenthesizedExpression(expression);
     }
 
-    private static ExpressionSyntax SimplifyExpression(ExpressionSyntax expression)
+    private static ExpressionSyntax SimplifyExpression(ExpressionSyntax expression, bool canRemoveParentheses = false)
     {
         if (expression is PrefixUnaryExpressionSyntax prefixedExpression)
         {
-            expression = prefixedExpression.WithOperand(SimplifyExpression(prefixedExpression.Operand));
+            expression = prefixedExpression.WithOperand(SimplifyExpression(prefixedExpression.Operand, true));
         }
         else if (expression is PostfixUnaryExpressionSyntax postfixedExpression)
         {
-            expression = postfixedExpression.WithOperand(SimplifyExpression(postfixedExpression.Operand));
+            expression = postfixedExpression.WithOperand(SimplifyExpression(postfixedExpression.Operand, true));
+        }
+        else if (expression is AssignmentExpressionSyntax assignmentExpression)
+        {
+            expression = assignmentExpression.WithRight(SimplifyExpression(assignmentExpression.Right, true));
         }
         else if (expression is BinaryExpressionSyntax binaryExpression)
         {
+            var left = SimplifyExpression(binaryExpression.Left, true);
+            var right = SimplifyExpression(binaryExpression.Right, true);
+
+            var leftBinaryExpr = left as BinaryExpressionSyntax;
+            var rightBinaryExpr = right as BinaryExpressionSyntax;
+            if (leftBinaryExpr is not null && rightBinaryExpr is not null)
+            {
+                if (!leftBinaryExpr.IsKind(rightBinaryExpr.Kind()))
+                {
+                    left = Parenthesize(left);
+                    right = Parenthesize(right);
+                }
+            }
+
             expression = binaryExpression
-                .WithLeft(SimplifyExpression(binaryExpression.Left))
-                .WithRight(SimplifyExpression(binaryExpression.Right));
+                .WithLeft(left)
+                .WithRight(right);
+        }
+        else if (expression is ParenthesizedExpressionSyntax parenthesizedExpression)
+        {
+            var innerExpression = parenthesizedExpression.Expression;
+            canRemoveParentheses |= ExpressionNeverRequiresParenthesis(innerExpression);
         }
 
-        if (expression is ParenthesizedExpressionSyntax parenExpression
-            && parenExpression.CanRemoveParentheses(null, default))
-            return SimplifyExpression(parenExpression.Expression);
-
+        if (canRemoveParentheses && expression is ParenthesizedExpressionSyntax pExpr)
+            return pExpr.Expression;
         return expression;
+    }
+
+    private static bool ExpressionNeverRequiresParenthesis(ExpressionSyntax expr)
+    {
+        return expr is LiteralExpressionSyntax or IdentifierNameSyntax or ParenthesizedExpressionSyntax or InvocationExpressionSyntax
+            or IsPatternExpressionSyntax;
     }
 
     private record QuickplayPage;
