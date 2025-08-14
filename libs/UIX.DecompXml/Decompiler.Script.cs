@@ -112,7 +112,7 @@ partial class Decompiler
                         if (symbolRef.Origin is SymbolOrigin.ScopedLocal && !scopedLocals.Contains(symbolRef.Symbol))
                         {
                             // Scoped locals need to be declared the first time they're assigned
-                            var newSymbolIrisObj = IrisObject.Create(newSymbolValue, null, _context);
+                            var newSymbolIrisObj = IrisObject.Create(newSymbolValue, null, _context, export);
                             var typeSchema = newSymbolIrisObj.Type ?? UIXTypes.MapIDToType(UIXTypeID.Object);
 
                             symbolWriteExpr = LocalDeclarationStatement(VariableDeclaration(

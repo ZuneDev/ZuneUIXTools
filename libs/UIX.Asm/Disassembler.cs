@@ -354,10 +354,15 @@ public class Disassembler
         }
     }
 
-    public static TypeSchema GuessTypeSchema(Type runtimeType, MarkupLoadResult loadResult)
+    public static TypeSchema TryGuessTypeSchema(Type runtimeType, MarkupLoadResult loadResult)
     {
         return loadResult.ImportTables.TypeImports.FirstOrDefault(t => t.RuntimeType == runtimeType)
-            ?? loadResult.ImportTables.TypeImports.FirstOrDefault(t => t.RuntimeType == runtimeType.BaseType)
+            ?? loadResult.ImportTables.TypeImports.FirstOrDefault(t => t.RuntimeType == runtimeType.BaseType);
+    }
+
+    public static TypeSchema GuessTypeSchema(Type runtimeType, MarkupLoadResult loadResult)
+    {
+        return TryGuessTypeSchema(runtimeType, loadResult)
             ?? throw new Exception($"Failed to find type schema for '{runtimeType.Name}' in {loadResult.Uri}");
     }
 
