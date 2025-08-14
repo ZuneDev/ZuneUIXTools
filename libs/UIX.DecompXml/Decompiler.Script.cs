@@ -371,7 +371,10 @@ partial class Decompiler
 
                         if (listenerType is not ListenerType.Symbol)
                         {
-                            var memberAccessExpr = (MemberAccessExpressionSyntax)ParseExpression($"{handlerObj}.{watch}");
+                            var memberAccessExpr = MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
+                                IrisExpression.ToSyntax(handlerObj, _context),
+                                IdentifierName(watch));
+
                             var attributeArgument = AttributeArgument(memberAccessExpr);
                             var attributeName = IdentifierName("DeclareTrigger");
                             
