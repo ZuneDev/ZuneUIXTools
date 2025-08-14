@@ -19,6 +19,9 @@ internal class Program
                 .WithAlias("d")
                 .WithDescription("Decompiles the given compiled UIX to a source language.");
 
+            config.AddCommand<ResxCommand>("resx")
+                .WithDescription("Generates a RESX file compatible with the CLR DLL resource loader.");
+
 #if DEBUG
             config.PropagateExceptions();
             config.ValidateExamples();
