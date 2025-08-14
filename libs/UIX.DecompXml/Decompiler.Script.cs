@@ -83,9 +83,13 @@ partial class Decompiler
                             if (expr is ParenthesizedExpressionSyntax parenExpr)
                                 expr = parenExpr.Expression;
 
-                            var lastStatement = blockStack.Peek().Statements[^1];
-                            if (lastStatement.DescendantNodes().Any(n => n.IsEquivalentTo(expr)))
-                                break;
+                            var statements = blockStack.Peek().Statements;
+                            if (statements.Count > 0)
+                            {
+                                var lastStatement = statements[^1];
+                                if (lastStatement.DescendantNodes().Any(n => n.IsEquivalentTo(expr)))
+                                    break;
+                            }
 
                             blockStack.Peek().Statements.Add(ExpressionStatement(expr));
                         }

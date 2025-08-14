@@ -194,7 +194,7 @@ public partial class Decompiler
                         var typeFromStringSchema = _context.GetImportedType(instruction.Operands.ElementAt(0));
                         var fromString = _context.GetConstant(instruction.Operands.ElementAt(1));
 
-                        var fromStringObj = IrisObject.Create(fromString, typeFromStringSchema, _context);
+                        var fromStringObj = IrisObject.Create(fromString, typeFromStringSchema, _context, initType);
                         stack.Push(fromStringObj);
                         break;
 
@@ -210,7 +210,7 @@ public partial class Decompiler
                         var target = stack.Pop();
                         var xTarget = (XElement)ToXmlFriendlyObject(target);
 
-                        PropertyAssignOnXElement(xTarget, propertyToInit, IrisObject.Create(newPropValue, propertyToInit.PropertyType, _context));
+                        PropertyAssignOnXElement(xTarget, propertyToInit, IrisObject.Create(newPropValue, propertyToInit.PropertyType, _context, initType));
 
                         stack.Push(new IrisObject(xTarget, propertyToInit.Owner));
                         break;
@@ -225,7 +225,7 @@ public partial class Decompiler
                             .Type;
 
                         var targetInstance = (XElement)ToXmlFriendlyObject(stack.Peek());
-                        var dictValueObj = IrisObject.Create(dictValue, dictValueType, _context);
+                        var dictValueObj = IrisObject.Create(dictValue, dictValueType, _context, initType);
 
                         var targetDictPropertyIndex = (ushort)instruction.Operands.ElementAt(0).Value;
                         if (targetDictPropertyIndex is ushort.MaxValue)
@@ -245,7 +245,7 @@ public partial class Decompiler
                                 .Type;
                         }
 
-                        var valueToAddObj = IrisObject.Create(valueToAdd, valueToAddType, _context);
+                        var valueToAddObj = IrisObject.Create(valueToAdd, valueToAddType, _context, initType);
 
                         var targetInstance2 = (XElement)ToXmlFriendlyObject(stack.Peek());
 
