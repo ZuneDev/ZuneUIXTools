@@ -448,7 +448,13 @@ public partial class Decompiler
     private XElement PropertyDictionaryAddOnXElement(XElement xDictionary, IrisObject value, string key)
     {
         var xDictionaryEntry = PropertyListAddOnXElement(xDictionary, value);
-        xDictionaryEntry.SetAttributeValue("Name", key);
+
+        // Insert the Name attribute (make sure it's always first)
+        var attributes = xDictionaryEntry.Attributes().ToArray();
+        xDictionaryEntry.RemoveAttributes();
+        xDictionaryEntry.Add(new XAttribute("Name", key));
+        xDictionaryEntry.Add(attributes);
+
         return xDictionaryEntry;
     }
 
