@@ -216,8 +216,6 @@ public partial class Decompiler
                         break;
 
                     case OpCode.PropertyDictionaryAdd:
-                        var targetDictProperty = _context.GetImportedProperty(instruction.Operands.ElementAt(0));
-
                         var keyReference = instruction.Operands.ElementAt(1);
                         var key = _context.GetConstant(keyReference).Value.ToString();
 
@@ -226,9 +224,14 @@ public partial class Decompiler
                             .FirstOrDefault(s => s.Name == key)?
                             .Type;
 
-                        var targetInstance = (XElement)stack.Peek();
+                        var targetInstance = (XElement)ToXmlFriendlyObject(stack.Peek());
+                        var dictValueObj = IrisObject.Create(dictValue, dictValueType, _context);
 
-                        PropertyDictionaryAddOnXElement(targetInstance, targetDictProperty, IrisObject.Create(dictValue, dictValueType, _context), key);
+                        var targetDictPropertyIndex = (ushort)instruction.Operands.ElementAt(0).Value;
+                        if (targetDictPropertyIndex is ushort.MaxValue)
+                            PropertyDictionaryAddOnXElement(targetInstance, dictValueObj, key);
+                        else
+                            PropertyDictionaryAddOnXElement(targetInstance, _context.ImportTables.PropertyImports[targetDictPropertyIndex], dictValueObj, key);
                         break;
 
                     case OpCode.PropertyListAdd:
