@@ -1,0 +1,32 @@
+﻿<UIX xmlns="http://schemas.microsoft.com/2007/uix"
+     xmlns:iris="assembly://UIX/Microsoft.Iris">
+    <UI Name="Default">
+        <Locals>
+            <iris:Command Name="SelectCommand"/>
+        </Locals>
+        <Content>
+            <Text Color="Red">
+                <Content>Howdy from Microsoft.Iris!</Content>
+            </Text>
+        </Content>
+
+        <Scripts>
+            <Script>
+                int x = 5;
+
+                if (x &lt; 10)
+                {
+                    x = x + 1;
+                }
+                else if (x &lt; 20)
+                {
+                    x = x + 2;
+                }
+                else
+                {
+                    x = x + 3;
+                }
+            </Script>
+        </Scripts>
+    </UI>
+</UIX>

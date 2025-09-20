@@ -25,6 +25,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\UIX.Asm\UIX.Asm.csproj" />
+        <ProjectReference Include="..\UIX.DecompXml\UIX.DecompXml.csproj" />
     </ItemGroup>
 
     <ItemGroup>
