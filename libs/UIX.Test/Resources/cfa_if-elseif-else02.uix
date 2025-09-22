@@ -12,21 +12,21 @@
 
         <Scripts>
             <Script>
-				int x = 5;
+                int x = 5;
 
-				if (x &lt; 10 || x == 20)
-				{
-				x = x + 1;
-				}
-				else if (x &gt; 50)
-				{
-				x = x + 2;
-				}
-				else
-				{
-				x = x + 3;
-				}
-			</Script>
+                if (x &lt; 10 || x == 20)
+                {
+                    x = x + 1;
+                }
+                else if (x &gt; 50)
+                {
+                    x = x + 2;
+                }
+                else
+                {
+                    x = x + 3;
+                }
+            </Script>
         </Scripts>
     </UI>
 </UIX>
