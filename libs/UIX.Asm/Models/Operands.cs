@@ -14,6 +14,7 @@ public enum LiteralDataType : byte
     Int32               = 0b0011,
 
     Bytes               = 0b0100,
+    Operation           = 0b0101,
 
     TypeIndex           = 0b1000,
     PropertyIndex       = 0b1001,
@@ -41,6 +42,9 @@ public record OperandLiteral : Operand
 
     public static LiteralDataType ReduceDataType(LiteralDataType dataType)
     {
+        if (dataType is LiteralDataType.Operation)
+            return LiteralDataType.Byte;
+
         return IsIndex(dataType) ? LiteralDataType.UInt16 : dataType;
     }
 

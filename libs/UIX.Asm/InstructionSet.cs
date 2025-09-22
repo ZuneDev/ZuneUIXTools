@@ -25,10 +25,11 @@ internal static class InstructionSet
 
     public static string GetMnemonic(OpCode opCode, OperationType? opType = null)
     {
+        if (opCode is OpCode.Operation && opType.HasValue && OperationMnemonicMap.TryGetLeft(opType.Value, out var operationMnemonic))
+            return operationMnemonic;
+
         if (MnemonicMap.TryGetLeft(opCode, out var mnemonic))
             return mnemonic;
-        else if (opType.HasValue && OperationMnemonicMap.TryGetLeft(opType.Value, out var operationMnemonic))
-            return operationMnemonic;
 
         throw new System.ArgumentException($"'{opCode}' is not a known UIXA instruction.", nameof(opCode));
     }
@@ -163,7 +164,7 @@ internal static class InstructionSet
 
         [OpCode.ConstructFromBinary] = [LiteralDataType.TypeIndex, LiteralDataType.Bytes],
 
-        [OpCode.Operation] = [LiteralDataType.OpHostIndex, LiteralDataType.Byte],
+        [OpCode.Operation] = [LiteralDataType.OpHostIndex, LiteralDataType.Operation],
 
         [OpCode.Listen] = [LiteralDataType.UInt16, LiteralDataType.Byte, LiteralDataType.UInt16, LiteralDataType.UInt32],
         [OpCode.DestructiveListen] = [LiteralDataType.UInt16, LiteralDataType.Byte, LiteralDataType.UInt16, LiteralDataType.UInt32, LiteralDataType.UInt32],

@@ -133,7 +133,7 @@ public class ObjectSection
                 operands[i] = operand;
             }
 
-            yield return new Instruction(opCode, operands, offset);
+            yield return Instruction.Create(opCode, operands, offset);
         }
     }
 }

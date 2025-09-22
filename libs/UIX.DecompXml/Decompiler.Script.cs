@@ -536,7 +536,7 @@ partial class Decompiler
 
     private ExpressionSyntax DecompileOperation(Instruction instruction, Stack<object> stack)
     {
-        var op = (OperationType)(int)(byte)instruction.Operands.ElementAt(1).Value;
+        var op = instruction.OperationType.Value;
         var isUnary = TypeSchema.IsUnaryOperation(op);
         var opSyntax = OperationToSyntaxKind(op);
 

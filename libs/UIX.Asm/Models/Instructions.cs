@@ -12,10 +12,6 @@ public record Instruction(string Mnemonic, IEnumerable<Operand> Operands, uint O
         : this(InstructionSet.GetMnemonic(opCode, operationType), operands, offset)
     {
     }
-    public Instruction(OpCode opCode, IEnumerable<Operand> operands, uint offset)
-        : this(opCode, null, operands, offset)
-    {
-    }
 
     public OpCode OpCode => InstructionSet.MnemonicToOpCode(Mnemonic);
 
@@ -29,5 +25,26 @@ public record Instruction(string Mnemonic, IEnumerable<Operand> Operands, uint O
         return Operands.Any()
             ? $"{mnemonic} {string.Join(", ", Operands)}"
             : mnemonic;
+    }
+
+    public static Instruction Create(OpCode opCode, IEnumerable<Operand> operands, uint offset)
+    {
+        OperationType? operationType = null;
+
+        if (opCode is OpCode.Operation)
+        {
+            var operandsList = operands.ToList();
+            if (operandsList.Count != 2)
+                throw new System.ArgumentException("Operation instructions must have exactly two operands: the operation host index and the operation type.", nameof(operands));
+
+            var operandOperationValue = operandsList[1].Value;
+            if (operandOperationValue is byte or Markup.OperationType)
+                operationType = (OperationType?)(int?)(byte?)operandOperationValue;
+
+            operandsList.RemoveAt(1);
+            operands = operandsList;
+        }
+
+        return new(opCode, operationType, operands, offset);
     }
 }
