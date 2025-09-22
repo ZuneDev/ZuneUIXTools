@@ -63,9 +63,19 @@ namespace UIX.Test {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        internal static byte[] cfa_if_elseif_else_uix {
+        internal static byte[] cfa_if_elseif_else01_uix {
             get {
-                object obj = ResourceManager.GetObject("cfa_if-elseif-else.uix", resourceCulture);
+                object obj = ResourceManager.GetObject("cfa_if-elseif-else01.uix", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] cfa_if_elseif_else02_uix {
+            get {
+                object obj = ResourceManager.GetObject("cfa_if-elseif-else02.uix", resourceCulture);
                 return ((byte[])(obj));
             }
         }

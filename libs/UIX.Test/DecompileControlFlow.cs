@@ -1,11 +1,6 @@
 ﻿using Microsoft.Iris;
 using Microsoft.Iris.DecompXml;
 using Microsoft.Iris.Markup;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UIX.Test.Fixtures;
 using Xunit.Abstractions;
 
@@ -22,10 +17,12 @@ public class DecompileControlFlow
         markupSystemFixture.SetupDebug(output);
     }
 
-    [Fact]
-    public async Task IfElseIfElse()
+    [Theory]
+    [InlineData("cfa_if-elseif-else01")]
+    [InlineData("cfa_if-elseif-else02")]
+    public async Task IfElseIfElse(string fileNameWithoutExtension)
     {
-        using TempFile uixFile = new($"cfa_if-elseif-else.uix", ".uix");
+        using TempFile uixFile = new($"{fileNameWithoutExtension}.uix", ".uix");
         await uixFile.InitAsync();
 
         var uibPathEx = Path.ChangeExtension(uixFile.Path, ".uib");
