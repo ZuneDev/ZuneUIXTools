@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="utf-16"?>
+<UIX xmlns="http://schemas.microsoft.com/2007/uix" xmlns:animations="res://ZuneShellResources!Animations.uix" xmlns:zuneUI="assembly://ZuneShell/ZuneUI" xmlns:styles="res://ZuneShellResources!Styles.uix" xmlns:linkButtons="res://ZuneShellResources!LinkButtons.uix" xmlns:label="res://UIXControls!Label.uix" xmlns:splitter="res://UIXControls!Splitter.uix" xmlns:gasGauge="res://ZuneShellResources!GasGauge.uix" xmlns:pageStack="res://ZuneShellResources!PageStack.uix" xmlns:devicelandElements="res://ZuneShellResources!DevicelandElements.uix" xmlns:deviceIcons="res://ZuneShellResources!DeviceIcons.uix">
+  <Class Name="Constants" Shared="true">
+    <Properties>
+      <String String="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_PLEASE_CONNECT_TO_SEE_STATUS)}" Name="PleaseConnectForStatusText" />
+      <String String="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_PLEASE_CONNECT_TO_SEE_CONTENTS)}" Name="PleaseConnectForContentsText" />
+      <String String="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_SIDELOADER_IS_BLOCKING_STATUS)}" Name="SideloaderStatusBaseText" />
+      <String String="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_SIDELOADER_IS_BLOCKING_CONTENTS)}" Name="SideloaderContentsBaseText" />
+    </Properties>
+  </Class>
+  <UI Name="DeviceBackground" Base="pageStack:PageBase">
+    <Locals>
+      <Window Name="Window" />
+      <zuneUI:UIDevice UIDevice="{null}" Name="Device" />
+    </Locals>
+    <Scripts>
+      <Script>[DeclareTrigger(zuneUI:SyncControls.Instance.CurrentDevice)]
+object isWindowsPhone = #zuneUI:SyncControls.Instance.CurrentDevice #.SupportsBrandingType(zuneUI:DeviceBranding.WindowsPhone);
+/* UIB_0068 */
+if (Page is not zuneUI:Deviceland)
+    goto UIB_008A;
+WindowsPhoneHorizon.Visible = isWindowsPhone;
+Horizon.Visible = !isWindowsPhone;
+goto UIB_009A;
+Horizon.Visible = false;
+WindowsPhoneHorizon.Visible = false;</Script>
+      <Script>[DeclareTrigger(Page.Device), DeclareTrigger(zuneUI:SyncControls.Instance.CurrentDevice)]
+/* UIB_00A4 */
+if (Page is not zuneUI:DeviceOverfillLand)
+    goto UIB_00BB;
+Device = ((zuneUI:DeviceOverfillLand)Page).Device;
+goto UIB_00C5;
+Device = #zuneUI:SyncControls.Instance.CurrentDevice #;</Script>
+      <Script>[DeclareTrigger(Device.IconSet)]
+/* UIB_00CE */
+if (Device == null)
+    goto UIB_00E3;
+BackgroundOverlayGraphic.Content = #Device.IconSet #.Background;</Script>
+      <Script>[DeclareTrigger(Window.Active)]
+/* UIB_00EA */
+if (!#Window.Active #)
+    goto UIB_010C;
+BackgroundOverlayGraphic.Margins = new Inset(0, 0, 1, 1);
+goto UIB_0124;
+BackgroundOverlayGraphic.Margins = new Inset(0, 0, 0, 0);</Script>
+      <Script>[DeclareTrigger(Window.WindowState)]
+/* UIB_0132 */
+if (#Window.WindowState # != WindowState.Maximized)
+    goto UIB_0154;
+BackgroundOverlayGraphic.Margins = new Inset(0, 0, 0, 0);
+goto UIB_016C;
+BackgroundOverlayGraphic.Margins = new Inset(0, 0, 1, 1);</Script>
+    </Scripts>
+    <Content>
+      <Panel Background="255, 255, 255, 255" Margins="0, 0, 1, 1" Layout="Form">
+        <Children>
+          <Graphic Name="WindowsPhoneHorizon" Content="{styles:Styles.WindowsPhoneDeviceHorizon}" StretchingPolicy="Fill">
+            <LayoutInput>
+              <FormLayoutInput Left="Parent,0" Top="Parent,0" Right="Parent,1" />
+            </LayoutInput>
+          </Graphic>
+          <Graphic Name="Horizon" Content="{styles:Styles.DeviceHorizon}">
+            <LayoutInput>
+              <FormLayoutInput Left="Parent,0" Top="Parent,0" />
+            </LayoutInput>
+          </Graphic>
+          <Graphic Name="BackgroundOverlayGraphic">
+            <Animations>
+              <Animation Animation="{animations:Animations.BasicContentChangeShow}" />
+              <Animation Animation="{animations:Animations.BasicContentChangeHide}" />
+            </Animations>
+            <LayoutInput>
+              <FormLayoutInput Left="Parent,0" Right="Parent,1" Top="Parent,0" />
+            </LayoutInput>
+          </Graphic>
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+  <UI Name="GasGauge" Base="pageStack:PageBase">
+    <Scripts>
+      <Script>[DeclareTrigger(zuneUI:SyncControls.Instance.CurrentDevice.IsConnectedToClient)]
+GasGauge.Visible = #zuneUI:SyncControls.Instance.CurrentDevice #.IsConnectedToClient #;</Script>
+      <Script>[DeclareTrigger(zuneUI:SyncControls.Instance.CurrentDevice.ActualGasGauge)]
+GasGauge.Model = #zuneUI:SyncControls.Instance.CurrentDevice #.ActualGasGauge #;</Script>
+      <Script>[DeclareTrigger(#zuneUI:SyncControls.Instance.CurrentDevice #.IsSyncing), DeclareTrigger(zuneUI:SyncControls.Instance.CurrentDevice.PredictedGasGauge)]
+/* UIB_02FC */
+if (!#zuneUI:SyncControls.Instance.CurrentDevice #.IsSyncing #)
+    goto UIB_0316;
+GasGauge.PredictionModel = #zuneUI:SyncControls.Instance.CurrentDevice.PredictedGasGauge #;
+goto UIB_031E;
+GasGauge.PredictionModel = null;</Script>
+    </Scripts>
+    <Content>
+      <gasGauge:GasGauge Name="GasGauge" Model="{zuneUI:SyncControls.Instance.CurrentDevice.ActualGasGauge}" />
+    </Content>
+  </UI>
+  <UI Name="PleaseConnect">
+    <Properties>
+      <Boolean Boolean="false" Name="IsStatusPage" />
+    </Properties>
+    <Locals>
+      <zuneUI:SyncControls SyncControls="{zuneUI:SyncControls.Instance}" Name="SyncControls" />
+    </Locals>
+    <Scripts>
+      <Script>[DeclareTrigger(#SyncControls.CurrentDevice #.IsConnectedToSideloader), DeclareTrigger(SyncControls.CurrentDevice.OwnerApplicationName)]
+object isConnectedToSideloader = #SyncControls.CurrentDevice #.IsConnectedToSideloader #;
+/* UIB_03CB */
+if (!IsStatusPage)
+    goto UIB_0402;
+/* UIB_03D3 */
+if (!isConnectedToSideloader)
+    goto UIB_03F3;
+Message.Content = devicelandElements:Constants.SideloaderStatusBaseText.Format(#SyncControls.CurrentDevice.OwnerApplicationName #);
+goto UIB_03FD;
+Message.Content = devicelandElements:Constants.PleaseConnectForStatusText;
+goto UIB_042F;
+/* UIB_0405 */
+if (!isConnectedToSideloader)
+    goto UIB_0425;
+Message.Content = devicelandElements:Constants.SideloaderContentsBaseText.Format(SyncControls.CurrentDevice.OwnerApplicationName);
+goto UIB_042F;
+Message.Content = devicelandElements:Constants.PleaseConnectForContentsText;</Script>
+    </Scripts>
+    <Content>
+      <label:Label Name="Message" Style="{styles:SharedStyles.PleaseConnectStyle}" WordWrap="true" Alignment="Near">
+        <Animations>
+          <Animation Animation="{animations:Animations.DeviceLandUIElementSlide}" />
+        </Animations>
+      </label:Label>
+    </Content>
+  </UI>
+  <UI Name="PleaseConnectPanel" Base="splitter:SplitPanel">
+    <Content>
+      <devicelandElements:PleaseConnect />
+    </Content>
+  </UI>
+  <UI Name="DeviceNameHeader" Base="label:Label">
+    <Properties>
+      <zuneUI:UIDevice UIDevice="{zuneUI:UIDeviceList.NullDevice}" Name="Device" />
+      <Boolean Boolean="false" Name="ShowToolTipWhenClipped" />
+      <Inset Inset="-3, -15, 20, 0" Name="Margins" />
+      <Boolean Name="FormatForPivots" />
+    </Properties>
+    <Scripts>
+      <Script>/* UIB_04E1 */
+if (!FormatForPivots)
+    goto UIB_04FB;
+Margins = new Inset(-3, -15, 320, 0);</Script>
+      <Script>[DeclareTrigger(Device.IconSet), DeclareTrigger(Device.IsConnectedToPC)]
+object DeviceNameStyles = new Dictionary();
+TextStyle DeviceNameStyle = styles:SharedStyles.DeviceNameStyle;
+TextStyle DeviceSizeStyle = styles:SharedStyles.DeviceSizeStyle;
+object iconSet = #Device.IconSet #;
+/* UIB_0521 */
+if (!#Device.IsConnectedToPC #)
+    goto UIB_0578;
+/* UIB_052F */
+if (!Device.SupportsBrandingType(zuneUI:DeviceBranding.WindowsPhone))
+    goto UIB_054D;
+DeviceNameStyle.Color = styles:Styles.WindowsPhoneBlue;
+DeviceSizeStyle.Color = styles:Styles.WindowsPhoneBlueLight;
+goto UIB_0573;
+DeviceNameStyle.Color = deviceIcons:ColorHelper.GetColor(iconSet.Colors.Dark);
+DeviceSizeStyle.Color = deviceIcons:ColorHelper.GetColor(iconSet.Colors.Light);
+goto UIB_058C;
+DeviceNameStyle.Color = styles:Styles.LightGray;
+DeviceSizeStyle.Color = styles:Styles.LightGray;
+DeviceNameStyles.set_Item("b", DeviceNameStyle);
+DeviceNameStyles.set_Item("l", DeviceSizeStyle);
+NamedStyles = DeviceNameStyles;</Script>
+      <Script>Label.Margins = Margins;</Script>
+      <Script>[DeclareTrigger(Device.IsValid), DeclareTrigger(Device.NameXMLEscaped), DeclareTrigger(Device.AdvertisedCapacity)]
+/* UIB_05DC */
+if (!#Device.IsValid # || !!Device.SupportsBrandingType(zuneUI:DeviceBranding.WindowsPhone))
+    goto UIB_05F2;
+/* UIB_05F2 */
+if (!Device.IsValid || !!Device.SupportsBrandingType(zuneUI:DeviceBranding.WindowsPhone) || !!Device.SupportsBrandingType(zuneUI:DeviceBranding.Kin))
+    goto UIB_0615;
+Content = string.Format(zuneUI:Shell.LoadString(zuneUI:StringId.IDS_DEVICE_NAME_STRING), #Device.NameXMLEscaped #, #Device.AdvertisedCapacity #);
+goto UIB_0625;
+Content = string.Format("&lt;b&gt;{0}&lt;/b&gt;", Device.NameXMLEscaped);</Script>
+    </Scripts>
+  </UI>
+  <UI Name="CurrentDeviceNameHeader" Base="devicelandElements:DeviceNameHeader">
+    <Properties>
+      <zuneUI:UIDevice UIDevice="{zuneUI:SyncControls.Instance.CurrentDevice}" Name="Device" />
+    </Properties>
+    <Scripts>
+      <Script>[DeclareTrigger(zuneUI:SyncControls.Instance.CurrentDevice)]
+Device = #zuneUI:SyncControls.Instance.CurrentDevice #;</Script>
+    </Scripts>
+  </UI>
+  <UI Name="OffloadedContentFooter" Base="pageStack:PageBase">
+    <Scripts>
+      <Script>[DeclareTrigger(zuneUI:SyncControls.Instance.CurrentDevice)]
+Warning.Device = #zuneUI:SyncControls.Instance.CurrentDevice #;</Script>
+    </Scripts>
+    <Content>
+      <devicelandElements:OffloadedContentWarning Name="Warning" Device="{zuneUI:SyncControls.Instance.CurrentDevice}" Margins="8" />
+    </Content>
+  </UI>
+  <UI Name="OffloadedContentWarning">
+    <Properties>
+      <zuneUI:UIDevice UIDevice="$Required" Name="Device" />
+    </Properties>
+    <Locals>
+      <zuneUI:WebHelpCommand Name="WebLinkCommand" />
+    </Locals>
+    <Scripts>
+      <Script>[DeclareTrigger(Device.OffloadedContentMessage)]
+WebLinkCommand.Description = #Device.OffloadedContentMessage #;</Script>
+      <Script>[DeclareTrigger(Device.OffloadedContentUrl)]
+WebLinkCommand.Url = #Device.OffloadedContentUrl #;</Script>
+    </Scripts>
+    <Content>
+      <linkButtons:ExternalLink Model="{WebLinkCommand}" WordWrap="true" ContentType="{typeof(linkButtons:LabelAndBottomAlignedIconContent)}">
+        <NamedStyles>
+          <TextStyle TextStyle="{styles:SharedStyles.OffloadedContentLinkSubheadingStyle}" Name="h" />
+        </NamedStyles>
+      </linkButtons:ExternalLink>
+    </Content>
+  </UI>
+</UIX>

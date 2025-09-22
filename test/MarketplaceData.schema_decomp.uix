@@ -1,0 +1,1314 @@
+<?xml version="1.0" encoding="utf-16"?>
+<UIX xmlns="http://schemas.microsoft.com/2007/uix" xmlns:schema="res://ZuneMarketplaceResources!MarketplaceData.schema.xml" xmlns:system="assembly://System.Private.CoreLib/System">
+  <DataType Name="MiniMedia">
+    <Properties>
+      <system:Guid Name="Id" />
+      <String Name="Title" />
+    </Properties>
+  </DataType>
+  <DataType Name="Category">
+    <Properties>
+      <String Name="Id" />
+      <String Name="Title" />
+    </Properties>
+  </DataType>
+  <DataType Name="Thumbnail">
+    <Properties>
+      <String Name="Id" />
+      <String Name="Title" />
+      <String Name="SortTitle" />
+      <system:Guid Name="ImageId" />
+    </Properties>
+  </DataType>
+  <DataType Name="Media" Base="schema:MiniMedia">
+    <Properties>
+      <String Name="SortTitle" />
+      <system:Guid Name="ImageId" />
+      <schema:MediaRights Name="Rights" />
+      <schema:MiniArtist Name="PrimaryArtist" />
+      <List Name="Artists" />
+      <system:Double Name="Popularity" />
+    </Properties>
+  </DataType>
+  <DataType Name="Artist">
+    <Properties>
+      <system:Guid Name="Id" />
+      <String Name="Title" />
+      <String Name="SortTitle" />
+      <system:Guid Name="ImageId" />
+      <system:Double Name="Popularity" />
+      <Boolean Name="IsVariousArtist" />
+      <String Name="BiographyLink" />
+      <Int32 Name="PlayCount" />
+      <schema:Genre Name="PrimaryGenre" />
+      <List Name="Genres" />
+      <List Name="Moods" />
+      <system:Guid Name="AlbumImageId" />
+      <system:Guid Name="BackgroundImageId" />
+      <Boolean Name="HasRadioChannel" />
+    </Properties>
+  </DataType>
+  <DataType Name="ArtistBiography">
+    <Properties>
+      <String Name="BiographyContent" />
+      <String Name="BiographyAuthor" />
+    </Properties>
+  </DataType>
+  <DataType Name="Right">
+    <Properties>
+      <String Name="LicenseType" />
+      <String Name="LicenseRight" />
+      <String Name="ProviderName" />
+      <String Name="ProviderCode" />
+      <system:Guid Name="OfferId" />
+      <Double Name="Price" />
+      <Double Name="OriginalPrice" />
+      <String Name="CurrencyCode" />
+      <String Name="DisplayPrice" />
+      <String Name="AudioEncoding" />
+      <String Name="AudioLocale" />
+      <String Name="SubtitleLocale" />
+      <String Name="VideoEncoding" />
+      <String Name="VideoDefinition" />
+      <String Name="VideoResolution" />
+      <String Name="ClientType" />
+      <Boolean Name="HasPoints" />
+      <Boolean Name="HasCurrency" />
+      <Int32 Name="PointsPrice" />
+      <Double Name="CurrencyPrice" />
+      <String Name="Language" />
+    </Properties>
+  </DataType>
+  <DataType Name="MediaRights">
+    <Properties>
+      <List Name="Rights" />
+      <List Name="Languages" />
+    </Properties>
+  </DataType>
+  <DataType Name="Album" Base="schema:Media">
+    <Properties>
+      <schema:Genre Name="PrimaryGenre" />
+      <system:DateTime Name="ReleaseDate" />
+      <Boolean Name="Explicit" />
+      <Boolean Name="Actionable" />
+      <Boolean Name="Premium" />
+      <String Name="Label" />
+      <String Name="ReviewLink" />
+      <List Name="Genres" />
+      <List Name="Tracks" />
+      <List Name="MusicVideos" />
+      <Int32 Name="PointsPrice" />
+      <Boolean Name="CanPurchase" />
+      <Boolean Name="CanPurchaseMP3" />
+      <Boolean Name="InCollection" />
+      <Int32 Name="LibraryId" />
+    </Properties>
+  </DataType>
+  <DataType Name="AlbumReview">
+    <Properties>
+      <String Name="ReviewContent" />
+    </Properties>
+  </DataType>
+  <DataType Name="Genre" Base="schema:Category" />
+  <DataType Name="PlaylistCategory" Base="schema:Category" />
+  <DataType Name="ChannelCategory" Base="schema:Category" />
+  <DataType Name="ChannelGenre" Base="schema:Category" />
+  <DataType Name="MarketplaceRadioStation" Base="schema:MiniMedia">
+    <Properties>
+      <List Name="Genres" />
+    </Properties>
+  </DataType>
+  <DataType Name="MarketplaceRadioTrack" Base="schema:MiniMedia">
+    <Properties>
+      <schema:Track Name="Track" />
+    </Properties>
+  </DataType>
+  <DataType Name="MiniArtist" Base="schema:MiniMedia" />
+  <DataType Name="MiniAlbum" Base="schema:MiniMedia">
+    <Properties>
+      <Boolean Name="Premium" />
+    </Properties>
+  </DataType>
+  <DataType Name="Track" Base="schema:Media">
+    <Properties>
+      <system:TimeSpan Name="Duration" />
+      <Int32 Name="TrackNumber" />
+      <Int32 Name="DiscNumber" />
+      <String Name="AlbumTitle" />
+      <system:Guid Name="AlbumId" />
+      <schema:MiniArtist Name="AlbumArtist" />
+      <String Name="ArtistName" />
+      <schema:Genre Name="PrimaryGenre" />
+      <Boolean Name="Explicit" />
+      <Boolean Name="Actionable" />
+      <Int32 Name="PlayCount" />
+      <String Name="ReferrerContext" />
+      <Int32 Name="UserRating" />
+      <system:Guid Name="MusicVideoId" />
+      <Int32 Name="LibraryId" />
+      <Int32 Name="PointsPrice" />
+      <Boolean Name="HasPoints" />
+      <Boolean Name="CanPlay" />
+      <Boolean Name="CanPreview" />
+      <Boolean Name="CanSubscriptionPlay" />
+      <Boolean Name="CanDownload" />
+      <Boolean Name="CanPurchase" />
+      <Boolean Name="CanPurchaseFree" />
+      <Boolean Name="CanPurchaseMP3" />
+      <Boolean Name="CanPurchaseAlbumOnly" />
+      <Boolean Name="CanPurchaseSubscriptionFree" />
+      <Boolean Name="CanSync" />
+      <Boolean Name="CanBurn" />
+      <Boolean Name="InCollection" />
+      <Boolean Name="IsDownloading" />
+      <Boolean Name="IsParentallyBlocked" />
+      <Int32 Name="Ordinal" />
+    </Properties>
+  </DataType>
+  <DataType Name="App" Base="schema:MiniMedia">
+    <Properties>
+      <String Name="SortTitle" />
+      <system:Guid Name="ImageId" />
+      <system:DateTime Name="ReleaseDate" />
+      <String Name="GenreName" />
+      <String Name="Version" />
+      <String Name="Author" />
+      <String Name="Publisher" />
+      <String Name="ShortDescription" />
+      <Single Name="AverageRating" />
+      <schema:AppMediaRights Name="Rights" />
+      <Double Name="Price" />
+      <String Name="DisplayPrice" />
+      <String Name="DisplayPriceFull" />
+      <String Name="DisplayPriceTrial" />
+      <Boolean Name="CanPurchase" />
+      <Boolean Name="CanPurchaseFull" />
+      <Boolean Name="CanPurchaseTrial" />
+      <Boolean Name="CanDownload" />
+    </Properties>
+  </DataType>
+  <DataType Name="Feature" Base="schema:Thumbnail">
+    <Properties>
+      <String Name="Content" />
+      <String Name="LinkId" />
+      <String Name="LinkType" />
+    </Properties>
+  </DataType>
+  <DataType Name="Editorial" Base="schema:Feature" />
+  <DataType Name="Playlist" Base="schema:Media">
+    <Properties>
+      <String Name="Content" />
+      <String Name="Author" />
+      <String Name="Description" />
+      <system:Double Name="Popularity" />
+      <Boolean Name="Explicit" />
+      <system:DateTime Name="CreatedDate" />
+      <schema:PlaylistCategory Name="Category" />
+      <List Name="Genres" />
+      <List Name="Tracks" />
+    </Properties>
+  </DataType>
+  <DataType Name="Channel" Base="schema:Media">
+    <Properties>
+      <String Name="Author" />
+      <system:DateTime Name="LastUpdated" />
+      <List Name="RelatedGenres" />
+      <schema:ChannelCategory Name="Category" />
+      <String Name="UpdateFrequency" />
+      <String Name="WebsiteUrl" />
+    </Properties>
+  </DataType>
+  <DataType Name="VideoDetails">
+    <Properties>
+      <schema:Video Name="Item" />
+    </Properties>
+  </DataType>
+  <DataType Name="Video" Base="schema:Media">
+    <Properties>
+      <system:DateTime Name="ReleaseDate" />
+      <system:TimeSpan Name="Duration" />
+      <Int32 Name="PointsPrice" />
+      <Boolean Name="HasPreview" />
+      <Boolean Name="CanPreview" />
+      <Boolean Name="CanSubscriptionPlay" />
+      <Boolean Name="CanPurchase" />
+      <Boolean Name="CanPurchaseHD" />
+      <Boolean Name="CanPurchaseSD" />
+      <Boolean Name="CanPurchaseSeason" />
+      <Boolean Name="CanPurchaseSeasonHD" />
+      <Boolean Name="CanPurchaseSeasonSD" />
+      <Boolean Name="CanRent" />
+      <Boolean Name="CanRentHD" />
+      <Boolean Name="CanRentSD" />
+      <Boolean Name="CanPurchaseAlbumOnly" />
+      <Boolean Name="CanSync" />
+      <Boolean Name="InCollection" />
+      <Boolean Name="InCollectionShortcut" />
+      <Boolean Name="IsDownloading" />
+      <Boolean Name="IsParentallyBlocked" />
+    </Properties>
+  </DataType>
+  <DataType Name="MusicVideo" Base="schema:Video">
+    <Properties>
+      <String Name="Label" />
+      <system:Guid Name="TrackId" />
+      <schema:MiniAlbum Name="Album" />
+      <schema:Genre Name="PrimaryGenre" />
+      <Boolean Name="Explicit" />
+      <Int32 Name="TrackNumber" />
+      <Int32 Name="LibraryId" />
+    </Properties>
+  </DataType>
+  <DataType Name="Photo" Base="schema:Thumbnail" />
+  <DataType Name="MediaInstance">
+    <Properties>
+      <Boolean Name="IsDownloadable" />
+      <String Name="LicenseRight" />
+      <String Name="VideoDefinition" />
+      <String Name="VideoResolution" />
+      <Boolean Name="HasPurchased" />
+      <Boolean Name="HasPurchasedTrial" />
+      <Boolean Name="HasPurchasedBeta" />
+    </Properties>
+  </DataType>
+  <DataType Name="TrackHistory" Base="schema:Track">
+    <Properties>
+      <system:DateTime Name="Date" />
+      <List Name="MediaInstances" />
+    </Properties>
+  </DataType>
+  <DataType Name="TrackPurchaseHistory" Base="schema:TrackHistory" />
+  <DataType Name="WinPhoneAppHistory" Base="schema:App">
+    <Properties>
+      <system:DateTime Name="Date" />
+      <List Name="MediaInstances" />
+    </Properties>
+  </DataType>
+  <DataType Name="WinPhoneAppPurchaseHistory" Base="schema:WinPhoneAppHistory" />
+  <DataType Name="TrackDownloadHistory" Base="schema:TrackHistory" />
+  <DataType Name="VideoHistory" Base="schema:Video">
+    <Properties>
+      <system:DateTime Name="Date" />
+      <String Name="MediaType" />
+      <String Name="SeasonTitle" />
+      <Int32 Name="SeasonNumber" />
+      <String Name="SeriesTitle" />
+      <List Name="SeasonEpisodes" />
+      <List Name="MediaInstances" />
+      <Boolean Name="CanDownload" />
+      <Boolean Name="CanDownloadHD" />
+      <Boolean Name="IsTVSeason" />
+    </Properties>
+  </DataType>
+  <DataType Name="ArtistEvent">
+    <Properties>
+      <String Name="Type" />
+      <String Name="WebLinkUrl" />
+      <system:DateTime Name="Date" />
+      <String Name="Venue" />
+      <String Name="City" />
+      <String Name="State" />
+      <String Name="Country" />
+    </Properties>
+  </DataType>
+  <DataType Name="Tag">
+    <Properties>
+      <String Name="Id" />
+      <String Name="Title" />
+    </Properties>
+  </DataType>
+  <DataType Name="Review">
+    <Properties>
+      <system:DateTime Name="Date" />
+      <String Name="Title" />
+      <String Name="Comment" />
+      <String Name="UserName" />
+      <Single Name="Rating" />
+    </Properties>
+  </DataType>
+  <DataType Name="ReviewListEntry" Base="schema:Review" />
+  <DataQuery Name="MarketplaceQuery">
+    <Properties>
+      <String Name="Id" />
+      <String Name="QueryType" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceListQuery" Base="schema:MarketplaceQuery" />
+  <DataQuery Name="UriResourceQuery">
+    <Properties>
+      <String Name="QueryType" />
+      <String Name="URI" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="AuthenticatedUriResourceQuery" Base="schema:UriResourceQuery">
+    <Properties>
+      <Boolean Name="SendSecurePassportTicket" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceChunkyListQuery" Base="schema:MarketplaceListQuery">
+    <Properties>
+      <Int32 Name="ChunkSize" />
+      <Boolean Name="Paged" />
+    </Properties>
+  </DataQuery>
+  <DataType Name="ListResult">
+    <Properties>
+      <List Name="Items" />
+    </Properties>
+  </DataType>
+  <DataType Name="AlbumList" Base="schema:ListResult">
+    <Properties>
+      <List Name="Items" />
+    </Properties>
+  </DataType>
+  <DataType Name="TrackList" Base="schema:ListResult">
+    <Properties>
+      <List Name="Items" />
+    </Properties>
+  </DataType>
+  <DataType Name="MarketplaceRadioTrackList" Base="schema:ListResult">
+    <Properties>
+      <List Name="Items" />
+    </Properties>
+  </DataType>
+  <DataType Name="ArtistList" Base="schema:ListResult">
+    <Properties>
+      <List Name="Items" />
+    </Properties>
+  </DataType>
+  <DataType Name="FeatureList" Base="schema:ListResult">
+    <Properties>
+      <List Name="Items" />
+    </Properties>
+  </DataType>
+  <DataType Name="EditorialList" Base="schema:FeatureList">
+    <Properties>
+      <List Name="Items" />
+      <system:Guid Name="LinkId" />
+      <String Name="LinkType" />
+    </Properties>
+  </DataType>
+  <DataType Name="EditorialLists" Base="schema:ListResult">
+    <Properties>
+      <List Name="Items" />
+    </Properties>
+  </DataType>
+  <DataType Name="PlaylistList" Base="schema:ListResult">
+    <Properties>
+      <List Name="Items" />
+    </Properties>
+  </DataType>
+  <DataType Name="GenreList" Base="schema:ListResult">
+    <Properties>
+      <List Name="Items" />
+    </Properties>
+  </DataType>
+  <DataType Name="PlaylistCategoryList" Base="schema:ListResult">
+    <Properties>
+      <List Name="Items" />
+    </Properties>
+  </DataType>
+  <DataType Name="MusicVideoList" Base="schema:ListResult">
+    <Properties>
+      <List Name="Items" />
+    </Properties>
+  </DataType>
+  <DataType Name="ChannelCategoryList" Base="schema:ListResult">
+    <Properties>
+      <List Name="Items" />
+    </Properties>
+  </DataType>
+  <DataType Name="ChannelGenreList" Base="schema:ListResult">
+    <Properties>
+      <List Name="Items" />
+    </Properties>
+  </DataType>
+  <DataType Name="MarketplaceRadioStationTrackList" Base="schema:ListResult">
+    <Properties>
+      <List Name="Items" />
+    </Properties>
+  </DataType>
+  <DataType Name="ChannelList" Base="schema:ListResult">
+    <Properties>
+      <List Name="Items" />
+    </Properties>
+  </DataType>
+  <DataType Name="PhotoList" Base="schema:ListResult">
+    <Properties>
+      <List Name="Items" />
+    </Properties>
+  </DataType>
+  <DataType Name="ArtistEventList" Base="schema:ListResult">
+    <Properties>
+      <List Name="Items" />
+      <List Name="Concerts" />
+    </Properties>
+  </DataType>
+  <DataType Name="ReviewList" Base="schema:ListResult">
+    <Properties>
+      <List Name="Items" />
+    </Properties>
+  </DataType>
+  <DataQuery Name="MarketplaceGenreDataQuery" Base="schema:MarketplaceQuery">
+    <Properties>
+      <String Name="ResourceType" />
+      <String Name="Representation" />
+    </Properties>
+  </DataQuery>
+  <DataType Name="GenreData">
+    <Properties>
+      <schema:Genre Name="Item" />
+      <Boolean Name="IsRoot" />
+      <String Name="ParentId" />
+      <List Name="PeerGenres" />
+      <List Name="SubGenres" />
+    </Properties>
+  </DataType>
+  <DataQuery Name="MarketplaceGenreListQuery" Base="schema:MarketplaceChunkyListQuery">
+    <Properties>
+      <String Name="Id" />
+      <String Name="ResourceType" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceGenreFeaturesDataQuery" Base="schema:MarketplaceGenreListQuery">
+    <Properties>
+      <String Name="Representation" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceGenreFeaturedAlbumsDataQuery" Base="schema:MarketplaceGenreListQuery">
+    <Properties>
+      <String Name="Representation" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceGenrePlaylistsDataQuery" Base="schema:MarketplaceGenreListQuery">
+    <Properties>
+      <String Name="Representation" />
+      <String Name="RequestSortBy" />
+      <String Name="StartsWith" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceGenreArtistsDataQuery" Base="schema:MarketplaceGenreListQuery">
+    <Properties>
+      <String Name="Representation" />
+      <String Name="RequestSortBy" />
+      <String Name="StartsWith" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceGenreAlbumsDataQuery" Base="schema:MarketplaceGenreListQuery">
+    <Properties>
+      <String Name="Representation" />
+      <String Name="RequestSortBy" />
+      <String Name="StartsWith" />
+      <String Name="StartDate" />
+      <String Name="EndDate" />
+      <Boolean Name="IsActionable" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceGenreTracksDataQuery" Base="schema:MarketplaceGenreListQuery">
+    <Properties>
+      <String Name="Representation" />
+      <String Name="RequestSortBy" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceGenreMusicVideosDataQuery" Base="schema:MarketplaceGenreListQuery">
+    <Properties>
+      <String Name="Representation" />
+      <String Name="RequestSortBy" />
+      <String Name="StartsWith" />
+      <String Name="StartDate" />
+      <String Name="EndDate" />
+      <String Name="ClientType" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceFlexHubDataQuery" Base="schema:MarketplaceQuery">
+    <Properties>
+      <String Name="ResourceType" />
+      <String Name="Representation" />
+      <String Name="ClientType" />
+    </Properties>
+  </DataQuery>
+  <DataType Name="FlexHubTemplate">
+    <Properties>
+      <String Name="MimeType" />
+      <String Name="TemplateName" />
+    </Properties>
+  </DataType>
+  <DataType Name="FlexHubData" Base="schema:Thumbnail">
+    <Properties>
+      <String Name="Title" />
+      <String Name="SortTitle" />
+      <String Name="Id" />
+      <system:Guid Name="ImageId" />
+      <List Name="Collections" />
+      <List Name="Templates" />
+    </Properties>
+  </DataType>
+  <DataQuery Name="MarketplaceFeatureCollectionQuery" Base="schema:MarketplaceQuery">
+    <Properties>
+      <Boolean Name="ResourceOnly" />
+      <String Name="ResourceType" />
+      <String Name="Representation" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceAlbumCollectionQuery" Base="schema:MarketplaceQuery">
+    <Properties>
+      <Boolean Name="ResourceOnly" />
+      <String Name="ResourceType" />
+      <String Name="Representation" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceMusicVideoCollectionQuery" Base="schema:MarketplaceQuery">
+    <Properties>
+      <Boolean Name="ResourceOnly" />
+      <String Name="ResourceType" />
+      <String Name="Representation" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplacePodcastCollectionQuery" Base="schema:MarketplaceQuery">
+    <Properties>
+      <Boolean Name="ResourceOnly" />
+      <String Name="ResourceType" />
+      <String Name="Representation" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceChannelHubQuery" Base="schema:MarketplaceQuery">
+    <Properties>
+      <Boolean Name="ResourceOnly" />
+      <String Name="ResourceType" />
+      <String Name="Representation" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceAlbumDataQuery" Base="schema:MarketplaceQuery">
+    <Properties>
+      <String Name="ResourceType" />
+      <String Name="Representation" />
+      <String Name="LocalSortBy" />
+    </Properties>
+  </DataQuery>
+  <DataType Name="SingleAlbumData">
+    <Properties>
+      <schema:Album Name="Item" />
+    </Properties>
+  </DataType>
+  <DataQuery Name="MarketplaceAlbumReviewQuery" Base="schema:MarketplaceQuery">
+    <Properties>
+      <String Name="ResourceType" />
+      <String Name="Representation" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceAlbumRelatedAlbumsDataQuery" Base="schema:MarketplaceQuery">
+    <Properties>
+      <String Name="ResourceType" />
+      <String Name="Representation" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceSingleTrackDataQuery" Base="schema:MarketplaceQuery">
+    <Properties>
+      <String Name="ResourceType" />
+      <String Name="Representation" />
+    </Properties>
+  </DataQuery>
+  <DataType Name="SingleTrackData">
+    <Properties>
+      <schema:Track Name="Item" />
+    </Properties>
+  </DataType>
+  <DataQuery Name="MarketplaceArtistDataQuery" Base="schema:MarketplaceQuery">
+    <Properties>
+      <String Name="ResourceType" />
+      <String Name="Representation" />
+    </Properties>
+  </DataQuery>
+  <DataType Name="Mood">
+    <Properties>
+      <String Name="Id" />
+      <String Name="Title" />
+    </Properties>
+  </DataType>
+  <DataType Name="ArtistData">
+    <Properties>
+      <schema:Artist Name="Item" />
+    </Properties>
+  </DataType>
+  <DataQuery Name="MarketplaceArtistBiographyQuery" Base="schema:MarketplaceQuery">
+    <Properties>
+      <String Name="ResourceType" />
+      <String Name="Representation" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceArtistAlbumsDataQuery" Base="schema:MarketplaceChunkyListQuery">
+    <Properties>
+      <String Name="Id" />
+      <String Name="ResourceType" />
+      <String Name="Representation" />
+      <Boolean Name="Paged" />
+      <String Name="RequestSortBy" />
+      <Boolean Name="IsActionable" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceArtistFollowersDataQuery" Base="schema:MarketplaceListQuery">
+    <Properties>
+      <String Name="Id" />
+      <String Name="ResourceType" />
+      <String Name="Representation" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceArtistInfluencersDataQuery" Base="schema:MarketplaceListQuery">
+    <Properties>
+      <String Name="Id" />
+      <String Name="ResourceType" />
+      <String Name="Representation" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceArtistPhotosDataQuery" Base="schema:MarketplaceQuery">
+    <Properties>
+      <String Name="ResourceType" />
+      <String Name="Representation" />
+      <Int32 Name="MinWidth" />
+      <Int32 Name="MinHeight" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceArtistPlaylistsDataQuery" Base="schema:MarketplaceChunkyListQuery">
+    <Properties>
+      <String Name="Id" />
+      <String Name="ResourceType" />
+      <String Name="Representation" />
+      <String Name="RequestSortBy" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceArtistRelatedArtistsDataQuery" Base="schema:MarketplaceQuery">
+    <Properties>
+      <String Name="ResourceType" />
+      <String Name="Representation" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceArtistRelatedAlbumsDataQuery" Base="schema:MarketplaceQuery">
+    <Properties>
+      <String Name="ResourceType" />
+      <String Name="Representation" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceArtistAppearsOnDataQuery" Base="schema:MarketplaceQuery">
+    <Properties>
+      <String Name="ResourceType" />
+      <String Name="Representation" />
+      <String Name="RequestSortBy" />
+      <Boolean Name="IsActionable" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceArtistTracksDataQuery" Base="schema:MarketplaceChunkyListQuery">
+    <Properties>
+      <String Name="Id" />
+      <String Name="ResourceType" />
+      <String Name="Representation" />
+      <Boolean Name="Paged" />
+      <String Name="RequestSortBy" />
+      <String Name="LocalSortBy" />
+      <Boolean Name="IsActionable" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceArtistVideosDataQuery" Base="schema:MarketplaceChunkyListQuery">
+    <Properties>
+      <String Name="Id" />
+      <String Name="ResourceType" />
+      <String Name="Representation" />
+      <String Name="RequestSortBy" />
+      <String Name="ClientType" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceMusicVideoDataQuery" Base="schema:MarketplaceQuery">
+    <Properties>
+      <String Name="ResourceType" />
+      <String Name="Representation" />
+      <String Name="ClientType" />
+    </Properties>
+  </DataQuery>
+  <DataType Name="MusicVideoData">
+    <Properties>
+      <schema:MusicVideo Name="Item" />
+    </Properties>
+  </DataType>
+  <DataQuery Name="MarketplaceAllArtistsDataQuery" Base="schema:MarketplaceListQuery">
+    <Properties>
+      <Boolean Name="ResourceOnly" />
+      <String Name="ResourceType" />
+      <String Name="RequestSortBy" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceAllAlbumsDataQuery" Base="schema:MarketplaceListQuery">
+    <Properties>
+      <Boolean Name="ResourceOnly" />
+      <String Name="ResourceType" />
+      <String Name="RequestSortBy" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceAllGenresDataQuery" Base="schema:MarketplaceListQuery">
+    <Properties>
+      <Boolean Name="ResourceOnly" />
+      <String Name="ResourceType" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceAllPlaylistCategoryDataQuery" Base="schema:MarketplaceListQuery">
+    <Properties>
+      <Boolean Name="ResourceOnly" />
+      <String Name="ResourceType" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceAllTracksDataQuery" Base="schema:MarketplaceListQuery">
+    <Properties>
+      <Boolean Name="ResourceOnly" />
+      <String Name="ResourceType" />
+      <String Name="RequestSortBy" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceAllPlaylistsDataQuery" Base="schema:MarketplaceChunkyListQuery">
+    <Properties>
+      <Boolean Name="ResourceOnly" />
+      <String Name="ResourceType" />
+      <String Name="RequestSortBy" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceAllMusicVideosDataQuery" Base="schema:MarketplaceListQuery">
+    <Properties>
+      <Boolean Name="ResourceOnly" />
+      <String Name="ResourceType" />
+      <String Name="RequestSortBy" />
+      <String Name="ClientType" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceAllChannelCategoriesDataQuery" Base="schema:MarketplaceListQuery">
+    <Properties>
+      <Boolean Name="ResourceOnly" />
+      <String Name="ResourceType" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceChannelDataQuery" Base="schema:MarketplaceQuery">
+    <Properties>
+      <String Name="Url" />
+      <String Name="ResourceType" />
+      <String Name="Representation" />
+      <Boolean Name="SendPassportTicket" />
+    </Properties>
+  </DataQuery>
+  <DataType Name="SingleChannelData">
+    <Properties>
+      <schema:Channel Name="Item" />
+      <List Name="Tracks" />
+      <Boolean Name="Explicit" />
+      <system:DateTime Name="CreatedDate" />
+      <String Name="Description" />
+      <List Name="Tags" />
+    </Properties>
+  </DataType>
+  <DataQuery Name="MarketplaceChannelBrowseDataQuery" Base="schema:MarketplaceChunkyListQuery">
+    <Properties>
+      <Boolean Name="ResourceOnly" />
+      <Boolean Name="Paged" />
+      <String Name="Id" />
+      <String Name="Representation" />
+      <String Name="ResourceType" />
+      <String Name="RequestSortBy" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceAllChannelGenresDataQuery" Base="schema:MarketplaceListQuery">
+    <Properties>
+      <Boolean Name="ResourceOnly" />
+      <String Name="ResourceType" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceChannelCategoryGenresDataQuery" Base="schema:MarketplaceListQuery">
+    <Properties>
+      <String Name="ResourceType" />
+      <String Name="Id" />
+      <String Name="Representation" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceMusicFeaturesDataQuery" Base="schema:MarketplaceListQuery">
+    <Properties>
+      <Boolean Name="ResourceOnly" />
+      <String Name="ResourceType" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplacePlaylistFeaturesDataQuery" Base="schema:MarketplaceListQuery">
+    <Properties>
+      <Boolean Name="ResourceOnly" />
+      <String Name="ResourceType" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceFeaturedAlbumsDataQuery" Base="schema:MarketplaceListQuery">
+    <Properties>
+      <Boolean Name="ResourceOnly" />
+      <String Name="ResourceType" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceArtistEventListQuery" Base="schema:MarketplaceQuery">
+    <Properties>
+      <String Name="ResourceType" />
+      <String Name="Representation" />
+      <String Name="LocalSortBy" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplacePlaylistDataQuery" Base="schema:MarketplaceQuery">
+    <Properties>
+      <String Name="ResourceType" />
+      <String Name="Representation" />
+    </Properties>
+  </DataQuery>
+  <DataType Name="PlaylistData">
+    <Properties>
+      <schema:Playlist Name="Item" />
+    </Properties>
+  </DataType>
+  <DataType Name="PlaylistTrack" Base="schema:Track">
+    <Properties>
+      <Int32 Name="Index" />
+      <String Name="Content" />
+    </Properties>
+  </DataType>
+  <DataType Name="ChannelReason">
+    <Properties>
+      <String Name="Id" />
+      <String Name="Description" />
+    </Properties>
+  </DataType>
+  <DataType Name="ChannelTrack" Base="schema:PlaylistTrack">
+    <Properties>
+      <List Name="Reasons" />
+    </Properties>
+  </DataType>
+  <DataQuery Name="MarketplaceChartsFeaturesDataQuery" Base="schema:MarketplaceListQuery">
+    <Properties>
+      <Boolean Name="ResourceOnly" />
+      <String Name="ResourceType" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceChartsZuneAlbumsDataQuery" Base="schema:MarketplaceChunkyListQuery">
+    <Properties>
+      <Boolean Name="ResourceOnly" />
+      <String Name="ResourceType" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceChartsZuneArtistsDataQuery" Base="schema:MarketplaceChunkyListQuery">
+    <Properties>
+      <Boolean Name="ResourceOnly" />
+      <String Name="ResourceType" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceChartsZuneMusicVideosDataQuery" Base="schema:MarketplaceChunkyListQuery">
+    <Properties>
+      <Boolean Name="ResourceOnly" />
+      <String Name="ResourceType" />
+      <String Name="ClientType" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceChartsZunePlaylistsDataQuery" Base="schema:MarketplaceChunkyListQuery">
+    <Properties>
+      <Boolean Name="ResourceOnly" />
+      <String Name="ResourceType" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceChartsZuneTracksDataQuery" Base="schema:MarketplaceChunkyListQuery">
+    <Properties>
+      <Boolean Name="ResourceOnly" />
+      <String Name="ResourceType" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceGenreChartsZuneAlbumsDataQuery" Base="schema:MarketplaceChunkyListQuery">
+    <Properties>
+      <String Name="ResourceType" />
+      <String Name="Representation" />
+      <String Name="Id" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceGenreChartsZuneArtistsDataQuery" Base="schema:MarketplaceChunkyListQuery">
+    <Properties>
+      <String Name="ResourceType" />
+      <String Name="Representation" />
+      <String Name="Id" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceGenreChartsZuneMusicVideosDataQuery" Base="schema:MarketplaceChunkyListQuery">
+    <Properties>
+      <String Name="ResourceType" />
+      <String Name="Representation" />
+      <String Name="Id" />
+      <String Name="ClientType" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceGenreChartsZunePlaylistsDataQuery" Base="schema:MarketplaceChunkyListQuery">
+    <Properties>
+      <String Name="ResourceType" />
+      <String Name="Representation" />
+      <String Name="Id" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceGenreChartsZuneTracksDataQuery" Base="schema:MarketplaceChunkyListQuery">
+    <Properties>
+      <String Name="ResourceType" />
+      <String Name="Representation" />
+      <String Name="Id" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="PrefixSearchQuery">
+    <Properties>
+      <String Name="QueryType" />
+      <String Name="Prefix" />
+      <Boolean Name="OnlyIncludeZuneRadioArtists" />
+      <String Name="ClientType" />
+    </Properties>
+  </DataQuery>
+  <DataType Name="PrefixSearchData">
+    <Properties>
+      <List Name="Titles" />
+    </Properties>
+  </DataType>
+  <DataType Name="PrefixSearchTitle">
+    <Properties>
+      <system:Guid Name="Id" />
+      <String Name="Type" />
+      <String Name="Title" />
+    </Properties>
+  </DataType>
+  <DataQuery Name="MarketplaceSearchQuery">
+    <Properties>
+      <String Name="QueryType" />
+      <String Name="Keywords" />
+      <String Name="ClientType" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceSearchArtistsQuery" Base="schema:MarketplaceSearchQuery">
+    <Properties>
+      <String Name="ResourceType" />
+    </Properties>
+  </DataQuery>
+  <DataType Name="SearchArtistsData">
+    <Properties>
+      <List Name="Artists" />
+    </Properties>
+  </DataType>
+  <DataQuery Name="MarketplaceSearchAlbumsQuery" Base="schema:MarketplaceSearchQuery">
+    <Properties>
+      <String Name="ResourceType" />
+    </Properties>
+  </DataQuery>
+  <DataType Name="SearchAlbumsData">
+    <Properties>
+      <List Name="Albums" />
+    </Properties>
+  </DataType>
+  <DataQuery Name="MarketplaceSearchTracksQuery" Base="schema:MarketplaceSearchQuery">
+    <Properties>
+      <String Name="ResourceType" />
+    </Properties>
+  </DataQuery>
+  <DataType Name="SearchTracksData">
+    <Properties>
+      <List Name="Tracks" />
+    </Properties>
+  </DataType>
+  <DataQuery Name="MarketplaceSearchPlaylistsQuery" Base="schema:MarketplaceSearchQuery">
+    <Properties>
+      <String Name="ResourceType" />
+    </Properties>
+  </DataQuery>
+  <DataType Name="SearchPlaylistsData">
+    <Properties>
+      <List Name="Playlists" />
+    </Properties>
+  </DataType>
+  <DataQuery Name="MarketplaceSearchMusicVideosQuery" Base="schema:MarketplaceSearchQuery">
+    <Properties>
+      <String Name="ResourceType" />
+    </Properties>
+  </DataQuery>
+  <DataType Name="SearchMusicVideosData">
+    <Properties>
+      <List Name="MusicVideos" />
+    </Properties>
+  </DataType>
+  <DataQuery Name="MarketplaceSearchAppsQuery" Base="schema:MarketplaceSearchQuery">
+    <Properties>
+      <String Name="ResourceType" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="MarketplaceSearchWinPhoneAppsQuery" Base="schema:MarketplaceSearchAppsQuery">
+    <Properties>
+      <String Name="ClientType" />
+      <String Name="Store" />
+    </Properties>
+  </DataQuery>
+  <DataType Name="SearchAppsData">
+    <Properties>
+      <List Name="Apps" />
+    </Properties>
+  </DataType>
+  <DataType Name="SearchWinPhoneAppsData" Base="schema:SearchAppsData">
+    <Properties>
+      <List Name="Apps" />
+    </Properties>
+  </DataType>
+  <DataQuery Name="MarketplaceHistoryQuery">
+    <Properties>
+      <String Name="QueryType" />
+      <String Name="MediaType" />
+      <Boolean Name="Paged" />
+      <Int32 Name="ChunkSize" />
+    </Properties>
+  </DataQuery>
+  <DataType Name="MarketplaceHistoryData">
+    <Properties>
+      <List Name="Entries" />
+    </Properties>
+  </DataType>
+  <DataQuery Name="VideoPurchaseHistoryQuery" Base="schema:MarketplaceHistoryQuery">
+    <Properties>
+      <String Name="QueryType" />
+      <Int32 Name="ChunkSize" />
+      <Boolean Name="Rentals" />
+    </Properties>
+  </DataQuery>
+  <DataType Name="VideoPurchaseHistoryData" Base="schema:MarketplaceHistoryData">
+    <Properties>
+      <List Name="Entries" />
+    </Properties>
+  </DataType>
+  <DataQuery Name="TrackPurchaseHistoryQuery" Base="schema:MarketplaceHistoryQuery">
+    <Properties>
+      <String Name="QueryType" />
+      <String Name="MediaType" />
+    </Properties>
+  </DataQuery>
+  <DataType Name="TrackPurchaseHistoryData" Base="schema:MarketplaceHistoryData">
+    <Properties>
+      <List Name="Entries" />
+    </Properties>
+  </DataType>
+  <DataQuery Name="WinPhoneAppPurchaseHistoryQuery" Base="schema:MarketplaceHistoryQuery">
+    <Properties>
+      <String Name="QueryType" />
+      <String Name="MediaType" />
+    </Properties>
+  </DataQuery>
+  <DataType Name="WinPhoneAppPurchaseHistoryData" Base="schema:MarketplaceHistoryData">
+    <Properties>
+      <List Name="Entries" />
+    </Properties>
+  </DataType>
+  <DataQuery Name="SubscriptionHistoryQuery" Base="schema:MarketplaceHistoryQuery">
+    <Properties>
+      <String Name="QueryType" />
+      <String Name="MediaType" />
+    </Properties>
+  </DataQuery>
+  <DataType Name="SubscriptionHistoryData" Base="schema:MarketplaceHistoryData">
+    <Properties>
+      <List Name="Entries" />
+    </Properties>
+  </DataType>
+  <DataType Name="ZuneHDApp" Base="schema:App" />
+  <DataType Name="WinPhoneApp" Base="schema:App" />
+  <DataType Name="AppGenre" Base="schema:Category">
+    <Properties>
+      <Boolean Name="IsRoot" />
+    </Properties>
+  </DataType>
+  <DataType Name="ZuneHDAppGenre" Base="schema:AppGenre" />
+  <DataType Name="WinPhoneAppGenre" Base="schema:AppGenre" />
+  <DataType Name="AppScreenshot" Base="schema:Thumbnail" />
+  <DataType Name="AppsResult">
+    <Properties>
+      <List Name="Items" />
+    </Properties>
+  </DataType>
+  <DataType Name="ZuneHDAppsResult" Base="schema:AppsResult">
+    <Properties>
+      <List Name="Items" />
+    </Properties>
+  </DataType>
+  <DataType Name="WinPhoneAppsResult" Base="schema:AppsResult">
+    <Properties>
+      <List Name="Items" />
+    </Properties>
+  </DataType>
+  <DataType Name="AppGenresResult">
+    <Properties>
+      <List Name="Items" />
+    </Properties>
+  </DataType>
+  <DataType Name="ZuneHDAppGenresResult">
+    <Properties>
+      <List Name="Items" />
+    </Properties>
+  </DataType>
+  <DataType Name="WinPhoneAppGenresResult">
+    <Properties>
+      <List Name="Items" />
+    </Properties>
+  </DataType>
+  <DataType Name="AppCapability">
+    <Properties>
+      <String Name="Id" />
+      <String Name="Description" />
+      <String Name="DisclosureType" />
+      <Boolean Name="NeedDisclosure" />
+      <Boolean Name="NeedPrompt" />
+    </Properties>
+  </DataType>
+  <DataType Name="AppData" Base="schema:App">
+    <Properties>
+      <String Name="Copyright" />
+      <String Name="Description" />
+      <List Name="Screenshots" />
+      <List Name="Genres" />
+      <schema:AppCapabilities Name="Capabilities" />
+      <system:Guid Name="BackgroundImageId" />
+      <system:Guid Name="RatingImageId" />
+    </Properties>
+  </DataType>
+  <DataType Name="ZuneHDAppData" Base="schema:AppData">
+    <Properties>
+      <List Name="Genres" />
+    </Properties>
+  </DataType>
+  <DataType Name="WinPhoneAppData" Base="schema:AppData">
+    <Properties>
+      <List Name="Genres" />
+    </Properties>
+  </DataType>
+  <DataType Name="AppCapabilities">
+    <Properties>
+      <List Name="Items" />
+    </Properties>
+  </DataType>
+  <DataType Name="AppMediaRights" Base="schema:MediaRights">
+    <Properties>
+      <List Name="Rights" />
+    </Properties>
+  </DataType>
+  <DataQuery Name="AppMarketplaceQuery" Base="schema:MarketplaceQuery">
+    <Properties>
+      <String Name="ClientType" />
+      <String Name="Store" />
+      <String Name="ResourceType" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="AppsQuery" Base="schema:AppMarketplaceQuery">
+    <Properties>
+      <String Name="Cost" />
+      <String Name="Tag" />
+      <String Name="RequestSortBy" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="ZuneHDAppsQuery" Base="schema:AppsQuery">
+    <Properties>
+      <Boolean Name="ResourceOnly" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="WinPhoneAppsQuery" Base="schema:AppsQuery">
+    <Properties>
+      <Boolean Name="ResourceOnly" />
+      <Boolean Name="Paged" />
+      <String Name="ClientType" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="AppsWithinGenreQuery" Base="schema:AppsQuery">
+    <Properties>
+      <Boolean Name="ResourceOnly" />
+      <String Name="ResourceType" />
+      <String Name="Representation" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="ZuneHDAppsWithinGenreQuery" Base="schema:AppsWithinGenreQuery">
+    <Properties>
+      <Boolean Name="ResourceOnly" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="WinPhoneAppsWithinGenreQuery" Base="schema:AppsWithinGenreQuery">
+    <Properties>
+      <Boolean Name="Paged" />
+      <String Name="ClientType" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="AppGenresQuery" Base="schema:AppMarketplaceQuery">
+    <Properties>
+      <Boolean Name="ResourceOnly" />
+      <String Name="ResourceType" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="ZuneHDAppGenresQuery" Base="schema:AppGenresQuery">
+    <Properties>
+      <String Name="QueryType" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="ZuneHDGameGenresQuery" Base="schema:AppGenresQuery">
+    <Properties>
+      <String Name="QueryType" />
+      <String Name="ResourceType" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="WinPhoneAppGenresQuery" Base="schema:AppGenresQuery">
+    <Properties>
+      <String Name="ClientType" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="WinPhoneAppSubGenresQuery" Base="schema:WinPhoneAppGenresQuery" />
+  <DataQuery Name="AppsHubQuery" Base="schema:MarketplaceQuery">
+    <Properties>
+      <Boolean Name="ResourceOnly" />
+      <String Name="ResourceType" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="ZuneAppsHubQuery" Base="schema:AppsHubQuery">
+    <Properties>
+      <String Name="ResourceType" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="WinPhoneAppsHubQuery" Base="schema:AppsHubQuery">
+    <Properties>
+      <String Name="ResourceType" />
+      <String Name="Store" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="AppDetailsQuery" Base="schema:AppMarketplaceQuery">
+    <Properties>
+      <Boolean Name="ResourceOnly" />
+      <String Name="QueryType" />
+      <String Name="Version" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="ZuneHDAppDetailsQuery" Base="schema:AppDetailsQuery">
+    <Properties>
+      <String Name="ClientType" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="WinPhoneAppDetailsQuery" Base="schema:AppDetailsQuery">
+    <Properties>
+      <String Name="ClientType" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="AppAggregateQuery">
+    <Properties>
+      <List Name="Queries" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="AppReviewQuery" Base="schema:AppMarketplaceQuery">
+    <Properties>
+      <Boolean Name="ResourceOnly" />
+      <Boolean Name="Paged" />
+      <Int32 Name="ChunkSize" />
+      <String Name="Representation" />
+      <String Name="Id" />
+    </Properties>
+  </DataQuery>
+  <DataQuery Name="AppReviewFromUserQuery" Base="schema:MarketplaceQuery">
+    <Properties>
+      <String Name="QueryType" />
+      <String Name="ResourceType" />
+      <String Name="Representation" />
+      <String Name="SubRepresentation" />
+      <String Name="Id" />
+      <String Name="SubId" />
+      <Boolean Name="SendSecurePassportTicket" />
+    </Properties>
+  </DataQuery>
+</UIX>
