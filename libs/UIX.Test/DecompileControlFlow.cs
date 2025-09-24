@@ -20,6 +20,9 @@ public class DecompileControlFlow
     [Theory]
     [InlineData("cfa_if-elseif-else01")]
     [InlineData("cfa_if-elseif-else02")]
+    [InlineData("cfa_if-elseif-else03")]
+    [InlineData("cfa_if-elseif-else04")]
+    [InlineData("cfa_if-elseif-else05")]
     public async Task IfElseIfElse(string fileNameWithoutExtension)
     {
         using TempFile uixFile = new($"{fileNameWithoutExtension}.uix", ".uix");

@@ -124,6 +124,15 @@
   <data name="cfa_if-elseif-else02.uix" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\cfa_if-elseif-else02.uix;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
+  <data name="cfa_if-elseif-else03.uix" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\cfa_if-elseif-else03.uix;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="cfa_if-elseif-else04.uix" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\cfa_if-elseif-else04.uix;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="cfa_if-elseif-else05.uix" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\cfa_if-elseif-else05.uix;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
   <data name="testA.uix" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\testA.uix;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
