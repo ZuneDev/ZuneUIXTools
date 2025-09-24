@@ -34,11 +34,6 @@ partial class Decompiler
         var dotGraph = ControlFlowAnalyzer.SerializeToGraphviz(controlBlocks);
         Console.WriteLine(dotGraph);
 
-        // TODO: Search for loops
-
-        // TODO: Search for branch conditions
-        var collapsedBlocks = controlBlocks.CollapseBlocks();
-
         Stack<CodeBlockInfo> blockStack = [];
         blockStack.Push(new(0, methodBody[^1].Offset, SyntaxKind.Block, null));
 
@@ -75,8 +70,8 @@ partial class Decompiler
 
             if (jumpToOffsets.Contains(instruction.Offset))
             {
-                // This address is code that will be unconditionally executed. For now,
-                // we'll assume that this is the end of IF/ELSE clauses.
+                // This address is code that will be unconditionally executed.
+                // For now, we'll assume that this is the end of IF/ELSE clauses.
                 while (blockStack.Count > 1)
                 {
                     if (blockStack.Peek().Kind is SyntaxKind.ElseClause)
@@ -203,21 +198,16 @@ partial class Decompiler
                     case OpCode.JumpIfTruePeek:
                         var jumpToOffset = (uint)instruction.Operands.First().Value;
 
-                        // TODO: What about for loops?
-                        if (instruction.Offset > jumpToOffset)
-                        {
-                        }
-
-                        var isPeek = opCode is OpCode.JumpIfFalsePeek or OpCode.JumpIfTruePeek or OpCode.JumpIfNullPeek;
+                        var isPeek = opCode is OpCode.JumpIfFalsePeek or OpCode.JumpIfTruePeek;
                         var jumpCondition = IrisExpression.ToSyntax(isPeek ? stack.Peek() : stack.Pop(), _context);
 
-                        if (opCode is OpCode.JumpIfFalse)
+                        if (!isPeek)
                         {
                             // JMPF is used to evaluate the branch condition
                             var ifBlock = new CodeBlockInfo(instruction.Offset, jumpToOffset, SyntaxKind.IfStatement, jumpCondition);
                             blockStack.Push(ifBlock);
                         }
-                        else if (opCode is OpCode.JumpIfFalsePeek or OpCode.JumpIfTruePeek)
+                        else
                         {
                             // JMPFP and JMPTP are only used to implement short-circuiting
                             var ifBlock = SimplifyExpression(jumpCondition);
@@ -229,10 +219,7 @@ partial class Decompiler
                     case OpCode.Jump:
                         var jumpOffset = (uint)instruction.Operands.First().Value;
 
-                        if (jumpOffset > instruction.Offset)
-                        {
-                        }
-                        else
+                        if (jumpOffset <= instruction.Offset)
                         {
                             throw new NotImplementedException("Loops, ternaries, and null coalescing are not supported at this time");
                         }
