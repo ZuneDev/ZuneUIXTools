@@ -54,6 +54,11 @@ partial class Decompiler
 
             if (jumpFalseToOffsets.Contains(instruction.Offset))
             {
+                if (blockStack.Count < 2)
+                {
+                    throw new InvalidOperationException("Expected two blocks left on the stack");
+                }
+
                 var currentBlock = blockStack.Pop() with { EndOffset = instruction.Offset };
                 currentBlock.FinalizeBlock(blockStack.Peek());
 
@@ -61,24 +66,25 @@ partial class Decompiler
                 // If multiple blocks lead to this address, then we're outside of the IF clause entirely.
                 // Otherwise, it's probably the start of an ELSE clause.
 
-                var currentControlBlock = controlBlocks.First(b => instruction.Offset >= b.StartOffset && instruction.Offset <= b.EndOffset);
-                if (controlBlocks.Count(b => b.HasEdgeTo(currentControlBlock)) <= 1)
+                var currentControlBlock = controlBlocks.GetByInstruction(instruction);
+                if (controlBlocks.Count(b => b.HasEdgeTo(currentControlBlock, controlBlocks)) <= 1)
                 {
                     blockStack.Push(new(instruction.Offset, uint.MaxValue, SyntaxKind.ElseClause, null));
                 }
             }
 
-            if (jumpToOffsets.Contains(instruction.Offset))
+            if (controlBlocks.IsAlwaysExecuted(instruction.Offset))
             {
-                // This address is code that will be unconditionally executed.
-                // For now, we'll assume that this is the end of IF/ELSE clauses.
                 while (blockStack.Count > 1)
                 {
-                    if (blockStack.Peek().Kind is SyntaxKind.ElseClause)
-                    {
-                        var currentBlock = blockStack.Pop() with { EndOffset = instruction.Offset };
-                        currentBlock.FinalizeBlock(blockStack.Peek());
-                    }
+                    var currentBlock = blockStack.Pop();
+                    if (currentBlock.EndOffset is uint.MaxValue)
+                        currentBlock = currentBlock with { EndOffset = instruction.Offset };
+
+                    if (currentBlock.EndOffset != instruction.Offset)
+                        break;
+
+                    currentBlock.FinalizeBlock(blockStack.Peek());
                 }
             }
 

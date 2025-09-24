@@ -75,47 +75,63 @@ public static class ControlFlowAnalyzer
             blocks.Add(block);
         }
 
-        // Pass III: Resolve next and branch target blocks
-        for (var b = 0; b < blocks.Count; b++)
-        {
-            var block = (BasicControlFlowBlock)blocks[b];
-
-            if (block.NextOffset is not uint.MaxValue)
-                block = block with { Next = blocks[IndexOfBlockFromStartOffset(block.NextOffset)] };
-
-            if (block.BranchTargetOffset is not uint.MaxValue)
-                block = block with { BranchTarget = blocks[IndexOfBlockFromStartOffset(block.BranchTargetOffset)] };
-
-            blocks[b] = block;
-        }
-
         return blocks;
-
-        int IndexOfBlockFromStartOffset(uint startOffset)
-        {
-            for (int b = 0; b <= blocks.Count; b++)
-            {
-                var block = blocks[b];
-                if (block.StartOffset == startOffset)
-                    return b;
-            }
-
-            return -1;
-        }
     }
 
-    public static List<IProgramBlock> CollapseBlocks(this List<IProgramBlock> blocks)
+    public static IProgramBlock GetByOffset(this List<IProgramBlock> blocks, uint offset)
     {
-        for (int b = 0; b < blocks.Count; b++)
+        return blocks.First(b => offset >= b.StartOffset && offset <= b.EndOffset);
+    }
+
+    public static IProgramBlock GetByStartOffset(this List<IProgramBlock> blocks, uint offset) => blocks.FirstOrDefault(b => offset == b.StartOffset);
+
+    public static IProgramBlock GetByInstruction(this List<IProgramBlock> blocks, Instruction instruction) => blocks.GetByOffset(instruction.Offset);
+
+    public static bool IsAlwaysExecuted(this List<IProgramBlock> blocks, uint offset)
+    {
+        if (blocks.Count == 1)
+            return true;
+
+        // Checks if the entry node is post-dominated by the block containing this offset.
+        // Essentially, do all paths through this method execute code at this offset?
+
+        var blockOfInterest = blocks.GetByStartOffset(offset);
+        if (blockOfInterest is null)
+            return false;
+
+        HashSet<uint> visitedStartOffsets = [];
+        Stack<IProgramBlock> stack = [];
+
+        var filteredBlocks = blocks
+            .OrderBy(b => b.StartOffset)
+            .Where(b => b.StartOffset != offset);
+        stack.Push(filteredBlocks.First());
+
+        while (stack.Count > 0)
         {
-            var block = blocks[b];
-            if (block.Body[^1].OpCode is OpCode.JumpIfFalse)
+            var current = stack.Pop();
+
+            if (visitedStartOffsets.Contains(current.StartOffset))
+                continue;
+
+            visitedStartOffsets.Add(current.StartOffset);
+
+            foreach (var childOffset in current.GetChildrenStartOffsets())
             {
-                // If conditions always end with JMPF
+                if (childOffset == blockOfInterest.StartOffset)
+                    continue;
+
+                var child = blocks.GetByStartOffset(childOffset);
+                stack.Push(child);
             }
         }
 
-        return [];
+        HashSet<uint> exitBlockOffsets = new(blocks
+            .Where(b => b.Body[^1].OpCode is OpCode.ReturnValue or OpCode.ReturnVoid)
+            .Select(b => b.StartOffset));
+
+        visitedStartOffsets.IntersectWith(exitBlockOffsets);
+        return visitedStartOffsets.Count == 0;
     }
 
     public static string SerializeToGraphviz(IEnumerable<IProgramBlock> blocks)
@@ -160,45 +176,48 @@ public interface IProgramBlock
 {
     uint StartOffset { get; }
     uint EndOffset { get; }
-    uint NextOffset { get; }
     List<Instruction> Body { get; }
-    IProgramBlock Next { get; }
+    uint NextOffset { get; }
 
-    bool HasEdgeTo(IProgramBlock block);
+    IEnumerable<uint> GetChildrenStartOffsets();
 }
 
-public abstract record ProgramBlock(uint StartOffset, uint EndOffset, List<Instruction> Body,
-    uint NextOffset = uint.MaxValue, IProgramBlock Next = null)
+public abstract record ProgramBlock(uint StartOffset, uint EndOffset, List<Instruction> Body, uint NextOffset = uint.MaxValue)
     : IProgramBlock
 {
-    public virtual bool HasEdgeTo(IProgramBlock block) => NextOffset == block.StartOffset;
+    public virtual IEnumerable<uint> GetChildrenStartOffsets()
+    {
+        if (NextOffset is not uint.MaxValue)
+            yield return NextOffset;
+    }
 }
 
 public record BasicControlFlowBlock(uint StartOffset, uint EndOffset, List<Instruction> Body,
-    uint NextOffset = uint.MaxValue, uint BranchTargetOffset = uint.MaxValue,
-    IProgramBlock Next = null, IProgramBlock BranchTarget = null)
-    : ProgramBlock(StartOffset, EndOffset, Body, NextOffset, Next)
+    uint NextOffset = uint.MaxValue, uint BranchTargetOffset = uint.MaxValue)
+    : ProgramBlock(StartOffset, EndOffset, Body, NextOffset)
 {
-    public override bool HasEdgeTo(IProgramBlock block) => base.HasEdgeTo(block) || BranchTargetOffset == block.StartOffset;
+    public override IEnumerable<uint> GetChildrenStartOffsets()
+    {
+        foreach (var offset in base.GetChildrenStartOffsets())
+            yield return offset;
+
+        if (BranchTargetOffset is not uint.MaxValue)
+            yield return BranchTargetOffset;
+    }
 }
 
-public record ConditionalControlFlowBlock(uint StartOffset, uint EndOffset, List<Instruction> Body,
-    uint NextOffset = uint.MaxValue, IProgramBlock Next = null,
-    IProgramBlock IfBlock = null, List<IProgramBlock> ElseIfBlocks = null, IProgramBlock ElseBlock = null)
-    : ProgramBlock(StartOffset, EndOffset, Body, NextOffset, Next)
+public static class IProgramBlockExtensions
 {
-    public ConditionalControlFlowBlock(IProgramBlock programBlock,
-        IProgramBlock ifBlock = null, List<IProgramBlock> elseIfBlocks = null, IProgramBlock elseBlock = null)
-        : this(programBlock.StartOffset, programBlock.EndOffset, programBlock.Body,
-            programBlock.NextOffset, programBlock.Next, ifBlock, elseIfBlocks ?? [], elseBlock)
+    public static bool HasEdgeTo(this IProgramBlock block, IProgramBlock targetBlock, List<IProgramBlock> blocks)
     {
+        return block
+            .GetChildren(blocks)
+            .Contains(targetBlock);
     }
 
-    public override bool HasEdgeTo(IProgramBlock block)
+    public static IEnumerable<IProgramBlock> GetChildren(this IProgramBlock block, List<IProgramBlock> blocks)
     {
-        return base.HasEdgeTo(block)
-            || IfBlock.StartOffset == block.StartOffset
-            || ElseIfBlocks.Any(b => b.StartOffset == block.StartOffset)
-            || ElseBlock.StartOffset == block.StartOffset;
+        foreach (var startOffset in block.GetChildrenStartOffsets())
+            yield return blocks.First(b => b.StartOffset == startOffset);
     }
 }
