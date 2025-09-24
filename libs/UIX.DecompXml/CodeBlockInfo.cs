@@ -6,7 +6,7 @@ using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace Microsoft.Iris.DecompXml;
 
-internal class CodeBlockInfo
+internal record CodeBlockInfo
 {
     public CodeBlockInfo(uint startOffset, uint endOffset, SyntaxKind kind, ExpressionSyntax expression = null)
     {

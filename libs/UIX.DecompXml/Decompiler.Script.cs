@@ -34,8 +34,21 @@ partial class Decompiler
         var dotGraph = ControlFlowAnalyzer.SerializeToGraphviz(controlBlocks);
         Console.WriteLine(dotGraph);
 
+        // TODO: Search for loops
+
+        // TODO: Search for branch conditions
+        var collapsedBlocks = controlBlocks.CollapseBlocks();
+
         Stack<CodeBlockInfo> blockStack = [];
         blockStack.Push(new(0, methodBody[^1].Offset, SyntaxKind.Block, null));
+
+        HashSet<uint> jumpFalseToOffsets = new(methodBody
+            .Where(i => i.OpCode is OpCode.JumpIfFalse)
+            .Select(i => (uint)i.Operands.First().Value));
+
+        HashSet<uint> jumpToOffsets = new(methodBody
+            .Where(i => i.OpCode is OpCode.Jump)
+            .Select(i => (uint)i.Operands.First().Value));
 
         HashSet<string> scopedLocals = [];
         Stack<object> stack = new();
@@ -44,20 +57,33 @@ partial class Decompiler
         {
             var instruction = methodBody[i];
 
-            // TODO: Handle for loops
-            if (instruction.Offset == blockStack.Peek().EndOffset)
+            if (jumpFalseToOffsets.Contains(instruction.Offset))
             {
-                // Make sure there is only one top-level block
-                if (blockStack.Count > 1)
+                var currentBlock = blockStack.Pop() with { EndOffset = instruction.Offset };
+                currentBlock.FinalizeBlock(blockStack.Peek());
+
+                // This address marks the end of the affirmative branch of an IF clause.
+                // If multiple blocks lead to this address, then we're outside of the IF clause entirely.
+                // Otherwise, it's probably the start of an ELSE clause.
+
+                var currentControlBlock = controlBlocks.First(b => instruction.Offset >= b.StartOffset && instruction.Offset <= b.EndOffset);
+                if (controlBlocks.Count(b => b.HasEdgeTo(currentControlBlock)) <= 1)
                 {
-                    var currentBlock = blockStack.Pop();
-                    currentBlock.FinalizeBlock(blockStack.Peek());
+                    blockStack.Push(new(instruction.Offset, uint.MaxValue, SyntaxKind.ElseClause, null));
                 }
-                else
+            }
+
+            if (jumpToOffsets.Contains(instruction.Offset))
+            {
+                // This address is code that will be unconditionally executed. For now,
+                // we'll assume that this is the end of IF/ELSE clauses.
+                while (blockStack.Count > 1)
                 {
-                    // End of function
-                    if (i + 1 != methodBody.Length)
-                        throw new InvalidOperationException("Expected end of function!");
+                    if (blockStack.Peek().Kind is SyntaxKind.ElseClause)
+                    {
+                        var currentBlock = blockStack.Pop() with { EndOffset = instruction.Offset };
+                        currentBlock.FinalizeBlock(blockStack.Peek());
+                    }
                 }
             }
 
@@ -126,6 +152,8 @@ partial class Decompiler
                                         .WithInitializer(EqualsValueClause(newSymbolValueExpr))
                                 )
                             ));
+
+                            scopedLocals.Add(symbolRef.Symbol);
                         }
                         else
                         {
@@ -181,38 +209,34 @@ partial class Decompiler
                         }
 
                         var isPeek = opCode is OpCode.JumpIfFalsePeek or OpCode.JumpIfTruePeek or OpCode.JumpIfNullPeek;
-                        var rawJumpCondition = IrisExpression.ToSyntax(isPeek ? stack.Peek() : stack.Pop(), _context);
+                        var jumpCondition = IrisExpression.ToSyntax(isPeek ? stack.Peek() : stack.Pop(), _context);
 
-                        // TODO: Invert jump condition when decompiling to blocks instead of gotos
-                        var jumpCondition = opCode switch
+                        if (opCode is OpCode.JumpIfFalse)
                         {
-                            OpCode.JumpIfFalse or
-                            OpCode.JumpIfFalsePeek => LogicalNotOf(rawJumpCondition),
-
-                            OpCode.JumpIfTruePeek => rawJumpCondition,
-
-                            OpCode.JumpIfNullPeek => BinaryExpression(SyntaxKind.EqualsEqualsToken,
-                                rawJumpCondition,
-                                LiteralExpression(SyntaxKind.NullLiteralExpression)),
-
-                            _ => throw new NotImplementedException()
-                        };
-
-                        //var ifBlock = new CodeBlockInfo(instruction.Offset, jumpToOffset, SyntaxKind.IfStatement, jumpCondition);
-                        //blockStack.Push(ifBlock);
-
-                        var ifBlock = IfStatement(SimplifyExpression(jumpCondition),
-                            GotoStatement(SyntaxKind.GotoStatement, IdentifierName($"UIB_{jumpToOffset:X4}")))
-                            .WithLeadingTrivia(Comment($"/* UIB_{instruction.Offset:X4} */"));
-                        blockStack.Peek().Statements.Add(ifBlock);
+                            // JMPF is used to evaluate the branch condition
+                            var ifBlock = new CodeBlockInfo(instruction.Offset, jumpToOffset, SyntaxKind.IfStatement, jumpCondition);
+                            blockStack.Push(ifBlock);
+                        }
+                        else if (opCode is OpCode.JumpIfFalsePeek or OpCode.JumpIfTruePeek)
+                        {
+                            // JMPFP and JMPTP are only used to implement short-circuiting
+                            var ifBlock = SimplifyExpression(jumpCondition);
+                            stack.Push(ifBlock);
+                        }
 
                         break;
 
                     case OpCode.Jump:
                         var jumpOffset = (uint)instruction.Operands.First().Value;
 
-                        // TODO
-                        blockStack.Peek().Statements.Add(GotoStatement(SyntaxKind.GotoStatement, IdentifierName($"UIB_{jumpOffset:X4}")));
+                        if (jumpOffset > instruction.Offset)
+                        {
+                        }
+                        else
+                        {
+                            throw new NotImplementedException("Loops, ternaries, and null coalescing are not supported at this time");
+                        }
+
                         break;
 
                     case OpCode.ReturnValue:
