@@ -99,39 +99,36 @@ public static class ControlFlowAnalyzer
         if (blockOfInterest is null)
             return false;
 
+        HashSet<uint> exitBlockOffsets = new(blocks
+            .Where(b => b.Body[^1].OpCode is OpCode.ReturnValue or OpCode.ReturnVoid)
+            .Select(b => b.StartOffset));
+
         HashSet<uint> visitedStartOffsets = [];
         Stack<IProgramBlock> stack = [];
 
-        var filteredBlocks = blocks
-            .OrderBy(b => b.StartOffset)
-            .Where(b => b.StartOffset != offset);
-        stack.Push(filteredBlocks.First());
+        stack.Push(blocks[0]);
 
         while (stack.Count > 0)
         {
             var current = stack.Pop();
+            var currentOffset = current.StartOffset;
 
-            if (visitedStartOffsets.Contains(current.StartOffset))
+            if (currentOffset == offset || visitedStartOffsets.Contains(currentOffset))
                 continue;
+
+            if (exitBlockOffsets.Contains(currentOffset))
+                return false;
 
             visitedStartOffsets.Add(current.StartOffset);
 
             foreach (var childOffset in current.GetChildrenStartOffsets())
             {
-                if (childOffset == blockOfInterest.StartOffset)
-                    continue;
-
                 var child = blocks.GetByStartOffset(childOffset);
                 stack.Push(child);
             }
         }
 
-        HashSet<uint> exitBlockOffsets = new(blocks
-            .Where(b => b.Body[^1].OpCode is OpCode.ReturnValue or OpCode.ReturnVoid)
-            .Select(b => b.StartOffset));
-
-        visitedStartOffsets.IntersectWith(exitBlockOffsets);
-        return visitedStartOffsets.Count == 0;
+        return true;
     }
 
     public static string SerializeToGraphviz(IEnumerable<IProgramBlock> blocks)
