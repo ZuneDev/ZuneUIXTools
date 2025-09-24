@@ -7,7 +7,7 @@ using System.Text;
 
 namespace Microsoft.Iris.DecompXml;
 
-public static class ControlFlowAnalyzer
+public class ControlFlowAnalyzer
 {
     private static readonly ImmutableHashSet<OpCode> _jumpOpCodes = [
         OpCode.JumpIfFalse, OpCode.JumpIfFalsePeek, OpCode.JumpIfTruePeek,
@@ -18,7 +18,67 @@ public static class ControlFlowAnalyzer
         OpCode.ReturnValue, OpCode.ReturnVoid, OpCode.Jump,
     ];
 
-    public static List<IProgramBlock> CreateGraph(Instruction[] instructions)
+    public ControlFlowAnalyzer(Instruction[] instructions)
+    {
+        ControlBlocks = CreateGraph(instructions);
+    }
+
+    public List<IProgramBlock> ControlBlocks { get; }
+
+    public IProgramBlock GetByOffset(uint offset)
+    {
+        return ControlBlocks.First(b => offset >= b.StartOffset && offset <= b.EndOffset);
+    }
+
+    public IProgramBlock GetByStartOffset(uint offset) => ControlBlocks.FirstOrDefault(b => offset == b.StartOffset);
+
+    public IProgramBlock GetByInstruction(Instruction instruction) => GetByOffset(instruction.Offset);
+
+    public bool IsAlwaysExecuted(uint offset)
+    {
+        if (ControlBlocks.Count == 1)
+            return true;
+
+        // Checks if the entry node is post-dominated by the block containing this offset.
+        // Essentially, do all paths through this method execute code at this offset?
+
+        var blockOfInterest = GetByStartOffset(offset);
+        if (blockOfInterest is null)
+            return false;
+
+        HashSet<uint> exitBlockOffsets = new(ControlBlocks
+            .Where(b => b.Body[^1].OpCode is OpCode.ReturnValue or OpCode.ReturnVoid)
+            .Select(b => b.StartOffset));
+
+        HashSet<uint> visitedStartOffsets = [];
+        Stack<IProgramBlock> stack = [];
+
+        stack.Push(ControlBlocks[0]);
+
+        while (stack.Count > 0)
+        {
+            var current = stack.Pop();
+            var currentOffset = current.StartOffset;
+
+            if (currentOffset == offset || visitedStartOffsets.Contains(currentOffset))
+                continue;
+
+            if (exitBlockOffsets.Contains(currentOffset))
+                return false;
+
+            visitedStartOffsets.Add(current.StartOffset);
+
+            foreach (var childOffset in current.GetChildrenStartOffsets())
+            {
+                var child = GetByStartOffset(childOffset);
+                stack.Push(child);
+            }
+        }
+
+        return true;
+    }
+
+    private static List<IProgramBlock> CreateGraph(Instruction[] instructions)
     {
         // See slide 15 (page 8) of https://www.cs.utexas.edu/~lin/cs380c/handout03.pdf
 
@@ -78,62 +138,9 @@ public static class ControlFlowAnalyzer
         return blocks;
     }
 
-    public static IProgramBlock GetByOffset(this List<IProgramBlock> blocks, uint offset)
+    public string SerializeToGraphviz()
     {
-        return blocks.First(b => offset >= b.StartOffset && offset <= b.EndOffset);
-    }
-
-    public static IProgramBlock GetByStartOffset(this List<IProgramBlock> blocks, uint offset) => blocks.FirstOrDefault(b => offset == b.StartOffset);
-
-    public static IProgramBlock GetByInstruction(this List<IProgramBlock> blocks, Instruction instruction) => blocks.GetByOffset(instruction.Offset);
-
-    public static bool IsAlwaysExecuted(this List<IProgramBlock> blocks, uint offset)
-    {
-        if (blocks.Count == 1)
-            return true;
-
-        // Checks if the entry node is post-dominated by the block containing this offset.
-        // Essentially, do all paths through this method execute code at this offset?
-
-        var blockOfInterest = blocks.GetByStartOffset(offset);
-        if (blockOfInterest is null)
-            return false;
-
-        HashSet<uint> exitBlockOffsets = new(blocks
-            .Where(b => b.Body[^1].OpCode is OpCode.ReturnValue or OpCode.ReturnVoid)
-            .Select(b => b.StartOffset));
-
-        HashSet<uint> visitedStartOffsets = [];
-        Stack<IProgramBlock> stack = [];
-
-        stack.Push(blocks[0]);
-
-        while (stack.Count > 0)
-        {
-            var current = stack.Pop();
-            var currentOffset = current.StartOffset;
-
-            if (currentOffset == offset || visitedStartOffsets.Contains(currentOffset))
-                continue;
-
-            if (exitBlockOffsets.Contains(currentOffset))
-                return false;
-
-            visitedStartOffsets.Add(current.StartOffset);
-
-            foreach (var childOffset in current.GetChildrenStartOffsets())
-            {
-                var child = blocks.GetByStartOffset(childOffset);
-                stack.Push(child);
-            }
-        }
-
-        return true;
-    }
-
-    public static string SerializeToGraphviz(IEnumerable<IProgramBlock> blocks)
-    {
-        var sortedBlocks = blocks.OrderBy(b => b.StartOffset).ToArray();
+        var sortedBlocks = ControlBlocks.OrderBy(b => b.StartOffset).ToArray();
         StringBuilder sb = new();
 
         sb.AppendLine("digraph G {");
@@ -141,7 +148,7 @@ public static class ControlFlowAnalyzer
         sb.AppendLine("    node [shape=none];");
 
         var rank = 0;
-        foreach (var block in blocks)
+        foreach (var block in sortedBlocks)
         {
             var nodeId = block.StartOffset;
 

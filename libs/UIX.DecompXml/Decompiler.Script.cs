@@ -30,8 +30,9 @@ partial class Decompiler
     {
         var methodBody = _context.GetMethodBody(startOffset).ToArray();
 
-        var controlBlocks = ControlFlowAnalyzer.CreateGraph(methodBody);
-        var dotGraph = ControlFlowAnalyzer.SerializeToGraphviz(controlBlocks);
+        var cfa = new ControlFlowAnalyzer(methodBody);
+        var controlBlocks = cfa.ControlBlocks;
+        var dotGraph = cfa.SerializeToGraphviz();
         Console.WriteLine(dotGraph);
 
         Stack<CodeBlockInfo> blockStack = [];
@@ -66,14 +67,14 @@ partial class Decompiler
                 // If multiple blocks lead to this address, then we're outside of the IF clause entirely.
                 // Otherwise, it's probably the start of an ELSE clause.
 
-                var currentControlBlock = controlBlocks.GetByInstruction(instruction);
+                var currentControlBlock = cfa.GetByInstruction(instruction);
                 if (controlBlocks.Count(b => b.HasEdgeTo(currentControlBlock, controlBlocks)) <= 1)
                 {
                     blockStack.Push(new(instruction.Offset, uint.MaxValue, SyntaxKind.ElseClause, null));
                 }
             }
 
-            if (controlBlocks.IsAlwaysExecuted(instruction.Offset))
+            if (cfa.IsAlwaysExecuted(instruction.Offset))
             {
                 while (blockStack.Count > 1)
                 {
