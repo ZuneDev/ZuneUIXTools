@@ -1,4 +1,5 @@
 ﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System;
 using System.Collections.Generic;
 
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
@@ -35,7 +36,11 @@ internal record CodeBlockInfo
 
             case ElseBlockInfo _:
                 var elseClause = ElseClause(blockBody);
-                var ifElseBlock = (IfStatementSyntax)parentBlock.Statements[^1];
+
+                var parentLastStatement = parentBlock.Statements[^1];
+                if (parentLastStatement is not IfStatementSyntax ifElseBlock)
+                    throw new InvalidOperationException($"Else block must be preceded by an if block, got '{parentLastStatement.Kind()}'");
+
                 parentBlock.Statements[^1] = ifElseBlock.WithElse(elseClause);
                 break;
 

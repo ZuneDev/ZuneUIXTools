@@ -56,37 +56,58 @@ partial class Decompiler
         {
             var instruction = methodBody[i];
 
-            if (jumpFalseToOffsets.Contains(instruction.Offset) && blockStack.Count >= 2)
+            while (blockStack.Count > 1)
             {
+                var currentBlock = blockStack.Pop();
 
-                var currentBlock = blockStack.Pop() with { EndOffset = instruction.Offset };
+                if (currentBlock.EndOffset != instruction.Offset)
+                {
+                    blockStack.Push(currentBlock);
+                    break;
+                }
+
+                System.Diagnostics.Debug.WriteLine($"END: Finalizing {currentBlock}");
                 currentBlock.FinalizeBlock(blockStack.Peek());
-
-                // This address marks the end of the affirmative branch of an IF clause.
-                // If multiple blocks lead to this address, then we're outside of the IF clause entirely.
-                // Otherwise, it's probably the start of an ELSE clause.
-
-                var currentControlBlock = cfa.GetByInstruction(instruction);
-                if (controlBlocks.Count(b => b.HasEdgeTo(currentControlBlock, controlBlocks)) <= 1)
-                {
-                    blockStack.Push(new(instruction.Offset, uint.MaxValue, new ElseBlockInfo()));
-                }
             }
 
-            if (!foreachLoopHeadOffsets.Contains(instruction.Offset) && cfa.IsAlwaysExecuted(instruction.Offset))
-            {
-                while (blockStack.Count > 1)
-                {
-                    var currentBlock = blockStack.Pop();
-                    if (currentBlock.EndOffset is uint.MaxValue)
-                        currentBlock = currentBlock with { EndOffset = instruction.Offset };
+            //if (jumpToOffsets.Contains(instruction.Offset) && TryPeekBlock<ElseBlockInfo>(out _))
+            //{
+            //    // This address marks the end of the affirmative branch of an IF clause.
+            //    // If multiple blocks lead to this address, then we're outside of the IF clause entirely.
+            //    // Otherwise, it's probably the start of an ELSE clause.
 
-                    if (currentBlock.EndOffset != instruction.Offset)
-                        break;
+            //    while (blockStack.Count > 1)
+            //    {
+            //        var currentBlock = blockStack.Pop();
 
-                    currentBlock.FinalizeBlock(blockStack.Peek());
-                }
-            }
+            //        if (currentBlock.AdditionalInfo is not (ElseBlockInfo))
+            //            break;
+
+            //        if (currentBlock.EndOffset is uint.MaxValue)
+            //            currentBlock = currentBlock with { EndOffset = instruction.Offset };
+
+            //        System.Diagnostics.Debug.WriteLine($"JMP: Finalizing ELSE {currentBlock}");
+            //        currentBlock.FinalizeBlock(blockStack.Peek());
+            //    }
+            //}
+
+            //if (!foreachLoopHeadOffsets.Contains(instruction.Offset) && cfa.IsAlwaysExecuted(instruction.Offset))
+            //{
+            //    while (blockStack.Count > 1)
+            //    {
+            //        var currentBlock = blockStack.Pop();
+            //        if (currentBlock.EndOffset is uint.MaxValue)
+            //        {
+
+            //        }
+
+            //        if (currentBlock.EndOffset != instruction.Offset || currentBlock.AdditionalInfo is not (IfBlockInfo or ElseBlockInfo))
+            //            break;
+
+            //        System.Diagnostics.Debug.WriteLine($"Always exec'ed: Automatically finalizing {currentBlock}");
+            //        currentBlock.FinalizeBlock(blockStack.Peek());
+            //    }
+            //}
 
             var opCode = instruction.OpCode;
 
@@ -299,7 +320,8 @@ partial class Decompiler
                     case OpCode.JumpIfTruePeek:
                         var jumpToOffset = (uint)instruction.Operands.First().Value;
 
-                        if (opCode is OpCode.JumpIfFalse && TryPeekBlock<ForEachBlockInfo>(out _))
+                        if (opCode is OpCode.JumpIfFalse && TryPeekBlock<ForEachBlockInfo>(out var jmpfForEachBlockInfo)
+                            && jmpfForEachBlockInfo.Type is null)
                             break;
 
                         var isPeek = opCode is OpCode.JumpIfFalsePeek or OpCode.JumpIfTruePeek;
@@ -308,7 +330,13 @@ partial class Decompiler
                         if (opCode is OpCode.JumpIfFalse)
                         {
                             // JMPF is used to evaluate the branch condition
-                            var ifBlock = new CodeBlockInfo(instruction.Offset, jumpToOffset, new IfBlockInfo(jumpCondition));
+                            var ifBlockEndOffset = methodBody
+                               .Reverse()
+                               .SkipWhile(i => i.Offset >= jumpToOffset)
+                               .First()
+                               .Offset;
+
+                            var ifBlock = new CodeBlockInfo(instruction.Offset, ifBlockEndOffset, new IfBlockInfo(jumpCondition));
                             blockStack.Push(ifBlock);
                         }
                         else
@@ -329,13 +357,32 @@ partial class Decompiler
 
                             if (foreachLoopHeadOffsets.Contains(jumpOffset))
                             {
-                                var currentBlock = blockStack.Pop() with { EndOffset = instruction.Offset };
-                                currentBlock.FinalizeBlock(blockStack.Peek());
+                                //var currentBlock = blockStack.Pop() with { EndOffset = instruction.Offset };
+                                //System.Diagnostics.Debug.WriteLine($"JMP: Finalizing loop {currentBlock}");
+                                //currentBlock.FinalizeBlock(blockStack.Peek());
                             }
                             else
                             {
                                 throw new NotImplementedException("For and while loops are not supported at this time.");
                             }
+                        }
+                        else
+                        {
+                            // End of if block, skipping else block
+
+                            // Figure out where the else block ends by searching for the last instruction we skip
+                            var elseBlockEndOffset = methodBody
+                                .Reverse()
+                                .SkipWhile(i => i.Offset >= jumpOffset)
+                                .First()
+                                .Offset;
+
+                            //var currentBlock = blockStack.Pop() with { EndOffset = instruction.Offset };
+                            //System.Diagnostics.Debug.WriteLine($"JMP: Finalizing presumed IF {currentBlock}");
+                            //currentBlock.FinalizeBlock(blockStack.Peek());
+
+                            var elseBlock = new CodeBlockInfo(instruction.Offset, elseBlockEndOffset, new ElseBlockInfo());
+                            blockStack.Push(elseBlock);
                         }
 
                         break;
@@ -381,11 +428,14 @@ partial class Decompiler
 
         bool TryPeekBlock<T>([NotNullWhen(true)] out T additionalInfo) where T : ICodeBlockAdditionalInfo
         {
-            var currentBlock = blockStack.Peek();
-            if (currentBlock.AdditionalInfo is T a)
+            if (blockStack.Count > 1)
             {
-                additionalInfo = a;
-                return true;
+                var currentBlock = blockStack.Peek();
+                if (currentBlock.AdditionalInfo is T a)
+                {
+                    additionalInfo = a;
+                    return true;
+                }
             }
 
             additionalInfo = default;
