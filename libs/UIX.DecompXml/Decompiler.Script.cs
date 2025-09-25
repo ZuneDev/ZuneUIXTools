@@ -39,14 +39,6 @@ partial class Decompiler
         Stack<CodeBlockInfo> blockStack = [];
         blockStack.Push(new(0, methodBody[^1].Offset));
 
-        HashSet<uint> jumpFalseToOffsets = new(methodBody
-            .Where(i => i.OpCode is OpCode.JumpIfFalse)
-            .Select(i => (uint)i.Operands.First().Value));
-
-        HashSet<uint> jumpToOffsets = new(methodBody
-            .Where(i => i.OpCode is OpCode.Jump)
-            .Select(i => (uint)i.Operands.First().Value));
-
         HashSet<uint> foreachLoopHeadOffsets = [];
 
         Dictionary<string, TypeSchema> scopedLocals = [];
@@ -66,48 +58,8 @@ partial class Decompiler
                     break;
                 }
 
-                System.Diagnostics.Debug.WriteLine($"END: Finalizing {currentBlock}");
                 currentBlock.FinalizeBlock(blockStack.Peek());
             }
-
-            //if (jumpToOffsets.Contains(instruction.Offset) && TryPeekBlock<ElseBlockInfo>(out _))
-            //{
-            //    // This address marks the end of the affirmative branch of an IF clause.
-            //    // If multiple blocks lead to this address, then we're outside of the IF clause entirely.
-            //    // Otherwise, it's probably the start of an ELSE clause.
-
-            //    while (blockStack.Count > 1)
-            //    {
-            //        var currentBlock = blockStack.Pop();
-
-            //        if (currentBlock.AdditionalInfo is not (ElseBlockInfo))
-            //            break;
-
-            //        if (currentBlock.EndOffset is uint.MaxValue)
-            //            currentBlock = currentBlock with { EndOffset = instruction.Offset };
-
-            //        System.Diagnostics.Debug.WriteLine($"JMP: Finalizing ELSE {currentBlock}");
-            //        currentBlock.FinalizeBlock(blockStack.Peek());
-            //    }
-            //}
-
-            //if (!foreachLoopHeadOffsets.Contains(instruction.Offset) && cfa.IsAlwaysExecuted(instruction.Offset))
-            //{
-            //    while (blockStack.Count > 1)
-            //    {
-            //        var currentBlock = blockStack.Pop();
-            //        if (currentBlock.EndOffset is uint.MaxValue)
-            //        {
-
-            //        }
-
-            //        if (currentBlock.EndOffset != instruction.Offset || currentBlock.AdditionalInfo is not (IfBlockInfo or ElseBlockInfo))
-            //            break;
-
-            //        System.Diagnostics.Debug.WriteLine($"Always exec'ed: Automatically finalizing {currentBlock}");
-            //        currentBlock.FinalizeBlock(blockStack.Peek());
-            //    }
-            //}
 
             var opCode = instruction.OpCode;
 
@@ -355,13 +307,7 @@ partial class Decompiler
                         {
                             // End of loop
 
-                            if (foreachLoopHeadOffsets.Contains(jumpOffset))
-                            {
-                                //var currentBlock = blockStack.Pop() with { EndOffset = instruction.Offset };
-                                //System.Diagnostics.Debug.WriteLine($"JMP: Finalizing loop {currentBlock}");
-                                //currentBlock.FinalizeBlock(blockStack.Peek());
-                            }
-                            else
+                            if (!foreachLoopHeadOffsets.Contains(jumpOffset))
                             {
                                 throw new NotImplementedException("For and while loops are not supported at this time.");
                             }
@@ -376,10 +322,6 @@ partial class Decompiler
                                 .SkipWhile(i => i.Offset >= jumpOffset)
                                 .First()
                                 .Offset;
-
-                            //var currentBlock = blockStack.Pop() with { EndOffset = instruction.Offset };
-                            //System.Diagnostics.Debug.WriteLine($"JMP: Finalizing presumed IF {currentBlock}");
-                            //currentBlock.FinalizeBlock(blockStack.Peek());
 
                             var elseBlock = new CodeBlockInfo(instruction.Offset, elseBlockEndOffset, new ElseBlockInfo());
                             blockStack.Push(elseBlock);
