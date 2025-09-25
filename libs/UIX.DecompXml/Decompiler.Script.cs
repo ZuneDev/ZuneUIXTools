@@ -8,7 +8,6 @@ using Microsoft.Iris.Markup;
 using Microsoft.Iris.Markup.UIX;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 
@@ -36,9 +35,6 @@ partial class Decompiler
         var dotGraph = cfa.SerializeToGraphviz();
         Console.WriteLine(dotGraph);
 
-        Stack<CodeBlockInfo> blockStack = [];
-        blockStack.Push(new(0, methodBody[^1].Offset));
-
         HashSet<uint> foreachLoopHeadOffsets = [];
 
         Dictionary<string, TypeSchema> scopedLocals = [];
@@ -48,18 +44,7 @@ partial class Decompiler
         {
             var instruction = methodBody[i];
 
-            while (blockStack.Count > 1)
-            {
-                var currentBlock = blockStack.Pop();
-
-                if (currentBlock.EndOffset != instruction.Offset)
-                {
-                    blockStack.Push(currentBlock);
-                    break;
-                }
-
-                currentBlock.FinalizeBlock(blockStack.Peek());
-            }
+            cfa.FinalizeCompletedBlocks(instruction.Offset);
 
             var opCode = instruction.OpCode;
 
@@ -98,13 +83,13 @@ partial class Decompiler
                         };
 
                         var foreachBlock = new CodeBlockInfo(instruction.Offset, loopBodyEndOffset, forEachBlockInfo);
-                        blockStack.Push(foreachBlock);
+                        cfa.PushBlock(foreachBlock);
 
                         break;
 
                     case OpCode.MethodInvokePeek:
                         // Ignore MoveNext calls when in a foreach loop, as long as we haven't already initialized this loop
-                        if (!TryPeekBlock<ForEachBlockInfo>(out var forEachBlockInfo1) || forEachBlockInfo1.Type is not null)
+                        if (!cfa.TryPeekBlock<ForEachBlockInfo>(out var forEachBlockInfo1) || forEachBlockInfo1.Type is not null)
                             goto default;
 
                         var methodSchemaPeek = _context.GetImportedMethod(instruction.Operands.First());
@@ -130,21 +115,18 @@ partial class Decompiler
                         break;
 
                     case OpCode.DiscardValue:
-                        var value = stack.Pop();
-                        if (value is ExpressionSyntax expr)
+                        if (stack.Pop() is ExpressionSyntax expr)
                         {
                             if (expr is ParenthesizedExpressionSyntax parenExpr)
                                 expr = parenExpr.Expression;
 
-                            var statements = blockStack.Peek().Statements;
-                            if (statements.Count > 0)
+                            if (cfa.TryGetLastStatement(out var lastStatement))
                             {
-                                var lastStatement = statements[^1];
                                 if (lastStatement.DescendantNodes().Any(n => n.IsEquivalentTo(expr)))
                                     break;
                             }
 
-                            blockStack.Peek().Statements.Add(ExpressionStatement(expr));
+                            cfa.AppendToBlock(ExpressionStatement(expr));
                         }
                         break;
 
@@ -197,7 +179,7 @@ partial class Decompiler
                             symbolWriteExpr = ExpressionStatement(symbolAssignmentExpr);
                         }
 
-                        blockStack.Peek().Statements.Add(symbolWriteExpr);
+                        cfa.AppendToBlock(symbolWriteExpr);
                         break;
 
                     case OpCode.PropertyAssign:
@@ -218,13 +200,13 @@ partial class Decompiler
                             newPropValue
                         );
 
-                        blockStack.Peek().Statements.Add(ExpressionStatement(propertySetExpression));
+                        cfa.AppendToBlock(ExpressionStatement(propertySetExpression));
                         break;
 
                     case OpCode.PropertyGetPeek:
                         // PGETP is only used in foreach loops
 
-                        if (!TryPeekBlock<ForEachBlockInfo>(out var forEachBlockInfo2))
+                        if (!cfa.TryPeekBlock<ForEachBlockInfo>(out var forEachBlockInfo2))
                             throw new InvalidOperationException("Unexpected call to Current outside of a foreach loop");
 
                         var propToGet = _context.GetImportedProperty(instruction.Operands.First());
@@ -272,7 +254,7 @@ partial class Decompiler
                     case OpCode.JumpIfTruePeek:
                         var jumpToOffset = (uint)instruction.Operands.First().Value;
 
-                        if (opCode is OpCode.JumpIfFalse && TryPeekBlock<ForEachBlockInfo>(out var jmpfForEachBlockInfo)
+                        if (opCode is OpCode.JumpIfFalse && cfa.TryPeekBlock<ForEachBlockInfo>(out var jmpfForEachBlockInfo)
                             && jmpfForEachBlockInfo.Type is null)
                             break;
 
@@ -289,13 +271,13 @@ partial class Decompiler
                                .Offset;
 
                             var ifBlock = new CodeBlockInfo(instruction.Offset, ifBlockEndOffset, new IfBlockInfo(jumpCondition));
-                            blockStack.Push(ifBlock);
+                            cfa.PushBlock(ifBlock);
                         }
                         else
                         {
                             // JMPFP and JMPTP are only used to implement short-circuiting
-                            var ifBlock = SimplifyExpression(jumpCondition);
-                            stack.Push(ifBlock);
+                            var ifCondition = SimplifyExpression(jumpCondition);
+                            stack.Push(ifCondition);
                         }
 
                         break;
@@ -324,21 +306,21 @@ partial class Decompiler
                                 .Offset;
 
                             var elseBlock = new CodeBlockInfo(instruction.Offset, elseBlockEndOffset, new ElseBlockInfo());
-                            blockStack.Push(elseBlock);
+                            cfa.PushBlock(elseBlock);
                         }
 
                         break;
 
                     case OpCode.ReturnValue:
                         var returnStatement = ReturnStatement(IrisExpression.ToSyntax(stack.Pop(), _context));
-                        blockStack.Peek().Statements.Add(returnStatement);
+                        cfa.AppendToBlock(returnStatement);
                         break;
 
                     case OpCode.ReturnVoid:
                         // Include return statement when we're not in the main block (which would return anyway)
                         // or when we're not at the end of the function
-                        if (blockStack.Count > 1 || i + 1 < methodBody.Length)
-                            blockStack.Peek().Statements.Add(ReturnStatement());
+                        if (cfa.BlockStack.Count > 1 || i + 1 < methodBody.Length)
+                            cfa.AppendToBlock(ReturnStatement());
                         break;
 
                     case OpCode.ClearSymbol:
@@ -346,10 +328,10 @@ partial class Decompiler
                         break;
 
                     default:
-                        if (!TryDecompileExpression(instruction, stack, blockStack))
+                        if (!TryDecompileExpression(instruction, stack, cfa))
                         {
                             var unsupportedComment = Comment($"// Unsupported instruction: {instruction}");
-                            blockStack.Peek().Statements.Add(EmptyStatement().WithLeadingTrivia(unsupportedComment));
+                            cfa.AppendToBlock(EmptyStatement().WithLeadingTrivia(unsupportedComment));
                         }
                         break;
                 }
@@ -360,29 +342,13 @@ partial class Decompiler
             }
         }
 
-        if (blockStack.Count > 1)
+        if (cfa.BlockStack.Count > 1)
             throw new InvalidOperationException($"Failed to decompile script for {export.Name}, more than one top-level code block");
-        else if (blockStack.Count < 0)
+        else if (cfa.BlockStack.Count < 0)
             throw new InvalidOperationException($"Failed to decompile script for {export.Name}, no top-level code blocks");
 
         // Unwrap top-most block to avoid extra curly braces around entire script
-        return blockStack.Pop().Statements;
-
-        bool TryPeekBlock<T>([NotNullWhen(true)] out T additionalInfo) where T : ICodeBlockAdditionalInfo
-        {
-            if (blockStack.Count > 1)
-            {
-                var currentBlock = blockStack.Peek();
-                if (currentBlock.AdditionalInfo is T a)
-                {
-                    additionalInfo = a;
-                    return true;
-                }
-            }
-
-            additionalInfo = default;
-            return false;
-        }
+        return cfa.BlockStack.Pop().Statements;
     }
 
     private MethodDeclarationSyntax DecompileMethodDeclaration(MarkupMethodSchema method, MarkupTypeSchema export)
@@ -615,7 +581,7 @@ partial class Decompiler
             .ToString();
     }
 
-    private bool TryDecompileExpression(Instruction instruction, Stack<object> stack, Stack<CodeBlockInfo> blockStack = null)
+    private bool TryDecompileExpression(Instruction instruction, Stack<object> stack, ControlFlowAnalyzer cfa = null)
     {
         var opCode = instruction.OpCode;
 
@@ -702,7 +668,7 @@ partial class Decompiler
                 }
                 else
                 {
-                    blockStack?.Peek().Statements.Add(ExpressionStatement(methodResult));
+                    cfa?.AppendToBlock(ExpressionStatement(methodResult));
                 }
 
                 if (pushLastParam)

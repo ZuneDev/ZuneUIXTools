@@ -1,4 +1,5 @@
-﻿using Microsoft.Iris.Asm.Models;
+﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.Iris.Asm.Models;
 using Microsoft.Iris.Markup;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -21,9 +22,14 @@ public class ControlFlowAnalyzer
     public ControlFlowAnalyzer(Instruction[] instructions)
     {
         ControlBlocks = CreateGraph(instructions);
+
+        BlockStack = [];
+        BlockStack.Push(new(0, instructions[^1].Offset));
     }
 
     public List<IProgramBlock> ControlBlocks { get; }
+
+    public Stack<CodeBlockInfo> BlockStack { get; }
 
     public IProgramBlock GetByOffset(uint offset)
     {
@@ -34,48 +40,53 @@ public class ControlFlowAnalyzer
 
     public IProgramBlock GetByInstruction(Instruction instruction) => GetByOffset(instruction.Offset);
 
-    public bool IsAlwaysExecuted(uint offset)
+    public void FinalizeCompletedBlocks(uint currentOffset)
     {
-        if (ControlBlocks.Count == 1)
-            return true;
-
-        // Checks if the entry node is post-dominated by the block containing this offset.
-        // Essentially, do all paths through this method execute code at this offset?
-
-        var blockOfInterest = GetByStartOffset(offset);
-        if (blockOfInterest is null)
-            return false;
-
-        HashSet<uint> exitBlockOffsets = new(ControlBlocks
-            .Where(b => b.Body[^1].OpCode is OpCode.ReturnValue or OpCode.ReturnVoid)
-            .Select(b => b.StartOffset));
-
-        HashSet<uint> visitedStartOffsets = [];
-        Stack<IProgramBlock> stack = [];
-
-        stack.Push(ControlBlocks[0]);
-
-        while (stack.Count > 0)
+        while (BlockStack.Count > 1)
         {
-            var current = stack.Pop();
-            var currentOffset = current.StartOffset;
+            var currentBlock = BlockStack.Pop();
 
-            if (currentOffset == offset || visitedStartOffsets.Contains(currentOffset))
-                continue;
-
-            if (exitBlockOffsets.Contains(currentOffset))
-                return false;
-
-            visitedStartOffsets.Add(current.StartOffset);
-
-            foreach (var childOffset in current.GetChildrenStartOffsets())
+            if (currentBlock.EndOffset != currentOffset)
             {
-                var child = GetByStartOffset(childOffset);
-                stack.Push(child);
+                BlockStack.Push(currentBlock);
+                break;
+            }
+
+            currentBlock.FinalizeBlock(BlockStack.Peek());
+        }
+    }
+
+    public void PushBlock(CodeBlockInfo block) => BlockStack.Push(block);
+
+    public bool TryPeekBlock<T>(out T additionalInfo) where T : ICodeBlockAdditionalInfo
+    {
+        if (BlockStack.Count > 1)
+        {
+            var currentBlock = BlockStack.Peek();
+            if (currentBlock.AdditionalInfo is T a)
+            {
+                additionalInfo = a;
+                return true;
             }
         }
 
-        return true;
+        additionalInfo = default;
+        return false;
+    }
+
+    public void AppendToBlock(StatementSyntax statement) => BlockStack.Peek().Statements.Add(statement);
+
+    public bool TryGetLastStatement(out StatementSyntax statement)
+    {
+        var statements = BlockStack.Peek().Statements;
+        if (statements.Count > 0)
+        {
+            statement = statements[^1];
+            return true;
+        }
+
+        statement = null;
+        return false;
     }
 
     private static List<IProgramBlock> CreateGraph(Instruction[] instructions)

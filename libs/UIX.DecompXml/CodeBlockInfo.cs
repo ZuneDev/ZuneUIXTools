@@ -6,7 +6,7 @@ using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace Microsoft.Iris.DecompXml;
 
-internal record CodeBlockInfo
+public record CodeBlockInfo
 {
     public CodeBlockInfo(uint startOffset, uint endOffset, ICodeBlockAdditionalInfo additionalInfo = null)
     {
@@ -51,21 +51,21 @@ internal record CodeBlockInfo
                 break;
 
             default:
-                throw new System.NotImplementedException($"Unrecognized code block kind '{AdditionalInfo.GetType().Name}'");
+                throw new NotImplementedException($"Unrecognized code block kind '{AdditionalInfo.GetType().Name}'");
         }
     }
 }
 
-internal interface ICodeBlockAdditionalInfo;
+public interface ICodeBlockAdditionalInfo;
 
-internal class IfBlockInfo(ExpressionSyntax condition = null) : ICodeBlockAdditionalInfo
+public class IfBlockInfo(ExpressionSyntax condition = null) : ICodeBlockAdditionalInfo
 {
     public ExpressionSyntax Condition { get; set; } = condition;
 }
 
-internal class ElseBlockInfo : ICodeBlockAdditionalInfo;
+public class ElseBlockInfo : ICodeBlockAdditionalInfo;
 
-internal class ForEachBlockInfo : ICodeBlockAdditionalInfo
+public class ForEachBlockInfo : ICodeBlockAdditionalInfo
 {
     public ExpressionSyntax Source { get; set; }
 
