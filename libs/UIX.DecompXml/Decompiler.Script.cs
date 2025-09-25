@@ -46,7 +46,7 @@ partial class Decompiler
             .Where(i => i.OpCode is OpCode.Jump)
             .Select(i => (uint)i.Operands.First().Value));
 
-        HashSet<string> scopedLocals = [];
+        Dictionary<string, TypeSchema> scopedLocals = [];
         Stack<object> stack = new();
 
         for (int i = 0; i < methodBody.Length; i++)
@@ -141,11 +141,17 @@ partial class Decompiler
 
                         StatementSyntax symbolWriteExpr;
 
-                        if (symbolRef.Origin is SymbolOrigin.ScopedLocal && !scopedLocals.Contains(symbolRef.Symbol))
+                        if (symbolRef.Origin is SymbolOrigin.ScopedLocal && !scopedLocals.ContainsKey(symbolRef.Symbol))
                         {
                             // Scoped locals need to be declared the first time they're assigned
-                            var newSymbolIrisObj = IrisObject.Create(newSymbolValue, null, _context, export);
-                            var typeSchema = newSymbolIrisObj.Type ?? UIXTypes.MapIDToType(UIXTypeID.Object);
+                            TypeSchema typeSchema = null;
+                            if (newSymbolValue is SymbolReference { Origin: SymbolOrigin.ScopedLocal } newSymbolValueRef)
+                            {
+                                scopedLocals.TryGetValue(newSymbolValueRef.Symbol, out typeSchema);
+                            }
+
+                            var newSymbolIrisObj = IrisObject.Create(newSymbolValue, typeSchema, _context, export);
+                            typeSchema = newSymbolIrisObj.Type ?? UIXTypes.MapIDToType(UIXTypeID.Object);
 
                             symbolWriteExpr = LocalDeclarationStatement(VariableDeclaration(
                                 IrisExpression.ToSyntax(typeSchema, _context),
@@ -155,7 +161,7 @@ partial class Decompiler
                                 )
                             ));
 
-                            scopedLocals.Add(symbolRef.Symbol);
+                            scopedLocals[symbolRef.Symbol] = typeSchema;
                         }
                         else
                         {

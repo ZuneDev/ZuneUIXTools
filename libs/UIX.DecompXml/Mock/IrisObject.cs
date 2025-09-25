@@ -40,7 +40,7 @@ internal record IrisObject(object Object, TypeSchema Type)
             type ??= constantInfo.Type;
         }
 
-        type ??= Disassembler.GuessTypeSchema(obj.GetType(), context.LoadResult);
+        type ??= Disassembler.TryGuessTypeSchema(obj.GetType(), context.LoadResult);
 
         return new(obj, type);
     }
