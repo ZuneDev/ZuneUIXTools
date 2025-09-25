@@ -8,6 +8,7 @@ using Microsoft.Iris.Markup;
 using Microsoft.Iris.Markup.UIX;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 
@@ -36,7 +37,7 @@ partial class Decompiler
         Console.WriteLine(dotGraph);
 
         Stack<CodeBlockInfo> blockStack = [];
-        blockStack.Push(new(0, methodBody[^1].Offset, SyntaxKind.Block, null));
+        blockStack.Push(new(0, methodBody[^1].Offset));
 
         HashSet<uint> jumpFalseToOffsets = new(methodBody
             .Where(i => i.OpCode is OpCode.JumpIfFalse)
@@ -46,6 +47,8 @@ partial class Decompiler
             .Where(i => i.OpCode is OpCode.Jump)
             .Select(i => (uint)i.Operands.First().Value));
 
+        HashSet<uint> foreachLoopHeadOffsets = [];
+
         Dictionary<string, TypeSchema> scopedLocals = [];
         Stack<object> stack = new();
 
@@ -53,12 +56,8 @@ partial class Decompiler
         {
             var instruction = methodBody[i];
 
-            if (jumpFalseToOffsets.Contains(instruction.Offset))
+            if (jumpFalseToOffsets.Contains(instruction.Offset) && blockStack.Count >= 2)
             {
-                if (blockStack.Count < 2)
-                {
-                    throw new InvalidOperationException("Expected two blocks left on the stack");
-                }
 
                 var currentBlock = blockStack.Pop() with { EndOffset = instruction.Offset };
                 currentBlock.FinalizeBlock(blockStack.Peek());
@@ -70,11 +69,11 @@ partial class Decompiler
                 var currentControlBlock = cfa.GetByInstruction(instruction);
                 if (controlBlocks.Count(b => b.HasEdgeTo(currentControlBlock, controlBlocks)) <= 1)
                 {
-                    blockStack.Push(new(instruction.Offset, uint.MaxValue, SyntaxKind.ElseClause, null));
+                    blockStack.Push(new(instruction.Offset, uint.MaxValue, new ElseBlockInfo()));
                 }
             }
 
-            if (cfa.IsAlwaysExecuted(instruction.Offset))
+            if (!foreachLoopHeadOffsets.Contains(instruction.Offset) && cfa.IsAlwaysExecuted(instruction.Offset))
             {
                 while (blockStack.Count > 1)
                 {
@@ -95,6 +94,59 @@ partial class Decompiler
             {
                 switch (opCode)
                 {
+                    case OpCode.MethodInvoke:
+                        var methodSchema = _context.GetImportedMethod(instruction.Operands.First());
+
+                        // `Enumerator GetEnumerator()` marks the start of a foreach loop
+                        if (!methodSchema.Name.Equals("GetEnumerator", StringComparison.InvariantCulture)
+                            || methodSchema.IsStatic
+                            || methodSchema.ParameterTypes.Length != 0
+                            || methodSchema.ReturnType != UIXTypes.MapIDToType(UIXTypeID.Enumerator))
+                        {
+                            goto default;
+                        }
+
+                        var preheaderBlock = cfa.GetByInstruction(instruction);
+
+                        var headOffset = preheaderBlock.NextOffset;
+                        foreachLoopHeadOffsets.Add(headOffset);
+
+                        var headBlock = cfa.GetByStartOffset(headOffset);
+                        var exitOffset = ((BasicControlFlowBlock)headBlock).BranchTargetOffset;
+                        var loopBodyEndOffset = methodBody
+                            .Select(i => i.Offset)
+                            .OrderByDescending(i => i)
+                            .SkipWhile(i => i >= exitOffset)
+                            .First();
+
+                        var forEachBlockInfo = new ForEachBlockInfo
+                        {
+                            Source = IrisExpression.ToSyntax(stack.Pop(), _context),
+                        };
+
+                        var foreachBlock = new CodeBlockInfo(instruction.Offset, loopBodyEndOffset, forEachBlockInfo);
+                        blockStack.Push(foreachBlock);
+
+                        break;
+
+                    case OpCode.MethodInvokePeek:
+                        // Ignore MoveNext calls when in a foreach loop, as long as we haven't already initialized this loop
+                        if (!TryPeekBlock<ForEachBlockInfo>(out var forEachBlockInfo1) || forEachBlockInfo1.Type is not null)
+                            goto default;
+
+                        var methodSchemaPeek = _context.GetImportedMethod(instruction.Operands.First());
+
+                        // `bool MoveNext()` marks the start of a foreach loop
+                        if (!methodSchemaPeek.Name.Equals("MoveNext", StringComparison.InvariantCulture)
+                            || methodSchemaPeek.IsStatic
+                            || methodSchemaPeek.ParameterTypes.Length != 0
+                            || methodSchemaPeek.ReturnType != UIXTypes.MapIDToType(UIXTypeID.Boolean))
+                        {
+                            goto default;
+                        }
+
+                        break;
+
                     case OpCode.PushConstant:
                         var constant = _context.GetConstant(instruction.Operands.First());
                         stack.Push(IrisExpression.ToSyntax(constant, _context));
@@ -196,6 +248,42 @@ partial class Decompiler
                         blockStack.Peek().Statements.Add(ExpressionStatement(propertySetExpression));
                         break;
 
+                    case OpCode.PropertyGetPeek:
+                        // PGETP is only used in foreach loops
+
+                        if (!TryPeekBlock<ForEachBlockInfo>(out var forEachBlockInfo2))
+                            throw new InvalidOperationException("Unexpected call to Current outside of a foreach loop");
+
+                        var propToGet = _context.GetImportedProperty(instruction.Operands.First());
+
+                        // `object Current` gets the item for this iteration of the loop
+                        if (!propToGet.Name.Equals("Current", StringComparison.InvariantCulture)
+                            || propToGet.IsStatic
+                            || !propToGet.CanRead
+                            || propToGet.PropertyType != UIXTypes.MapIDToType(UIXTypeID.Object))
+                        {
+                            throw new InvalidOperationException("Unexpected PGETP instruction in foreach loop");
+                        }
+
+                        var vtcInstruction = methodBody[++i];
+                        if (vtcInstruction.OpCode is not OpCode.VerifyTypeCast)
+                            throw new InvalidOperationException($"Expected a VTC instruction, got {vtcInstruction.OpCode}");
+
+                        var loopVariableType = _context.GetImportedType(vtcInstruction.Operands.First());
+
+                        var wsymInstruction = methodBody[++i];
+                        if (wsymInstruction.OpCode is not OpCode.WriteSymbol)
+                            throw new InvalidOperationException($"Expected a WSYM instruction, got {wsymInstruction.OpCode}");
+                        
+                        var loopVariableSymbol = export.SymbolReferenceTable[(ushort)wsymInstruction.Operands.First().Value].Symbol;
+
+                        forEachBlockInfo2.Type = IrisExpression.ToSyntax(loopVariableType, _context);
+                        forEachBlockInfo2.Identifier = loopVariableSymbol;
+
+                        stack.Push(IdentifierName(loopVariableSymbol));
+
+                        break;
+
                     case OpCode.VerifyTypeCast:
                         var objToCast = stack.Pop();
                         var typeToCastTo = _context.GetImportedType(instruction.Operands.First());
@@ -211,13 +299,16 @@ partial class Decompiler
                     case OpCode.JumpIfTruePeek:
                         var jumpToOffset = (uint)instruction.Operands.First().Value;
 
+                        if (opCode is OpCode.JumpIfFalse && TryPeekBlock<ForEachBlockInfo>(out _))
+                            break;
+
                         var isPeek = opCode is OpCode.JumpIfFalsePeek or OpCode.JumpIfTruePeek;
                         var jumpCondition = IrisExpression.ToSyntax(isPeek ? stack.Peek() : stack.Pop(), _context);
 
-                        if (!isPeek)
+                        if (opCode is OpCode.JumpIfFalse)
                         {
                             // JMPF is used to evaluate the branch condition
-                            var ifBlock = new CodeBlockInfo(instruction.Offset, jumpToOffset, SyntaxKind.IfStatement, jumpCondition);
+                            var ifBlock = new CodeBlockInfo(instruction.Offset, jumpToOffset, new IfBlockInfo(jumpCondition));
                             blockStack.Push(ifBlock);
                         }
                         else
@@ -232,9 +323,19 @@ partial class Decompiler
                     case OpCode.Jump:
                         var jumpOffset = (uint)instruction.Operands.First().Value;
 
-                        if (jumpOffset <= instruction.Offset)
+                        if (jumpOffset < instruction.Offset)
                         {
-                            throw new NotImplementedException("Loops, ternaries, and null coalescing are not supported at this time");
+                            // End of loop
+
+                            if (foreachLoopHeadOffsets.Contains(jumpOffset))
+                            {
+                                var currentBlock = blockStack.Pop() with { EndOffset = instruction.Offset };
+                                currentBlock.FinalizeBlock(blockStack.Peek());
+                            }
+                            else
+                            {
+                                throw new NotImplementedException("For and while loops are not supported at this time.");
+                            }
                         }
 
                         break;
@@ -277,6 +378,19 @@ partial class Decompiler
 
         // Unwrap top-most block to avoid extra curly braces around entire script
         return blockStack.Pop().Statements;
+
+        bool TryPeekBlock<T>([NotNullWhen(true)] out T additionalInfo) where T : ICodeBlockAdditionalInfo
+        {
+            var currentBlock = blockStack.Peek();
+            if (currentBlock.AdditionalInfo is T a)
+            {
+                additionalInfo = a;
+                return true;
+            }
+
+            additionalInfo = default;
+            return false;
+        }
     }
 
     private MethodDeclarationSyntax DecompileMethodDeclaration(MarkupMethodSchema method, MarkupTypeSchema export)
