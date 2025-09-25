@@ -118,6 +118,27 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="cfa_foreach01.uix" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\cfa_foreach01.uix;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="cfa_foreach02.uix" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\cfa_foreach02.uix;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="cfa_foreach03.uix" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\cfa_foreach03.uix;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="cfa_foreach04.uix" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\cfa_foreach04.uix;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="cfa_foreach05.uix" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\cfa_foreach05.uix;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="cfa_foreach06.uix" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\cfa_foreach06.uix;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="cfa_foreach07.uix" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\cfa_foreach07.uix;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
   <data name="cfa_if-elseif-else01.uix" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\cfa_if-elseif-else01.uix;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>

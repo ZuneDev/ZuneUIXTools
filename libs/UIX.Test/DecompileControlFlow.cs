@@ -23,7 +23,19 @@ public class DecompileControlFlow
     [InlineData("cfa_if-elseif-else03")]
     [InlineData("cfa_if-elseif-else04")]
     [InlineData("cfa_if-elseif-else05")]
-    public async Task IfElseIfElse(string fileNameWithoutExtension)
+    public async Task IfElseIfElse(string testId) => await TestDecompile(testId);
+
+    [Theory]
+    [InlineData("cfa_foreach01")]
+    [InlineData("cfa_foreach02")]
+    [InlineData("cfa_foreach03")]
+    [InlineData("cfa_foreach04")]
+    [InlineData("cfa_foreach05")]
+    [InlineData("cfa_foreach06")]
+    [InlineData("cfa_foreach07")]
+    public async Task Foreach(string testId) => await TestDecompile(testId);
+
+    private async Task TestDecompile(string fileNameWithoutExtension)
     {
         using TempFile uixFile = new($"{fileNameWithoutExtension}.uix", ".uix");
         await uixFile.InitAsync();

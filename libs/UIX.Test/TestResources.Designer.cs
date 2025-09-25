@@ -63,6 +63,76 @@ namespace UIX.Test {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
+        internal static byte[] cfa_foreach01_uix {
+            get {
+                object obj = ResourceManager.GetObject("cfa_foreach01.uix", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] cfa_foreach02_uix {
+            get {
+                object obj = ResourceManager.GetObject("cfa_foreach02.uix", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] cfa_foreach03_uix {
+            get {
+                object obj = ResourceManager.GetObject("cfa_foreach03.uix", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] cfa_foreach04_uix {
+            get {
+                object obj = ResourceManager.GetObject("cfa_foreach04.uix", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] cfa_foreach05_uix {
+            get {
+                object obj = ResourceManager.GetObject("cfa_foreach05.uix", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] cfa_foreach06_uix {
+            get {
+                object obj = ResourceManager.GetObject("cfa_foreach06.uix", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] cfa_foreach07_uix {
+            get {
+                object obj = ResourceManager.GetObject("cfa_foreach07.uix", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
         internal static byte[] cfa_if_elseif_else01_uix {
             get {
                 object obj = ResourceManager.GetObject("cfa_if-elseif-else01.uix", resourceCulture);
