@@ -35,6 +35,12 @@ partial class Decompiler
         var dotGraph = cfa.SerializeToGraphviz();
         Console.WriteLine(dotGraph);
 
+        var breakOrContinueBlocks = controlBlocks
+            .Where(c => c.Body.TrueForAll(i => i.OpCode is OpCode.ClearSymbol or OpCode.Jump))
+            .ToList();
+        HashSet<uint> breakOrContinueStartOffsets = new(breakOrContinueBlocks.Select(c => c.StartOffset));
+        HashSet<uint> breakOrContinueEndOffsets = new(breakOrContinueBlocks.Select(c => c.EndOffset));
+
         HashSet<uint> foreachLoopHeadOffsets = [];
 
         Dictionary<string, TypeSchema> scopedLocals = [];
@@ -43,8 +49,6 @@ partial class Decompiler
         for (int i = 0; i < methodBody.Length; i++)
         {
             var instruction = methodBody[i];
-
-            cfa.FinalizeCompletedBlocks(instruction.Offset);
 
             var opCode = instruction.OpCode;
 
@@ -82,14 +86,14 @@ partial class Decompiler
                             Source = IrisExpression.ToSyntax(stack.Pop(), _context),
                         };
 
-                        var foreachBlock = new CodeBlockInfo(instruction.Offset, loopBodyEndOffset, forEachBlockInfo);
+                        var foreachBlock = new CodeBlock(instruction.Offset, loopBodyEndOffset, forEachBlockInfo);
                         cfa.PushBlock(foreachBlock);
 
                         break;
 
                     case OpCode.MethodInvokePeek:
                         // Ignore MoveNext calls when in a foreach loop, as long as we haven't already initialized this loop
-                        if (!cfa.TryPeekBlock<ForEachBlockInfo>(out var forEachBlockInfo1) || forEachBlockInfo1.Type is not null)
+                        if (!cfa.TryPeekBlockInfo<ForEachBlockInfo>(out var forEachBlockInfo1) || forEachBlockInfo1.Type is not null)
                             goto default;
 
                         var methodSchemaPeek = _context.GetImportedMethod(instruction.Operands.First());
@@ -206,7 +210,7 @@ partial class Decompiler
                     case OpCode.PropertyGetPeek:
                         // PGETP is only used in foreach loops
 
-                        if (!cfa.TryPeekBlock<ForEachBlockInfo>(out var forEachBlockInfo2))
+                        if (!cfa.TryPeekBlockInfo<ForEachBlockInfo>(out var forEachBlockInfo2))
                             throw new InvalidOperationException("Unexpected call to Current outside of a foreach loop");
 
                         var propToGet = _context.GetImportedProperty(instruction.Operands.First());
@@ -254,7 +258,7 @@ partial class Decompiler
                     case OpCode.JumpIfTruePeek:
                         var jumpToOffset = (uint)instruction.Operands.First().Value;
 
-                        if (opCode is OpCode.JumpIfFalse && cfa.TryPeekBlock<ForEachBlockInfo>(out var jmpfForEachBlockInfo)
+                        if (opCode is OpCode.JumpIfFalse && cfa.TryPeekBlockInfo<ForEachBlockInfo>(out var jmpfForEachBlockInfo)
                             && jmpfForEachBlockInfo.Type is null)
                             break;
 
@@ -270,7 +274,7 @@ partial class Decompiler
                                .First()
                                .Offset;
 
-                            var ifBlock = new CodeBlockInfo(instruction.Offset, ifBlockEndOffset, new IfBlockInfo(jumpCondition));
+                            var ifBlock = new CodeBlock(instruction.Offset, ifBlockEndOffset, new IfBlockInfo(jumpCondition));
                             cfa.PushBlock(ifBlock);
                         }
                         else
@@ -285,28 +289,51 @@ partial class Decompiler
                     case OpCode.Jump:
                         var jumpOffset = (uint)instruction.Operands.First().Value;
 
+                        CodeBlock currentForEachBlock = null;
+                        ForEachBlockInfo jmpForEachBlockInfo = null;
+
+                        foreach (var block in cfa.BlockStack)
+                        {
+                            currentForEachBlock = block;
+                            jmpForEachBlockInfo = block.Info as ForEachBlockInfo;
+
+                            if (jmpForEachBlockInfo is not null)
+                                break;
+                        }
+
                         if (jumpOffset < instruction.Offset)
                         {
-                            // End of loop
-
                             if (!foreachLoopHeadOffsets.Contains(jumpOffset))
-                            {
                                 throw new NotImplementedException("For and while loops are not supported at this time.");
-                            }
+
+                            if (currentForEachBlock is null)
+                                throw new NotImplementedException($"Unexpected backwards JMP at 0x{instruction.Offset:X}");
+
+                            // Continue statements look like premature jumps back to the loop header
+                            if (currentForEachBlock.EndOffset > instruction.Offset)
+                                cfa.AppendToBlock(ContinueStatement());
                         }
                         else
                         {
-                            // End of if block, skipping else block
+                            // Break statements look like premature jumps to the loop tail
+                            if (currentForEachBlock is not null && currentForEachBlock.EndOffset < jumpOffset)
+                            {
+                                cfa.AppendToBlock(BreakStatement());
+                            }
+                            else
+                            {
+                                // End of if block, skipping over else block
 
-                            // Figure out where the else block ends by searching for the last instruction we skip
-                            var elseBlockEndOffset = methodBody
-                                .Reverse()
-                                .SkipWhile(i => i.Offset >= jumpOffset)
-                                .First()
-                                .Offset;
+                                // Figure out where the else block ends by searching for the last instruction we skip
+                                var elseBlockEndOffset = methodBody
+                                    .Reverse()
+                                    .SkipWhile(i => i.Offset >= jumpOffset)
+                                    .First()
+                                    .Offset;
 
-                            var elseBlock = new CodeBlockInfo(instruction.Offset, elseBlockEndOffset, new ElseBlockInfo());
-                            cfa.PushBlock(elseBlock);
+                                var elseBlock = new CodeBlock(instruction.Offset, elseBlockEndOffset, new ElseBlockInfo());
+                                cfa.PushBlock(elseBlock);
+                            }
                         }
 
                         break;
@@ -335,6 +362,8 @@ partial class Decompiler
                         }
                         break;
                 }
+
+                cfa.FinalizeCompletedBlocks(instruction.Offset);
             }
             catch (Exception ex)
             {

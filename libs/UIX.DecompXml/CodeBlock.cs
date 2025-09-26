@@ -6,42 +6,43 @@ using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace Microsoft.Iris.DecompXml;
 
-public record CodeBlockInfo
+public record CodeBlock
 {
-    public CodeBlockInfo(uint startOffset, uint endOffset, ICodeBlockAdditionalInfo additionalInfo = null)
+    public CodeBlock(uint startOffset, uint endOffset, ICodeBlockInfo meta = null)
     {
         StartOffset = startOffset;
         EndOffset = endOffset;
-        AdditionalInfo = additionalInfo;
+        Info = meta;
     }
 
     public uint StartOffset { get; init; }
 
     public uint EndOffset { get; init; }
 
-    public ICodeBlockAdditionalInfo AdditionalInfo { get; init; }
+    public ICodeBlockInfo Info { get; init; }
 
     public List<StatementSyntax> Statements { get; } = [];
 
-    public void FinalizeBlock(CodeBlockInfo parentBlock)
+    public void FinalizeBlock(CodeBlock parentBlock)
     {
         var blockBody = Block(Statements);
 
-        switch (AdditionalInfo)
+        switch (Info)
         {
             case IfBlockInfo ifBlockInfo:
                 var ifStatement = IfStatement(ifBlockInfo.Condition, blockBody);
+
+                if (ifBlockInfo.ElseClause is not null)
+                    ifStatement = ifStatement.WithElse(ifBlockInfo.ElseClause);
+
                 parentBlock.Statements.Add(ifStatement);
                 break;
 
             case ElseBlockInfo _:
-                var elseClause = ElseClause(blockBody);
+                if (parentBlock.Info is not IfBlockInfo ifElseBlockInfo)
+                    throw new InvalidOperationException($"Else block must be preceded by an if block, got '{parentBlock.Info}'");
 
-                var parentLastStatement = parentBlock.Statements[^1];
-                if (parentLastStatement is not IfStatementSyntax ifElseBlock)
-                    throw new InvalidOperationException($"Else block must be preceded by an if block, got '{parentLastStatement.Kind()}'");
-
-                parentBlock.Statements[^1] = ifElseBlock.WithElse(elseClause);
+                ifElseBlockInfo.ElseClause = ElseClause(blockBody);
                 break;
 
             case ForEachBlockInfo forEachBlockInfo:
@@ -51,21 +52,23 @@ public record CodeBlockInfo
                 break;
 
             default:
-                throw new NotImplementedException($"Unrecognized code block kind '{AdditionalInfo.GetType().Name}'");
+                throw new NotImplementedException($"Unrecognized code block kind '{Info.GetType().Name}'");
         }
     }
 }
 
-public interface ICodeBlockAdditionalInfo;
+public interface ICodeBlockInfo;
 
-public class IfBlockInfo(ExpressionSyntax condition = null) : ICodeBlockAdditionalInfo
+public class IfBlockInfo(ExpressionSyntax condition = null) : ICodeBlockInfo
 {
     public ExpressionSyntax Condition { get; set; } = condition;
+
+    public ElseClauseSyntax ElseClause { get; set; }
 }
 
-public class ElseBlockInfo : ICodeBlockAdditionalInfo;
+public class ElseBlockInfo : ICodeBlockInfo;
 
-public class ForEachBlockInfo : ICodeBlockAdditionalInfo
+public class ForEachBlockInfo : ICodeBlockInfo
 {
     public ExpressionSyntax Source { get; set; }
 

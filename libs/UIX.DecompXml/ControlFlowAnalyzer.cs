@@ -29,7 +29,7 @@ public class ControlFlowAnalyzer
 
     public List<IProgramBlock> ControlBlocks { get; }
 
-    public Stack<CodeBlockInfo> BlockStack { get; }
+    public Stack<CodeBlock> BlockStack { get; }
 
     public IProgramBlock GetByOffset(uint offset)
     {
@@ -46,7 +46,7 @@ public class ControlFlowAnalyzer
         {
             var currentBlock = BlockStack.Pop();
 
-            if (currentBlock.EndOffset != currentOffset)
+            if (currentBlock.EndOffset > currentOffset)
             {
                 BlockStack.Push(currentBlock);
                 break;
@@ -56,21 +56,43 @@ public class ControlFlowAnalyzer
         }
     }
 
-    public void PushBlock(CodeBlockInfo block) => BlockStack.Push(block);
+    public void PushBlock(CodeBlock block)
+    {
+        BlockStack.Push(block);
+        return;
 
-    public bool TryPeekBlock<T>(out T additionalInfo) where T : ICodeBlockAdditionalInfo
+        while (BlockStack.Count > 1)
+        {
+            var currentBlock = BlockStack.Pop();
+            var parentBlock = BlockStack.Peek();
+
+            if (currentBlock.EndOffset <= parentBlock.EndOffset)
+            {
+                BlockStack.Push(currentBlock);
+                break;
+            }
+
+            currentBlock.FinalizeBlock(parentBlock);
+        }
+    }
+
+    public bool TryPeekBlockInfo<T>(out T info) where T : ICodeBlockInfo => TryPeekBlock(out _, out info);
+
+    public bool TryPeekBlock<T>(out CodeBlock block, out T info) where T : ICodeBlockInfo
     {
         if (BlockStack.Count > 1)
         {
             var currentBlock = BlockStack.Peek();
-            if (currentBlock.AdditionalInfo is T a)
+            if (currentBlock.Info is T a)
             {
-                additionalInfo = a;
+                block = currentBlock;
+                info = a;
                 return true;
             }
         }
 
-        additionalInfo = default;
+        block = default;
+        info = default;
         return false;
     }
 

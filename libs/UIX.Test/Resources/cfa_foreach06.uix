@@ -24,14 +24,10 @@
 				
 				foreach (Int32 num in ArraySet)
                 {
-				    int y = num;
-					
-					if (y % 4 == 0)
-					{
-					    continue;
-					}
-					
-                    sum = sum + y;
+                    sum = sum + num;
+					continue;
+
+					num = sum - 1;
                 }
 				
 				int x = sum * 5;
