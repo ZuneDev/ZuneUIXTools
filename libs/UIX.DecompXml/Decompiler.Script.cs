@@ -233,6 +233,8 @@ partial class Decompiler
                         forEachBlockInfo2.Type = IrisExpression.ToSyntax(loopVariableType, _context);
                         forEachBlockInfo2.Identifier = loopVariableSymbol;
 
+                        scopedLocals[loopVariableSymbol] = loopVariableType;
+
                         stack.Push(IdentifierName(loopVariableSymbol));
 
                         break;
