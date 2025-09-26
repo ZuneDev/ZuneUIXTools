@@ -35,12 +35,6 @@ partial class Decompiler
         var dotGraph = cfa.SerializeToGraphviz();
         Console.WriteLine(dotGraph);
 
-        var breakOrContinueBlocks = controlBlocks
-            .Where(c => c.Body.TrueForAll(i => i.OpCode is OpCode.ClearSymbol or OpCode.Jump))
-            .ToList();
-        HashSet<uint> breakOrContinueStartOffsets = new(breakOrContinueBlocks.Select(c => c.StartOffset));
-        HashSet<uint> breakOrContinueEndOffsets = new(breakOrContinueBlocks.Select(c => c.EndOffset));
-
         HashSet<uint> foreachLoopHeadOffsets = [];
 
         Dictionary<string, TypeSchema> scopedLocals = [];

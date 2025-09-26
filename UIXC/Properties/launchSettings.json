@@ -4,10 +4,10 @@
             "commandName": "Project",
 
             //"commandLineArgs": "decompile E:\\Documents\\REProj\\Zune\\Resources\\ZuneMarketplaceResources48\\MarketplaceData.schema.xml -l xml -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o E:\\Repos\\ZuneDev\\ZuneUIXTools\\test",
-            //"commandLineArgs": "decompile E:\\Repos\\ZuneDev\\ZuneUIXTools\\test\\4.8\\DEVICELANDELEMENTS.UIB -l xml -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o E:\\Repos\\ZuneDev\\ZuneUIXTools\\test",
+            "commandLineArgs": "decompile E:\\Documents\\REProj\\Zune\\Resources\\ZuneShellResources48\\NowPlayingLand.uix -l xml -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o E:\\Repos\\ZuneDev\\ZuneUIXTools\\test",
             //"commandLineArgs": "decompile E:\\Repos\\ZuneDev\\ZuneShell.dll\\libs\\MicrosoftIris\\UIXcontrols\\Resources\\RCDATA\\STYLES.UIX -l xml -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o E:\\Repos\\ZuneDev\\ZuneShell.dll\\ZuneShell\\Resources\\RCDATA\\Dark\\Controls",
             //"commandLineArgs": "compile E:\\Repos\\ZuneDev\\ZuneUIXTools\\test\\ADDTOCOLLECTION.31_48.UIX -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o E:\\Repos\\ZuneDev\\ZuneUIXTools\\test",
-            "commandLineArgs": "compile E:\\Documents\\REProj\\Zune\\Resources\\ZuneMarketplaceResources31\\MARKETPLACEDATA.SCHEMA.31_48.XML -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o E:\\Repos\\ZuneDev\\ZuneUIXTools\\test",
+            //"commandLineArgs": "compile E:\\Documents\\REProj\\Zune\\Resources\\ZuneMarketplaceResources31\\MARKETPLACEDATA.SCHEMA.31_48.XML -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o E:\\Repos\\ZuneDev\\ZuneUIXTools\\test",
 
             //"commandLineArgs": "decompile E:\\Documents\\REProj\\Zune\\Resources\\ZuneShellResources48\\ABOUTDIALOG.UIX -l xml -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o E:\\Documents\\REProj\\Zune\\Resources\\ZuneShellResources48_xml -t E:\\Documents\\REProj\\Zune\\Resources\\ZuneShellResources48\\_DATATABLE.uib",
             //"commandLineArgs": "decompile C:\\Users\\jjask\\Documents\\Dump\\Zune\\ZuneShellResources\\AboutDialog.uix -l xml -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o C:\\Users\\jjask\\Documents\\Dump\\Zune\\ZuneShellResources_xml -t C:\\Users\\jjask\\Documents\\Dump\\Zune\\ZuneShellResources\\_DATATABLE.uib",
