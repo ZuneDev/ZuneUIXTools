@@ -45,6 +45,7 @@ partial class Decompiler
             var instruction = methodBody[i];
 
             var opCode = instruction.OpCode;
+            var offset = instruction.Offset;
 
             try
             {
@@ -77,10 +78,10 @@ partial class Decompiler
 
                         var forEachBlockInfo = new ForEachBlockInfo
                         {
-                            Source = IrisExpression.ToSyntax(stack.Pop(), _context),
+                            Source = IrisExpression.ToSyntax(stack.Pop(), offset, _context),
                         };
 
-                        var foreachBlock = new CodeBlock(instruction.Offset, loopBodyEndOffset, forEachBlockInfo);
+                        var foreachBlock = new CodeBlock(offset, loopBodyEndOffset, forEachBlockInfo);
                         cfa.PushBlock(foreachBlock);
 
                         break;
@@ -105,11 +106,12 @@ partial class Decompiler
 
                     case OpCode.PushConstant:
                         var constant = _context.GetConstant(instruction.Operands.First());
-                        stack.Push(IrisExpression.ToSyntax(constant, _context));
+                        stack.Push(IrisExpression.ToSyntax(constant, offset, _context));
                         break;
 
                     case OpCode.PushNull:
-                        stack.Push(LiteralExpression(SyntaxKind.NullLiteralExpression));
+                        stack.Push(LiteralExpression(SyntaxKind.NullLiteralExpression)
+                            .WithOffset(offset));
                         break;
 
                     case OpCode.DiscardValue:
@@ -142,7 +144,7 @@ partial class Decompiler
 
                         var symbolRef = export.SymbolReferenceTable[writeSymbolIndex];
                         var symbolIdentifierExpr = IrisExpression.ToSyntax(symbolRef);
-                        var newSymbolValueExpr = SimplifyExpression(IrisExpression.ToSyntax(newSymbolValue, _context), true);
+                        var newSymbolValueExpr = SimplifyExpression(IrisExpression.ToSyntax(newSymbolValue, offset, _context), true);
 
                         StatementSyntax symbolWriteExpr;
 
@@ -177,7 +179,7 @@ partial class Decompiler
                             symbolWriteExpr = ExpressionStatement(symbolAssignmentExpr);
                         }
 
-                        cfa.AppendToBlock(symbolWriteExpr);
+                        cfa.AppendToBlock(symbolWriteExpr.WithOffset(offset));
                         break;
 
                     case OpCode.PropertyAssign:
@@ -188,17 +190,17 @@ partial class Decompiler
                             ? propToSet.Owner
                             : stack.Pop();
 
-                        var newPropValue = IrisExpression.ToSyntax(stack.Peek(), _context);
+                        var newPropValue = IrisExpression.ToSyntax(stack.Peek(), offset, _context);
 
                         var propertySetExpression = AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
                             MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
-                                IrisExpression.ToSyntax(propSetTarget, _context),
+                                IrisExpression.ToSyntax(propSetTarget, offset, _context),
                                 IdentifierName(propToSet.Name)
                             ),
                             newPropValue
                         );
 
-                        cfa.AppendToBlock(ExpressionStatement(propertySetExpression));
+                        cfa.AppendToBlock(ExpressionStatement(propertySetExpression).WithOffset(offset));
                         break;
 
                     case OpCode.PropertyGetPeek:
@@ -235,7 +237,7 @@ partial class Decompiler
 
                         scopedLocals[loopVariableSymbol] = loopVariableType;
 
-                        stack.Push(IdentifierName(loopVariableSymbol));
+                        stack.Push(IdentifierName(loopVariableSymbol).WithOffset(offset));
 
                         break;
 
@@ -243,10 +245,12 @@ partial class Decompiler
                         var objToCast = stack.Pop();
                         var typeToCastTo = _context.GetImportedType(instruction.Operands.First());
 
-                        stack.Push(Parenthesize(CastExpression(
+                        var castExpr = CastExpression(
                             IrisExpression.ToSyntax(typeToCastTo, _context),
-                            IrisExpression.ToSyntax(objToCast, _context)
-                        )));
+                            IrisExpression.ToSyntax(objToCast, offset, _context)
+                        );
+
+                        stack.Push(Parenthesize(castExpr).WithOffset(offset));
                         break;
 
                     case OpCode.JumpIfFalse:
@@ -259,7 +263,7 @@ partial class Decompiler
                             break;
 
                         var isPeek = opCode is OpCode.JumpIfFalsePeek or OpCode.JumpIfTruePeek;
-                        var jumpCondition = IrisExpression.ToSyntax(isPeek ? stack.Peek() : stack.Pop(), _context);
+                        var jumpCondition = IrisExpression.ToSyntax(isPeek ? stack.Peek() : stack.Pop(), offset, _context);
 
                         if (opCode is OpCode.JumpIfFalse)
                         {
@@ -270,7 +274,7 @@ partial class Decompiler
                                .First()
                                .Offset;
 
-                            var ifBlock = new CodeBlock(instruction.Offset, ifBlockEndOffset, new IfBlockInfo(jumpCondition));
+                            var ifBlock = new CodeBlock(offset, ifBlockEndOffset, new IfBlockInfo(jumpCondition));
                             cfa.PushBlock(ifBlock);
                         }
                         else
@@ -297,24 +301,24 @@ partial class Decompiler
                                 break;
                         }
 
-                        if (jumpOffset < instruction.Offset)
+                        if (jumpOffset < offset)
                         {
                             if (!foreachLoopHeadOffsets.Contains(jumpOffset))
                                 throw new NotImplementedException("For and while loops are not supported at this time.");
 
                             if (currentForEachBlock is null)
-                                throw new NotImplementedException($"Unexpected backwards JMP at 0x{instruction.Offset:X}");
+                                throw new NotImplementedException($"Unexpected backwards JMP at 0x{offset:X}");
 
                             // Continue statements look like premature jumps back to the loop header
-                            if (currentForEachBlock.EndOffset > instruction.Offset)
-                                cfa.AppendToBlock(ContinueStatement());
+                            if (currentForEachBlock.EndOffset > offset)
+                                cfa.AppendToBlock(ContinueStatement().WithOffset(offset));
                         }
                         else
                         {
                             // Break statements look like premature jumps to the loop tail
                             if (currentForEachBlock is not null && currentForEachBlock.EndOffset < jumpOffset)
                             {
-                                cfa.AppendToBlock(BreakStatement());
+                                cfa.AppendToBlock(BreakStatement().WithOffset(offset));
                             }
                             else
                             {
@@ -327,7 +331,7 @@ partial class Decompiler
                                     .First()
                                     .Offset;
 
-                                var elseBlock = new CodeBlock(instruction.Offset, elseBlockEndOffset, new ElseBlockInfo());
+                                var elseBlock = new CodeBlock(offset, elseBlockEndOffset, new ElseBlockInfo());
                                 cfa.PushBlock(elseBlock);
                             }
                         }
@@ -335,15 +339,15 @@ partial class Decompiler
                         break;
 
                     case OpCode.ReturnValue:
-                        var returnStatement = ReturnStatement(IrisExpression.ToSyntax(stack.Pop(), _context));
-                        cfa.AppendToBlock(returnStatement);
+                        var returnStatement = ReturnStatement(IrisExpression.ToSyntax(stack.Pop(), offset, _context));
+                        cfa.AppendToBlock(returnStatement.WithOffset(offset));
                         break;
 
                     case OpCode.ReturnVoid:
                         // Include return statement when we're not in the main block (which would return anyway)
                         // or when we're not at the end of the function
                         if (cfa.BlockStack.Count > 1 || i + 1 < methodBody.Length)
-                            cfa.AppendToBlock(ReturnStatement());
+                            cfa.AppendToBlock(ReturnStatement().WithOffset(offset));
                         break;
 
                     case OpCode.ClearSymbol:
@@ -354,15 +358,19 @@ partial class Decompiler
                         if (!TryDecompileExpression(instruction, stack, cfa))
                         {
                             var unsupportedComment = Comment($"// Unsupported instruction: {instruction}");
-                            cfa.AppendToBlock(EmptyStatement().WithLeadingTrivia(unsupportedComment));
+                            cfa.AppendToBlock(EmptyStatement()
+                                .WithLeadingTrivia(unsupportedComment)
+                                .WithOffset(offset));
                         }
                         break;
                 }
 
-                cfa.FinalizeCompletedBlocks(instruction.Offset);
+                cfa.FinalizeCompletedBlocks(offset);
             }
             catch (Exception ex)
             {
+                Console.WriteLine("oopsie");
+                return null;
                 throw new Exception($"Failed to decompile instruction `{instruction}` @ 0x{instruction.Offset:X} in script for {export.Name}", ex);
             }
         }
@@ -420,6 +428,7 @@ partial class Decompiler
         for (int i = 0; i < methodBody.Length; i++)
         {
             var instruction = methodBody[i];
+            var offset = instruction.Offset;
 
             try
             {
@@ -442,7 +451,7 @@ partial class Decompiler
                         };
 
                         var propertyGetExpression = MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
-                            IrisExpression.ToSyntax(propGetTarget, _context),
+                            IrisExpression.ToSyntax(propGetTarget, offset, _context),
                             IdentifierName(propToGet.Name)
                         );
 
@@ -488,6 +497,10 @@ partial class Decompiler
                         {
                             var statements = DecompileMethod(scriptOffset, initType);
 
+                            // TODO: remove me
+                            if (statements is null)
+                                break;
+
                             scriptContent = CreateTree(statements);
                             _context.SetScriptContent(initType, scriptOffset, scriptContent);
                         }
@@ -497,7 +510,7 @@ partial class Decompiler
                         if (listenerType is not ListenerType.Symbol)
                         {
                             var memberAccessExpr = MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
-                                IrisExpression.ToSyntax(handlerObj, _context),
+                                IrisExpression.ToSyntax(handlerObj, offset, _context),
                                 IdentifierName(watch));
 
                             var attributeArgument = AttributeArgument(memberAccessExpr);
@@ -597,18 +610,42 @@ partial class Decompiler
 
     public static string FormatScript(IEnumerable<StatementSyntax> statements, CancellationToken token = default) => FormatScript(CreateTree(statements), token);
 
-    public static string FormatSyntaxNode(SyntaxNode root, CancellationToken token = default)
+    public static string FormatSyntaxNode(SyntaxNode root, CancellationToken cancellationToken = default)
     {
-        return root
-            .NormalizeWhitespace()
+        Debug.Symbols.ScriptDebugSymbols symbols = new()
+        {
+            LineNumberMap = []
+        };
+
+        root = root.NormalizeWhitespace();
+
+        foreach (var node in root.GetAnnotatedNodes(UIBOffsetAnnotation.Kind))
+        {
+            var offsetAnnotation = node.GetAnnotations(UIBOffsetAnnotation.Kind).Single();
+            var offset = UIBOffsetAnnotation.GetOffset(offsetAnnotation);
+
+            var location = node.GetLocation();
+
+            symbols.LineNumberMap[offset] = new(location.SourceSpan.Start, location.SourceSpan.End);
+        }
+
+        var sourceText = root
             .SyntaxTree
-            .GetText(token)
-            .ToString();
+            .GetText(cancellationToken);
+
+        foreach (var mapping in symbols.LineNumberMap.OrderBy(x => x.Key))
+        {
+            var subtext = sourceText.GetSubText(CodeAnalysis.Text.TextSpan.FromBounds(mapping.Value.Start, mapping.Value.End));
+            System.Diagnostics.Debug.WriteLine($"0x{mapping.Key:X}: `{subtext}`");
+        }
+
+        return sourceText.ToString();
     }
 
     private bool TryDecompileExpression(Instruction instruction, Stack<object> stack, ControlFlowAnalyzer cfa = null)
     {
         var opCode = instruction.OpCode;
+        var offset = instruction.Offset;
 
         switch (opCode)
         {
@@ -630,7 +667,7 @@ partial class Decompiler
 
                     for (ctorParameterCount--; ctorParameterCount >= 0; ctorParameterCount--)
                     {
-                        var parameter = IrisExpression.ToSyntax(stack.Pop(), _context);
+                        var parameter = IrisExpression.ToSyntax(stack.Pop(), offset, _context);
                         ctorParameters.Add(Argument(parameter));
                     }
                     ctorParameters.Reverse();
@@ -654,7 +691,7 @@ partial class Decompiler
                 var parameters = new ArgumentSyntax[parameterCount];
                 for (parameterCount--; parameterCount >= 0; parameterCount--)
                 {
-                    var parameter = IrisExpression.ToSyntax(stack.Pop(), _context);
+                    var parameter = IrisExpression.ToSyntax(stack.Pop(), offset, _context);
                     parameters[parameterCount] = Argument(parameter);
                 }
 
@@ -670,7 +707,7 @@ partial class Decompiler
                     _ => stack.Pop(),
                 };
 
-                var methodTargetExpression = IrisExpression.ToSyntax(targetObj, _context);
+                var methodTargetExpression = IrisExpression.ToSyntax(targetObj, offset, _context);
 
                 ExpressionSyntax methodResult;
                 if ((methodSchema.Owner == _listType || methodSchema.Owner == _dictionaryType) && methodSchema.Name == "get_Item")
@@ -715,7 +752,7 @@ partial class Decompiler
                 };
 
                 var propertyGetExpression = MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
-                    IrisExpression.ToSyntax(propGetTarget, _context),
+                    IrisExpression.ToSyntax(propGetTarget, offset, _context),
                     IdentifierName(propToGet.Name)
                 );
 
@@ -731,7 +768,7 @@ partial class Decompiler
                 var objToCheck = stack.Pop();
 
                 stack.Push(IsPatternExpression(
-                    IrisExpression.ToSyntax(objToCheck, _context),
+                    IrisExpression.ToSyntax(objToCheck, offset, _context),
                     TypePattern(IrisExpression.ToSyntax(typeToCheckFor, _context))
                 ));
                 break;
@@ -746,7 +783,7 @@ partial class Decompiler
                 var destinationTypeSchema = _context.GetImportedType(instruction.Operands.First());
                 var typeCastExpr = CastExpression(
                     IrisExpression.ToSyntax(destinationTypeSchema, _context),
-                    Parenthesize(IrisExpression.ToSyntax(stack.Pop(), _context))
+                    Parenthesize(IrisExpression.ToSyntax(stack.Pop(), offset, _context))
                 );
                 stack.Push(Parenthesize(typeCastExpr));
                 break;
@@ -760,6 +797,7 @@ partial class Decompiler
 
     private ExpressionSyntax DecompileOperation(Instruction instruction, Stack<object> stack)
     {
+        var offset = instruction.Offset;
         var op = instruction.OperationType.Value;
         var isUnary = TypeSchema.IsUnaryOperation(op);
         var opSyntax = OperationToSyntaxKind(op);
@@ -768,7 +806,7 @@ partial class Decompiler
 
         if (isUnary)
         {
-            var left = Parenthesize(IrisExpression.ToSyntax(stack.Pop(), _context));
+            var left = Parenthesize(IrisExpression.ToSyntax(stack.Pop(), offset, _context));
             var isPostfix = op is OperationType.PostIncrement or OperationType.PostDecrement;
 
             operationExpr = isPostfix
@@ -777,8 +815,8 @@ partial class Decompiler
         }
         else
         {
-            var right = IrisExpression.ToSyntax(stack.Pop(), _context);
-            var left = IrisExpression.ToSyntax(stack.Pop(), _context);
+            var right = IrisExpression.ToSyntax(stack.Pop(), offset, _context);
+            var left = IrisExpression.ToSyntax(stack.Pop(), offset, _context);
 
             operationExpr = BinaryExpression(opSyntax,
                 ParenthesizedExpression(left),

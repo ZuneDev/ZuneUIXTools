@@ -30,7 +30,8 @@ public record CodeBlock
         switch (Info)
         {
             case IfBlockInfo ifBlockInfo:
-                var ifStatement = IfStatement(ifBlockInfo.Condition, blockBody);
+                var ifStatement = IfStatement(ifBlockInfo.Condition, blockBody)
+                    .WithOffset(StartOffset);
 
                 if (ifBlockInfo.ElseClause is not null)
                     ifStatement = ifStatement.WithElse(ifBlockInfo.ElseClause);
@@ -42,12 +43,15 @@ public record CodeBlock
                 if (parentBlock.Info is not IfBlockInfo ifElseBlockInfo)
                     throw new InvalidOperationException($"Else block must be preceded by an if block, got '{parentBlock.Info}'");
 
-                ifElseBlockInfo.ElseClause = ElseClause(blockBody);
+                ifElseBlockInfo.ElseClause = ElseClause(blockBody)
+                    .WithOffset(StartOffset);
                 break;
 
             case ForEachBlockInfo forEachBlockInfo:
                 var foreachStatement = ForEachStatement(forEachBlockInfo.Type, forEachBlockInfo.Identifier,
-                    forEachBlockInfo.Source, blockBody);
+                    forEachBlockInfo.Source, blockBody)
+                    .WithOffset(StartOffset);
+
                 parentBlock.Statements.Add(foreachStatement);
                 break;
 
