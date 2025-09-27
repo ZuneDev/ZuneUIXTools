@@ -1,5 +1,4 @@
-﻿using Microsoft.Iris;
-using Microsoft.Iris.DecompXml;
+﻿using Microsoft.Iris.DecompXml;
 using Microsoft.Iris.Markup;
 using UIX.Test.Fixtures;
 using Xunit.Abstractions;
@@ -40,18 +39,6 @@ public class DecompileControlFlow
         using TempFile uixFile = new($"{fileNameWithoutExtension}.uix", ".uix");
         await uixFile.InitAsync();
 
-        var uibPathEx = Path.ChangeExtension(uixFile.Path, ".uib");
-
-        // Compile the UIX source
-        CompilerInput uixCompilerInput = new()
-        {
-            SourceFileName = uixFile.Path,
-            OutputFileName = uibPathEx
-        };
-        var uixSuccess = MarkupCompiler.Compile([uixCompilerInput], default);
-        Assert.True(uixSuccess);
-
-        // Decompile the compiled UIX
         var sourceLoadResult = MarkupSystem.ResolveLoadResult($"file://{uixFile.Path}", MarkupSystem.RootIslandId);
         var decompiler = Decompiler.Load(sourceLoadResult);
         var uixDocAc = decompiler.Decompile();

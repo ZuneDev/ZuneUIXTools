@@ -56,25 +56,7 @@ public class ControlFlowAnalyzer
         }
     }
 
-    public void PushBlock(CodeBlock block)
-    {
-        BlockStack.Push(block);
-        return;
-
-        while (BlockStack.Count > 1)
-        {
-            var currentBlock = BlockStack.Pop();
-            var parentBlock = BlockStack.Peek();
-
-            if (currentBlock.EndOffset <= parentBlock.EndOffset)
-            {
-                BlockStack.Push(currentBlock);
-                break;
-            }
-
-            currentBlock.FinalizeBlock(parentBlock);
-        }
-    }
+    public void PushBlock(CodeBlock block) => BlockStack.Push(block);
 
     public bool TryPeekBlockInfo<T>(out T info) where T : ICodeBlockInfo => TryPeekBlock(out _, out info);
 
