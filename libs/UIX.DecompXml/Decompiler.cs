@@ -100,7 +100,7 @@ public partial class Decompiler
             foreach (var syntaxTree in _context.GetScriptContents(export))
             {
                 var scriptText = FormatScript(syntaxTree);
-                XElement xScript = new(_nsUix + "Script", scriptText);
+                XElement xScript = new(_nsUix + "Script", new XCData(Environment.NewLine + scriptText + Environment.NewLine));
                 xScripts.Add(xScript);
             }
 
