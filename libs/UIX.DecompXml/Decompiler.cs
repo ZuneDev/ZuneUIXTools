@@ -1,6 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Iris.Asm;
+using Microsoft.Iris.Debug.Symbols;
 using Microsoft.Iris.DecompXml.Mock;
 using Microsoft.Iris.Markup;
 using System;
@@ -87,7 +88,7 @@ public partial class Decompiler
             {
                 var statements = DecompileMethod(offset, export);
                 AddMethodAttribute(statements, "FinalEvaluate");
-                _context.SetScriptContent(export, offset, CreateTree(statements));
+                _context.SetScriptContent(export, offset, CreateTree(statements, offset));
             }
 
             foreach (var offset in export.RefreshGroupOffsets ?? [])
@@ -160,6 +161,8 @@ public partial class Decompiler
         }
         return sb.ToString();
     }
+
+    public FileDebugSymbols DebugSymbols => _context.DebugSymbols;
 
     private Stack<object> AnalyzeMethodForInit(uint startOffset, XElement elemToInit, MarkupTypeSchema initType, string methodName = "")
     {
@@ -283,7 +286,10 @@ public partial class Decompiler
 
                         // Ensure stack is in valid state
                         var isPeek = instruction.OpCode is OpCode.JumpIfFalsePeek or OpCode.JumpIfTruePeek or OpCode.JumpIfNullPeek;
-                        var rawJumpCondition = IrisExpression.ToSyntax(isPeek ? stack.Peek() : stack.Pop(), _context);
+                        if (isPeek)
+                            stack.Peek();
+                        else
+                            stack.Pop();
                         break;
 
                     case OpCode.ConstructObjectParam:

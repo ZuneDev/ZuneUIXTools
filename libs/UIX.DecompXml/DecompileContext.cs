@@ -2,6 +2,7 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.Iris.Asm;
 using Microsoft.Iris.Asm.Models;
+using Microsoft.Iris.Debug.Symbols;
 using Microsoft.Iris.Markup;
 using System;
 using System.Collections.Generic;
@@ -58,6 +59,12 @@ internal class DecompileContext
 
         _scriptMap = [];
 
+        DebugSymbols = new()
+        {
+            CompiledFileName = _loadResult.ErrorContextUri,
+            ScriptSymbols = [],
+        };
+
         _instructions = ObjectSection.Decode(_loadResult.ObjectSection)
             .OfType<Instruction>()
             .ToArray();
@@ -70,6 +77,8 @@ internal class DecompileContext
     public MarkupLoadResult LoadResult => _loadResult;
 
     public MarkupImportTables ImportTables => _loadResult.ImportTables;
+
+    public FileDebugSymbols DebugSymbols { get; }
 
     [MemberNotNullWhen(true, nameof(_dataTableLoadResult))]
     private bool UseSharedDataTable => _dataTableLoadResult is not null;

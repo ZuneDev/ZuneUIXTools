@@ -3,6 +3,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Extensions;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Iris.Asm.Models;
+using Microsoft.Iris.Debug.Symbols;
 using Microsoft.Iris.DecompXml.Mock;
 using Microsoft.Iris.Markup;
 using Microsoft.Iris.Markup.UIX;
@@ -23,7 +24,7 @@ partial class Decompiler
     private SyntaxTree DecompileScript(uint startOffset, MarkupTypeSchema export)
     {
         var statements = DecompileMethod(startOffset, export);
-        return CreateTree(statements);
+        return CreateTree(statements, startOffset);
     }
 
     public List<StatementSyntax> DecompileMethod(uint startOffset, MarkupTypeSchema export)
@@ -501,7 +502,7 @@ partial class Decompiler
                             if (statements is null)
                                 break;
 
-                            scriptContent = CreateTree(statements);
+                            scriptContent = CreateTree(statements, scriptOffset);
                             _context.SetScriptContent(initType, scriptOffset, scriptContent);
                         }
 
@@ -595,26 +596,29 @@ partial class Decompiler
         return newNode;
     }
 
-    public static SyntaxTree CreateTree(IEnumerable<StatementSyntax> statements)
+    public static SyntaxTree CreateTree(IEnumerable<StatementSyntax> statements, uint? startOffset = null)
     {
-        return SyntaxTree(
-            CompilationUnit().WithMembers(
+        var root = CompilationUnit()
+            .WithMembers(
                 [.. statements.Select(GlobalStatement)]
-            )
-        );
+            );
+
+        if (startOffset is not null)
+            root = root.WithOffset(startOffset.Value);
+
+        return SyntaxTree(root);
     }
 
-    public static string FormatInlineExpression(ExpressionSyntax expr, CancellationToken token = default) => '{' + FormatSyntaxNode(expr, token) + '}';
+    public string FormatInlineExpression(ExpressionSyntax expr, CancellationToken token = default) => '{' + FormatSyntaxNode(expr, token) + '}';
 
-    public static string FormatScript(SyntaxTree tree, CancellationToken token = default) => FormatSyntaxNode(tree.GetRoot(token), token);
+    public string FormatScript(SyntaxTree tree, CancellationToken token = default) => FormatSyntaxNode(tree.GetRoot(token), token);
 
-    public static string FormatScript(IEnumerable<StatementSyntax> statements, CancellationToken token = default) => FormatScript(CreateTree(statements), token);
-
-    public static string FormatSyntaxNode(SyntaxNode root, CancellationToken cancellationToken = default)
+    public string FormatSyntaxNode(SyntaxNode root, CancellationToken cancellationToken = default)
     {
-        Debug.Symbols.ScriptDebugSymbols symbols = new()
+        uint? scriptOffset = null;
+        ScriptDebugSymbols debugSymbols = new()
         {
-            LineNumberMap = []
+            SourceMap = []
         };
 
         root = root.NormalizeWhitespace();
@@ -626,20 +630,22 @@ partial class Decompiler
 
             var location = node.GetLocation();
 
-            symbols.LineNumberMap[offset] = new(location.SourceSpan.Start, location.SourceSpan.End);
+            debugSymbols.SourceMap[offset] = new(location.SourceSpan.Start, location.SourceSpan.End);
+
+            if (scriptOffset is null && node is CompilationUnitSyntax)
+                scriptOffset = offset;
         }
 
         var sourceText = root
             .SyntaxTree
             .GetText(cancellationToken);
 
-        foreach (var mapping in symbols.LineNumberMap.OrderBy(x => x.Key))
-        {
-            var subtext = sourceText.GetSubText(CodeAnalysis.Text.TextSpan.FromBounds(mapping.Value.Start, mapping.Value.End));
-            System.Diagnostics.Debug.WriteLine($"0x{mapping.Key:X}: `{subtext}`");
-        }
+        debugSymbols.SourceCode = sourceText.ToString();
 
-        return sourceText.ToString();
+        if (scriptOffset is not null)
+            _context.DebugSymbols.ScriptSymbols[scriptOffset.Value] = debugSymbols;
+
+        return debugSymbols.SourceCode;
     }
 
     private bool TryDecompileExpression(Instruction instruction, Stack<object> stack, ControlFlowAnalyzer cfa = null)
