@@ -1,0 +1,1692 @@
+<?xml version="1.0" encoding="utf-16"?>
+<UIX xmlns="http://schemas.microsoft.com/2007/uix" xmlns:iris="assembly://UIX/Microsoft.Iris" xmlns:animations="res://ZuneShellResources!Animations.uix" xmlns:style="res://UIXControls!Style.uix" xmlns:zuneUI="assembly://ZuneShell/ZuneUI" xmlns:styles="res://ZuneShellResources!Styles.uix" xmlns:button="res://UIXControls!Button.uix" xmlns:contentList="res://UIXControls!ContentList.uix" xmlns:spreadSheet="res://UIXControls!SpreadSheet.uix" xmlns:system="assembly://System.Private.CoreLib/System" xmlns:zuneDBApi="assembly://ZuneDBApi/" xmlns:label="res://UIXControls!Label.uix" xmlns:util="assembly://ZuneDBApi/Microsoft.Zune.Util" xmlns:schema1="res://ZuneShellResources!SocialData.schema.xml" xmlns:schema2="res://ZuneMarketplaceResources!MarketplaceData.schema.xml" xmlns:wizard="res://ZuneShellResources!Wizard.uix" xmlns:service="assembly://ZuneDBApi/Microsoft.Zune.Service" xmlns:collections="assembly://System.Private.CoreLib/System.Collections" xmlns:pageStack="res://ZuneShellResources!PageStack.uix" xmlns:spreadSheetCells="res://ZuneShellResources!SpreadSheetCells.uix" xmlns:tracksPanelColumns="res://ZuneShellResources!TracksPanelColumns.uix" xmlns:contextMenu="res://UIXControls!ContextMenu.uix" xmlns:socialComposer="res://ZuneShellResources!SocialComposer.uix" xmlns:mixManager="res://ZuneShellResources!MixManager.uix" xmlns:checkbox="res://UIXControls!Checkbox.uix" xmlns:wizardControls="res://ZuneShellResources!WizardControls.uix" xmlns:signInDialog="res://ZuneShellResources!SignInDialog.uix" xmlns:moreInfoActions="res://ZuneShellResources!MoreInfoActions.uix" xmlns:nowPlayingLand="res://ZuneShellResources!NowPlayingLand.uix" xmlns:nowPlayingMusicBackground="res://ZuneShellResources!NowPlayingMusicBackground.uix" xmlns:libraryDialogs="res://ZuneShellResources!LibraryDialogs.uix" xmlns:playlistDialog="res://ZuneShellResources!PlaylistDialog.uix" xmlns:popup="res://UIXControls!Popup.uix" xmlns:miniMode="res://ZuneShellResources!MiniMode.uix" xmlns:nonClientControls="res://UIXControls!NonClientControls.uix" xmlns:configuration="assembly://ZuneDBApi/Microsoft.Zune.Configuration" xmlns:util1="assembly://ZuneShell/Microsoft.Zune.Util" xmlns:imageSelector="res://ZuneMarketplaceResources!ImageSelector.uix" xmlns:shell="assembly://ZuneShell/Microsoft.Zune.Shell" xmlns:utility="res://ZuneShellResources!Utility.uix" xmlns:frame="res://ZuneShellResources!Frame.uix" xmlns:libraryContextMenu="res://ZuneShellResources!LibraryContextMenu.uix">
+  <Class Name="NowPlayingPersistentState" Shared="true">
+    <Properties>
+      <Boolean Name="ShowZunePassTracks" Boolean="true" />
+    </Properties>
+    <Locals>
+      <zuneUI:TransportControls Name="TransportControls" TransportControls="{zuneUI:SingletonModelItem`1[ZuneUI.TransportControls].Instance}" />
+      <zuneUI:SignIn Name="SignIn" SignIn="{zuneUI:SignIn.Instance}" />
+    </Locals>
+    <Scripts>
+      <Script>[DeclareTrigger(TransportControls.CurrentPlaylist), DeclareTrigger(SignIn.SignedInWithSubscription)]
+bool playMarketplaceTracks = true;
+/* UIB_000B */
+if (!this.IsQuickMix())
+    goto UIB_0056;
+/* UIB_0016 */
+if (!#SignIn.SignedInWithSubscription #)
+    goto UIB_0027;
+bool playMarketplaceTracks = ShowZunePassTracks;
+goto UIB_002E;
+bool playMarketplaceTracks = false;
+/* UIB_0035 */
+if (!!ShowZunePassTracks)
+    goto UIB_0056;
+/* UIB_0047 */
+if (!!TransportControls.CurrentTrack.IsInVisibleCollection)
+    goto UIB_0056;
+TransportControls.Forward.Invoke();
+TransportControls.DontPlayMarketplaceTracks = !playMarketplaceTracks;</Script>
+      <Script>[DeclareTrigger(TransportControls.CurrentPlaylist)]
+/* UIB_006C */
+if (!this.IsQuickMix())
+    goto UIB_0085;
+/* UIB_0085 */
+if (!this.IsQuickMix() || TransportControls.Instance.QuickMixType != zuneDBApi:EQuickMixType.eQuickMixTypeRadio)
+    goto UIB_0091;
+ShowZunePassTracks = true;</Script>
+    </Scripts>
+    <Methods><![CDATA[
+bool IsQuickMix()
+{
+    return TransportControls.Instance.QuickMixSession != null;
+}
+]]></Methods>
+  </Class>
+  <UI Name="NowPlayingLand" Base="pageStack:PageBase">
+    <Properties>
+      <zuneUI:PlaybackPage Name="Page" PlaybackPage="$Required" />
+    </Properties>
+    <Locals>
+      <Window Name="Window" />
+      <zuneUI:TransportControls Name="TransportControls" TransportControls="{zuneUI:SingletonModelItem`1[ZuneUI.TransportControls].Instance}" />
+      <SelectionManager Name="SelectionManager" />
+      <contentList:NavigateIntoIndexRequest Name="NavigateIntoArgs" />
+      <nowPlayingLand:NowPlayingListModel Name="NowPlayingListModel" Page="{Page}" />
+      <iris:Command Name="SaveAsPlaylist" Description="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_NOW_PLAYING_SAVEASPLAYLIST)}" />
+      <iris:BooleanChoice Name="ShowMPContent" Description="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_NOWPLAYING_FILTER_ZUNEPASS)}" Value="true" />
+      <iris:Command Name="Play" Description="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_PLAY_MENUITEM)}" />
+      <zuneUI:MenuItemCommand Name="Remove" Description="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_NOW_PLAYING_REMOVE)}" />
+      <zuneUI:MenuItemCommand Name="AddToPlaylist" Description="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_MENUITEM_ADD_TO_DIALOG)}" />
+      <zuneUI:MenuItemCommand Name="AddToBurnList" Description="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_MENUITEM_ADD_TO_BURNLIST)}" />
+      <zuneUI:MenuItemCommand Name="Properties" Description="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_LIBRARY_PROPERTIES_MENU_ITEM)}" />
+      <zuneUI:RateCommand Name="Rate" />
+      <zuneUI:MenuItemCommand Name="FindInCollection" Description="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_FIND_IN_COLLECTION)}" />
+      <zuneUI:FeatureMenuItemCommand Name="TellAFriend" Features="eSocial" Description="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_TELL_A_FRIEND_MENUITEM)}" />
+      <zuneUI:FeatureMenuItemCommand Name="AddToFavorites" Features="eSocial" Description="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_ADD_TO_FAVORITES_MENUITEM)}" />
+      <moreInfoActions:TrackMoreInfoActions Name="MoreInfoActions" />
+      <socialComposer:MessageComposer Name="MessageComposer" MessageComposer="{null}" />
+      <socialComposer:AddToFavoritesComposer Name="AddToFavoritesComposer" AddToFavoritesComposer="{null}" />
+      <libraryContextMenu:LibraryContextMenu Name="ContextMenu">
+        <Options>
+          <iris:Command Command="{Play}" />
+          <contextMenu:MenuDivider />
+          <zuneUI:MenuItemCommand MenuItemCommand="{AddToPlaylist}" />
+          <zuneUI:MenuItemCommand MenuItemCommand="{AddToBurnList}" />
+          <zuneUI:FeatureMenuItemCommand FeatureMenuItemCommand="{AddToFavorites}" />
+          <contextMenu:MenuDivider />
+          <zuneUI:RateCommand RateCommand="{Rate}" />
+          <zuneUI:MenuItemCommand MenuItemCommand="{Remove}" />
+          <contextMenu:MenuDivider />
+          <zuneUI:MenuItemCommand MenuItemCommand="{Properties}" />
+          <contextMenu:MenuDivider />
+          <zuneUI:MenuItemCommand MenuItemCommand="{FindInCollection}" />
+          <zuneUI:MenuItemCommand MenuItemCommand="{MoreInfoActions.PrimaryMenuCommand}" />
+          <zuneUI:FeatureMenuItemCommand FeatureMenuItemCommand="{TellAFriend}" />
+        </Options>
+      </libraryContextMenu:LibraryContextMenu>
+      <libraryDialogs:PropertiesDialog Name="PropertiesDialog" PropertiesDialog="{null}" />
+      <nonClientControls:WindowState Name="WndState" />
+      <Boolean Name="AllowMusicControls" />
+      <Boolean Name="PlayingMusic" />
+      <Inset Name="TracksListMarginsForMusic" Inset="0, 0, 0, -10" />
+      <Inset Name="TracksListMarginsForNonMusic" Inset="0" />
+      <Inset Name="TrackListTriangleMarginsWithShuffle" Inset="0, 0, 179, 0" />
+      <Inset Name="TrackListTriangleMarginsWithoutShuffle" Inset="0, 0, 153, 0" />
+      <playlistDialog:CreatePlaylistDialog Name="SaveAsPlaylistDialog" CreatePlaylistDialog="{null}" />
+      <playlistDialog:AddToPlaylistDialog Name="AddToPlaylistDialog" AddToPlaylistDialog="{null}" />
+      <zuneUI:PlaybackTrack Name="CurrentTrack" PlaybackTrack="{null}" />
+      <Image Name="RadioIcon" Image="res://ZuneShellResources!NowPlaying.RadioIcon.png" />
+      <Boolean Name="TracksListNeedsDisposing" Boolean="false" />
+      <Boolean Name="ForceInitialShow" Boolean="false" />
+      <Timer Name="InitialShowTimer" Interval="23000" AutoRepeat="false" Enabled="false" />
+      <zuneUI:SignIn Name="SignIn" SignIn="{zuneUI:SignIn.Instance}" />
+      <mixManager:CurrentlyPlayingTrackMixAvailability Name="CurrentlyPlayingTrackMixAvailability" />
+      <miniMode:MiniMode Name="MiniMode" />
+    </Locals>
+    <Input>
+      <KeyHandler Key="Delete" DisallowedModifiers="Ctrl, Shift, Alt" HandlerStage="Bubbled" Command="{Remove}" />
+      <KeyHandler Name="ZoomShortcutHandler" Key="Z" RequiredModifiers="Ctrl" DisallowedModifiers="Shift, Alt, Windows" HandlerStage="Direct" Handle="true" />
+      <KeyHandler Name="RightKeyHandler" Key="Right" HandlerStage="Direct, Bubbled" Repeat="true" />
+      <KeyHandler Name="LeftKeyHandler" Key="Left" HandlerStage="Direct, Bubbled" Repeat="true" />
+      <KeyHandler Name="EnterKeyHandler" Key="Enter" HandlerStage="Direct, Bubbled" />
+      <MouseWheelHandler Name="WheelHandler" HandlerStage="Bubbled" />
+      <ClickHandler Name="LeftClickHandler" ClickType="LeftMouse" HandlerStage="Bubbled" />
+    </Input>
+    <Scripts>
+      <Script>shell:ZuneApplication.PageLoadComplete();
+UI.CreateInterestOnFocus = false;
+ShowMPContent.Value = nowPlayingLand:NowPlayingPersistentState.ShowZunePassTracks;</Script>
+      <Script>[DeclareTrigger(zuneUI:SingletonModelItem`1[ZuneUI.TransportControls].Instance.CurrentTrack)]
+CurrentTrack = #zuneUI:SingletonModelItem`1[ZuneUI.TransportControls].Instance.CurrentTrack #;</Script>
+      <Script>[DeclareTrigger(TransportControls.Playing), DeclareTrigger(TransportControls.PlayingVideo), DeclareTrigger(Page.SlideShowState.Play), DeclareTrigger(MiniMode.InCompactMode), DeclareTrigger(MiniMode.InPopupMode), DeclareTrigger(Window.WindowState)]
+object playingVideo = #TransportControls.Playing # &amp;&amp; #TransportControls.PlayingVideo #;
+/* UIB_0180 */
+if (Page is not zuneUI:SlideshowLand)
+    goto UIB_0195;
+object playingSlideShow = Page is zuneUI:SlideshowLand &amp;&amp; ((zuneUI:SlideshowLand)Page).SlideShowState.Play;
+/* UIB_019F */
+if (#MiniMode.InCompactMode #)
+    goto UIB_01AE;
+object minimode = MiniMode.InCompactMode || #MiniMode.InPopupMode #;
+/* UIB_01BF */
+if (#Window.WindowState # == WindowState.Normal)
+    goto UIB_01D5;
+object windowVisible = Window.WindowState == WindowState.Normal || Window.WindowState == WindowState.Maximized;
+/* UIB_01DC */
+if (playingVideo)
+    goto UIB_01E8;
+/* UIB_01E8 */
+if (!playingVideo &amp;&amp; !playingSlideShow)
+    goto UIB_01F8;
+/* UIB_01F8 */
+if (!playingVideo &amp;&amp; !playingSlideShow || !!minimode)
+    goto UIB_0204;
+Window.PreventInterruption = playingVideo || playingSlideShow &amp;&amp; !minimode &amp;&amp; windowVisible;</Script>
+      <Script>[DeclareTrigger(TransportControls.PlayingVideo)]
+/* UIB_0229 */
+if (!#TransportControls.PlayingVideo #)
+    goto UIB_023D;
+shell:ViewTimeLogger.Instance.ViewChanged(util:SQMDataId.NowPlayingVideoViewTime);
+goto UIB_0247;
+shell:ViewTimeLogger.Instance.ViewChanged(util:SQMDataId.NowPlayingMusicViewTime);</Script>
+      <Script>[DeclareTrigger(TransportControls.PlayingVideo)]
+bool playingVideo = #TransportControls.PlayingVideo #;
+/* UIB_026A */
+if (Page.TransportControlStyle == zuneUI:TransportControlStyle.Photo)
+    goto UIB_0290;
+/* UIB_0272 */
+if (!playingVideo)
+    goto UIB_0286;
+Page.TransportControlStyle = zuneUI:TransportControlStyle.Video;
+goto UIB_0290;
+Page.TransportControlStyle = zuneUI:TransportControlStyle.Music;</Script>
+      <Script>[DeclareTrigger(Page.ActiveTransportControlStyle)]
+AllowMusicControls = #Page.ActiveTransportControlStyle # == zuneUI:TransportControlStyle.Music;</Script>
+      <Script>[DeclareTrigger(TransportControls.CurrentPlaylist)]
+/* UIB_02B1 */
+if (TracksList.Content == null)
+    goto UIB_02BD;
+/* UIB_02BD */
+if (TracksList.Content == null || !TracksListNeedsDisposing)
+    goto UIB_02D5;
+UI.DisposeOwnedObject(TracksList.Content);
+TracksListNeedsDisposing = false;
+TracksList.Content = null;
+/* UIB_02E1 */
+if (!this.IsQuickMix())
+    goto UIB_02F0;
+/* UIB_02F0 */
+if (!this.IsQuickMix() || !util:FeatureEnablement.IsFeatureEnabled(zuneDBApi:Features.eSubscription))
+    goto UIB_0309;
+ShowMPContentCheckBox.Visible = (this.IsQuickMix() &amp;&amp; util:FeatureEnablement.IsFeatureEnabled(zuneDBApi:Features.eSubscription)) &amp;&amp; (TransportControls.Instance.QuickMixType != zuneDBApi:EQuickMixType.eQuickMixTypeRadio);
+Remove.Available = !this.IsQuickMix();
+TracksList.CanReorder = !this.IsQuickMix();
+TracksList.CanDrag = !this.IsQuickMix();
+/* UIB_0345 */
+if (!!this.IsQuickMix())
+    goto UIB_0370;
+TracksList.Content = #TransportControls.CurrentPlaylist #;
+ShowMPContentCheckBox.Visible = false;
+TransportControls.DontPlayMarketplaceTracks = false;
+goto UIB_03E6;
+ForceInitialShow = true;
+InitialShowTimer.Enabled = true;
+TracksList.Content = new iris:ArrayListDataSet();
+TracksListNeedsDisposing = true;
+/* UIB_039D */
+if (TransportControls.CurrentPlaylist == null)
+    goto UIB_03E6;
+/* UIB_03AE */
+if (!TransportControls.CurrentPlaylist.GetEnumerator().MoveNext())
+    goto UIB_03E2;
+zuneUI:PlaybackTrack track = (zuneUI:PlaybackTrack)TransportControls.CurrentPlaylist.GetEnumerator().Current;
+/* UIB_03CC */
+if (!ShowMPContent.Value &amp;&amp; !track.IsInVisibleCollection)
+    goto UIB_03DD;
+TracksList.Content.Add(track);
+goto UIB_03AB;
+TransportControls.CurrentPlaylist.GetEnumerator();
+PlayingMusic = false;
+/* UIB_03FA */
+if (!!List.IsNullOrEmpty(TracksList.Content))
+    goto UIB_0415;
+PlayingMusic = ((zuneUI:PlaybackTrack)TracksList.Content[0]).IsMusic;</Script>
+      <Script>[DeclareTrigger(ShowMPContent.Value)]
+nowPlayingLand:NowPlayingPersistentState.ShowZunePassTracks = #ShowMPContent.Value #;</Script>
+      <Script>SaveAsPlaylistButton.Visible = PlayingMusic;
+AddToPlaylist.Hidden = !PlayingMusic;
+AddToBurnList.Hidden = !PlayingMusic;
+/* UIB_0559 */
+if (!PlayingMusic)
+    goto UIB_056D;
+TracksList.Margins = TracksListMarginsForMusic;
+goto UIB_0577;
+TracksList.Margins = TracksListMarginsForNonMusic;</Script>
+      <Script>[DeclareTrigger(TransportControls.CurrentTrackIndex)]
+/* UIB_09D6 */
+if (!UI.MouseFocus)
+    goto UIB_09E5;
+/* UIB_09E5 */
+if (UI.MouseFocus &amp;&amp; Window.MouseActive)
+    goto UIB_0A00;
+/* UIB_09F0 */
+if (!UI.KeyFocus)
+    goto UIB_09FC;
+/* UIB_0A04 */
+if (!!UI.MouseFocus &amp;&amp; Window.MouseActive || UI.KeyFocus &amp;&amp; nonClientControls:WindowState.KeysActive)
+    goto UIB_0A16;
+NavigateIntoArgs.Index = #TransportControls.CurrentTrackIndex #;</Script>
+      <Script>[DeclareTrigger(WndState.InputActive), DeclareTrigger(Page.OverlayUI), DeclareTrigger(TransportControls.ShowNowPlayingList.Value)]
+/* UIB_0A1A */
+if (ForceInitialShow)
+    goto UIB_0A29;
+/* UIB_0A29 */
+if (!ForceInitialShow &amp;&amp; !#WndState.InputActive #)
+    goto UIB_0A35;
+/* UIB_0A35 */
+if (!ForceInitialShow &amp;&amp; !WndState.InputActive || !AllowMusicControls)
+    goto UIB_0A49;
+/* UIB_0A49 */
+if ((!(ForceInitialShow) &amp;&amp; !(WndState.InputActive) || !(AllowMusicControls)) || (#Page.OverlayUI # != null))
+    goto UIB_0A7B;
+/* UIB_0A5D */
+if (Page is zuneUI:SlideshowLand)
+    goto UIB_0A73;
+TracksListInnerContainer.Visible = (ForceInitialShow || WndState.InputActive &amp;&amp; AllowMusicControls) &amp;&amp; (Page.OverlayUI == null) &amp;&amp; #TransportControls.ShowNowPlayingList #.Value # &amp;&amp; Page is zuneUI:SlideshowLand || Page.TransportControlStyle == zuneUI:TransportControlStyle.Music;
+TrackListBackground.Visible = TracksListInnerContainer.Visible;
+/* UIB_0A95 */
+if (!TrackListBackground.Visible)
+    goto UIB_0AA7;
+NavigateIntoArgs.Index = TransportControls.CurrentTrackIndex;</Script>
+      <Script>[DeclareTrigger(TracksListInnerContainer.Visible), DeclareTrigger(HeadingLabel.Content), DeclareTrigger(Page.TransportControlStyle)]
+/* UIB_0AAE */
+if (!#TracksListInnerContainer.Visible #)
+    goto UIB_0AC4;
+HeadingPanel.Visible = TracksListInnerContainer.Visible &amp;&amp; !string.IsNullOrEmpty(#HeadingLabel.Content #);
+/* UIB_0AD1 */
+if (!HeadingPanel.Visible)
+    goto UIB_0AEA;
+TrackListTriangle.Visible = #Page.TransportControlStyle # == zuneUI:TransportControlStyle.Music;</Script>
+      <Script>[DeclareTrigger(TransportControls.HasPlaylist), DeclareTrigger(TransportControls.PlaylistSupportsShuffle)]
+/* UIB_0B1C */
+if (!#TransportControls.HasPlaylist #)
+    goto UIB_0B2B;
+/* UIB_0B2B */
+if (!!TransportControls.HasPlaylist &amp;&amp; !#TransportControls.PlaylistSupportsShuffle #)
+    goto UIB_0B3F;
+TrackListTriangle.Margins = TrackListTriangleMarginsWithShuffle;
+goto UIB_0B49;
+TrackListTriangle.Margins = TrackListTriangleMarginsWithoutShuffle;</Script>
+      <Script>[DeclareTrigger(TransportControls.CurrentPlaylist)]
+HeadingLabel.Content = TransportControls.Instance.QuickMixTitle;</Script>
+      <Script>[DeclareTrigger(SaveAsPlaylistButton.Visible), DeclareTrigger(ShowMPContentCheckBox.Visible)]
+/* UIB_0C57 */
+if (#SaveAsPlaylistButton.Visible #)
+    goto UIB_0C66;
+ActionContainer.Visible = SaveAsPlaylistButton.Visible || #ShowMPContentCheckBox.Visible #;</Script>
+      <Script>[DeclareTrigger(CurrentlyPlayingTrackMixAvailability.Available)]
+object track = zuneUI:SingletonModelItem`1[ZuneUI.TransportControls].Instance.CurrentTrack;
+/* UIB_0C8A */
+if (!Page.ShowMixOnEntry || track == null)
+    goto UIB_0CA3;
+/* UIB_0CA3 */
+if ((!(Page.ShowMixOnEntry) || track == null) || (Page.InitialPlaybackID != track.PlaybackID))
+    goto UIB_0CB2;
+/* UIB_0CB2 */
+if ((!(Page.ShowMixOnEntry) || track == null) || (Page.InitialPlaybackID != track.PlaybackID) || !#CurrentlyPlayingTrackMixAvailability.Available #)
+    goto UIB_0CCD;
+CurrentlyPlayingTrackMixAvailability.UpdateMixSeed.Invoke();
+zuneUI:ZuneShell.DefaultInstance.CurrentPage.OverlayUI = mixManager:MixLayerManager.MixUI;</Script>
+      <Script>[FinalEvaluate]
+Window.PreventInterruption = false;</Script>
+      <Script>[FinalEvaluate]
+shell:ViewTimeLogger.Instance.ViewChanged(util:SQMDataId.Invalid);</Script>
+      <Script>[FinalEvaluate]
+Page.ShowMixOnEntry = false;</Script>
+      <Script>[DeclareTrigger(ZoomShortcutHandler.Invoked)]
+TransportControls.ZoomScaleFactor = TransportControls.ZoomScaleFactor + 1 % 4;</Script>
+      <Script>[DeclareTrigger(InitialShowTimer.Tick)]
+ForceInitialShow = false;</Script>
+      <Script>[DeclareTrigger(ShowMPContent.Value), DeclareTrigger(TransportControls.CurrentPlaylist.Count)]
+/* UIB_042D */
+if (!this.IsQuickMix())
+    goto UIB_052F;
+int i = 0;
+/* UIB_0449 */
+if (i &gt;= #TransportControls.CurrentPlaylist #.Count #)
+    goto UIB_04B3;
+/* UIB_045E */
+if (TracksList.Content.Count == i)
+    goto UIB_0483;
+/* UIB_0483 */
+if ((TracksList.Content.Count != i) &amp;&amp; (TransportControls.CurrentPlaylist.get_Item(i) == TracksList.Content[i]))
+    goto UIB_04A0;
+TracksList.Content.Insert(i, TransportControls.CurrentPlaylist.get_Item(i));
+object i = i + 1;
+goto UIB_0439;
+/* UIB_04C0 */
+if (!!#ShowMPContent.Value #)
+    goto UIB_052F;
+object i = TracksList.Content.Count - 1;
+/* UIB_04E3 */
+if (i &lt; 0)
+    goto UIB_052C;
+zuneUI:PlaybackTrack track = (zuneUI:PlaybackTrack)TracksList.Content[i];
+/* UIB_0505 */
+if (!!track.IsInVisibleCollection)
+    goto UIB_0516;
+TracksList.Content.RemoveAt(i);
+object i = i - 1;
+goto UIB_04D9;</Script>
+      <Script>[DeclareTrigger(Play.Invoked)]
+/* UIB_0585 */
+if (SelectionManager.Count &lt;= 0)
+    goto UIB_05AC;
+/* UIB_0597 */
+if (SelectionManager.Count != 1)
+    goto UIB_05AC;
+TransportControls.StartPlayingAt(((zuneUI:PlaybackTrack)SelectionManager.SelectedItem));</Script>
+      <Script>[DeclareTrigger(AddToPlaylist.Invoked)]
+/* UIB_05BA */
+if (SelectionManager.Count == 0)
+    goto UIB_05E9;
+/* UIB_05C7 */
+if (AddToPlaylistDialog != null)
+    goto UIB_05D6;
+// Unsupported instruction: INIT 649
+;
+AddToPlaylistDialog = new playlistDialog:AddToPlaylistDialog();
+AddToPlaylistDialog.DragItems = SelectionManager.SelectedItems;
+AddToPlaylistDialog.Show();</Script>
+      <Script>[DeclareTrigger(AddToBurnList.Invoked)]
+zuneUI:CDAccess.Instance.AddToBurnList(SelectionManager.SelectedItems);</Script>
+      <Script>[DeclareTrigger(LeftKeyHandler.Invoked), DeclareTrigger(WheelHandler.UpInvoked)]
+/* UIB_05FE */
+if (Page is not zuneUI:SlideshowLand)
+    goto UIB_060D;
+((zuneUI:SlideshowLand)Page).MoveToPreviousSlide();</Script>
+      <Script>[DeclareTrigger(LeftClickHandler.Invoked), DeclareTrigger(EnterKeyHandler.Invoked), DeclareTrigger(RightKeyHandler.Invoked), DeclareTrigger(WheelHandler.DownInvoked)]
+/* UIB_0614 */
+if (Page is not zuneUI:SlideshowLand)
+    goto UIB_0623;
+((zuneUI:SlideshowLand)Page).MoveToNextSlide();</Script>
+      <Script>[DeclareTrigger(ContextMenu.IsOpening)]
+/* UIB_062A */
+if (!#ContextMenu.IsOpening #)
+    goto UIB_085B;
+int selectionCount = SelectionManager.Count;
+/* UIB_0643 */
+if (selectionCount == 0)
+    goto UIB_0650;
+Remove.Hidden = selectionCount == 0 || this.IsQuickMix();
+object selectedOne = selectionCount == 1;
+Play.Available = selectedOne;
+zuneUI:PlaybackTrack track = (zuneUI:PlaybackTrack)SelectionManager.SelectedItem;
+/* UIB_067F */
+if (!selectedOne)
+    goto UIB_068E;
+object selectedOneLibraryItem = selectedOne &amp;&amp; track is zuneUI:LibraryPlaybackTrack;
+object selectedOneLibraryTrack = new bool ();
+bool isInCollection = false;
+bool isInHiddenCollection = false;
+/* UIB_06A9 */
+if (!selectedOneLibraryItem)
+    goto UIB_0707;
+zuneUI:LibraryPlaybackTrack libraryTrack = (zuneUI:LibraryPlaybackTrack)track;
+object selectedOneLibraryTrack = libraryTrack.MediaType == zuneUI:MediaType.Track;
+/* UIB_06CC */
+if (!selectedOneLibraryTrack)
+    goto UIB_06DB;
+object isInCollection = selectedOneLibraryTrack &amp;&amp; libraryTrack.IsInCollection;
+/* UIB_06EC */
+if (!!zuneUI:GuidHelper.IsEmpty(track.ZuneMediaId))
+    goto UIB_0704;
+object isInHiddenCollection = shell:ZuneApplication.Service.InHiddenCollection(track.ZuneMediaId, service:EContentType.MusicTrack);
+Properties.Hidden = !selectedOneLibraryTrack;
+/* UIB_071D */
+if (track == null)
+    goto UIB_072C;
+Rate.Hidden = !track != null &amp;&amp; track.CanRate;
+/* UIB_073E */
+if (!isInCollection)
+    goto UIB_074A;
+FindInCollection.Hidden = !isInCollection || isInHiddenCollection;
+MoreInfoActions.ZuneMediaId = zuneUI:GuidHelper.Empty;
+TellAFriend.Hidden = true;
+/* UIB_0768 */
+if (!PlayingMusic)
+    goto UIB_0774;
+/* UIB_0774 */
+if (!PlayingMusic || !selectedOne)
+    goto UIB_0785;
+/* UIB_0785 */
+if ((!(PlayingMusic) || !(selectedOne)) || (track == null))
+    goto UIB_079B;
+/* UIB_079B */
+if ((!(PlayingMusic) || !(selectedOne)) || (track == null) || !!zuneUI:GuidHelper.IsEmpty(track.ZuneMediaId))
+    goto UIB_07D0;
+/* UIB_07AD */
+if (track.MediaType != zuneUI:MediaType.Track)
+    goto UIB_07D0;
+MoreInfoActions.ZuneMediaId = track.ZuneMediaId;
+TellAFriend.Hidden = !zuneUI:Attachment.CanCreateAttachment(track);
+AddToBurnList.Available = !zuneUI:CDAccess.Instance.IsBurning;
+bool canAddToFavorites = false;
+/* UIB_07EB */
+if (!PlayingMusic)
+    goto UIB_0830;
+/* UIB_07FC */
+if (!SelectionManager.SelectedItems.GetEnumerator().MoveNext())
+    goto UIB_082C;
+zuneUI:PlaybackTrack playbackTrack = (zuneUI:PlaybackTrack)SelectionManager.SelectedItems.GetEnumerator().Current;
+/* UIB_080D */
+if (canAddToFavorites)
+    goto UIB_0823;
+object canAddToFavorites = canAddToFavorites || !zuneUI:GuidHelper.IsEmpty(playbackTrack.ZuneMediaId);
+goto UIB_07F9;
+SelectionManager.SelectedItems.GetEnumerator();
+AddToFavorites.Hidden = !canAddToFavorites;
+goto UIB_0865;
+Play.Available = true;</Script>
+      <Script>[DeclareTrigger(Remove.Invoked)]
+/* UIB_086E */
+if (!!this.IsQuickMix())
+    goto UIB_0880;
+TransportControls.RemoveFromNowPlaying(SelectionManager.SelectedIndices);</Script>
+      <Script>[DeclareTrigger(Properties.Invoked)]
+/* UIB_0889 */
+if (PropertiesDialog != null)
+    goto UIB_0898;
+// Unsupported instruction: INIT 636
+;
+PropertiesDialog = new libraryDialogs:PropertiesDialog();
+/* UIB_08A1 */
+if (SelectionManager.SelectedItem is not zuneUI:LibraryPlaybackTrack)
+    goto UIB_08D6;
+zuneUI:LibraryPlaybackTrack track = (zuneUI:LibraryPlaybackTrack)SelectionManager.SelectedItem;
+PropertiesDialog.LibraryId = track.MediaId;
+PropertiesDialog.ItemType = track.MediaType;
+PropertiesDialog.Show();</Script>
+      <Script>[DeclareTrigger(Rate.Rating)]
+/* UIB_08E3 */
+if (!SelectionManager.SelectedItems.GetEnumerator().MoveNext())
+    goto UIB_0903;
+zuneUI:PlaybackTrack track = (zuneUI:PlaybackTrack)SelectionManager.SelectedItems.GetEnumerator().Current;
+track.UserRating = #Rate.Rating #;
+goto UIB_08E0;
+SelectionManager.SelectedItems.GetEnumerator();</Script>
+      <Script>[DeclareTrigger(SaveAsPlaylist.Invoked)]
+/* UIB_0910 */
+if (SaveAsPlaylistDialog != null)
+    goto UIB_092C;
+// Unsupported instruction: INIT 652
+;
+SaveAsPlaylistDialog = new playlistDialog:CreatePlaylistDialog();
+SaveAsPlaylistDialog.BaseDefaultPlaylistName = zuneUI:Shell.LoadString(zuneUI:StringId.IDS_NEW_NOWPLAYING_PLAYLIST_NAME);
+/* UIB_093A */
+if (TransportControls.Instance.QuickMixSession == null)
+    goto UIB_0996;
+/* UIB_094F */
+if (TransportControls.Instance.QuickMixType == zuneDBApi:EQuickMixType.eQuickMixTypeRadio)
+    goto UIB_0981;
+/* UIB_095A */
+if (!TransportControls.DontPlayMarketplaceTracks)
+    goto UIB_0967;
+goto UIB_096A;
+object mixType = zuneDBApi:EQuickMixType.eQuickMixTypeMixed;
+TransportControls.Instance.QuickMixSession.SetQuickMixType(mixType);
+SaveAsPlaylistDialog.QuickMixSession = TransportControls.Instance.QuickMixSession;
+goto UIB_09A3;
+SaveAsPlaylistDialog.DragItems = TracksList.Content;
+SaveAsPlaylistDialog.Show();</Script>
+      <Script>[DeclareTrigger(FindInCollection.Invoked)]
+/* UIB_09B3 */
+if (SelectionManager.SelectedItem is not zuneUI:LibraryPlaybackTrack)
+    goto UIB_09CF;
+zuneUI:LibraryPlaybackTrack track = (zuneUI:LibraryPlaybackTrack)SelectionManager.SelectedItem;
+track.FindInCollection();</Script>
+      <Script>[DeclareTrigger(TransportControls.PlaybackStopped)]
+/* UIB_0AF1 */
+if (!Page.ExitOnPlaybackStopped)
+    goto UIB_0B11;
+/* UIB_0AFC */
+if (!zuneUI:ZuneShell.DefaultInstance.CanNavigateBack)
+    goto UIB_0B0D;
+zuneUI:ZuneShell.DefaultInstance.NavigateBack();
+goto UIB_0B11;
+zuneUI:Shell.NavigateToHomePage();</Script>
+      <Script>[DeclareTrigger(TellAFriend.Invoked)]
+Null attachment = null;
+/* UIB_0B58 */
+if (SelectionManager.SelectedItem is not zuneUI:PlaybackTrack)
+    goto UIB_0B80;
+zuneUI:PlaybackTrack track = (zuneUI:PlaybackTrack)SelectionManager.SelectedItem;
+object attachment = zuneUI:Attachment.CreateAttachment(track.ZuneMediaId, track.MediaType);
+/* UIB_0B88 */
+if (attachment == null)
+    goto UIB_0BB4;
+/* UIB_0B95 */
+if (MessageComposer != null)
+    goto UIB_0BA4;
+// Unsupported instruction: INIT 490
+;
+MessageComposer = new socialComposer:MessageComposer();
+MessageComposer.Attachment = attachment;
+MessageComposer.Show();</Script>
+      <Script>[DeclareTrigger(AddToFavorites.Invoked)]
+/* UIB_0BBB */
+if (!PlayingMusic)
+    goto UIB_0C3F;
+object favorites = new List();
+/* UIB_0BD3 */
+if (!SelectionManager.SelectedItems.GetEnumerator().MoveNext())
+    goto UIB_0C04;
+zuneUI:PlaybackTrack track = (zuneUI:PlaybackTrack)SelectionManager.SelectedItems.GetEnumerator().Current;
+/* UIB_0BEE */
+if (!!zuneUI:GuidHelper.IsEmpty(track.ZuneMediaId))
+    goto UIB_0BFF;
+favorites.Add(track.ZuneMediaId);
+goto UIB_0BD0;
+SelectionManager.SelectedItems.GetEnumerator();
+/* UIB_0C10 */
+if (AddToFavoritesComposer != null)
+    goto UIB_0C1F;
+// Unsupported instruction: INIT 1509
+;
+AddToFavoritesComposer = new socialComposer:AddToFavoritesComposer();
+AddToFavoritesComposer.MediaType = zuneUI:MediaType.Track;
+AddToFavoritesComposer.ServiceMediaIds = favorites;
+AddToFavoritesComposer.Send.Invoke();</Script>
+      <Script>/* UIB_0CD9 */
+if (CurrentTrack == null)
+    goto UIB_0CEC;
+/* UIB_0CEC */
+if (CurrentTrack == null || !!CurrentTrack.IsMusic)
+    goto UIB_0CFC;
+zuneUI:ZuneShell.DefaultInstance.CurrentPage.OverlayUI = null;</Script>
+    </Scripts>
+    <Methods><![CDATA[
+bool IsQuickMix()
+{
+    return nowPlayingLand:NowPlayingPersistentState.IsQuickMix();
+}
+]]></Methods>
+    <Content>
+      <Panel Background="0, 0, 0, 0" Layout="Form">
+        <Animations>
+          <Animation Animation="{animations:Animations.NowPlayingPageFadeIn}" />
+          <Animation Animation="{animations:Animations.NowPlayingPageFadeOut}" />
+        </Animations>
+        <Children>
+          <Panel Name="HeadingPanel" MaximumSize="0, 60" MinimumSize="0, 60">
+            <LayoutInput>
+              <FormLayoutInput Left="TrackListBackground,0" Right="TrackListBackground,1" Bottom="TracksListPanel,0,-3" />
+            </LayoutInput>
+            <Animations>
+              <Animation Animation="{animations:Animations.NowPlayingTrackListShow}" />
+              <Animation Animation="{animations:Animations.NowPlayingFadeOut}" />
+            </Animations>
+            <Children>
+              <Panel Layout="HorizontalFlow">
+                <Children>
+                  <Graphic Content="{RadioIcon}" SizingPolicy="SizeToContent" StretchingPolicy="Uniform" Margins="5" Alignment="Unspecified, Center" />
+                  <label:Label Name="HeadingLabel" Style="{styles:SharedStyles.NowPlayingHeadingStyle}" Alignment="Unspecified, Center" />
+                </Children>
+              </Panel>
+              <Panel Layout="Form" Background="255, 0, 0, 0" Alpha="0.8" />
+            </Children>
+          </Panel>
+          <Panel Name="TracksListPanel" Margins="4, 20, 4, 20" MinimumSize="310, 0" MaximumSize="310, 600" Alignment="Unspecified, Far">
+            <LayoutInput>
+              <FormLayoutInput Right="Parent,1,20" Top="Parent,0,150" Bottom="Parent,1,22" />
+            </LayoutInput>
+            <Animations>
+              <Animation Animation="{animations:Animations.NowPlayingTrackListShow}" />
+              <Animation Animation="{animations:Animations.NowPlayingFadeOut}" />
+            </Animations>
+            <Children>
+              <Panel Name="TracksListInnerContainer">
+                <Layout>
+                  <DockLayout DefaultLayoutInput="Bottom" />
+                </Layout>
+                <Animations>
+                  <Animation Animation="{animations:Animations.NowPlayingFadeIn}" />
+                </Animations>
+                <Children>
+                  <Panel Name="ActionContainer" Layout="VerticalFlow" MinimumSize="0, 39" Margins="0, 12, 0, -5">
+                    <Children>
+                      <button:ActionButton Name="SaveAsPlaylistButton" Model="{SaveAsPlaylist}" Alignment="Near, Far" Margins="5, 0, 0, 0" FocusOrder="1" />
+                      <checkbox:CheckBox Name="ShowMPContentCheckBox" Model="{ShowMPContent}" Alignment="Near, Far" Margins="5, 0, 0, 0" LabelFont="{styles:Styles.ZegoeCaps8}" />
+                    </Children>
+                  </Panel>
+                  <nowPlayingLand:NowPlayingSpreadSheet Name="TracksList" ListModel="{NowPlayingListModel}" SelectionManager="{SelectionManager}" NavigateIntoArgs="{NavigateIntoArgs}" ColumnData="{nowPlayingLand:Columns.DefaultViewColumnData}" ShowHeaders="false" ContextMenu="{ContextMenu}" ExecuteCommand="{Play}" FocusOrder="0" LayoutInput="Client" Alignment="Fill" />
+                </Children>
+              </Panel>
+            </Children>
+          </Panel>
+          <Panel Name="TrackListBackground" Alpha="0.8" Layout="Dock">
+            <LayoutInput>
+              <FormLayoutInput Left="TracksListPanel,0" Right="TracksListPanel,1" Top="TracksListPanel,0" Bottom="TracksListPanel,1" />
+            </LayoutInput>
+            <Animations>
+              <Animation Animation="{animations:Animations.NowPlayingTrackListShow}" />
+              <Animation Animation="{animations:Animations.NowPlayingFadeOut}" />
+            </Animations>
+            <Children>
+              <Graphic Name="TrackListTriangle" SizingPolicy="SizeToContent" StretchingPolicy="Uniform" Content="{styles:Styles.NowPlayingTriangle}" LayoutInput="Bottom" Alignment="Far, Unspecified" Margins="{TrackListTriangleMarginsWithShuffle}" />
+              <Panel Background="255, 0, 0, 0" LayoutInput="Client" />
+            </Children>
+          </Panel>
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+  <UI Name="NowPlayingBackground" Base="pageStack:PageBase">
+    <Properties>
+      <zuneUI:PlaybackPage Name="Page" PlaybackPage="$Required" />
+    </Properties>
+    <Locals>
+      <Window Name="Window" />
+      <zuneUI:TransportControls Name="TransportControls" TransportControls="{zuneUI:SingletonModelItem`1[ZuneUI.TransportControls].Instance}" />
+      <nonClientControls:WindowState Name="WindowState" />
+      <iris:Command Name="ZoomScale0" Description="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_VIDEO_ZOOM_FULL)}" />
+      <iris:Command Name="ZoomScale1" Description="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_VIDEO_ZOOM_NONE)}" />
+      <iris:Command Name="ZoomScale2" Description="{string.Format(zuneUI:Shell.LoadString(zuneUI:StringId.IDS_VIDEO_ZOOM_X), 2)}" />
+      <iris:Command Name="ZoomScale3" Description="{string.Format(zuneUI:Shell.LoadString(zuneUI:StringId.IDS_VIDEO_ZOOM_X), 3)}" />
+      <libraryContextMenu:LibraryContextMenu Name="ZoomScaleContextMenu">
+        <Options>
+          <iris:Command Command="{ZoomScale1}" />
+          <iris:Command Command="{ZoomScale2}" />
+          <iris:Command Command="{ZoomScale3}" />
+          <iris:Command Command="{ZoomScale0}" />
+        </Options>
+      </libraryContextMenu:LibraryContextMenu>
+      <popup:PopupManager Name="PopupManager" />
+      <miniMode:MiniMode Name="MiniMode" />
+      <Boolean Name="IsShowingDebugInfo" Boolean="false" />
+    </Locals>
+    <Input>
+      <KeyHandler Name="DebugInfoHotKey" Key="F4" DisallowedModifiers="Ctrl, Shift, Alt" HandlerStage="Direct" />
+      <ClickHandler Name="RightClick" ClickType="RightMouse" HandlerStage="Direct" />
+      <ClickHandler Name="ZoomModeHandler" ClickType="LeftMouse" HandlerStage="Direct" ClickCount="Double" Handle="true" />
+    </Input>
+    <Scripts>
+      <Script>[DeclareTrigger(TransportControls.PlayingVideo), DeclareTrigger(TransportControls.VideoStream), DeclareTrigger(Window.ClientSize), DeclareTrigger(TransportControls.ZoomScaleFactor)]
+bool playingVideo = #TransportControls.PlayingVideo #;
+bool scalingVideo = false;
+int maxVideoSizeX = 0;
+int maxVideoSizeY = 0;
+Video.Visible = playingVideo;
+/* UIB_1818 */
+if (!playingVideo)
+    goto UIB_1A05;
+iris:VideoStream stream = #TransportControls.VideoStream #;
+Video.VideoStream = stream;
+/* UIB_183B */
+if (iris:Application.RenderingType != iris:RenderingType.GDI)
+    goto UIB_1859;
+VideoConstraint.Margins = styles:Styles.VideoMarginsGDIMode;
+GDIVideoBackground.Visible = true;
+goto UIB_186D;
+VideoConstraint.Margins = new Inset();
+GDIVideoBackground.Visible = false;
+/* UIB_1877 */
+if (!!MiniMode.InCompactMode)
+    goto UIB_188A;
+/* UIB_188A */
+if (!!MiniMode.InCompactMode || !!MiniMode.InPopupMode)
+    goto UIB_18A0;
+/* UIB_18A0 */
+if ((!(!MiniMode.InCompactMode) || !(!MiniMode.InPopupMode)) || (stream.ContentAspectHeight == 0))
+    goto UIB_18B6;
+/* UIB_18B6 */
+if (((!(!MiniMode.InCompactMode) || !(!MiniMode.InPopupMode)) || (stream.ContentAspectHeight == 0)) || (stream.ContentAspectWidth == 0))
+    goto UIB_18CC;
+/* UIB_18CC */
+if ((((!(!MiniMode.InCompactMode) || !(!MiniMode.InPopupMode)) || (stream.ContentAspectHeight == 0)) || (stream.ContentAspectWidth == 0)) || (stream.ContentHeight == 0))
+    goto UIB_19FD;
+object naturalWidth = stream.ContentHeight * stream.ContentAspectWidth / stream.ContentAspectHeight;
+object naturalHeight = stream.ContentHeight;
+object wndWidth = #Window.ClientSize #.Width;
+object wndHeight = Window.ClientSize.Height;
+/* UIB_191D */
+if (wndWidth == 0)
+    goto UIB_1930;
+/* UIB_1930 */
+if (wndWidth == 0 || wndHeight == 0)
+    goto UIB_19F1;
+object scaleX = (float)(wndWidth) / (float)(naturalWidth);
+((float)(wndWidth)) / ((float)(naturalWidth));
+object scaleY = (float)(wndHeight) / (float)(naturalHeight);
+((float)(wndHeight)) / ((float)(naturalHeight));
+object scale = system:Math.Min(scaleX, scaleY);
+object maxVideoSizeX = #TransportControls.ZoomScaleFactor # * naturalWidth;
+object maxVideoSizeY = TransportControls.ZoomScaleFactor * naturalHeight;
+/* UIB_19A5 */
+if (maxVideoSizeY + 50 &gt; wndHeight)
+    goto UIB_19BF;
+/* UIB_19BF */
+if (maxVideoSizeY + 50 &lt;= wndHeight &amp;&amp; maxVideoSizeX + 50 &lt;= wndWidth)
+    goto UIB_19E1;
+TransportControls.ZoomScaleFactor = 0;
+int maxVideoSizeY = 0;
+int maxVideoSizeX = 0;
+goto UIB_19E8;
+bool scalingVideo = true;
+goto UIB_1A17;
+Video.VideoStream = null;
+GDIVideoBackground.Visible = false;
+VideoConstraint.MaximumSize = new Size(maxVideoSizeX, maxVideoSizeY);
+LeftVideoBackground.Visible = scalingVideo;
+TopVideoBackground.Visible = scalingVideo;
+RightVideoBackground.Visible = scalingVideo;
+BottomVideoBackground.Visible = scalingVideo;</Script>
+      <Script>[DeclareTrigger(TransportControls.PlayingVideo)]
+/* UIB_1A68 */
+if (!!#TransportControls.PlayingVideo #)
+    goto UIB_1A81;
+MusicBackground.RequestSource(typeof(nowPlayingMusicBackground:NowPlayingMusicBackground), "Page", Page);
+goto UIB_1A88;
+MusicBackground.RequestSource(null);</Script>
+      <Script>[DeclareTrigger(PopupManager.IsModal)]
+Page.AutoHideToolbars = !#PopupManager.IsModal #;</Script>
+      <Script>[DeclareTrigger(Page.OverlayUI), DeclareTrigger(WindowState.InputActive)]
+/* UIB_1AA6 */
+if (#Page.OverlayUI # != null)
+    goto UIB_1AB5;
+Fade.Visible = Page.OverlayUI == null &amp;&amp; #WindowState.InputActive #;</Script>
+      <Script>[DeclareTrigger(RightClick.Invoked)]
+/* UIB_175C */
+if (!TransportControls.PlayingVideo || iris:Application.RenderingType == iris:RenderingType.GDI)
+    goto UIB_177E;
+ZoomScaleContextMenu.LayoutInput = new PopupLayoutInput();
+ZoomScaleContextMenu.LayoutInput.Placement = MouseOrigin;
+ZoomScaleContextMenu.Show();</Script>
+      <Script>[DeclareTrigger(ZoomScale0.Invoked)]
+TransportControls.ZoomScaleFactor = 0;</Script>
+      <Script>[DeclareTrigger(ZoomScale1.Invoked)]
+TransportControls.ZoomScaleFactor = 1;</Script>
+      <Script>[DeclareTrigger(ZoomScale2.Invoked)]
+TransportControls.ZoomScaleFactor = 2;</Script>
+      <Script>[DeclareTrigger(ZoomScale3.Invoked)]
+TransportControls.ZoomScaleFactor = 3;</Script>
+      <Script>[DeclareTrigger(ZoomModeHandler.Invoked)]
+TransportControls.ZoomScaleFactor = TransportControls.ZoomScaleFactor + 1 % 4;</Script>
+      <Script>[DeclareTrigger(DebugInfoHotKey.Invoked)]
+/* UIB_17CA */
+if (!zuneUI:Shell.PreRelease)
+    goto UIB_17DE;
+IsShowingDebugInfo = !IsShowingDebugInfo;
+this.ShowDebugInfo();</Script>
+      <Script>[DeclareTrigger(TransportControls.BandwidthUpdateInfo)]
+/* UIB_17E2 */
+if (!zuneUI:Shell.PreRelease)
+    goto UIB_17EB;
+this.ShowDebugInfo();</Script>
+    </Scripts>
+    <Methods><![CDATA[
+void ShowDebugInfo()
+{
+    DebugInfoText.Visible = IsShowingDebugInfo;
+    /* UIB_1C7C */
+    if (!IsShowingDebugInfo)
+        goto UIB_1C90;
+    /* UIB_1C90 */
+    if (!IsShowingDebugInfo || TransportControls.BandwidthUpdateInfo == null)
+        goto UIB_1D81;
+    DebugInfoText.Content = "ID = " + TransportControls.BandwidthUpdateInfo.Id.ToString("X") + ", Bitrate = " + TransportControls.BandwidthUpdateInfo.Bitrate.ToString() + ", RecentAvgBandwidth = " + TransportControls.BandwidthUpdateInfo.RecentAverageBandwidth.ToString() + ", TotalAverageBandwidth = " + TransportControls.BandwidthUpdateInfo.TotalAverageBandwidth.ToString() + ", LatestBandwidth = " + TransportControls.BandwidthUpdateInfo.LatestBandwidth.ToString() + ", Buffering = " + TransportControls.BandwidthUpdateInfo.Buffering.ToString() + ", DroppedFrames = " + TransportControls.BandwidthUpdateInfo.DroppedFrames.ToString() + ", Quality = " + TransportControls.BandwidthUpdateInfo.Quality.ToString() + ", TestPosition = " + TransportControls.BandwidthUpdateInfo.TestPosition.ToString() + ", TestLength = " + TransportControls.BandwidthUpdateInfo.TestLength.ToString();
+}
+]]></Methods>
+    <Content>
+      <Panel Layout="Form">
+        <Animations>
+          <Animation Animation="{animations:Animations.NowPlayingPageFadeIn}" />
+          <Animation Animation="{animations:Animations.NowPlayingPageFadeOut}" />
+        </Animations>
+        <Children>
+          <frame:ApplicationBorders>
+            <LayoutInput>
+              <FormLayoutInput Left="Parent,0" Right="Parent,1" Top="Parent,0" Bottom="Parent,1" />
+            </LayoutInput>
+          </frame:ApplicationBorders>
+          <Panel Name="DebugInfoPanel" Visible="true">
+            <LayoutInput>
+              <FormLayoutInput Left="Parent,0.1" Right="Parent,0.9" Top="Parent,0.02" />
+            </LayoutInput>
+            <Children>
+              <label:Label Name="DebugInfoText" Style="{styles:SharedStyles.NowPlayingDebugInfoStyle}" WordWrap="true" Visible="false" />
+            </Children>
+          </Panel>
+          <Graphic Name="Fade" Content="{styles:Styles.NowPlayingFade}" SizingPolicy="SizeToConstraint">
+            <LayoutInput>
+              <FormLayoutInput Left="Parent,0" Right="Parent,1" Top="Parent,1,-160" Bottom="Parent,1" />
+            </LayoutInput>
+            <Animations>
+              <Animation Animation="{animations:Animations.NowPlayingFadeIn}" />
+              <Animation Animation="{animations:Animations.NowPlayingFadeOut}" />
+            </Animations>
+          </Graphic>
+          <Panel Name="VideoConstraint" Alignment="Center">
+            <Children>
+              <Video Name="Video" LetterboxColor="255, 16, 16, 16" Visible="false" Layout="Form" />
+            </Children>
+          </Panel>
+          <Panel Name="GDIVideoBackground" Background="255, 0, 0, 0" Visible="false">
+            <LayoutInput>
+              <FormLayoutInput Left="Parent,0" Right="Parent,1" Top="Parent,0" Bottom="Parent,1" />
+            </LayoutInput>
+          </Panel>
+          <Panel Name="LeftVideoBackground" Background="255, 16, 16, 16" Visible="false">
+            <LayoutInput>
+              <FormLayoutInput Left="Parent,0" Right="VideoConstraint,0" Top="VideoConstraint,0" Bottom="VideoConstraint,1" />
+            </LayoutInput>
+          </Panel>
+          <Panel Name="TopVideoBackground" Background="255, 16, 16, 16" Visible="false">
+            <LayoutInput>
+              <FormLayoutInput Left="Parent,0" Right="Parent,1" Top="Parent,0" Bottom="VideoConstraint,0" />
+            </LayoutInput>
+          </Panel>
+          <Panel Name="RightVideoBackground" Background="255, 16, 16, 16" Visible="false">
+            <LayoutInput>
+              <FormLayoutInput Left="VideoConstraint,1" Right="Parent,1" Top="VideoConstraint,0" Bottom="VideoConstraint,1" />
+            </LayoutInput>
+          </Panel>
+          <Panel Name="BottomVideoBackground" Background="255, 16, 16, 16" Visible="false">
+            <LayoutInput>
+              <FormLayoutInput Left="Parent,0" Right="Parent,1" Top="VideoConstraint,1" Bottom="Parent,1" />
+            </LayoutInput>
+          </Panel>
+          <Host Name="MusicBackground" />
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+  <Class Name="NowPlayingListModel" Base="spreadSheet:SpreadSheetListModel">
+    <Properties>
+      <zuneUI:PlaybackPage Name="Page" PlaybackPage="$Required" />
+      <Type Name="RowModelType" Type="{typeof(nowPlayingLand:NowPlayingRowModel)}" />
+    </Properties>
+  </Class>
+  <UI Name="NowPlayingSpreadSheet" Base="spreadSheet:SpreadSheet">
+    <Properties>
+      <Boolean Name="CanReorder" Boolean="true" />
+      <Size Name="LayoutSpacing" Size="0, 5" />
+      <Size Name="RowSize" Size="0, 50" />
+      <Inset Name="RowPadding" Inset="6, 1, 0, 3" />
+      <Boolean Name="AllowHorizontalScrolling" Boolean="false" />
+      <Type Name="ScrollBarType" Type="{typeof(wizard:ScrollBar)}" />
+      <style:StyleSet Name="RowBackgroundStyle" StyleSet="{styles:SharedStyles.NowPlayingRowBackgroundStyle}" />
+    </Properties>
+    <Scripts>
+      <Script>[DeclareTrigger(UI.MouseFocus)]
+nonClientControls:WindowState.PageInputActivity = #UI.MouseFocus #;</Script>
+      <Script>[DeclareTrigger(Target.Dropped)]
+object value = DropHelper.Value;
+/* UIB_2106 */
+if (!!value is SelectionManager)
+    goto UIB_2110;
+goto UIB_213A;
+SelectionManager selectionManager = (SelectionManager)value;
+object insertAt = InsertIndex.Value;
+zuneUI:SingletonModelItem`1[ZuneUI.TransportControls].Instance.ReorderNowPlaying(selectionManager.SelectedIndices, insertAt);</Script>
+    </Scripts>
+  </UI>
+  <Class Name="Columns" Shared="true">
+    <Properties>
+      <spreadSheet:ColumnData Name="DefaultViewColumnData" SaveKeyPrefix="NowPlaying">
+        <Columns>
+          <spreadSheet:ColumnInfo CellType="{typeof(nowPlayingLand:StatusCell)}" Resizable="false" CellPadding="0, 0, 0, 2">
+            <LayoutInput>
+              <StackLayoutInput Priority="High" />
+            </LayoutInput>
+            <ColumnSize>
+              <SharedSize Size="17, 0" />
+            </ColumnSize>
+          </spreadSheet:ColumnInfo>
+          <spreadSheet:ColumnInfo Header="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_SONG_COLUMN_HEADER)}" CellType="{typeof(nowPlayingLand:SongCell)}" Resizable="false" CellPadding="5, 0, 5, 0" Fill="true">
+            <LayoutInput>
+              <StackLayoutInput Priority="Low" />
+            </LayoutInput>
+          </spreadSheet:ColumnInfo>
+          <spreadSheet:ColumnInfo CellType="{typeof(nowPlayingLand:RatingCell)}" Resizable="false" CellPadding="4, 9, 1, 0" LayoutInput="Right">
+            <ColumnSize>
+              <SharedSize Size="30, 0" />
+            </ColumnSize>
+          </spreadSheet:ColumnInfo>
+          <spreadSheet:ColumnInfo CellType="{typeof(nowPlayingLand:MoreInfoCell)}" Resizable="false" CellPadding="1, 9, 4, 0" LayoutInput="Right">
+            <ColumnSize>
+              <SharedSize Size="30, 0" />
+            </ColumnSize>
+          </spreadSheet:ColumnInfo>
+          <spreadSheet:ColumnInfo CellType="{typeof(nowPlayingLand:DownloadCell)}" Resizable="false" CellPadding="1, 9, 4, 0" LayoutInput="Right">
+            <ColumnSize>
+              <SharedSize Size="30, 0" />
+            </ColumnSize>
+          </spreadSheet:ColumnInfo>
+        </Columns>
+      </spreadSheet:ColumnData>
+    </Properties>
+  </Class>
+  <Class Name="NowPlayingRowModel" Base="spreadSheetCells:SpreadSheetTrackRowModel">
+    <Properties>
+      <iris:Choice Name="ButtonState">
+        <Options>
+          <String String="Hidden" />
+          <String String="Buttons" />
+          <String String="Upsell" />
+          <String String="SignIn" />
+        </Options>
+      </iris:Choice>
+      <Boolean Name="ForceNonMarketplace" Boolean="false" />
+    </Properties>
+  </Class>
+  <UI Name="StatusCell" Base="spreadSheetCells:MediaStatusCell">
+    <Properties>
+      <nowPlayingLand:NowPlayingRowModel Name="RowModel" NowPlayingRowModel="$Required" />
+      <zuneUI:PlaybackTrack Name="Model" PlaybackTrack="$Required" />
+    </Properties>
+    <Scripts>
+      <Script>[DeclareTrigger(zuneUI:SingletonModelItem`1[ZuneUI.TransportControls].Instance.ErrorCount)]
+ErrorCode = zuneUI:SingletonModelItem`1[ZuneUI.TransportControls].Instance.GetLibraryErrorCode(Model);</Script>
+      <Script>[DeclareTrigger(RowModel.IsNowPlaying)]
+IsNowPlaying = #RowModel.IsNowPlaying #;</Script>
+    </Scripts>
+  </UI>
+  <UI Name="SongCell" Base="spreadSheet:Cell">
+    <Properties>
+      <style:StatefulCompositeStyle Name="Style" StatefulCompositeStyle="$Required" />
+      <zuneUI:PlaybackTrack Name="Model" PlaybackTrack="$Required" />
+      <nowPlayingLand:NowPlayingRowModel Name="RowModel" NowPlayingRowModel="$Required" />
+      <style:Style Name="TrackStyle" Style="{styles:SharedStyles.NowPlayingTrackStyle}" />
+      <style:Style Name="ArtistStyle" Style="{styles:SharedStyles.NowPlayingArtistStyle}" />
+      <iris:Command Name="SignInModel" Description="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_LOGON_BUTTON)}" />
+    </Properties>
+    <Locals>
+      <style:StatefulCompositeStyle Name="TrackStatefulStyle" Base="{styles:SharedStyles.NowPlayingTrackStyle}" />
+      <style:StatefulCompositeStyle Name="ArtistStatefulStyle" Base="{styles:SharedStyles.NowPlayingArtistStyle}" />
+      <zuneUI:SignIn Name="SignIn" SignIn="{zuneUI:SignIn.Instance}" />
+      <signInDialog:SignInDialog Name="SignInDialog" SignInDialog="{null}" />
+    </Locals>
+    <Scripts>
+      <Script>[DeclareTrigger(Style.State.Hovered), DeclareTrigger(RowModel.Focused), DeclareTrigger(SignIn.LastSignedInUserHadActiveSubscription), DeclareTrigger(SignIn.SignedIn)]
+RowModel.ButtonState.ChosenValue = "Hidden";
+/* UIB_2393 */
+if (#Style.State #.Hovered #)
+    goto UIB_23A2;
+/* UIB_23A2 */
+if (!Style.State.Hovered &amp;&amp; !#RowModel.Focused #)
+    goto UIB_240F;
+/* UIB_23AD */
+if (!Model.IsInVisibleCollection)
+    goto UIB_23C4;
+RowModel.ButtonState.ChosenValue = "Buttons";
+goto UIB_240F;
+/* UIB_23CE */
+if (!!#SignIn.LastSignedInUserHadActiveSubscription #)
+    goto UIB_23E5;
+RowModel.ButtonState.ChosenValue = "Upsell";
+goto UIB_240F;
+/* UIB_23EB */
+if (!#SignIn.SignedIn #)
+    goto UIB_2402;
+RowModel.ButtonState.ChosenValue = "Buttons";
+goto UIB_240F;
+RowModel.ButtonState.ChosenValue = "SignIn";</Script>
+      <Script>[DeclareTrigger(RowModel.ButtonState.ChosenValue)]
+SignInButton.Visible = #RowModel.ButtonState #.ChosenValue # == "SignIn";
+Upsell.Visible = util:FeatureEnablement.IsFeatureEnabled(zuneDBApi:Features.eSubscription) &amp;&amp; RowModel.ButtonState.ChosenValue == "Upsell";</Script>
+      <Script>[DeclareTrigger(zuneUI:SingletonModelItem`1[ZuneUI.TransportControls].Instance.CurrentTrack)]
+RowModel.IsNowPlaying = Model == #zuneUI:SingletonModelItem`1[ZuneUI.TransportControls].Instance.CurrentTrack #;</Script>
+      <Script>[DeclareTrigger(RowModel.IsNowPlaying), DeclareTrigger(RowModel.ForceNonMarketplace)]
+/* UIB_2464 */
+if (!#RowModel.IsNowPlaying #)
+    goto UIB_2482;
+TrackStatefulStyle.Base = styles:SharedStyles.NowPlayingTrackStylePlaying;
+ArtistStatefulStyle.Base = styles:SharedStyles.NowPlayingArtistStylePlaying;
+goto UIB_24E2;
+/* UIB_248C */
+if (!!#RowModel.ForceNonMarketplace #)
+    goto UIB_249D;
+/* UIB_249D */
+if (!!RowModel.ForceNonMarketplace || Model == null)
+    goto UIB_24B0;
+/* UIB_24B0 */
+if (!!RowModel.ForceNonMarketplace || Model == null || !!Model.IsInVisibleCollection)
+    goto UIB_24CE;
+TrackStatefulStyle.Base = styles:SharedStyles.NowPlayingTrackStyleMarketplace;
+ArtistStatefulStyle.Base = styles:SharedStyles.NowPlayingArtistStyleMarketplace;
+goto UIB_24E2;
+TrackStatefulStyle.Base = styles:SharedStyles.NowPlayingTrackStyle;
+ArtistStatefulStyle.Base = styles:SharedStyles.NowPlayingArtistStyle;</Script>
+      <Script>/* UIB_24E9 */
+if (Model is not zuneUI:LibraryPlaybackTrack)
+    goto UIB_250D;
+zuneUI:LibraryPlaybackTrack track = (zuneUI:LibraryPlaybackTrack)Model;
+ArtistName.Content = track.DisplayArtist;
+goto UIB_2541;
+/* UIB_2513 */
+if (Model is not zuneUI:MarketplacePlaybackTrack)
+    goto UIB_2537;
+zuneUI:MarketplacePlaybackTrack track = (zuneUI:MarketplacePlaybackTrack)Model;
+ArtistName.Content = track.Artist;
+goto UIB_2541;
+ArtistName.Content = "";
+TrackName.Content = Model.Title;</Script>
+      <Script>[DeclareTrigger(SignInModel.Invoked)]
+/* UIB_2557 */
+if (SignInDialog != null)
+    goto UIB_2566;
+// Unsupported instruction: INIT 567
+;
+SignInDialog = new signInDialog:SignInDialog();
+SignInDialog.Show();</Script>
+    </Scripts>
+    <Content>
+      <Panel Layout="Dock">
+        <Children>
+          <Panel Layout="Dock">
+            <Children>
+              <label:DarkLabel Name="TrackName" LayoutInput="Top" MouseInteractive="true" WordWrap="false" MaximumLines="0" Style="{TrackStatefulStyle}" />
+              <label:DarkLabel Name="ArtistName" LayoutInput="Top" MouseInteractive="true" WordWrap="false" MaximumLines="0" Style="{ArtistStatefulStyle}" />
+            </Children>
+          </Panel>
+          <nowPlayingLand:ZunePassUpsell Name="Upsell" Alignment="Far, Center" LayoutInput="Right" LineAlignment="Far" Margins="0, 0, -87, 0" />
+          <wizardControls:NavigationActionButton Name="SignInButton" LayoutInput="Right" Model="{SignInModel}" Alignment="Far, Center" Margins="0, 0, -87, 0" />
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+  <UI Name="ZunePassUpsell" Base="label:Label">
+    <Properties>
+      <style:Style Name="Style" Style="{styles:SharedStyles.NowPlayingZunePassUpsellStyle}" />
+      <String Name="Content" String="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_NOWPLAYING_ZUNEPASS_NOTRIAL_UPSELL)}" />
+      <Boolean Name="WordWrap" Boolean="true" />
+      <Int32 Name="MaximumLines" Int32="3" />
+    </Properties>
+    <Input>
+      <ClickHandler Name="Clicker" />
+    </Input>
+    <Scripts>
+      <Script>[DeclareTrigger(Clicker.Invoked)]
+zuneUI:ZuneShell.DefaultInstance.Execute("Settings\\Account\\PurchaseSubscription", null);
+util1:SQMLog.Log(util:SQMDataId.QuickMixUpsell, 1);</Script>
+    </Scripts>
+  </UI>
+  <UI Name="MoreInfoCell" Base="spreadSheet:Cell">
+    <Properties>
+      <nowPlayingLand:NowPlayingListModel Name="ListModel" NowPlayingListModel="$Required" />
+      <zuneUI:PlaybackTrack Name="Model" PlaybackTrack="$Required" />
+      <style:StatefulCompositeStyle Name="Style" StatefulCompositeStyle="$Required" />
+      <nowPlayingLand:NowPlayingRowModel Name="RowModel" NowPlayingRowModel="$Required" />
+    </Properties>
+    <Locals>
+      <zuneUI:SignIn Name="SignIn" SignIn="{zuneUI:SignIn.Instance}" />
+      <moreInfoActions:TrackMoreInfoActions Name="TrackMoreInfoActions" />
+    </Locals>
+    <Scripts>
+      <Script>TrackMoreInfoActions.ZuneMediaId = Model.ZuneMediaId;
+TrackMoreInfoActions.ServiceContext = Model.ServiceContext;
+TrackMoreInfoActions.Title = Model.Title;</Script>
+      <Script>[DeclareTrigger(TrackMoreInfoActions.PrimaryMenuCommand.Available)]
+/* UIB_288A */
+if (MoreInfo.Model == null)
+    goto UIB_28BD;
+UI.Enabled = #TrackMoreInfoActions.PrimaryMenuCommand #.Available # &amp;&amp; Model.MediaType == zuneUI:MediaType.Track;
+UI.KeyInteractive = UI.Enabled;</Script>
+      <Script>[DeclareTrigger(RowModel.IsNowPlaying), DeclareTrigger(RowModel.ButtonState.ChosenValue), DeclareTrigger(TrackMoreInfoActions.PrimaryMenuCommand.Available)]
+/* UIB_28C4 */
+if (RowModel is not spreadSheetCells:SpreadSheetTrackRowModel)
+    goto UIB_28D6;
+object isNowPlaying = RowModel is spreadSheetCells:SpreadSheetTrackRowModel &amp;&amp; ((spreadSheetCells:SpreadSheetTrackRowModel)RowModel).IsNowPlaying;
+/* UIB_28DD */
+if (!isNowPlaying)
+    goto UIB_2905;
+MoreInfo.Image = styles:Styles.NPInformationDefault;
+MoreInfo.HoverImage = styles:Styles.NPInformationHover;
+MoreInfo.PressedImage = styles:Styles.NPInformationClick;
+goto UIB_2923;
+MoreInfo.Image = styles:Styles.OverlayInformationDefault;
+MoreInfo.HoverImage = styles:Styles.OverlayInformationHover;
+MoreInfo.PressedImage = styles:Styles.OverlayInformationClick;
+/* UIB_2933 */
+if (#RowModel.ButtonState #.ChosenValue # != "Buttons")
+    goto UIB_2949;
+/* UIB_2949 */
+if (RowModel.ButtonState.ChosenValue != "Buttons" || !#TrackMoreInfoActions.PrimaryMenuCommand #.Available #)
+    goto UIB_295F;
+/* UIB_295F */
+if ((RowModel.ButtonState.ChosenValue == "Buttons" &amp;&amp; !(!TrackMoreInfoActions.PrimaryMenuCommand.Available)) &amp;&amp; (Model.MediaType == zuneUI:MediaType.Track))
+    goto UIB_2982;
+MoreInfo.Image = styles:Styles.RatingBlank;
+MoreInfo.HoverImage = styles:Styles.RatingBlank;
+MoreInfo.PressedImage = styles:Styles.RatingBlank;</Script>
+    </Scripts>
+    <Content>
+      <button:IconButton Name="MoreInfo" Model="{TrackMoreInfoActions.PrimaryMenuCommand}" Margins="0, 1, 0, 0" KeyInteractiveNStuff="false" AllowDoubleClicks="false" />
+    </Content>
+  </UI>
+  <UI Name="DownloadCell" Base="spreadSheet:Cell">
+    <Properties>
+      <nowPlayingLand:NowPlayingListModel Name="ListModel" NowPlayingListModel="$Required" />
+      <zuneUI:PlaybackTrack Name="Model" PlaybackTrack="$Required" />
+      <style:StatefulCompositeStyle Name="Style" StatefulCompositeStyle="$Required" />
+      <nowPlayingLand:NowPlayingRowModel Name="RowModel" NowPlayingRowModel="$Required" />
+    </Properties>
+    <Locals>
+      <zuneUI:SignIn Name="SignIn" SignIn="{zuneUI:SignIn.Instance}" />
+      <iris:Command Name="DownloadCommand" Description="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_DOWNLOAD_MENUITEM)}" />
+      <schema2:MarketplaceSingleTrackDataQuery Name="SingleTrackQuery" Enabled="false" />
+    </Locals>
+    <Scripts>
+      <Script>[DeclareTrigger(RowModel.IsNowPlaying), DeclareTrigger(RowModel.ForceNonMarketplace), DeclareTrigger(RowModel.ButtonState.ChosenValue)]
+/* UIB_2A80 */
+if (RowModel is not spreadSheetCells:SpreadSheetTrackRowModel)
+    goto UIB_2A92;
+object isNowPlaying = RowModel is spreadSheetCells:SpreadSheetTrackRowModel &amp;&amp; ((spreadSheetCells:SpreadSheetTrackRowModel)RowModel).IsNowPlaying;
+/* UIB_2A99 */
+if (!isNowPlaying)
+    goto UIB_2AC1;
+Download.Image = styles:Styles.NPDownloadDefault;
+Download.HoverImage = styles:Styles.NPDownloadHover;
+Download.PressedImage = styles:Styles.NPDownloadClick;
+goto UIB_2ADF;
+Download.Image = styles:Styles.OverlayDownloadDefault;
+Download.HoverImage = styles:Styles.OverlayDownloadHover;
+Download.PressedImage = styles:Styles.OverlayDownloadClick;
+/* UIB_2AE5 */
+if (#RowModel.ForceNonMarketplace #)
+    goto UIB_2AFE;
+/* UIB_2AFE */
+if (RowModel.ForceNonMarketplace || #RowModel.ButtonState #.ChosenValue # != "Buttons")
+    goto UIB_2B2F;
+/* UIB_2B0B */
+if (Model == null)
+    goto UIB_2B2B;
+/* UIB_2B2F */
+if ((RowModel.ForceNonMarketplace || RowModel.ButtonState.ChosenValue != "Buttons") || ((Model != null) &amp;&amp; (Model.IsInVisibleCollection || Model.ZuneMediaId == zuneUI:GuidHelper.Empty)))
+    goto UIB_2B42;
+object dontShowIcon = (RowModel.ForceNonMarketplace || RowModel.ButtonState.ChosenValue != "Buttons") || ((Model != null) &amp;&amp; (Model.IsInVisibleCollection || Model.ZuneMediaId == zuneUI:GuidHelper.Empty)) || !shell:ZuneApplication.Service.CanDownloadSubscriptionContent();
+/* UIB_2B49 */
+if (!dontShowIcon)
+    goto UIB_2B6C;
+Download.Image = styles:Styles.RatingBlank;
+Download.HoverImage = styles:Styles.RatingBlank;
+Download.PressedImage = styles:Styles.RatingBlank;
+DownloadCommand.Available = !dontShowIcon;</Script>
+      <Script>[DeclareTrigger(DownloadCommand.Invoked)]
+object modelId = Model.ZuneMediaId.ToString();
+SingleTrackQuery.Id = modelId;
+SingleTrackQuery.Enabled = !string.IsNullOrEmpty(modelId);
+DownloadCommand.Available = false;</Script>
+      <Script>[DeclareTrigger(SingleTrackQuery.Status)]
+/* UIB_2BC4 */
+if (#SingleTrackQuery.Status # != iris:DataProviderQueryStatus.Complete)
+    goto UIB_2C32;
+object track = SingleTrackQuery.Result.Item;
+/* UIB_2BDE */
+if (track == null)
+    goto UIB_2BED;
+/* UIB_2BED */
+if (track == null || !track.CanDownload)
+    goto UIB_2C2F;
+track.ReferrerContext = Model.ServiceContext;
+object downloadItems = new collections:ArrayList(1);
+downloadItems.Add(track);
+zuneUI:Download.Instance.DownloadContent(downloadItems, service:EDownloadFlags.Subscription);
+RowModel.ForceNonMarketplace = true;</Script>
+    </Scripts>
+    <Content>
+      <button:IconButton Name="Download" Model="{DownloadCommand}" Margins="0, 1, 0, 0" KeyInteractiveNStuff="false" AllowDoubleClicks="false" />
+    </Content>
+  </UI>
+  <UI Name="RatingCell" Base="tracksPanelColumns:RatingCellBase">
+    <Properties>
+      <nowPlayingLand:NowPlayingListModel Name="ListModel" NowPlayingListModel="$Required" />
+      <nowPlayingLand:NowPlayingRowModel Name="RowModel" NowPlayingRowModel="$Required" />
+      <zuneUI:PlaybackTrack Name="Model" PlaybackTrack="$Required" />
+      <Int32 Name="UserRating" Int32="{Model.UserRating}" />
+      <Boolean Name="DisplayNowPlayingNotRated" Boolean="true" />
+      <Boolean Name="DontDisplayWhenNotAvailable" Boolean="true" />
+      <Image Name="NowPlayingNotRated" Image="{styles:Styles.NPRatingNowPlayingNotRated}" />
+      <Image Name="NowPlayingNotRatedHover" Image="{styles:Styles.NPRatingNowPlayingNotRatedHover}" />
+      <Image Name="NowPlayingNotRatedPressed" Image="{styles:Styles.NPRatingNowPlayingNotRatedPressed}" />
+      <Image Name="NotRated" Image="{styles:Styles.RatingBlank}" />
+      <Image Name="NotRatedHover" Image="{styles:Styles.NPRatingNotRatedHover}" />
+      <Image Name="NotRatedHasFocus" Image="{styles:Styles.NPRatingNotRated}" />
+      <Image Name="NotRatedPressed" Image="{styles:Styles.NPRatingNotRatedPressed}" />
+      <Image Name="NowPlayingHate" Image="{styles:Styles.NPRatingNowPlayingHateIt}" />
+      <Image Name="NowPlayingHateHover" Image="{styles:Styles.NPRatingNowPlayingHateItHover}" />
+      <Image Name="NowPlayingHatePressed" Image="{styles:Styles.NPRatingNowPlayingHateItPressed}" />
+      <Image Name="Hate" Image="{styles:Styles.NPRatingHateIt}" />
+      <Image Name="HateHover" Image="{styles:Styles.NPRatingHateItHover}" />
+      <Image Name="HateSelected" Image="{styles:Styles.NPRatingHateItSelected}" />
+      <Image Name="HatePressed" Image="{styles:Styles.NPRatingHateItPressed}" />
+      <Image Name="NowPlayingLove" Image="{styles:Styles.NPRatingNowPlayingLikeIt}" />
+      <Image Name="NowPlayingLoveHover" Image="{styles:Styles.NPRatingNowPlayingLikeItHover}" />
+      <Image Name="NowPlayingLovePressed" Image="{styles:Styles.NPRatingNowPlayingLikeItPressed}" />
+      <Image Name="Love" Image="{styles:Styles.NPRatingLikeIt}" />
+      <Image Name="LoveHover" Image="{styles:Styles.NPRatingLikeItHover}" />
+      <Image Name="LoveSelected" Image="{styles:Styles.NPRatingLikeItSelected}" />
+      <Image Name="LovePressed" Image="{styles:Styles.NPRatingLikeItPressed}" />
+    </Properties>
+    <Scripts>
+      <Script>[DeclareTrigger(RowModel.ButtonState.ChosenValue)]
+ShowOverride = #RowModel.ButtonState #.ChosenValue # == "Buttons";</Script>
+      <Script>[DeclareTrigger(RowModel.ButtonState.ChosenValue)]
+/* UIB_2D5A */
+if (#RowModel.ButtonState #.ChosenValue # != "Buttons")
+    goto UIB_2D7F;
+/* UIB_2D62 */
+if (nowPlayingLand:NowPlayingPersistentState.IsQuickMix())
+    goto UIB_2D7B;
+ChangeRating.Available = (RowModel.ButtonState.ChosenValue == "Buttons") &amp;&amp; (nowPlayingLand:NowPlayingPersistentState.IsQuickMix() || Model.CanRate &amp;&amp; Model.IsInVisibleCollection);</Script>
+      <Script>[DeclareTrigger(Model.RatingChanged.Invoked)]
+UserRating = Model.UserRating;</Script>
+      <Script>/* UIB_2D9F */
+if (Model.UserRating == UserRating)
+    goto UIB_2DAE;
+Model.UserRating = UserRating;</Script>
+      <Script>[DeclareTrigger(ChangeRating.Invoked)]
+/* UIB_2DBA */
+if (ListModel.SelectionManager == null)
+    goto UIB_2DD2;
+/* UIB_2DD2 */
+if (ListModel.SelectionManager == null || !ListModel.SelectionManager.IsSelected(RowIndex.Value))
+    goto UIB_2E19;
+/* UIB_2DE6 */
+if (!ListModel.SelectionManager.SelectedItems.GetEnumerator().MoveNext())
+    goto UIB_2E15;
+zuneUI:PlaybackTrack track = (zuneUI:PlaybackTrack)ListModel.SelectionManager.SelectedItems.GetEnumerator().Current;
+/* UIB_2E01 */
+if (track.UserRating == UserRating)
+    goto UIB_2E10;
+track.UserRating = UserRating;
+goto UIB_2DE3;
+ListModel.SelectionManager.SelectedItems.GetEnumerator();</Script>
+    </Scripts>
+  </UI>
+  <Class Name="NowPlayingInfo" Shared="true">
+    <Properties>
+      <Size Name="TinySize" Size="38, 38" />
+      <Size Name="BigSize" Size="144, 144" />
+      <String Name="TrackTitle" String="{null}" />
+      <String Name="ArtistName" String="{null}" />
+      <String Name="AlbumTitle" String="{null}" />
+      <String Name="ArtistBio" String="{null}" />
+      <String Name="ArtistBioAuthor" String="{null}" />
+      <Image Name="BigAlbumArt" Image="{null}" />
+      <Image Name="TinyAlbumArt" Image="{null}" />
+      <Int32 Name="TrackPlayCount" />
+      <List Name="ArtistImages" List="{null}" />
+      <system:Guid Name="ArtistId" />
+      <zuneUI:LibraryAlbumInfo Name="LibraryAlbumInfo" LibraryAlbumInfo="{null}" />
+      <List Name="ExtendedPlayInfo" List="{null}" />
+      <collections:IList Name="ArtistGenres" IList="{null}" />
+      <collections:IList Name="ArtistMoods" IList="{null}" />
+      <iris:BooleanChoice Name="IsFullscreen" Value="false" />
+      <String Name="RotatingPlayInfo" String="{null}" />
+      <Command Name="Rotate" />
+    </Properties>
+    <Locals>
+      <schema2:MarketplaceSingleTrackDataQuery Name="MPTrackQuery" Enabled="false" />
+      <schema2:MarketplaceArtistBiographyQuery Name="ArtistBiographyQuery" Enabled="false" />
+      <schema2:MarketplaceArtistDataQuery Name="ArtistQuery" Enabled="false" />
+      <schema2:PhotoList Name="ArtistPhotos" PhotoList="{null}" />
+      <schema1:TopListenersTopListenersDataQuery Name="TopListenersQuery" Enabled="false" />
+      <imageSelector:ImageSelector Name="TinyImageSelector" ImageLoadSize="{TinySize}" />
+      <imageSelector:ImageSelector Name="BigImageSelector" ImageLoadSize="{BigSize}" Fallback="{styles:Styles.NoAlbumArtNowPlayingBig}" />
+      <Size Name="MinArtistImageSize" Width="420" Height="315" />
+      <Image Name="FallbackImage" />
+      <imageSelector:ImageSelector Name="ArtistImageSelector" ImageLoadSize="{utility:Utility.SizeToSize(zuneUI:ImageConstants.NowPlaying)}" Fallback="{FallbackImage}" />
+      <schema2:MarketplaceArtistPhotosDataQuery Name="ArtistPhotosQuery" Enabled="false" MinWidth="{MinArtistImageSize.Width}" MinHeight="{MinArtistImageSize.Height}" />
+      <Timer Name="RotateInfo" Interval="4000" AutoRepeat="true" Enabled="false" />
+      <Int32 Name="RotationCode" Int32="0" />
+      <List Name="RotateInfoList" List="{null}" />
+      <Int32 Name="ArtistImageIndex" Int32="0" />
+      <List Name="SelectedArtistImages" List="{null}" />
+      <system:Random Name="Random" />
+      <Int32 Name="TotalTrackPlays" />
+      <Int32 Name="TotalArtistPlays" />
+      <String Name="TopListenerTag" />
+      <Int32 Name="TopListenerPlays" />
+      <nowPlayingMusicBackground:NowPlayingBackgroundHelper Name="NowPlayingBackgroundHelper" />
+      <schema2:ArtistData Name="ArtistData" ArtistData="{null}" />
+      <system:Guid Name="TrackId" />
+    </Locals>
+    <Scripts>
+      <Script>[DeclareTrigger(zuneUI:SingletonModelItem`1[ZuneUI.TransportControls].Instance.CurrentTrack)]
+object track = #zuneUI:SingletonModelItem`1[ZuneUI.TransportControls].Instance.CurrentTrack #;
+/* UIB_306C */
+if (LibraryAlbumInfo == null)
+    goto UIB_307F;
+Class.DisposeOwnedObject(LibraryAlbumInfo);
+LibraryAlbumInfo = null;
+TrackId = zuneUI:GuidHelper.Empty;
+ArtistId = zuneUI:GuidHelper.Empty;
+MPTrackQuery.Enabled = false;
+ArtistQuery.Enabled = false;
+TopListenersQuery.Enabled = false;
+TotalTrackPlays = 0;
+TotalArtistPlays = 0;
+TopListenerTag = null;
+TopListenerPlays = 0;
+ArtistData = null;
+ArtistImages = null;
+TrackPlayCount = 1;
+TrackTitle = null;
+AlbumTitle = null;
+ArtistName = null;
+ArtistGenres = null;
+ArtistMoods = null;
+this.private_ResetImageSelectors();
+ExtendedPlayInfo = new List();
+/* UIB_3102 */
+if (track == null)
+    goto UIB_31EA;
+TrackTitle = track.Title;
+/* UIB_3117 */
+if (track is not zuneUI:LibraryPlaybackTrack)
+    goto UIB_315A;
+zuneUI:LibraryPlaybackTrack libTrack = (zuneUI:LibraryPlaybackTrack)track;
+LibraryAlbumInfo = new zuneUI:LibraryAlbumInfo(libTrack, TinySize.Width, TinySize.Height);
+AlbumTitle = LibraryAlbumInfo.AlbumTitle;
+ArtistName = LibraryAlbumInfo.ArtistName;
+goto UIB_31AD;
+/* UIB_3160 */
+if (track is not zuneUI:MarketplacePlaybackTrack)
+    goto UIB_318B;
+zuneUI:MarketplacePlaybackTrack mptrack = (zuneUI:MarketplacePlaybackTrack)track;
+AlbumTitle = mptrack.Album;
+ArtistName = mptrack.Artist;
+goto UIB_31AD;
+/* UIB_3191 */
+if (track is not zuneUI:VideoPlaybackTrack)
+    goto UIB_31AD;
+zuneUI:VideoPlaybackTrack mvtrack = (zuneUI:VideoPlaybackTrack)track;
+ArtistName = mvtrack.Artist;
+/* UIB_31B7 */
+if (!!track is zuneUI:VideoPlaybackTrack)
+    goto UIB_31C6;
+TrackId = track.ZuneMediaId;
+/* UIB_31CC */
+if (!track.IsVideo)
+    goto UIB_31E0;
+TinyImageSelector.Fallback = styles:Styles.NoAlbumArtNowPlayingTinyWide;
+goto UIB_31EA;
+TinyImageSelector.Fallback = styles:Styles.NoAlbumArtNowPlayingTiny;</Script>
+      <Script>[DeclareTrigger(MPTrackQuery.Status)]
+/* UIB_321F */
+if (!zuneUI:QueryHelper.HasCompleted(#MPTrackQuery.Status #))
+    goto UIB_32C0;
+object track = MPTrackQuery.Result.Item;
+/* UIB_3239 */
+if (track == null)
+    goto UIB_3248;
+/* UIB_3248 */
+if (track == null || !MPTrackQuery.Enabled)
+    goto UIB_32BD;
+/* UIB_3256 */
+if (!string.IsNullOrEmpty(BigImageSelector.ImageUri))
+    goto UIB_3268;
+BigImageSelector.ImageId = track.ImageId;
+TotalTrackPlays = track.PlayCount;
+/* UIB_327F */
+if (track.PlayCount &lt;= 0)
+    goto UIB_328E;
+TrackPlayCount = track.PlayCount;
+/* UIB_3299 */
+if (track.AlbumArtist == null)
+    goto UIB_32B0;
+ArtistId = track.AlbumArtist.Id;
+goto UIB_32BD;
+ArtistId = track.PrimaryArtist.Id;</Script>
+      <Script>[DeclareTrigger(BigImageSelector.ImageUri)]
+TinyImageSelector.ImageUri = #BigImageSelector.ImageUri #;</Script>
+      <Script>[DeclareTrigger(BigImageSelector.Image)]
+BigAlbumArt = #BigImageSelector.Image #;</Script>
+      <Script>[DeclareTrigger(LibraryAlbumInfo.ThumbnailImage), DeclareTrigger(TinyImageSelector.Image)]
+/* UIB_32E2 */
+if (LibraryAlbumInfo == null)
+    goto UIB_32F6;
+/* UIB_32F6 */
+if (LibraryAlbumInfo == null || #LibraryAlbumInfo.ThumbnailImage # == null)
+    goto UIB_330A;
+TinyAlbumArt = LibraryAlbumInfo.ThumbnailImage;
+goto UIB_3314;
+TinyAlbumArt = #TinyImageSelector.Image #;</Script>
+      <Script>RotateInfoList = new List();
+/* UIB_3326 */
+if (!!string.IsNullOrEmpty(TrackTitle))
+    goto UIB_3334;
+RotateInfoList.Add(TrackTitle);
+/* UIB_333E */
+if (!!string.IsNullOrEmpty(ArtistName))
+    goto UIB_334C;
+RotateInfoList.Add(ArtistName);
+/* UIB_3356 */
+if (!!string.IsNullOrEmpty(AlbumTitle))
+    goto UIB_3364;
+RotateInfoList.Add(AlbumTitle);
+RotationCode = 0;
+/* UIB_3378 */
+if (RotateInfoList.Count &lt;= 1)
+    goto UIB_3388;
+RotateInfo.Start();
+goto UIB_338E;
+RotateInfo.Stop();</Script>
+      <Script>[DeclareTrigger(IsFullscreen.Value)]
+/* UIB_39E5 */
+if (!#IsFullscreen.Value #)
+    goto UIB_39FC;
+IsFullscreen.Description = zuneUI:Shell.LoadString(zuneUI:StringId.IDS_FULLSCREEN_OFF);
+goto UIB_3A09;
+IsFullscreen.Description = zuneUI:Shell.LoadString(zuneUI:StringId.IDS_FULLSCREEN_ON);</Script>
+      <Script>[DeclareTrigger(LibraryAlbumInfo.AlbumArtUrl)]
+/* UIB_31F6 */
+if (LibraryAlbumInfo == null)
+    goto UIB_320D;
+BigImageSelector.ImageUri = #LibraryAlbumInfo.AlbumArtUrl #;
+goto UIB_3215;
+BigImageSelector.ImageUri = null;</Script>
+      <Script>Null content = null;
+/* UIB_339E */
+if (!!List.IsNullOrEmpty(RotateInfoList))
+    goto UIB_33C4;
+RotationCode = RotationCode % RotateInfoList.Count;
+string content = (string)RotateInfoList[RotationCode];
+RotatingPlayInfo = content;</Script>
+      <Script>[DeclareTrigger(RotateInfo.Tick)]
+RotationCode = RotationCode + 1;</Script>
+      <Script>[DeclareTrigger(Rotate.Invoked)]
+RotationCode = RotationCode + 1;
+/* UIB_33F2 */
+if (!RotateInfo.Enabled)
+    goto UIB_3403;
+RotateInfo.Stop();
+RotateInfo.Start();</Script>
+      <Script>[DeclareTrigger(NowPlayingBackgroundHelper.Visible)]
+MPTrackQuery.Enabled = false;
+MPTrackQuery.Id = null;
+object currentTrack = zuneUI:SingletonModelItem`1[ZuneUI.TransportControls].Instance.CurrentTrack;
+/* UIB_342A */
+if (!!zuneUI:GuidHelper.IsEmpty(TrackId))
+    goto UIB_343B;
+/* UIB_343B */
+if (!!zuneUI:GuidHelper.IsEmpty(TrackId) || currentTrack == null)
+    goto UIB_344A;
+/* UIB_344A */
+if (!!zuneUI:GuidHelper.IsEmpty(TrackId) || currentTrack == null || !currentTrack.IsMusic)
+    goto UIB_346C;
+/* UIB_3455 */
+if (#NowPlayingBackgroundHelper.Visible #)
+    goto UIB_3468;
+/* UIB_346C */
+if ((!(!zuneUI:GuidHelper.IsEmpty(TrackId)) || currentTrack == null || !(currentTrack.IsMusic)) || (!(NowPlayingBackgroundHelper.Visible) &amp;&amp; !(!currentTrack.IsInVisibleCollection)))
+    goto UIB_347B;
+/* UIB_347B */
+if ((!(!zuneUI:GuidHelper.IsEmpty(TrackId)) || currentTrack == null || !(currentTrack.IsMusic)) || (!(NowPlayingBackgroundHelper.Visible) &amp;&amp; !(!currentTrack.IsInVisibleCollection)) || !util:FeatureEnablement.IsFeatureEnabled(zuneDBApi:Features.eMusic))
+    goto UIB_3497;
+MPTrackQuery.Id = TrackId.ToString();
+MPTrackQuery.Enabled = true;</Script>
+      <Script>[DeclareTrigger(NowPlayingBackgroundHelper.Visible)]
+ArtistPhotosQuery.Enabled = false;
+ArtistPhotosQuery.Id = null;
+ArtistBiographyQuery.Enabled = false;
+ArtistBiographyQuery.Id = null;
+ArtistQuery.Enabled = false;
+ArtistQuery.Id = null;
+TopListenersQuery.Enabled = false;
+TopListenersQuery.ArtistId = null;
+object currentTrack = zuneUI:SingletonModelItem`1[ZuneUI.TransportControls].Instance.CurrentTrack;
+/* UIB_34F7 */
+if (!!zuneUI:GuidHelper.IsEmpty(ArtistId))
+    goto UIB_3506;
+/* UIB_3506 */
+if (!!zuneUI:GuidHelper.IsEmpty(ArtistId) || !#NowPlayingBackgroundHelper.Visible #)
+    goto UIB_3515;
+/* UIB_3515 */
+if (!!zuneUI:GuidHelper.IsEmpty(ArtistId) || !NowPlayingBackgroundHelper.Visible || !util:FeatureEnablement.IsFeatureEnabled(zuneDBApi:Features.eMusic))
+    goto UIB_3524;
+/* UIB_3524 */
+if (!!zuneUI:GuidHelper.IsEmpty(ArtistId) || !NowPlayingBackgroundHelper.Visible || !util:FeatureEnablement.IsFeatureEnabled(zuneDBApi:Features.eMusic) || !configuration:ClientConfiguration.Playback.ShowNowPlayingClipAnimations)
+    goto UIB_3537;
+/* UIB_3537 */
+if ((!(!zuneUI:GuidHelper.IsEmpty(ArtistId)) || !(NowPlayingBackgroundHelper.Visible) || !(util:FeatureEnablement.IsFeatureEnabled(zuneDBApi:Features.eMusic)) || !(configuration:ClientConfiguration.Playback.ShowNowPlayingClipAnimations)) || (iris:Application.RenderingQuality != iris:RenderingQuality.MaxQuality))
+    goto UIB_3548;
+/* UIB_3548 */
+if (((!(!zuneUI:GuidHelper.IsEmpty(ArtistId)) || !(NowPlayingBackgroundHelper.Visible) || !(util:FeatureEnablement.IsFeatureEnabled(zuneDBApi:Features.eMusic)) || !(configuration:ClientConfiguration.Playback.ShowNowPlayingClipAnimations)) || (iris:Application.RenderingQuality != iris:RenderingQuality.MaxQuality)) || (currentTrack == null))
+    goto UIB_3557;
+/* UIB_3557 */
+if (((!(!zuneUI:GuidHelper.IsEmpty(ArtistId)) || !(NowPlayingBackgroundHelper.Visible) || !(util:FeatureEnablement.IsFeatureEnabled(zuneDBApi:Features.eMusic)) || !(configuration:ClientConfiguration.Playback.ShowNowPlayingClipAnimations)) || (iris:Application.RenderingQuality != iris:RenderingQuality.MaxQuality)) || (currentTrack == null) || !currentTrack.IsMusic)
+    goto UIB_35D0;
+ArtistPhotosQuery.Id = ArtistId.ToString();
+ArtistPhotosQuery.Enabled = true;
+/* UIB_3586 */
+if (!!string.IsNullOrEmpty(ArtistQuery.Result.Item.BiographyLink))
+    goto UIB_35A2;
+ArtistBiographyQuery.Id = ArtistId.ToString();
+ArtistBiographyQuery.Enabled = true;
+ArtistQuery.Id = ArtistId.ToString();
+ArtistQuery.Enabled = true;
+TopListenersQuery.ArtistId = ArtistId.ToString();
+TopListenersQuery.Enabled = true;</Script>
+      <Script>[DeclareTrigger(ArtistQuery.Status)]
+/* UIB_35DA */
+if (!ArtistQuery.Enabled)
+    goto UIB_35F0;
+/* UIB_35F0 */
+if (!ArtistQuery.Enabled || #ArtistQuery.Status # != iris:DataProviderQueryStatus.Complete)
+    goto UIB_3629;
+TotalArtistPlays = ArtistQuery.Result.Item.PlayCount;
+ArtistData = ArtistQuery.Result;
+ArtistGenres = ArtistData.Item.Genres;
+ArtistMoods = ArtistData.Item.Moods;</Script>
+      <Script>[DeclareTrigger(TopListenersQuery.Status)]
+/* UIB_3630 */
+if (!TopListenersQuery.Enabled)
+    goto UIB_3646;
+/* UIB_3646 */
+if (!TopListenersQuery.Enabled || #TopListenersQuery.Status # != iris:DataProviderQueryStatus.Complete)
+    goto UIB_3662;
+/* UIB_3662 */
+if ((!(TopListenersQuery.Enabled) || TopListenersQuery.Status != iris:DataProviderQueryStatus.Complete) || (TopListenersQuery.Result.Profiles.Count &lt;= 0))
+    goto UIB_3694;
+schema1:ProfileData profile = (schema1:ProfileData)TopListenersQuery.Result.Profiles[0];
+TopListenerTag = profile.ZuneTag;
+TopListenerPlays = profile.PlayCount;</Script>
+      <Script>[DeclareTrigger(ArtistPhotosQuery.Status)]
+/* UIB_369B */
+if (!ArtistPhotosQuery.Enabled)
+    goto UIB_36B1;
+/* UIB_36B1 */
+if (!ArtistPhotosQuery.Enabled || #ArtistPhotosQuery.Status # != iris:DataProviderQueryStatus.Complete)
+    goto UIB_3711;
+ArtistImages = null;
+SelectedArtistImages = null;
+ArtistImageIndex = 0;
+ArtistPhotos = ArtistPhotosQuery.Result;
+/* UIB_36E1 */
+if (ArtistPhotos.Items.Count &lt;= 0)
+    goto UIB_3711;
+schema2:Photo photo = (schema2:Photo)ArtistPhotos.Items[0];
+ArtistImageSelector.ImageId = photo.ImageId;
+ArtistImageSelector.Image = null;</Script>
+      <Script>[DeclareTrigger(ArtistBiographyQuery.Status)]
+/* UIB_3718 */
+if (!ArtistBiographyQuery.Enabled)
+    goto UIB_372E;
+/* UIB_372E */
+if (!ArtistBiographyQuery.Enabled || #ArtistBiographyQuery.Status # != iris:DataProviderQueryStatus.Complete)
+    goto UIB_374D;
+ArtistBio = ArtistBiographyQuery.Result.BiographyContent;
+ArtistBioAuthor = ArtistBiographyQuery.Result.BiographyAuthor;</Script>
+      <Script>[DeclareTrigger(ArtistImageSelector.Image)]
+/* UIB_3759 */
+if (#ArtistImageSelector.Image # == null)
+    goto UIB_380D;
+/* UIB_376B */
+if (ArtistImageSelector.Image == FallbackImage)
+    goto UIB_3790;
+/* UIB_3778 */
+if (SelectedArtistImages != null)
+    goto UIB_3784;
+SelectedArtistImages = new List();
+SelectedArtistImages.Add(ArtistImageSelector.Image);
+ArtistImageIndex = ArtistImageIndex + 1;
+/* UIB_37AE */
+if (ArtistImageIndex &gt;= ArtistPhotos.Items.Count)
+    goto UIB_37E3;
+schema2:Photo photo = (schema2:Photo)ArtistPhotos.Items[ArtistImageIndex];
+ArtistImageSelector.ImageId = photo.ImageId;
+ArtistImageSelector.Image = null;
+goto UIB_380D;
+/* UIB_37EB */
+if (SelectedArtistImages == null)
+    goto UIB_3801;
+/* UIB_3801 */
+if ((SelectedArtistImages == null) || (SelectedArtistImages.Count &lt; 2))
+    goto UIB_380D;
+ArtistImages = SelectedArtistImages;</Script>
+      <Script>/* UIB_3816 */
+if (ExtendedPlayInfo == null)
+    goto UIB_39DE;
+/* UIB_3825 */
+if (!!string.IsNullOrEmpty(TrackTitle))
+    goto UIB_383B;
+/* UIB_383B */
+if (!!string.IsNullOrEmpty(TrackTitle) || !!ExtendedPlayInfo.Contains(TrackTitle))
+    goto UIB_3849;
+ExtendedPlayInfo.Add(TrackTitle);
+/* UIB_3853 */
+if (!!string.IsNullOrEmpty(AlbumTitle))
+    goto UIB_3869;
+/* UIB_3869 */
+if (!!string.IsNullOrEmpty(AlbumTitle) || !!ExtendedPlayInfo.Contains(AlbumTitle))
+    goto UIB_3877;
+ExtendedPlayInfo.Add(AlbumTitle);
+/* UIB_3881 */
+if (TotalTrackPlays &lt;= 0)
+    goto UIB_38D6;
+Null text = null;
+/* UIB_3894 */
+if (TotalTrackPlays != 1)
+    goto UIB_38A8;
+object text = zuneUI:Shell.LoadString(zuneUI:StringId.IDS_NOWPLAYING_TRACK_PLAYS_SINGULAR);
+goto UIB_38B8;
+object text = string.Format(zuneUI:Shell.LoadString(zuneUI:StringId.IDS_NOWPLAYING_TRACK_PLAYS), TotalTrackPlays);
+/* UIB_38C5 */
+if (!!ExtendedPlayInfo.Contains(text))
+    goto UIB_38D3;
+ExtendedPlayInfo.Add(text);
+/* UIB_38E0 */
+if (!!string.IsNullOrEmpty(ArtistName))
+    goto UIB_38F6;
+/* UIB_38F6 */
+if (!!string.IsNullOrEmpty(ArtistName) || !!ExtendedPlayInfo.Contains(ArtistName))
+    goto UIB_3904;
+ExtendedPlayInfo.Add(ArtistName);
+/* UIB_390E */
+if (TotalArtistPlays &lt;= 0)
+    goto UIB_3963;
+Null text = null;
+/* UIB_3921 */
+if (TotalArtistPlays != 1)
+    goto UIB_3935;
+object text = zuneUI:Shell.LoadString(zuneUI:StringId.IDS_NOWPLAYING_ARTIST_PLAYS_SINGULAR);
+goto UIB_3945;
+object text = string.Format(zuneUI:Shell.LoadString(zuneUI:StringId.IDS_NOWPLAYING_ARTIST_PLAYS), TotalArtistPlays);
+/* UIB_3952 */
+if (!!ExtendedPlayInfo.Contains(text))
+    goto UIB_3960;
+ExtendedPlayInfo.Add(text);
+/* UIB_396D */
+if (!!string.IsNullOrEmpty(TopListenerTag))
+    goto UIB_3980;
+/* UIB_3980 */
+if (!!string.IsNullOrEmpty(TopListenerTag) || TopListenerPlays &lt;= 0)
+    goto UIB_39DE;
+Null text = null;
+/* UIB_3993 */
+if (TopListenerPlays != 1)
+    goto UIB_39AD;
+object text = string.Format(zuneUI:Shell.LoadString(zuneUI:StringId.IDS_NOWPLAYING_TOP_LISTENER_PLAYS_SINGULAR), TopListenerTag);
+goto UIB_39C0;
+object text = string.Format(zuneUI:Shell.LoadString(zuneUI:StringId.IDS_NOWPLAYING_TOP_LISTENER_PLAYS), TopListenerTag, TopListenerPlays);
+/* UIB_39CD */
+if (!!ExtendedPlayInfo.Contains(text))
+    goto UIB_39DB;
+ExtendedPlayInfo.Add(text);</Script>
+    </Scripts>
+    <Methods><![CDATA[
+void private_ResetImageSelectors()
+{
+    BigImageSelector.ImageId = zuneUI:GuidHelper.Empty;
+    TinyImageSelector.ImageId = zuneUI:GuidHelper.Empty;
+    BigImageSelector.ImageUri = "";
+    TinyImageSelector.ImageUri = "";
+}
+]]></Methods>
+  </Class>
+</UIX>
