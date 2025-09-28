@@ -1,0 +1,44 @@
+[DeclareTrigger(NowPlayingBackgroundHelper.Visible)]
+
+ArtistPhotosQuery.Enabled = false;
+ArtistPhotosQuery.Id = null;
+ArtistBiographyQuery.Enabled = false;
+ArtistBiographyQuery.Id = null;
+ArtistQuery.Enabled = false;
+ArtistQuery.Id = null;
+TopListenersQuery.Enabled = false;
+TopListenersQuery.ArtistId = null;
+int y = 0;
+object currentTrack = zuneUI:SingletonModelItem<zuneUI:TransportControls>.Instance.CurrentTrack;
+
+if (!zuneUI:GuidHelper.IsEmpty(ArtistId)
+    && #NowPlayingBackgroundHelper.Visible#
+    && util:FeatureEnablement.IsFeatureEnabled(zuneDBApi:Features.eMusic)
+    && configuration:ClientConfiguration.Playback.ShowNowPlayingClipAnimations
+    && iris:Application.RenderingQuality == iris:RenderingQuality.MaxQuality
+    && currentTrack != null
+    && currentTrack.IsMusic)
+{
+    ArtistPhotosQuery.Id = ArtistId.ToString();
+    ArtistPhotosQuery.Enabled = true;
+    if (!string.IsNullOrEmpty(ArtistQuery.Result.Item.BiographyLink))
+    {
+        ArtistBiographyQuery.Id = ArtistId.ToString();
+        ArtistBiographyQuery.Enabled = true;
+    }
+
+    ArtistQuery.Id = ArtistId.ToString();
+    ArtistQuery.Enabled = true;
+    TopListenersQuery.ArtistId = ArtistId.ToString();
+    TopListenersQuery.Enabled = true;
+}
+
+string text = string.Format(zuneUI:Shell.LoadString(zuneUI:StringId.IDS_NOWPLAYING_TOP_LISTENER_PLAYS_SINGULAR), TopListenerTag);
+
+foreach (zuneUI:PlaybackTrack track in TransportControls.CurrentPlaylist)
+{
+    if (ShowMPContent.Value || track.IsInVisibleCollection)
+    {
+        TracksList.Content.Add(track);
+    }
+}

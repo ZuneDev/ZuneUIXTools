@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UIXC", "UIXC\UIXC.csproj", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UIX.DecompXml", "libs\UIX.DecompXml\UIX.DecompXml.csproj", "{3AE2DF12-C52B-48DB-9120-BCA32BB04FB2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IrisLanguageServer", "IrisLanguageServer\IrisLanguageServer.csproj", "{23701AD4-E7EE-48AA-865D-AC972320B97D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -99,6 +101,18 @@ Global
 		{3AE2DF12-C52B-48DB-9120-BCA32BB04FB2}.Release|x64.Build.0 = Release|Any CPU
 		{3AE2DF12-C52B-48DB-9120-BCA32BB04FB2}.Release|x86.ActiveCfg = Release|Any CPU
 		{3AE2DF12-C52B-48DB-9120-BCA32BB04FB2}.Release|x86.Build.0 = Release|Any CPU
+		{23701AD4-E7EE-48AA-865D-AC972320B97D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{23701AD4-E7EE-48AA-865D-AC972320B97D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{23701AD4-E7EE-48AA-865D-AC972320B97D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{23701AD4-E7EE-48AA-865D-AC972320B97D}.Debug|x64.Build.0 = Debug|Any CPU
+		{23701AD4-E7EE-48AA-865D-AC972320B97D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{23701AD4-E7EE-48AA-865D-AC972320B97D}.Debug|x86.Build.0 = Debug|Any CPU
+		{23701AD4-E7EE-48AA-865D-AC972320B97D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{23701AD4-E7EE-48AA-865D-AC972320B97D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{23701AD4-E7EE-48AA-865D-AC972320B97D}.Release|x64.ActiveCfg = Release|Any CPU
+		{23701AD4-E7EE-48AA-865D-AC972320B97D}.Release|x64.Build.0 = Release|Any CPU
+		{23701AD4-E7EE-48AA-865D-AC972320B97D}.Release|x86.ActiveCfg = Release|Any CPU
+		{23701AD4-E7EE-48AA-865D-AC972320B97D}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
