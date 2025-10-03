@@ -1,49 +1,71 @@
-﻿using IrisLanguageServer;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using OmniSharp.Extensions.LanguageServer.Protocol.Models;
-using OmniSharp.Extensions.LanguageServer.Protocol.Server;
-using OmniSharp.Extensions.LanguageServer.Server;
+﻿using CommandLine;
+using IrisLanguageServer;
 using System;
 using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
+using System.IO;
+using System.IO.Pipes;
+using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 
-await System.IO.File.WriteAllTextAsync("E:\\Repos\\ZuneDev\\ZuneUIXTools\\marker.txt", "hi, I launched");
-
-Debugger.Launch();
-
-var server = await LanguageServer.From(options =>
-    options
-        .WithInput(Console.OpenStandardInput())
-        .WithOutput(Console.OpenStandardOutput())
-        .WithLoggerFactory(new LoggerFactory())
-        .AddDefaultLoggingProvider()
-        .WithServices(ConfigureServices)
-        .WithHandler<TextDocumentHandler>()
-        .OnInitialize(OnLanguageServerInitialize)
-        .OnInitialized(OnLanguageServerInitialized)
-        .OnStarted(OnLanguageServerStarted)
-);
-
-await server.WaitForExit;
-
-static void ConfigureServices(IServiceCollection services)
+var parser = new Parser(settings => 
 {
-    services.AddSingleton<BufferManager>();
+    settings.IgnoreUnknownArguments = true;
+});
+
+var parseResult = parser.ParseArguments<CommandLineOptions>(args);
+
+if (parseResult.Errors.Any())
+{
+    Environment.Exit(1);
 }
 
-async Task OnLanguageServerInitialize(ILanguageServer server, InitializeParams request, CancellationToken cancellationToken)
-{
+var options = parseResult.Value;
 
+if (options.WaitForDebugger)
+{
+    Debugger.Launch();
 }
 
-async Task OnLanguageServerInitialized(ILanguageServer server, InitializeParams request, InitializeResult response, CancellationToken cancellationToken)
-{
+Stream input, output;
+IDisposable? disposable = null;
 
+if (options.Pipe is { } pipeName)
+{
+    if (pipeName.StartsWith(@"\\.\pipe\"))
+    {
+        // VSCode on Windows prefixes the pipe with \\.\pipe\
+        pipeName = pipeName[@"\\.\pipe\".Length..];
+    }
+
+    var clientPipe = new NamedPipeClientStream(".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
+
+    await clientPipe.ConnectAsync();
+
+    input = clientPipe;
+    output = clientPipe;
+    disposable = clientPipe;
+}
+else if (options.Socket is { } port)
+{
+    var tcpClient = new TcpClient();
+
+    await tcpClient.ConnectAsync(IPAddress.Loopback, port);
+    var tcpStream = tcpClient.GetStream();
+
+    input = tcpStream;
+    output = tcpStream;
+    disposable = tcpClient;
+}
+else
+{
+    input = Console.OpenStandardInput();
+    output = Console.OpenStandardOutput();
 }
 
-async Task OnLanguageServerStarted(ILanguageServer server, CancellationToken cancellationToken)
-{
+var lsp = await ProgramLsp.InitializeAsync(input, output, disposable).ConfigureAwait(false);
 
-}
+await lsp.WaitForExit;
+
+// Runs after server is exited
+lsp.Dispose();

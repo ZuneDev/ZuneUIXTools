@@ -1,0 +1,11 @@
+{
+    "profiles": {
+        "IrisLanguageServer (stdio)": {
+            "commandName": "Project"
+        },
+        "IrisLanguageServer (TCP)": {
+            "commandName": "Project",
+            "commandLineArgs": "--socket 1337"
+        },
+    }
+}

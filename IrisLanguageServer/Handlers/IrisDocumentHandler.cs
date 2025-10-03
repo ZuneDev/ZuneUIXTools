@@ -1,46 +1,67 @@
 ﻿using MediatR;
 using Microsoft.Extensions.Logging;
+using Microsoft.Language.Xml;
 using OmniSharp.Extensions.LanguageServer.Protocol;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server.Capabilities;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace IrisLanguageServer;
+namespace IrisLanguageServer.Handlers;
 
-public class TextDocumentHandler(ILogger<TextDocumentHandler> logger, ILanguageServerConfiguration config) : TextDocumentSyncHandlerBase
+public class IrisDocumentHandler(DocumentContentRepository contentRepo, ILogger<IrisDocumentHandler> logger, ILanguageServerConfiguration config) : TextDocumentSyncHandlerBase
 {
     private readonly TextDocumentSelector _documentSelector = new(
         new TextDocumentFilter
         {
             Pattern = "**/*.uix"
+        },
+        new TextDocumentFilter
+        {
+            Pattern = "**/*.uix-xml"
+        },
+        new TextDocumentFilter
+        {
+            Pattern = "**/*.uixa"
+        },
+        new TextDocumentFilter
+        {
+            Pattern = "**/*.uix-script"
         }
     );
 
-    public override TextDocumentAttributes GetTextDocumentAttributes(DocumentUri uri) => new(uri, "uix-xml");
+    public override TextDocumentAttributes GetTextDocumentAttributes(DocumentUri uri)
+    {
+        var fileExtension = System.IO.Path.GetExtension(uri.Path).ToLowerInvariant();
+        var languageId = fileExtension switch
+        {
+            ".uix" => "uix-xml",
+            _ => fileExtension[1..]
+        };
+        return new(uri, languageId);
+    }
 
     public override async Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken token)
     {
         await Task.Yield();
-        logger.LogInformation("Hello world!");
-        await config.GetScopedConfiguration(request.TextDocument.Uri, token).ConfigureAwait(false);
+
+        var docConfig = await config.GetScopedConfiguration(request.TextDocument.Uri, token).ConfigureAwait(false);
+
+        contentRepo.AddOrUpdateContent(request.TextDocument);
+
+        var xml = Parser.ParseText(request.TextDocument.Text);
+
         return Unit.Value;
     }
 
     public override Task<Unit> Handle(DidChangeTextDocumentParams request, CancellationToken token)
     {
-        logger.LogCritical("Critical");
-        logger.LogDebug("Debug");
-        logger.LogTrace("Trace");
-        logger.LogInformation("Hello world!");
-
-        foreach (var change in request.ContentChanges)
-        {
-            logger.LogInformation("{range}:\t{text}", change.Range, change.Text);
-        }
+        var change = request.ContentChanges.Single();
+        contentRepo.AddOrUpdateContent(request.TextDocument.Uri, change.Text);
 
         return Unit.Task;
     }
@@ -53,6 +74,8 @@ public class TextDocumentHandler(ILogger<TextDocumentHandler> logger, ILanguageS
         {
             disposable.Dispose();
         }
+
+        contentRepo.DiscardDocument(request.TextDocument.Uri.ToString());
 
         return Unit.Task;
     }

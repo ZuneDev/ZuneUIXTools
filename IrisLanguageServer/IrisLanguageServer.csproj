@@ -8,9 +8,15 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="CommandLineParser" Version="2.9.1" />
         <PackageReference Include="GuiLabs.Language.Xml" Version="1.2.93" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.9" />
         <PackageReference Include="OmniSharp.Extensions.DebugAdapter.Server" Version="0.19.9" />
         <PackageReference Include="OmniSharp.Extensions.LanguageServer" Version="0.19.9" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\libs\UIX.DecompXml\UIX.DecompXml.csproj" />
     </ItemGroup>
 
 </Project>
