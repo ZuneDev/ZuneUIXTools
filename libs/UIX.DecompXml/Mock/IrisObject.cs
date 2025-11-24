@@ -125,7 +125,9 @@ internal record IrisObject(object Object, TypeSchema Type)
                 SyntaxKind.CharacterLiteralExpression => UIXTypes.MapIDToType(UIXTypeID.Char),
                 SyntaxKind.TrueLiteralExpression or
                 SyntaxKind.FalseLiteralExpression => UIXTypes.MapIDToType(UIXTypeID.Boolean),
-                SyntaxKind.NullLiteralExpression => UIXTypes.MapIDToType(UIXTypeID.Null),
+
+                // `null` doesn't tell us what type it should be
+                SyntaxKind.NullLiteralExpression => null,
 
                 SyntaxKind.ArgListExpression or
                 SyntaxKind.DefaultLiteralExpression or
