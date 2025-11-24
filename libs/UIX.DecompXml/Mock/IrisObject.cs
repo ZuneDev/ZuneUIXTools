@@ -51,20 +51,61 @@ internal record IrisObject(object Object, TypeSchema Type)
         if (expr is ParenthesizedExpressionSyntax parenExpr)
             expr = parenExpr.Expression;
 
-        if (expr is MemberAccessExpressionSyntax memberAccessExpression)
+        if (expr is InvocationExpressionSyntax or MemberAccessExpressionSyntax)
         {
-            // TODO: Handle member access on instances
+            // TODO: Handle invocation of instance methods
             try
             {
-                var sourceExpr = (IdentifierNameSyntax)memberAccessExpression.Expression;
-                var sourceTypeName = QualifiedTypeName.Parse(sourceExpr.ToString());
+                ExpressionSyntax sourceExpr = expr;
+
+                Stack<ArgumentListSyntax> argumentLists = [];
+                List<NameSyntax> names = [];
+
+                while (sourceExpr is not NameSyntax)
+                {
+                    if (sourceExpr is MemberAccessExpressionSyntax innerSourceExpr)
+                    {
+                        names.Add(innerSourceExpr.Name);
+                        sourceExpr = innerSourceExpr.Expression;
+                    }
+                    else if (sourceExpr is InvocationExpressionSyntax innerInvocationExpr)
+                    {
+                        argumentLists.Push(innerInvocationExpr.ArgumentList);
+                        sourceExpr = innerInvocationExpr.Expression;
+                    }
+                }
+
+                if (sourceExpr is not NameSyntax sourceName)
+                    return null;
+
+                names.Reverse();
+
+                var sourceTypeName = QualifiedTypeName.Parse(sourceName.ToString());
                 var sourceType = ctx.GetImportedType(sourceTypeName);
 
-                var memberName = memberAccessExpression.TryGetInferredMemberName();
+                foreach (var name in names)
+                {
+                    var memberName = name.ToString();
 
-                var property = sourceType.FindPropertyDeep(memberName);
-                if (property is not null)
-                    return property.PropertyType;
+                    var prop = sourceType.FindPropertyDeep(memberName);
+                    if (prop is not null)
+                    {
+                        sourceType = prop.PropertyType;
+                        continue;
+                    }
+
+                    var argumentList = argumentLists.Pop();
+
+                    // Try to disambiguate overloads using number of parameters
+                    var parameterCount = argumentList.Arguments.Count;
+
+                    var method = sourceType.Methods.FirstOrDefault(
+                        m => m.Name == memberName && m.ParameterTypes.Length == parameterCount);
+
+                    sourceType = method.ReturnType;
+                }
+
+                return sourceType;
             }
             catch { }
         }
@@ -90,35 +131,6 @@ internal record IrisObject(object Object, TypeSchema Type)
                 SyntaxKind.DefaultLiteralExpression or
                 _ => throw new System.NotImplementedException(),
             };
-        }
-        else if (expr is InvocationExpressionSyntax invocationExpression)
-        {
-            // TODO: Handle invocation of instance methods
-            try
-            {
-                var sourceExpr = invocationExpression.Expression;
-                
-                List<NameSyntax> names = [];
-                while (sourceExpr is MemberAccessExpressionSyntax innerSourceExpr)
-                {
-                    names.Add(innerSourceExpr.Name);
-                    sourceExpr = innerSourceExpr.Expression;
-                }
-
-                var sourceTypeName = QualifiedTypeName.Parse(sourceExpr.ToString());
-                var sourceType = ctx.GetImportedType(sourceTypeName);
-
-                var memberName = names[^1].ToString();
-
-                // Try to disambiguate overloads using number of parameters
-                var parameterCount = invocationExpression.ArgumentList.Arguments.Count;
-
-                var method = sourceType.Methods.FirstOrDefault(
-                    m => m.Name == memberName && m.ParameterTypes.Length == parameterCount);
-
-                return method?.ReturnType;
-            }
-            catch { }
         }
 
         return null;
