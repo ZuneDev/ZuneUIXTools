@@ -559,6 +559,7 @@ partial class Decompiler
                             }
                         }
 
+#if false
                         SyntaxNode node = scriptRoot
                             .DescendantNodes()
                             .OfType<MemberAccessExpressionSyntax>()
@@ -576,6 +577,7 @@ partial class Decompiler
 
                             scriptRoot = RecursiveReplaceNode(node, newNode);
                         }
+#endif
 
                         _context.SetScriptContent(initType, scriptOffset, scriptRoot.SyntaxTree);
                         break;

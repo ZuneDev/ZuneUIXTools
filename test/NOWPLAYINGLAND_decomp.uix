@@ -14,7 +14,7 @@
 bool playMarketplaceTracks = true;
 if (this.IsQuickMix())
 {
-    if (#SignIn.SignedInWithSubscription #)
+    if (SignIn.SignedInWithSubscription)
     {
         playMarketplaceTracks = ShowZunePassTracks;
     }
@@ -127,19 +127,19 @@ ShowMPContent.Value = nowPlayingLand:NowPlayingPersistentState.ShowZunePassTrack
 ]]></Script>
       <Script><![CDATA[
 [DeclareTrigger(zuneUI:TransportControls.Instance.CurrentTrack)]
-CurrentTrack = #zuneUI:TransportControls.Instance.CurrentTrack #;
+CurrentTrack = zuneUI:TransportControls.Instance.CurrentTrack;
 ]]></Script>
       <Script><![CDATA[
 [DeclareTrigger(TransportControls.Playing), DeclareTrigger(TransportControls.PlayingVideo), DeclareTrigger(Page.SlideShowState.Play), DeclareTrigger(MiniMode.InCompactMode), DeclareTrigger(MiniMode.InPopupMode), DeclareTrigger(Window.WindowState)]
-object playingVideo = #TransportControls.Playing # && #TransportControls.PlayingVideo #;
+object playingVideo = TransportControls.Playing && TransportControls.PlayingVideo;
 object playingSlideShow = Page is zuneUI:SlideshowLand && ((zuneUI:SlideshowLand)Page).SlideShowState.Play;
-object minimode = #MiniMode.InCompactMode # || #MiniMode.InPopupMode #;
-object windowVisible = #Window.WindowState # == WindowState.Normal || Window.WindowState == WindowState.Maximized;
+object minimode = MiniMode.InCompactMode || MiniMode.InPopupMode;
+object windowVisible = Window.WindowState == WindowState.Normal || Window.WindowState == WindowState.Maximized;
 Window.PreventInterruption = playingVideo || playingSlideShow && !minimode && windowVisible;
 ]]></Script>
       <Script><![CDATA[
 [DeclareTrigger(TransportControls.PlayingVideo)]
-if (#TransportControls.PlayingVideo #)
+if (TransportControls.PlayingVideo)
 {
     shell:ViewTimeLogger.Instance.ViewChanged(util:SQMDataId.NowPlayingVideoViewTime);
 }
@@ -150,7 +150,7 @@ else
 ]]></Script>
       <Script><![CDATA[
 [DeclareTrigger(TransportControls.PlayingVideo)]
-bool playingVideo = #TransportControls.PlayingVideo #;
+bool playingVideo = TransportControls.PlayingVideo;
 if (Page.TransportControlStyle != zuneUI:TransportControlStyle.Photo)
 {
     if (playingVideo)
@@ -165,7 +165,7 @@ if (Page.TransportControlStyle != zuneUI:TransportControlStyle.Photo)
 ]]></Script>
       <Script><![CDATA[
 [DeclareTrigger(Page.ActiveTransportControlStyle)]
-AllowMusicControls = #Page.ActiveTransportControlStyle # == zuneUI:TransportControlStyle.Music;
+AllowMusicControls = Page.ActiveTransportControlStyle == zuneUI:TransportControlStyle.Music;
 ]]></Script>
       <Script><![CDATA[
 [DeclareTrigger(TransportControls.CurrentPlaylist)]
@@ -182,7 +182,7 @@ TracksList.CanReorder = !this.IsQuickMix();
 TracksList.CanDrag = !this.IsQuickMix();
 if (!this.IsQuickMix())
 {
-    TracksList.Content = #TransportControls.CurrentPlaylist #;
+    TracksList.Content = TransportControls.CurrentPlaylist;
     ShowMPContentCheckBox.Visible = false;
     TransportControls.DontPlayMarketplaceTracks = false;
 }
@@ -212,7 +212,7 @@ if (!List.IsNullOrEmpty(TracksList.Content))
 ]]></Script>
       <Script><![CDATA[
 [DeclareTrigger(ShowMPContent.Value)]
-nowPlayingLand:NowPlayingPersistentState.ShowZunePassTracks = #ShowMPContent.Value #;
+nowPlayingLand:NowPlayingPersistentState.ShowZunePassTracks = ShowMPContent.Value;
 ]]></Script>
       <Script><![CDATA[
 SaveAsPlaylistButton.Visible = PlayingMusic;
@@ -231,12 +231,12 @@ else
 [DeclareTrigger(TransportControls.CurrentTrackIndex)]
 if (!UI.KeyFocus || UI.KeyFocus && nonClientControls:WindowState.KeysActive)
 {
-    NavigateIntoArgs.Index = #TransportControls.CurrentTrackIndex #;
+    NavigateIntoArgs.Index = TransportControls.CurrentTrackIndex;
 }
 ]]></Script>
       <Script><![CDATA[
 [DeclareTrigger(WndState.InputActive), DeclareTrigger(Page.OverlayUI), DeclareTrigger(TransportControls.ShowNowPlayingList.Value)]
-TracksListInnerContainer.Visible = #TransportControls.ShowNowPlayingList #.Value # && Page is zuneUI:SlideshowLand && Page is zuneUI:SlideshowLand || Page.TransportControlStyle == zuneUI:TransportControlStyle.Music;
+TracksListInnerContainer.Visible = TransportControls.ShowNowPlayingList.Value && Page is zuneUI:SlideshowLand && Page is zuneUI:SlideshowLand || Page.TransportControlStyle == zuneUI:TransportControlStyle.Music;
 TrackListBackground.Visible = TracksListInnerContainer.Visible;
 if (TrackListBackground.Visible)
 {
@@ -245,15 +245,15 @@ if (TrackListBackground.Visible)
 ]]></Script>
       <Script><![CDATA[
 [DeclareTrigger(TracksListInnerContainer.Visible), DeclareTrigger(HeadingLabel.Content), DeclareTrigger(Page.TransportControlStyle)]
-HeadingPanel.Visible = #TracksListInnerContainer.Visible # && !string.IsNullOrEmpty(#HeadingLabel.Content #);
+HeadingPanel.Visible = TracksListInnerContainer.Visible && !string.IsNullOrEmpty(HeadingLabel.Content);
 if (HeadingPanel.Visible)
 {
-    TrackListTriangle.Visible = #Page.TransportControlStyle # == zuneUI:TransportControlStyle.Music;
+    TrackListTriangle.Visible = Page.TransportControlStyle == zuneUI:TransportControlStyle.Music;
 }
 ]]></Script>
       <Script><![CDATA[
 [DeclareTrigger(TransportControls.HasPlaylist), DeclareTrigger(TransportControls.PlaylistSupportsShuffle)]
-if (!#TransportControls.HasPlaylist # || #TransportControls.PlaylistSupportsShuffle #)
+if (!TransportControls.HasPlaylist || TransportControls.PlaylistSupportsShuffle)
 {
     TrackListTriangle.Margins = TrackListTriangleMarginsWithShuffle;
 }
@@ -268,12 +268,12 @@ HeadingLabel.Content = TransportControls.Instance.QuickMixTitle;
 ]]></Script>
       <Script><![CDATA[
 [DeclareTrigger(SaveAsPlaylistButton.Visible), DeclareTrigger(ShowMPContentCheckBox.Visible)]
-ActionContainer.Visible = #SaveAsPlaylistButton.Visible # || #ShowMPContentCheckBox.Visible #;
+ActionContainer.Visible = SaveAsPlaylistButton.Visible || ShowMPContentCheckBox.Visible;
 ]]></Script>
       <Script><![CDATA[
 [DeclareTrigger(CurrentlyPlayingTrackMixAvailability.Available)]
 zuneUI:PlaybackTrack track = zuneUI:TransportControls.Instance.CurrentTrack;
-if ((Page.ShowMixOnEntry && track != null) && (Page.InitialPlaybackID == track.PlaybackID) && #CurrentlyPlayingTrackMixAvailability.Available #)
+if ((Page.ShowMixOnEntry && track != null) && (Page.InitialPlaybackID == track.PlaybackID) && CurrentlyPlayingTrackMixAvailability.Available)
 {
     CurrentlyPlayingTrackMixAvailability.UpdateMixSeed.Invoke();
     zuneUI:ZuneShell.DefaultInstance.CurrentPage.OverlayUI = mixManager:MixLayerManager.MixUI;
@@ -344,7 +344,7 @@ if (Page is zuneUI:SlideshowLand)
 ]]></Script>
       <Script><![CDATA[
 [DeclareTrigger(ContextMenu.IsOpening)]
-if (#ContextMenu.IsOpening #)
+if (ContextMenu.IsOpening)
 {
     int selectionCount = SelectionManager.Count;
     Remove.Hidden = selectionCount == 0 || this.IsQuickMix();
@@ -425,7 +425,7 @@ if (SelectionManager.SelectedItem is zuneUI:LibraryPlaybackTrack)
 [DeclareTrigger(Rate.Rating)]
 foreach (zuneUI:PlaybackTrack track in SelectionManager.SelectedItems)
 {
-    track.UserRating = #Rate.Rating #;
+    track.UserRating = Rate.Rating;
 }
 ]]></Script>
       <Script><![CDATA[
@@ -646,14 +646,14 @@ bool IsQuickMix()
     <Scripts>
       <Script><![CDATA[
 [DeclareTrigger(TransportControls.PlayingVideo), DeclareTrigger(TransportControls.VideoStream), DeclareTrigger(Window.ClientSize), DeclareTrigger(TransportControls.ZoomScaleFactor)]
-bool playingVideo = #TransportControls.PlayingVideo #;
+bool playingVideo = TransportControls.PlayingVideo;
 bool scalingVideo = false;
 int maxVideoSizeX = 0;
 int maxVideoSizeY = 0;
 Video.Visible = playingVideo;
 if (playingVideo)
 {
-    iris:VideoStream stream = #TransportControls.VideoStream #;
+    iris:VideoStream stream = TransportControls.VideoStream;
     Video.VideoStream = stream;
     if (iris:Application.RenderingType == iris:RenderingType.GDI)
     {
@@ -670,14 +670,14 @@ if (playingVideo)
     {
         object naturalWidth = stream.ContentHeight * stream.ContentAspectWidth / stream.ContentAspectHeight;
         object naturalHeight = stream.ContentHeight;
-        int wndWidth = #Window.ClientSize #.Width;
+        int wndWidth = Window.ClientSize.Width;
         int wndHeight = Window.ClientSize.Height;
         if (wndWidth != 0 && wndHeight != 0)
         {
             object scaleX = (float)(wndWidth) / (float)(naturalWidth);
             object scaleY = (float)(wndHeight) / (float)(naturalHeight);
             int scale = system:Math.Min(scaleX, scaleY);
-            maxVideoSizeX = #TransportControls.ZoomScaleFactor # * naturalWidth;
+            maxVideoSizeX = TransportControls.ZoomScaleFactor * naturalWidth;
             maxVideoSizeY = TransportControls.ZoomScaleFactor * naturalHeight;
             if (maxVideoSizeY + 50 > wndHeight || maxVideoSizeX + 50 > wndWidth)
             {
@@ -706,7 +706,7 @@ BottomVideoBackground.Visible = scalingVideo;
 ]]></Script>
       <Script><![CDATA[
 [DeclareTrigger(TransportControls.PlayingVideo)]
-if (!#TransportControls.PlayingVideo #)
+if (!TransportControls.PlayingVideo)
 {
     MusicBackground.RequestSource(typeof(nowPlayingMusicBackground:NowPlayingMusicBackground), "Page", Page);
 }
@@ -717,11 +717,11 @@ else
 ]]></Script>
       <Script><![CDATA[
 [DeclareTrigger(PopupManager.IsModal)]
-Page.AutoHideToolbars = !#PopupManager.IsModal #;
+Page.AutoHideToolbars = !PopupManager.IsModal;
 ]]></Script>
       <Script><![CDATA[
 [DeclareTrigger(Page.OverlayUI), DeclareTrigger(WindowState.InputActive)]
-Fade.Visible = #Page.OverlayUI # == null && #WindowState.InputActive #;
+Fade.Visible = Page.OverlayUI == null && WindowState.InputActive;
 ]]></Script>
       <Script><![CDATA[
 [DeclareTrigger(RightClick.Invoked)]
@@ -861,7 +861,7 @@ void ShowDebugInfo()
     <Scripts>
       <Script><![CDATA[
 [DeclareTrigger(UI.MouseFocus)]
-nonClientControls:WindowState.PageInputActivity = #UI.MouseFocus #;
+nonClientControls:WindowState.PageInputActivity = UI.MouseFocus;
 ]]></Script>
       <Script><![CDATA[
 [DeclareTrigger(Target.Dropped)]
@@ -939,7 +939,7 @@ ErrorCode = zuneUI:TransportControls.Instance.GetLibraryErrorCode(Model);
 ]]></Script>
       <Script><![CDATA[
 [DeclareTrigger(RowModel.IsNowPlaying)]
-IsNowPlaying = #RowModel.IsNowPlaying #;
+IsNowPlaying = RowModel.IsNowPlaying;
 ]]></Script>
     </Scripts>
   </UI>
@@ -962,7 +962,7 @@ IsNowPlaying = #RowModel.IsNowPlaying #;
       <Script><![CDATA[
 [DeclareTrigger(Style.State.Hovered), DeclareTrigger(RowModel.Focused), DeclareTrigger(SignIn.LastSignedInUserHadActiveSubscription), DeclareTrigger(SignIn.SignedIn)]
 RowModel.ButtonState.ChosenValue = "Hidden";
-if (#Style.State #.Hovered # || #RowModel.Focused #)
+if (Style.State.Hovered || RowModel.Focused)
 {
     if (Model.IsInVisibleCollection)
     {
@@ -970,13 +970,13 @@ if (#Style.State #.Hovered # || #RowModel.Focused #)
     }
     else
     {
-        if (!#SignIn.LastSignedInUserHadActiveSubscription #)
+        if (!SignIn.LastSignedInUserHadActiveSubscription)
         {
             RowModel.ButtonState.ChosenValue = "Upsell";
         }
         else
         {
-            if (#SignIn.SignedIn #)
+            if (SignIn.SignedIn)
             {
                 RowModel.ButtonState.ChosenValue = "Buttons";
             }
@@ -990,23 +990,23 @@ if (#Style.State #.Hovered # || #RowModel.Focused #)
 ]]></Script>
       <Script><![CDATA[
 [DeclareTrigger(RowModel.ButtonState.ChosenValue)]
-SignInButton.Visible = #RowModel.ButtonState #.ChosenValue # == "SignIn";
+SignInButton.Visible = RowModel.ButtonState.ChosenValue == "SignIn";
 Upsell.Visible = util:FeatureEnablement.IsFeatureEnabled(zuneDBApi:Features.eSubscription) && RowModel.ButtonState.ChosenValue == "Upsell";
 ]]></Script>
       <Script><![CDATA[
 [DeclareTrigger(zuneUI:TransportControls.Instance.CurrentTrack)]
-RowModel.IsNowPlaying = Model == #zuneUI:TransportControls.Instance.CurrentTrack #;
+RowModel.IsNowPlaying = Model == zuneUI:TransportControls.Instance.CurrentTrack;
 ]]></Script>
       <Script><![CDATA[
 [DeclareTrigger(RowModel.IsNowPlaying), DeclareTrigger(RowModel.ForceNonMarketplace)]
-if (#RowModel.IsNowPlaying #)
+if (RowModel.IsNowPlaying)
 {
     TrackStatefulStyle.Base = styles:SharedStyles.NowPlayingTrackStylePlaying;
     ArtistStatefulStyle.Base = styles:SharedStyles.NowPlayingArtistStylePlaying;
 }
 else
 {
-    if (!#RowModel.ForceNonMarketplace # && Model != null && !Model.IsInVisibleCollection)
+    if (!RowModel.ForceNonMarketplace && Model != null && !Model.IsInVisibleCollection)
     {
         TrackStatefulStyle.Base = styles:SharedStyles.NowPlayingTrackStyleMarketplace;
         ArtistStatefulStyle.Base = styles:SharedStyles.NowPlayingArtistStyleMarketplace;
@@ -1105,7 +1105,7 @@ TrackMoreInfoActions.Title = Model.Title;
 [DeclareTrigger(TrackMoreInfoActions.PrimaryMenuCommand.Available)]
 if (MoreInfo.Model != null)
 {
-    UI.Enabled = #TrackMoreInfoActions.PrimaryMenuCommand #.Available # && Model.MediaType == zuneUI:MediaType.Track;
+    UI.Enabled = TrackMoreInfoActions.PrimaryMenuCommand.Available && Model.MediaType == zuneUI:MediaType.Track;
     UI.KeyInteractive = UI.Enabled;
 }
 ]]></Script>
@@ -1125,7 +1125,7 @@ else
     MoreInfo.PressedImage = styles:Styles.OverlayInformationClick;
 }
 
-if ((#RowModel.ButtonState #.ChosenValue # != "Buttons" || !#TrackMoreInfoActions.PrimaryMenuCommand #.Available #) || (Model.MediaType != zuneUI:MediaType.Track))
+if ((RowModel.ButtonState.ChosenValue != "Buttons" || !TrackMoreInfoActions.PrimaryMenuCommand.Available) || (Model.MediaType != zuneUI:MediaType.Track))
 {
     MoreInfo.Image = styles:Styles.RatingBlank;
     MoreInfo.HoverImage = styles:Styles.RatingBlank;
@@ -1185,7 +1185,7 @@ DownloadCommand.Available = false;
 ]]></Script>
       <Script><![CDATA[
 [DeclareTrigger(SingleTrackQuery.Status)]
-if (#SingleTrackQuery.Status # == iris:DataProviderQueryStatus.Complete)
+if (SingleTrackQuery.Status == iris:DataProviderQueryStatus.Complete)
 {
     object track = SingleTrackQuery.Result.Item;
     if (track != null && track.CanDownload)
@@ -1236,7 +1236,7 @@ if (#SingleTrackQuery.Status # == iris:DataProviderQueryStatus.Complete)
     <Scripts>
       <Script><![CDATA[
 [DeclareTrigger(RowModel.ButtonState.ChosenValue)]
-ShowOverride = #RowModel.ButtonState #.ChosenValue # == "Buttons";
+ShowOverride = RowModel.ButtonState.ChosenValue == "Buttons";
 ]]></Script>
       <Script><![CDATA[
 [DeclareTrigger(RowModel.ButtonState.ChosenValue)]
@@ -1318,7 +1318,7 @@ if (ListModel.SelectionManager != null && ListModel.SelectionManager.IsSelected(
     <Scripts>
       <Script><![CDATA[
 [DeclareTrigger(zuneUI:TransportControls.Instance.CurrentTrack)]
-zuneUI:PlaybackTrack track = #zuneUI:TransportControls.Instance.CurrentTrack #;
+zuneUI:PlaybackTrack track = zuneUI:TransportControls.Instance.CurrentTrack;
 if (LibraryAlbumInfo != null)
 {
     Class.DisposeOwnedObject(LibraryAlbumInfo);
@@ -1389,7 +1389,7 @@ if (track != null)
 ]]></Script>
       <Script><![CDATA[
 [DeclareTrigger(MPTrackQuery.Status)]
-if (zuneUI:QueryHelper.HasCompleted(#MPTrackQuery.Status #))
+if (zuneUI:QueryHelper.HasCompleted(MPTrackQuery.Status))
 {
     object track = MPTrackQuery.Result.Item;
     if (track != null && MPTrackQuery.Enabled)
@@ -1418,21 +1418,21 @@ if (zuneUI:QueryHelper.HasCompleted(#MPTrackQuery.Status #))
 ]]></Script>
       <Script><![CDATA[
 [DeclareTrigger(BigImageSelector.ImageUri)]
-TinyImageSelector.ImageUri = #BigImageSelector.ImageUri #;
+TinyImageSelector.ImageUri = BigImageSelector.ImageUri;
 ]]></Script>
       <Script><![CDATA[
 [DeclareTrigger(BigImageSelector.Image)]
-BigAlbumArt = #BigImageSelector.Image #;
+BigAlbumArt = BigImageSelector.Image;
 ]]></Script>
       <Script><![CDATA[
 [DeclareTrigger(LibraryAlbumInfo.ThumbnailImage), DeclareTrigger(TinyImageSelector.Image)]
-if (LibraryAlbumInfo != null && #LibraryAlbumInfo.ThumbnailImage # != null)
+if (LibraryAlbumInfo != null && LibraryAlbumInfo.ThumbnailImage != null)
 {
     TinyAlbumArt = LibraryAlbumInfo.ThumbnailImage;
 }
 else
 {
-    TinyAlbumArt = #TinyImageSelector.Image #;
+    TinyAlbumArt = TinyImageSelector.Image;
 }
 ]]></Script>
       <Script><![CDATA[
@@ -1464,7 +1464,7 @@ else
 ]]></Script>
       <Script><![CDATA[
 [DeclareTrigger(IsFullscreen.Value)]
-if (#IsFullscreen.Value #)
+if (IsFullscreen.Value)
 {
     IsFullscreen.Description = zuneUI:Shell.LoadString(zuneUI:StringId.IDS_FULLSCREEN_OFF);
 }
@@ -1477,7 +1477,7 @@ else
 [DeclareTrigger(LibraryAlbumInfo.AlbumArtUrl)]
 if (LibraryAlbumInfo != null)
 {
-    BigImageSelector.ImageUri = #LibraryAlbumInfo.AlbumArtUrl #;
+    BigImageSelector.ImageUri = LibraryAlbumInfo.AlbumArtUrl;
 }
 else
 {
@@ -1512,7 +1512,7 @@ if (RotateInfo.Enabled)
 MPTrackQuery.Enabled = false;
 MPTrackQuery.Id = null;
 zuneUI:PlaybackTrack currentTrack = zuneUI:TransportControls.Instance.CurrentTrack;
-if (#NowPlayingBackgroundHelper.Visible # && NowPlayingBackgroundHelper.Visible || !currentTrack.IsInVisibleCollection && util:FeatureEnablement.IsFeatureEnabled(zuneDBApi:Features.eMusic))
+if (NowPlayingBackgroundHelper.Visible && NowPlayingBackgroundHelper.Visible || !currentTrack.IsInVisibleCollection && util:FeatureEnablement.IsFeatureEnabled(zuneDBApi:Features.eMusic))
 {
     MPTrackQuery.Id = TrackId.ToString();
     MPTrackQuery.Enabled = true;
@@ -1529,7 +1529,7 @@ ArtistQuery.Id = null;
 TopListenersQuery.Enabled = false;
 TopListenersQuery.ArtistId = null;
 zuneUI:PlaybackTrack currentTrack = zuneUI:TransportControls.Instance.CurrentTrack;
-if (((!zuneUI:GuidHelper.IsEmpty(ArtistId) && #NowPlayingBackgroundHelper.Visible # && util:FeatureEnablement.IsFeatureEnabled(zuneDBApi:Features.eMusic) && configuration:ClientConfiguration.Playback.ShowNowPlayingClipAnimations) && (iris:Application.RenderingQuality == iris:RenderingQuality.MaxQuality)) && (currentTrack != null) && currentTrack.IsMusic)
+if (((!zuneUI:GuidHelper.IsEmpty(ArtistId) && NowPlayingBackgroundHelper.Visible && util:FeatureEnablement.IsFeatureEnabled(zuneDBApi:Features.eMusic) && configuration:ClientConfiguration.Playback.ShowNowPlayingClipAnimations) && (iris:Application.RenderingQuality == iris:RenderingQuality.MaxQuality)) && (currentTrack != null) && currentTrack.IsMusic)
 {
     ArtistPhotosQuery.Id = ArtistId.ToString();
     ArtistPhotosQuery.Enabled = true;
@@ -1547,7 +1547,7 @@ if (((!zuneUI:GuidHelper.IsEmpty(ArtistId) && #NowPlayingBackgroundHelper.Visibl
 ]]></Script>
       <Script><![CDATA[
 [DeclareTrigger(ArtistQuery.Status)]
-if (ArtistQuery.Enabled && #ArtistQuery.Status # == iris:DataProviderQueryStatus.Complete)
+if (ArtistQuery.Enabled && ArtistQuery.Status == iris:DataProviderQueryStatus.Complete)
 {
     TotalArtistPlays = ArtistQuery.Result.Item.PlayCount;
     ArtistData = ArtistQuery.Result;
@@ -1557,7 +1557,7 @@ if (ArtistQuery.Enabled && #ArtistQuery.Status # == iris:DataProviderQueryStatus
 ]]></Script>
       <Script><![CDATA[
 [DeclareTrigger(TopListenersQuery.Status)]
-if ((TopListenersQuery.Enabled && #TopListenersQuery.Status # == iris:DataProviderQueryStatus.Complete) && (TopListenersQuery.Result.Profiles.Count > 0))
+if ((TopListenersQuery.Enabled && TopListenersQuery.Status == iris:DataProviderQueryStatus.Complete) && (TopListenersQuery.Result.Profiles.Count > 0))
 {
     schema1:ProfileData profile = (schema1:ProfileData)TopListenersQuery.Result.Profiles[0];
     TopListenerTag = profile.ZuneTag;
@@ -1566,7 +1566,7 @@ if ((TopListenersQuery.Enabled && #TopListenersQuery.Status # == iris:DataProvid
 ]]></Script>
       <Script><![CDATA[
 [DeclareTrigger(ArtistPhotosQuery.Status)]
-if (ArtistPhotosQuery.Enabled && #ArtistPhotosQuery.Status # == iris:DataProviderQueryStatus.Complete)
+if (ArtistPhotosQuery.Enabled && ArtistPhotosQuery.Status == iris:DataProviderQueryStatus.Complete)
 {
     ArtistImages = null;
     SelectedArtistImages = null;
@@ -1582,7 +1582,7 @@ if (ArtistPhotosQuery.Enabled && #ArtistPhotosQuery.Status # == iris:DataProvide
 ]]></Script>
       <Script><![CDATA[
 [DeclareTrigger(ArtistBiographyQuery.Status)]
-if (ArtistBiographyQuery.Enabled && #ArtistBiographyQuery.Status # == iris:DataProviderQueryStatus.Complete)
+if (ArtistBiographyQuery.Enabled && ArtistBiographyQuery.Status == iris:DataProviderQueryStatus.Complete)
 {
     ArtistBio = ArtistBiographyQuery.Result.BiographyContent;
     ArtistBioAuthor = ArtistBiographyQuery.Result.BiographyAuthor;
@@ -1590,7 +1590,7 @@ if (ArtistBiographyQuery.Enabled && #ArtistBiographyQuery.Status # == iris:DataP
 ]]></Script>
       <Script><![CDATA[
 [DeclareTrigger(ArtistImageSelector.Image)]
-if (#ArtistImageSelector.Image # != null)
+if (ArtistImageSelector.Image != null)
 {
     if (ArtistImageSelector.Image != FallbackImage)
     {
