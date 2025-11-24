@@ -800,6 +800,9 @@ partial class Decompiler
                 stack.Push(Parenthesize(typeCastExpr));
                 break;
 
+            case OpCode.InitializeInstance: // Always handled by ConstructObject
+                return true;
+
             default:
                 return false;
         }

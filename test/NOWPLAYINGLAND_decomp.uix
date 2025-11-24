@@ -315,8 +315,6 @@ if (SelectionManager.Count != 0)
 {
     if (AddToPlaylistDialog == null)
     {
-        // Unsupported instruction: INIT 649
-        ;
         AddToPlaylistDialog = new playlistDialog:AddToPlaylistDialog();
     }
 
@@ -408,8 +406,6 @@ if (!this.IsQuickMix())
 [DeclareTrigger(Properties.Invoked)]
 if (PropertiesDialog == null)
 {
-    // Unsupported instruction: INIT 636
-    ;
     PropertiesDialog = new libraryDialogs:PropertiesDialog();
 }
 
@@ -432,8 +428,6 @@ foreach (zuneUI:PlaybackTrack track in SelectionManager.SelectedItems)
 [DeclareTrigger(SaveAsPlaylist.Invoked)]
 if (SaveAsPlaylistDialog == null)
 {
-    // Unsupported instruction: INIT 652
-    ;
     SaveAsPlaylistDialog = new playlistDialog:CreatePlaylistDialog();
     SaveAsPlaylistDialog.BaseDefaultPlaylistName = zuneUI:Shell.LoadString(zuneUI:StringId.IDS_NEW_NOWPLAYING_PLAYLIST_NAME);
 }
@@ -497,8 +491,6 @@ if (attachment != null)
 {
     if (MessageComposer == null)
     {
-        // Unsupported instruction: INIT 490
-        ;
         MessageComposer = new socialComposer:MessageComposer();
     }
 
@@ -521,8 +513,6 @@ if (PlayingMusic)
 
     if (AddToFavoritesComposer == null)
     {
-        // Unsupported instruction: INIT 1509
-        ;
         AddToFavoritesComposer = new socialComposer:AddToFavoritesComposer();
     }
 
@@ -1043,8 +1033,6 @@ TrackName.Content = Model.Title;
 [DeclareTrigger(SignInModel.Invoked)]
 if (SignInDialog == null)
 {
-    // Unsupported instruction: INIT 567
-    ;
     SignInDialog = new signInDialog:SignInDialog();
 }
 
