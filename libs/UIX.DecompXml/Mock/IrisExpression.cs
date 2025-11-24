@@ -1,9 +1,12 @@
 ﻿using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Iris.Asm;
+using Microsoft.Iris.Asm.Models;
 using Microsoft.Iris.Markup;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace Microsoft.Iris.DecompXml.Mock;
@@ -40,11 +43,30 @@ internal class IrisExpression
         if (TryMapPredefinedType(type, out var kind))
             return PredefinedType(Token(kind));
 
-        return IdentifierName(context.GetQualifiedName(type).ToString());
+        var typeName = context.GetQualifiedName(type);
+        
+        if (type.Name.StartsWith("SingletonModelItem"))
+        {
+            // Special handling for this weird wrapper type
+            var genericName = ParseGenericType(typeName);
+            var innerFullTypeName = genericName.TypeArgumentList.Arguments[0].ToString();
+
+            // Resolve namespace to prefix
+            var nsEndIndex = innerFullTypeName.LastIndexOf('.');
+            var innerTypeName = innerFullTypeName[(nsEndIndex + 1)..];
+            var ns = innerFullTypeName[..nsEndIndex];
+            
+            var innerType = context.ImportTables.TypeImports
+                .Where(t => t.Name == innerTypeName || t.AlternateName == innerTypeName)
+                .FirstOrDefault(t => (t.Owner as AssemblyLoadResult)?.Namespace == ns);
+
+            typeName = context.GetQualifiedName(innerType);
+        }
+
+        return IdentifierName(typeName.ToString());
     }
 
-    public static IdentifierNameSyntax ToSyntax(SymbolReference symbolRef) =>
-        IdentifierName(symbolRef.Symbol);
+    public static IdentifierNameSyntax ToSyntax(SymbolReference symbolRef) => IdentifierName(symbolRef.Symbol);
 
     public static ExpressionSyntax ToSyntax(object obj, TypeSchema type, uint offset, DecompileContext context)
     {
@@ -89,5 +111,23 @@ internal class IrisExpression
         }
 
         return false;
+    }
+
+    private static GenericNameSyntax ParseGenericType(QualifiedTypeName typeName)
+    {
+        Regex rxGeneric = new(@"([A-z_:]\w*)`(\d+)\[(.+)\]");
+        var genericMatch = rxGeneric.Match(typeName.TypeName);
+        if (!genericMatch.Success)
+            throw new ArgumentException("Invalid generic");
+
+        var unqualifiedTypeName = genericMatch.Groups[1].Value;
+        var typeArgCount = int.Parse(genericMatch.Groups[2].Value);
+        var typeArgNames = genericMatch.Groups[3].Value
+            .Split(',')
+            .Select(IdentifierName);
+
+        // TODO: Handle nested generics
+        var trimmedTypeName = $"{typeName.NamespacePrefix}:{unqualifiedTypeName}";
+        return GenericName(Identifier(trimmedTypeName), TypeArgumentList([.. typeArgNames]));
     }
 }

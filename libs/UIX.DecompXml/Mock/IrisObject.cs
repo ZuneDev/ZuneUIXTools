@@ -3,6 +3,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Iris.Asm;
 using Microsoft.Iris.Asm.Models;
 using Microsoft.Iris.Markup;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Microsoft.Iris.DecompXml.Mock;
@@ -52,7 +53,7 @@ internal record IrisObject(object Object, TypeSchema Type)
 
         if (expr is MemberAccessExpressionSyntax memberAccessExpression)
         {
-            // TODO: Handle member access on instance methods
+            // TODO: Handle member access on instances
             try
             {
                 var sourceExpr = (IdentifierNameSyntax)memberAccessExpression.Expression;
@@ -89,6 +90,35 @@ internal record IrisObject(object Object, TypeSchema Type)
                 SyntaxKind.DefaultLiteralExpression or
                 _ => throw new System.NotImplementedException(),
             };
+        }
+        else if (expr is InvocationExpressionSyntax invocationExpression)
+        {
+            // TODO: Handle invocation of instance methods
+            try
+            {
+                var sourceExpr = invocationExpression.Expression;
+                
+                List<NameSyntax> names = [];
+                while (sourceExpr is MemberAccessExpressionSyntax innerSourceExpr)
+                {
+                    names.Add(innerSourceExpr.Name);
+                    sourceExpr = innerSourceExpr.Expression;
+                }
+
+                var sourceTypeName = QualifiedTypeName.Parse(sourceExpr.ToString());
+                var sourceType = ctx.GetImportedType(sourceTypeName);
+
+                var memberName = names[^1].ToString();
+
+                // Try to disambiguate overloads using number of parameters
+                var parameterCount = invocationExpression.ArgumentList.Arguments.Count;
+
+                var method = sourceType.Methods.FirstOrDefault(
+                    m => m.Name == memberName && m.ParameterTypes.Length == parameterCount);
+
+                return method?.ReturnType;
+            }
+            catch { }
         }
 
         return null;

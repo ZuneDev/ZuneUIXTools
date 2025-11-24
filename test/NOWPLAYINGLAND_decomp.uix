@@ -5,7 +5,7 @@
       <Boolean Name="ShowZunePassTracks" Boolean="true" />
     </Properties>
     <Locals>
-      <zuneUI:TransportControls Name="TransportControls" TransportControls="{zuneUI:SingletonModelItem`1[ZuneUI.TransportControls].Instance}" />
+      <zuneUI:TransportControls Name="TransportControls" TransportControls="{zuneUI:TransportControls.Instance}" />
       <zuneUI:SignIn Name="SignIn" SignIn="{zuneUI:SignIn.Instance}" />
     </Locals>
     <Scripts>
@@ -55,7 +55,7 @@ bool IsQuickMix()
     </Properties>
     <Locals>
       <Window Name="Window" />
-      <zuneUI:TransportControls Name="TransportControls" TransportControls="{zuneUI:SingletonModelItem`1[ZuneUI.TransportControls].Instance}" />
+      <zuneUI:TransportControls Name="TransportControls" TransportControls="{zuneUI:TransportControls.Instance}" />
       <SelectionManager Name="SelectionManager" />
       <contentList:NavigateIntoIndexRequest Name="NavigateIntoArgs" />
       <nowPlayingLand:NowPlayingListModel Name="NowPlayingListModel" Page="{Page}" />
@@ -126,8 +126,8 @@ UI.CreateInterestOnFocus = false;
 ShowMPContent.Value = nowPlayingLand:NowPlayingPersistentState.ShowZunePassTracks;
 ]]></Script>
       <Script><![CDATA[
-[DeclareTrigger(zuneUI:SingletonModelItem`1[ZuneUI.TransportControls].Instance.CurrentTrack)]
-CurrentTrack = #zuneUI:SingletonModelItem`1[ZuneUI.TransportControls].Instance.CurrentTrack #;
+[DeclareTrigger(zuneUI:TransportControls.Instance.CurrentTrack)]
+CurrentTrack = #zuneUI:TransportControls.Instance.CurrentTrack #;
 ]]></Script>
       <Script><![CDATA[
 [DeclareTrigger(TransportControls.Playing), DeclareTrigger(TransportControls.PlayingVideo), DeclareTrigger(Page.SlideShowState.Play), DeclareTrigger(MiniMode.InCompactMode), DeclareTrigger(MiniMode.InPopupMode), DeclareTrigger(Window.WindowState)]
@@ -272,7 +272,7 @@ ActionContainer.Visible = #SaveAsPlaylistButton.Visible # || #ShowMPContentCheck
 ]]></Script>
       <Script><![CDATA[
 [DeclareTrigger(CurrentlyPlayingTrackMixAvailability.Available)]
-object track = zuneUI:SingletonModelItem`1[ZuneUI.TransportControls].Instance.CurrentTrack;
+object track = zuneUI:TransportControls.Instance.CurrentTrack;
 if ((Page.ShowMixOnEntry && track != null) && (Page.InitialPlaybackID == track.PlaybackID) && #CurrentlyPlayingTrackMixAvailability.Available #)
 {
     CurrentlyPlayingTrackMixAvailability.UpdateMixSeed.Invoke();
@@ -620,7 +620,7 @@ bool IsQuickMix()
     </Properties>
     <Locals>
       <Window Name="Window" />
-      <zuneUI:TransportControls Name="TransportControls" TransportControls="{zuneUI:SingletonModelItem`1[ZuneUI.TransportControls].Instance}" />
+      <zuneUI:TransportControls Name="TransportControls" TransportControls="{zuneUI:TransportControls.Instance}" />
       <nonClientControls:WindowState Name="WindowState" />
       <iris:Command Name="ZoomScale0" Description="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_VIDEO_ZOOM_FULL)}" />
       <iris:Command Name="ZoomScale1" Description="{zuneUI:Shell.LoadString(zuneUI:StringId.IDS_VIDEO_ZOOM_NONE)}" />
@@ -678,7 +678,7 @@ if (playingVideo)
             ((float)(wndWidth)) / ((float)(naturalWidth));
             object scaleY = (float)(wndHeight) / (float)(naturalHeight);
             ((float)(wndHeight)) / ((float)(naturalHeight));
-            object scale = system:Math.Min(scaleX, scaleY);
+            int scale = system:Math.Min(scaleX, scaleY);
             maxVideoSizeX = #TransportControls.ZoomScaleFactor # * naturalWidth;
             maxVideoSizeY = TransportControls.ZoomScaleFactor * naturalHeight;
             if (maxVideoSizeY + 50 > wndHeight || maxVideoSizeX + 50 > wndWidth)
@@ -875,7 +875,7 @@ else
 {
     SelectionManager selectionManager = (SelectionManager)value;
     object insertAt = InsertIndex.Value;
-    zuneUI:SingletonModelItem`1[ZuneUI.TransportControls].Instance.ReorderNowPlaying(selectionManager.SelectedIndices, insertAt);
+    zuneUI:TransportControls.Instance.ReorderNowPlaying(selectionManager.SelectedIndices, insertAt);
 }
 ]]></Script>
     </Scripts>
@@ -936,8 +936,8 @@ else
     </Properties>
     <Scripts>
       <Script><![CDATA[
-[DeclareTrigger(zuneUI:SingletonModelItem`1[ZuneUI.TransportControls].Instance.ErrorCount)]
-ErrorCode = zuneUI:SingletonModelItem`1[ZuneUI.TransportControls].Instance.GetLibraryErrorCode(Model);
+[DeclareTrigger(zuneUI:TransportControls.Instance.ErrorCount)]
+ErrorCode = zuneUI:TransportControls.Instance.GetLibraryErrorCode(Model);
 ]]></Script>
       <Script><![CDATA[
 [DeclareTrigger(RowModel.IsNowPlaying)]
@@ -996,8 +996,8 @@ SignInButton.Visible = #RowModel.ButtonState #.ChosenValue # == "SignIn";
 Upsell.Visible = util:FeatureEnablement.IsFeatureEnabled(zuneDBApi:Features.eSubscription) && RowModel.ButtonState.ChosenValue == "Upsell";
 ]]></Script>
       <Script><![CDATA[
-[DeclareTrigger(zuneUI:SingletonModelItem`1[ZuneUI.TransportControls].Instance.CurrentTrack)]
-RowModel.IsNowPlaying = Model == #zuneUI:SingletonModelItem`1[ZuneUI.TransportControls].Instance.CurrentTrack #;
+[DeclareTrigger(zuneUI:TransportControls.Instance.CurrentTrack)]
+RowModel.IsNowPlaying = Model == #zuneUI:TransportControls.Instance.CurrentTrack #;
 ]]></Script>
       <Script><![CDATA[
 [DeclareTrigger(RowModel.IsNowPlaying), DeclareTrigger(RowModel.ForceNonMarketplace)]
@@ -1319,8 +1319,8 @@ if (ListModel.SelectionManager != null && ListModel.SelectionManager.IsSelected(
     </Locals>
     <Scripts>
       <Script><![CDATA[
-[DeclareTrigger(zuneUI:SingletonModelItem`1[ZuneUI.TransportControls].Instance.CurrentTrack)]
-object track = #zuneUI:SingletonModelItem`1[ZuneUI.TransportControls].Instance.CurrentTrack #;
+[DeclareTrigger(zuneUI:TransportControls.Instance.CurrentTrack)]
+object track = #zuneUI:TransportControls.Instance.CurrentTrack #;
 if (LibraryAlbumInfo != null)
 {
     Class.DisposeOwnedObject(LibraryAlbumInfo);
@@ -1513,7 +1513,7 @@ if (RotateInfo.Enabled)
 [DeclareTrigger(NowPlayingBackgroundHelper.Visible)]
 MPTrackQuery.Enabled = false;
 MPTrackQuery.Id = null;
-object currentTrack = zuneUI:SingletonModelItem`1[ZuneUI.TransportControls].Instance.CurrentTrack;
+object currentTrack = zuneUI:TransportControls.Instance.CurrentTrack;
 if (#NowPlayingBackgroundHelper.Visible # && NowPlayingBackgroundHelper.Visible || !currentTrack.IsInVisibleCollection && util:FeatureEnablement.IsFeatureEnabled(zuneDBApi:Features.eMusic))
 {
     MPTrackQuery.Id = TrackId.ToString();
@@ -1530,7 +1530,7 @@ ArtistQuery.Enabled = false;
 ArtistQuery.Id = null;
 TopListenersQuery.Enabled = false;
 TopListenersQuery.ArtistId = null;
-object currentTrack = zuneUI:SingletonModelItem`1[ZuneUI.TransportControls].Instance.CurrentTrack;
+object currentTrack = zuneUI:TransportControls.Instance.CurrentTrack;
 if (((!zuneUI:GuidHelper.IsEmpty(ArtistId) && #NowPlayingBackgroundHelper.Visible # && util:FeatureEnablement.IsFeatureEnabled(zuneDBApi:Features.eMusic) && configuration:ClientConfiguration.Playback.ShowNowPlayingClipAnimations) && (iris:Application.RenderingQuality == iris:RenderingQuality.MaxQuality)) && (currentTrack != null) && currentTrack.IsMusic)
 {
     ArtistPhotosQuery.Id = ArtistId.ToString();
