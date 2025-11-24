@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis.CSharp.Extensions;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Iris.Asm.Models;
 using Microsoft.Iris.Debug.Symbols;
+using Microsoft.Iris.DecompXml.Extensions;
 using Microsoft.Iris.DecompXml.Mock;
 using Microsoft.Iris.Markup;
 using Microsoft.Iris.Markup.UIX;
@@ -126,6 +127,9 @@ partial class Decompiler
                                 if (lastStatement.DescendantNodes().Any(n => n.IsEquivalentTo(expr)))
                                     break;
                             }
+
+                            if (!expr.IsStatementExpression())
+                                break;
 
                             cfa.AppendToBlock(ExpressionStatement(expr));
                         }
