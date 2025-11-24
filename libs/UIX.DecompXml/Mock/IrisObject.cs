@@ -132,6 +132,11 @@ internal record IrisObject(object Object, TypeSchema Type)
                 _ => throw new System.NotImplementedException(),
             };
         }
+        else if (expr is ObjectCreationExpressionSyntax newExpr)
+        {
+            var typeName = QualifiedTypeName.Parse(newExpr.Type.ToString());
+            return ctx.GetImportedType(typeName);
+        }
 
         return null;
     }

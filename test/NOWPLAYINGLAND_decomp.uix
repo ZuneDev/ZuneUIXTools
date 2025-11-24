@@ -352,7 +352,7 @@ if (#ContextMenu.IsOpening #)
     Play.Available = selectedOne;
     zuneUI:PlaybackTrack track = (zuneUI:PlaybackTrack)SelectionManager.SelectedItem;
     object selectedOneLibraryItem = selectedOne && track is zuneUI:LibraryPlaybackTrack;
-    object selectedOneLibraryTrack = new bool ();
+    bool selectedOneLibraryTrack = new bool ();
     bool isInCollection = false;
     bool isInHiddenCollection = false;
     if (selectedOneLibraryItem)
@@ -510,7 +510,7 @@ if (attachment != null)
 [DeclareTrigger(AddToFavorites.Invoked)]
 if (PlayingMusic)
 {
-    object favorites = new List();
+    List favorites = new List();
     foreach (zuneUI:PlaybackTrack track in SelectionManager.SelectedItems)
     {
         if (!zuneUI:GuidHelper.IsEmpty(track.ZuneMediaId))
@@ -1191,7 +1191,7 @@ if (#SingleTrackQuery.Status # == iris:DataProviderQueryStatus.Complete)
     if (track != null && track.CanDownload)
     {
         track.ReferrerContext = Model.ServiceContext;
-        object downloadItems = new collections:ArrayList(1);
+        collections:ArrayList downloadItems = new collections:ArrayList(1);
         downloadItems.Add(track);
         zuneUI:Download.Instance.DownloadContent(downloadItems, service:EDownloadFlags.Subscription);
         RowModel.ForceNonMarketplace = true;
