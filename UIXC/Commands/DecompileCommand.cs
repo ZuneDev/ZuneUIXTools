@@ -1,5 +1,7 @@
 ﻿using Microsoft.Iris.Asm;
+using Microsoft.Iris.Data;
 using Microsoft.Iris.Debug;
+using Microsoft.Iris.Debug.Symbols;
 using Microsoft.Iris.DecompXml;
 using Microsoft.Iris.Markup;
 using Spectre.Console;
@@ -59,7 +61,7 @@ public class DecompileCommand : CompilerCommandBase<DecompileCommand.Settings>
         foreach (var redirectOption in settings.ImportRedirects ?? [])
         {
             var parts = redirectOption.Split('>');
-            MarkupSystem.AddImportRedirect(parts[0], parts[1]);
+            ResourceManager.Instance.AddUriRedirect(parts[0], parts[1]);
         }
 
         MarkupSystem.Startup(true);
@@ -90,10 +92,23 @@ public class DecompileCommand : CompilerCommandBase<DecompileCommand.Settings>
         }
         else if (settings.Language == SourceLanguage.Xml)
         {
+            var saveDebugSymbols = settings.SymbolDir is not null;
+
             decompilerMethod = loadResult =>
             {
                 var decompiler = Decompiler.Load(loadResult);
-                return decompiler.DecompileToSource();
+                var source = decompiler.DecompileToSource(saveDebugSymbols);
+
+                if (settings.SymbolDir is not null && decompiler.DebugSymbols is not null)
+                {
+                    var fsymJson = DebugSymbolsJsonParser.Serialize(decompiler.DebugSymbols);
+                    var sourceName = Path.GetFileName(decompiler.DebugSymbols.CompiledFileName);
+                    var fsymPath = Path.Combine(settings.SymbolDir, $"{sourceName}.fsym.json");
+
+                    File.WriteAllText(fsymPath, fsymJson);
+                }
+
+                return source;
             };
         }
         else
@@ -179,5 +194,9 @@ public class DecompileCommand : CompilerCommandBase<DecompileCommand.Settings>
         [Description("The language to decompile to.")]
         [CommandOption("-l|--lang <lang>")]
         public SourceLanguage Language { get; init; } = SourceLanguage.Asm;
+
+        [Description("The directory to write file symbols to.")]
+        [CommandOption("--symbols <symbolOutDir>")]
+        public string? SymbolDir { get; init; }
     }
 }

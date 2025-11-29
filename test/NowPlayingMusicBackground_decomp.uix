@@ -12,7 +12,7 @@
     </Properties>
     <Locals>
       <nowPlayingLand:NowPlayingInfo Name="NowPlayingInfo" />
-      <zuneUI:TransportControls Name="TransportControls" TransportControls="{zuneUI:SingletonModelItem`1[ZuneUI.TransportControls].Instance}" />
+      <zuneUI:TransportControls Name="TransportControls" TransportControls="{zuneUI:TransportControls.Instance}" />
       <Timer Name="GridDisplayedTimer" Interval="3000" AutoRepeat="false" Enabled="true" />
       <Boolean Name="GridDisplayed" />
       <Image Name="FirstAnimationClipImage" Image="{null}" />
@@ -24,133 +24,119 @@
       <nowPlayingMusicBackground:NowPlayingBackgroundHelper Name="NowPlayingBackgroundHelper" />
     </Locals>
     <Scripts>
-      <Script>NowPlayingBackgroundHelper.Visible = true;</Script>
-      <Script>[DeclareTrigger(NowPlayingInfo.ArtistBio)]
-AnimationClips.ArtistBio = zuneUI:StringParserHelper.StripHtmlTags(#NowPlayingInfo.ArtistBio #);</Script>
-      <Script>[DeclareTrigger(NowPlayingInfo.ArtistBioAuthor)]
-AnimationClips.ArtistBioAuthor = #NowPlayingInfo.ArtistBioAuthor #;</Script>
-      <Script>[DeclareTrigger(AnimationClips.Visible)]
-Background.Visible = !#AnimationClips.Visible #;</Script>
-      <Script>[FinalEvaluate]
-NowPlayingBackgroundHelper.Visible = false;</Script>
-      <Script>[DeclareTrigger(NowPlayingInfo.ArtistImages), DeclareTrigger(TransportControls.Playing)]
-/* UIB_0033 */
-if (!#TransportControls.Playing #)
-    goto UIB_0060;
-/* UIB_0045 */
-if (NowPlayingInfo.ArtistName != ArtistName)
-    goto UIB_0058;
-/* UIB_0060 */
-if (!!TransportControls.Playing &amp;&amp; !!NowPlayingInfo.ArtistName == ArtistName &amp;&amp; !string.IsNullOrEmpty(ArtistName))
-    goto UIB_00ED;
-/* UIB_0070 */
-if (#NowPlayingInfo.ArtistImages # == null)
-    goto UIB_0089;
-/* UIB_0089 */
-if ((NowPlayingInfo.ArtistImages == null) || (NowPlayingInfo.ArtistImages.Count &lt;= 0))
-    goto UIB_00D3;
-ArtistName = NowPlayingInfo.ArtistName;
-ArtistImages = NowPlayingInfo.ArtistImages;
-NextAnimationClipImage = null;
-NextAnimationClipImageIndex = 0;
-FirstAnimationClipImage = (Image)ArtistImages[0];
-ImageHolder.Content = FirstAnimationClipImage;
-FirstAnimationClipImage.Load();
-goto UIB_00ED;
-/* UIB_00DE */
-if (NowPlayingInfo.ArtistImages != null)
-    goto UIB_00ED;
-FirstAnimationClipImage = null;
-NextAnimationClipImage = null;</Script>
-      <Script>[DeclareTrigger(TransportControls.Playing), DeclareTrigger(FirstAnimationClipImage.Status)]
-/* UIB_00FB */
-if (!#TransportControls.Playing # || !GridDisplayed)
-    goto UIB_0111;
-/* UIB_0111 */
-if ((!(TransportControls.Playing) || !(GridDisplayed)) || (NowPlayingInfo.ArtistName != ArtistName))
-    goto UIB_0124;
-/* UIB_0124 */
-if ((!(TransportControls.Playing) || !(GridDisplayed)) || (NowPlayingInfo.ArtistName != ArtistName) || !!string.IsNullOrEmpty(ArtistName))
-    goto UIB_0135;
-/* UIB_0135 */
-if (((!(TransportControls.Playing) || !(GridDisplayed)) || (NowPlayingInfo.ArtistName != ArtistName) || !(!string.IsNullOrEmpty(ArtistName))) || (FirstAnimationClipImage == null))
-    goto UIB_014B;
-/* UIB_014B */
-if ((((!(TransportControls.Playing) || !(GridDisplayed)) || (NowPlayingInfo.ArtistName != ArtistName) || !(!string.IsNullOrEmpty(ArtistName))) || (FirstAnimationClipImage == null)) || (#FirstAnimationClipImage.Status # != ImageStatus.Complete))
-    goto UIB_01E2;
-AnimationClips.Image = FirstAnimationClipImage;
-AnimationClips.Text = NowPlayingInfo.ExtendedPlayInfo;
-AnimationClips.PlayNextAnimationClip.Invoke();
-AnimationClips.Visible = true;
-AlbumGrid.ShowState.ChosenValue = "Faded";
-/* UIB_018F */
-if (ArtistImages == null)
-    goto UIB_01A5;
-/* UIB_01A5 */
-if ((ArtistImages == null) || (ArtistImages.Count &lt;= 1))
-    goto UIB_01E2;
-NextAnimationClipImageIndex = NextAnimationClipImageIndex + 1 % ArtistImages.Count;
-NextAnimationClipImage = (Image)ArtistImages[NextAnimationClipImageIndex];
-ImageHolder.Content = NextAnimationClipImage;
-NextAnimationClipImage.Load();</Script>
-      <Script>[DeclareTrigger(OnAnimationClipComplete.Invoked)]
-/* UIB_01E9 */
-if (!TransportControls.Playing)
-    goto UIB_02B5;
-/* UIB_01FB */
-if (NowPlayingInfo.ArtistName != ArtistName)
-    goto UIB_020E;
-/* UIB_020E */
-if (NowPlayingInfo.ArtistName != ArtistName || !!string.IsNullOrEmpty(ArtistName))
-    goto UIB_021F;
-/* UIB_021F */
-if ((NowPlayingInfo.ArtistName != ArtistName || !(!string.IsNullOrEmpty(ArtistName))) || (NextAnimationClipImage == null))
-    goto UIB_0235;
-/* UIB_0235 */
-if (((NowPlayingInfo.ArtistName != ArtistName || !(!string.IsNullOrEmpty(ArtistName))) || (NextAnimationClipImage == null)) || (NextAnimationClipImage.Status != ImageStatus.Complete))
-    goto UIB_029F;
-AnimationClips.Image = NextAnimationClipImage;
-/* UIB_024C */
-if (ArtistImages == null)
-    goto UIB_0262;
-/* UIB_0262 */
-if ((ArtistImages == null) || (ArtistImages.Count &lt;= 1))
-    goto UIB_029F;
-NextAnimationClipImageIndex = NextAnimationClipImageIndex + 1 % ArtistImages.Count;
-NextAnimationClipImage = (Image)ArtistImages[NextAnimationClipImageIndex];
-ImageHolder.Content = NextAnimationClipImage;
-NextAnimationClipImage.Load();
-AnimationClips.Text = NowPlayingInfo.ExtendedPlayInfo;
-AnimationClips.PlayNextAnimationClip.Invoke();</Script>
-      <Script>[DeclareTrigger(GridDisplayedTimer.Tick)]
+      <Script><![CDATA[
+NowPlayingBackgroundHelper.Visible = true;
+]]></Script>
+      <Script><![CDATA[
+[DeclareTrigger(NowPlayingInfo.ArtistBio)]
+AnimationClips.ArtistBio = zuneUI:StringParserHelper.StripHtmlTags(NowPlayingInfo.ArtistBio);
+]]></Script>
+      <Script><![CDATA[
+[DeclareTrigger(NowPlayingInfo.ArtistBioAuthor)]
+AnimationClips.ArtistBioAuthor = NowPlayingInfo.ArtistBioAuthor;
+]]></Script>
+      <Script><![CDATA[
+[DeclareTrigger(AnimationClips.Visible)]
+Background.Visible = !AnimationClips.Visible;
+]]></Script>
+      <Script><![CDATA[
+[FinalEvaluate]
+NowPlayingBackgroundHelper.Visible = false;
+]]></Script>
+      <Script><![CDATA[
+[DeclareTrigger(NowPlayingInfo.ArtistImages), DeclareTrigger(TransportControls.Playing)]
+if (NowPlayingInfo.ArtistName == ArtistName || !NowPlayingInfo.ArtistName == ArtistName && !string.IsNullOrEmpty(ArtistName))
+{
+    if ((NowPlayingInfo.ArtistImages != null) && (NowPlayingInfo.ArtistImages.Count > 0))
+    {
+        ArtistName = NowPlayingInfo.ArtistName;
+        ArtistImages = NowPlayingInfo.ArtistImages;
+        NextAnimationClipImage = null;
+        NextAnimationClipImageIndex = 0;
+        FirstAnimationClipImage = (Image)ArtistImages[0];
+        ImageHolder.Content = FirstAnimationClipImage;
+        FirstAnimationClipImage.Load();
+    }
+    else
+    {
+        if (NowPlayingInfo.ArtistImages == null)
+        {
+            FirstAnimationClipImage = null;
+            NextAnimationClipImage = null;
+        }
+    }
+}
+]]></Script>
+      <Script><![CDATA[
+[DeclareTrigger(TransportControls.Playing), DeclareTrigger(FirstAnimationClipImage.Status)]
+if ((((TransportControls.Playing && GridDisplayed) && (NowPlayingInfo.ArtistName == ArtistName) && !string.IsNullOrEmpty(ArtistName)) && (FirstAnimationClipImage != null)) && (FirstAnimationClipImage.Status == ImageStatus.Complete))
+{
+    AnimationClips.Image = FirstAnimationClipImage;
+    AnimationClips.Text = NowPlayingInfo.ExtendedPlayInfo;
+    AnimationClips.PlayNextAnimationClip.Invoke();
+    AnimationClips.Visible = true;
+    AlbumGrid.ShowState.ChosenValue = "Faded";
+    if ((ArtistImages != null) && (ArtistImages.Count > 1))
+    {
+        NextAnimationClipImageIndex = NextAnimationClipImageIndex + 1 % ArtistImages.Count;
+        NextAnimationClipImage = (Image)ArtistImages[NextAnimationClipImageIndex];
+        ImageHolder.Content = NextAnimationClipImage;
+        NextAnimationClipImage.Load();
+    }
+}
+]]></Script>
+      <Script><![CDATA[
+[DeclareTrigger(OnAnimationClipComplete.Invoked)]
+if (TransportControls.Playing)
+{
+    if (((NowPlayingInfo.ArtistName == ArtistName && !string.IsNullOrEmpty(ArtistName)) && (NextAnimationClipImage != null)) && (NextAnimationClipImage.Status == ImageStatus.Complete))
+    {
+        AnimationClips.Image = NextAnimationClipImage;
+        if ((ArtistImages != null) && (ArtistImages.Count > 1))
+        {
+            NextAnimationClipImageIndex = NextAnimationClipImageIndex + 1 % ArtistImages.Count;
+            NextAnimationClipImage = (Image)ArtistImages[NextAnimationClipImageIndex];
+            ImageHolder.Content = NextAnimationClipImage;
+            NextAnimationClipImage.Load();
+        }
+    }
+
+    AnimationClips.Text = NowPlayingInfo.ExtendedPlayInfo;
+    AnimationClips.PlayNextAnimationClip.Invoke();
+}
+]]></Script>
+      <Script><![CDATA[
+[DeclareTrigger(GridDisplayedTimer.Tick)]
 AlbumGrid.ShowState.ChosenValue = "Normal";
 AnimationClips.Visible = false;
-GridDisplayed = true;</Script>
-      <Script>[DeclareTrigger(NowPlayingInfo.ExtendedPlayInfo), DeclareTrigger(TransportControls.Playing)]
-/* UIB_02E0 */
-if (#NowPlayingInfo.ExtendedPlayInfo # == null)
-    goto UIB_0378;
-/* UIB_02FC */
-if (!#TransportControls.Playing # || NowPlayingInfo.ArtistName != ArtistName)
-    goto UIB_030F;
-/* UIB_030F */
-if (!TransportControls.Playing || NowPlayingInfo.ArtistName != ArtistName || !!string.IsNullOrEmpty(ArtistName))
-    goto UIB_031F;
-OnAnimationClipComplete.Invoke();
-goto UIB_0378;
-/* UIB_032F */
-if (AlbumGrid.ShowState.ChosenValue != "Faded")
-    goto UIB_0378;
-AlbumGrid.ShowState.ChosenValue = "Normal";
-GridDisplayed = false;
-GridDisplayedTimer.Enabled = true;
-ArtistName = null;
-FirstAnimationClipImage = null;
-NextAnimationClipImage = null;
-/* UIB_0369 */
-if (Page == null)
-    goto UIB_0378;
-Page.ShowingArtistBio = false;</Script>
+GridDisplayed = true;
+]]></Script>
+      <Script><![CDATA[
+[DeclareTrigger(NowPlayingInfo.ExtendedPlayInfo), DeclareTrigger(TransportControls.Playing)]
+if (NowPlayingInfo.ExtendedPlayInfo != null)
+{
+    if (TransportControls.Playing && NowPlayingInfo.ArtistName == ArtistName && !string.IsNullOrEmpty(ArtistName))
+    {
+        OnAnimationClipComplete.Invoke();
+    }
+    else
+    {
+        if (AlbumGrid.ShowState.ChosenValue == "Faded")
+        {
+            AlbumGrid.ShowState.ChosenValue = "Normal";
+            GridDisplayed = false;
+            GridDisplayedTimer.Enabled = true;
+            ArtistName = null;
+            FirstAnimationClipImage = null;
+            NextAnimationClipImage = null;
+            if (Page != null)
+            {
+                Page.ShowingArtistBio = false;
+            }
+        }
+    }
+}
+]]></Script>
     </Scripts>
     <Content>
       <Panel Layout="Form">
@@ -178,18 +164,24 @@ Page.ShowingArtistBio = false;</Script>
       <Boolean Name="LaunchedAsScreenSaver" Boolean="false" />
     </Properties>
     <Scripts>
-      <Script>ShowState.ChosenValue = "Intro";
-GridArt.LayoutInput = GridArt.AnchorInput;</Script>
-      <Script>[DeclareTrigger(animations:AnimationState.InMixView.Value)]
-/* UIB_0620 */
-if (iris:Application.RenderingQuality != iris:RenderingQuality.MaxQuality)
-    goto UIB_0647;
-/* UIB_062B */
-if (!#animations:AnimationState.InMixView.Value #)
-    goto UIB_063E;
-GridInfo.PlayAnimation(animations:Animations.MixClientShrink);
-goto UIB_0647;
-GridInfo.PlayAnimation(animations:Animations.MixClientRestore);</Script>
+      <Script><![CDATA[
+ShowState.ChosenValue = "Intro";
+GridArt.LayoutInput = GridArt.AnchorInput;
+]]></Script>
+      <Script><![CDATA[
+[DeclareTrigger(animations:AnimationState.InMixView.Value)]
+if (iris:Application.RenderingQuality == iris:RenderingQuality.MaxQuality)
+{
+    if (animations:AnimationState.InMixView.Value)
+    {
+        GridInfo.PlayAnimation(animations:Animations.MixClientShrink);
+    }
+    else
+    {
+        GridInfo.PlayAnimation(animations:Animations.MixClientRestore);
+    }
+}
+]]></Script>
     </Scripts>
     <Content>
       <Panel Layout="Form">
@@ -243,112 +235,114 @@ GridInfo.PlayAnimation(animations:Animations.MixClientRestore);</Script>
       <nowPlayingStyles:TimedPalettePicker Name="PalettePicker" />
     </Locals>
     <Scripts>
-      <Script>[DeclareTrigger(NowPlayingInfo.ArtistMoods)]
-PalettePicker.CurrentMoods = #NowPlayingInfo.ArtistMoods #;</Script>
-      <Script>[DeclareTrigger(NowPlayingInfo.ArtistGenres)]
-PalettePicker.CurrentGenres = #NowPlayingInfo.ArtistGenres #;</Script>
-      <Script>[DeclareTrigger(NowPlayingInfo.TrackTitle)]
-PalettePicker.ChangeMood.Invoke();</Script>
-      <Script>Model.Text = Text;</Script>
-      <Script>Model.Image = Image;</Script>
-      <Script>Model.ArtistBio = ArtistBio;</Script>
-      <Script>Model.ArtistBioAuthor = ArtistBioAuthor;</Script>
-      <Script>[DeclareTrigger(NowPlayingInfo.TrackPlayCount)]
-Model.TrackPlayCount = #NowPlayingInfo.TrackPlayCount #;</Script>
-      <Script>[DeclareTrigger(NowPlayingInfo.ArtistName)]
-Model.ArtistName = #NowPlayingInfo.ArtistName #;</Script>
-      <Script>[DeclareTrigger(NowPlayingInfo.AlbumTitle)]
-Model.AlbumTitle = #NowPlayingInfo.AlbumTitle #;</Script>
-      <Script>[DeclareTrigger(NowPlayingInfo.TrackTitle)]
-Model.TrackTitle = #NowPlayingInfo.TrackTitle #;</Script>
-      <Script>[DeclareTrigger(PlayNextAnimationClip.Invoked)]
-/* UIB_070B */
-if (Image == null)
-    goto UIB_071C;
-/* UIB_071C */
-if (Image == null || Text == null)
-    goto UIB_0982;
-Null previousClip = null;
-/* UIB_0730 */
-if (PreviousClipIndex &lt; 0)
-    goto UIB_0745;
-nowPlayingMusicBackground:AnimationClipDef previousClip = (nowPlayingMusicBackground:AnimationClipDef)AnimationClipDefs.get_Item(PreviousClipIndex);
-object applicableClips = new List();
-/* UIB_0755 */
-if (!AnimationClipDefs.GetEnumerator().MoveNext())
-    goto UIB_0812;
-nowPlayingMusicBackground:AnimationClipDef potentialAnimationClip = (nowPlayingMusicBackground:AnimationClipDef)AnimationClipDefs.GetEnumerator().Current;
-/* UIB_076A */
-if (!!ShowArtistBioClips)
-    goto UIB_0780;
-/* UIB_0780 */
-if (!ShowArtistBioClips &amp;&amp; potentialAnimationClip.ArtistBioMaxLength &gt; 0)
-    goto UIB_07A5;
-/* UIB_0792 */
-if (potentialAnimationClip.ArtistBioMaxLength &lt;= 0)
-    goto UIB_07A1;
-/* UIB_07A5 */
-if (!ShowArtistBioClips &amp;&amp; potentialAnimationClip.ArtistBioMaxLength &gt; 0 || potentialAnimationClip.ArtistBioMaxLength &gt; 0 &amp;&amp; string.IsNullOrEmpty(ArtistBio))
-    goto UIB_07B8;
-/* UIB_07B8 */
-if ((!ShowArtistBioClips &amp;&amp; potentialAnimationClip.ArtistBioMaxLength &gt; 0 || potentialAnimationClip.ArtistBioMaxLength &gt; 0 &amp;&amp; string.IsNullOrEmpty(ArtistBio)) || (previousClip == potentialAnimationClip))
-    goto UIB_07F5;
-/* UIB_07C5 */
-if (previousClip == null)
-    goto UIB_07DB;
-/* UIB_07DB */
-if (previousClip == null || previousClip.ArtistBioMaxLength == 0)
-    goto UIB_07F1;
-/* UIB_07F5 */
-if (((!(!ShowArtistBioClips) || potentialAnimationClip.ArtistBioMaxLength &lt;= 0 &amp;&amp; potentialAnimationClip.ArtistBioMaxLength &lt;= 0 || !(string.IsNullOrEmpty(ArtistBio))) &amp;&amp; (previousClip != potentialAnimationClip)) &amp;&amp; ((previousClip == null || previousClip.ArtistBioMaxLength == 0) || (potentialAnimationClip.ArtistBioMaxLength == 0)))
-    goto UIB_0804;
-goto UIB_0752;
-goto UIB_080D;
-applicableClips.Add(potentialAnimationClip);
-goto UIB_0752;
-AnimationClipDefs.GetEnumerator();
-/* UIB_0823 */
-if (applicableClips.Count != 0)
-    goto UIB_0834;
-/* UIB_0834 */
-if ((applicableClips.Count != 0) || (previousClip == null))
-    goto UIB_0842;
-applicableClips.Add(previousClip);
-object clipIndex = Random.Next(0, applicableClips.Count);
-nowPlayingMusicBackground:AnimationClipDef animationClip = (nowPlayingMusicBackground:AnimationClipDef)applicableClips[clipIndex];
-PreviousClipIndex = clipIndex;
-/* UIB_0874 */
-if (Page == null)
-    goto UIB_088D;
-Page.ShowingArtistBio = animationClip.ArtistBioMaxLength &gt; 0;
-/* UIB_0895 */
-if (Model == null)
-    goto UIB_08A8;
-UI.DisposeOwnedObject(Model);
-Model = null;
-// Unsupported instruction: INIT 605
-;
-Model = new nowPlayingClips:AnimationClipModel();
+      <Script><![CDATA[
+[DeclareTrigger(NowPlayingInfo.ArtistMoods)]
+PalettePicker.CurrentMoods = NowPlayingInfo.ArtistMoods;
+]]></Script>
+      <Script><![CDATA[
+[DeclareTrigger(NowPlayingInfo.ArtistGenres)]
+PalettePicker.CurrentGenres = NowPlayingInfo.ArtistGenres;
+]]></Script>
+      <Script><![CDATA[
+[DeclareTrigger(NowPlayingInfo.TrackTitle)]
+PalettePicker.ChangeMood.Invoke();
+]]></Script>
+      <Script><![CDATA[
 Model.Text = Text;
+]]></Script>
+      <Script><![CDATA[
 Model.Image = Image;
+]]></Script>
+      <Script><![CDATA[
 Model.ArtistBio = ArtistBio;
+]]></Script>
+      <Script><![CDATA[
 Model.ArtistBioAuthor = ArtistBioAuthor;
-Model.ArtistBioMaxLength = animationClip.ArtistBioMaxLength;
+]]></Script>
+      <Script><![CDATA[
+[DeclareTrigger(NowPlayingInfo.TrackPlayCount)]
 Model.TrackPlayCount = NowPlayingInfo.TrackPlayCount;
+]]></Script>
+      <Script><![CDATA[
+[DeclareTrigger(NowPlayingInfo.ArtistName)]
 Model.ArtistName = NowPlayingInfo.ArtistName;
+]]></Script>
+      <Script><![CDATA[
+[DeclareTrigger(NowPlayingInfo.AlbumTitle)]
 Model.AlbumTitle = NowPlayingInfo.AlbumTitle;
+]]></Script>
+      <Script><![CDATA[
+[DeclareTrigger(NowPlayingInfo.TrackTitle)]
 Model.TrackTitle = NowPlayingInfo.TrackTitle;
-Host.RequestSource(animationClip.Type, "Model", Model, "PalettePicker", PalettePicker, "Duration", animationClip.Duration);
-DebugName.Content = animationClip.DebugName;
-Timer.Interval = ((int)(animationClip.Duration * 1000));
-Timer.Enabled = false;
-Timer.Enabled = true;</Script>
-      <Script>[DeclareTrigger(Timer.Tick)]
-/* UIB_0A15 */
-if (Page == null)
-    goto UIB_0A24;
-Page.ShowingArtistBio = false;
-OnAnimationClipComplete.Invoke();</Script>
+]]></Script>
+      <Script><![CDATA[
+[DeclareTrigger(PlayNextAnimationClip.Invoked)]
+if (Image != null && Text != null)
+{
+    object previousClip = null;
+    if (PreviousClipIndex >= 0)
+    {
+        previousClip = (nowPlayingMusicBackground:AnimationClipDef)AnimationClipDefs.get_Item(PreviousClipIndex);
+    }
+
+    List applicableClips = new List();
+    foreach (nowPlayingMusicBackground:AnimationClipDef potentialAnimationClip in AnimationClipDefs)
+    {
+        if (previousClip != null && previousClip.ArtistBioMaxLength != 0 || (previousClip != null && previousClip.ArtistBioMaxLength != 0) && (potentialAnimationClip.ArtistBioMaxLength != 0))
+        {
+            continue;
+        }
+        else
+        {
+            applicableClips.Add(potentialAnimationClip);
+        }
+    }
+
+    if ((applicableClips.Count == 0) && (previousClip != null))
+    {
+        applicableClips.Add(previousClip);
+    }
+
+    int clipIndex = Random.Next(0, applicableClips.Count);
+    nowPlayingMusicBackground:AnimationClipDef animationClip = (nowPlayingMusicBackground:AnimationClipDef)applicableClips[clipIndex];
+    PreviousClipIndex = clipIndex;
+    if (Page != null)
+    {
+        Page.ShowingArtistBio = animationClip.ArtistBioMaxLength > 0;
+    }
+
+    if (Model != null)
+    {
+        UI.DisposeOwnedObject(Model);
+        Model = null;
+    }
+
+    Model = new nowPlayingClips:AnimationClipModel();
+    Model.Text = Text;
+    Model.Image = Image;
+    Model.ArtistBio = ArtistBio;
+    Model.ArtistBioAuthor = ArtistBioAuthor;
+    Model.ArtistBioMaxLength = animationClip.ArtistBioMaxLength;
+    Model.TrackPlayCount = NowPlayingInfo.TrackPlayCount;
+    Model.ArtistName = NowPlayingInfo.ArtistName;
+    Model.AlbumTitle = NowPlayingInfo.AlbumTitle;
+    Model.TrackTitle = NowPlayingInfo.TrackTitle;
+    Host.RequestSource(animationClip.Type, "Model", Model, "PalettePicker", PalettePicker, "Duration", animationClip.Duration);
+    DebugName.Content = animationClip.DebugName;
+    Timer.Interval = ((int)(animationClip.Duration * 1000));
+    Timer.Enabled = false;
+    Timer.Enabled = true;
+}
+]]></Script>
+      <Script><![CDATA[
+[DeclareTrigger(Timer.Tick)]
+if (Page != null)
+{
+    Page.ShowingArtistBio = false;
+}
+
+OnAnimationClipComplete.Invoke();
+]]></Script>
     </Scripts>
     <Content>
       <Panel>
@@ -377,59 +371,77 @@ OnAnimationClipComplete.Invoke();</Script>
       <mixManager:CurrentlyPlayingTrackMixAvailability Name="CurrentlyPlayingTrackMixAvailability" />
     </Locals>
     <Scripts>
-      <Script>IsFaded = ShowState.ChosenValue == "Faded";</Script>
-      <Script>[DeclareTrigger(zuneUI:SingletonModelItem`1[ZuneUI.TransportControls].Instance.CurrentTrack)]
-CurrentTrack = #zuneUI:SingletonModelItem`1[ZuneUI.TransportControls].Instance.CurrentTrack #;</Script>
-      <Script>Form.Visible = CurrentTrack != null;</Script>
-      <Script>[DeclareTrigger(NowPlayingInfo.AlbumTitle)]
-AlbumTitle.Content = #NowPlayingInfo.AlbumTitle #;</Script>
-      <Script>[DeclareTrigger(NowPlayingInfo.TrackTitle)]
-TrackTitle.Content = #NowPlayingInfo.TrackTitle #;</Script>
-      <Script>[DeclareTrigger(NowPlayingInfo.ArtistName)]
-ArtistName.Content = #NowPlayingInfo.ArtistName #;</Script>
-      <Script>[DeclareTrigger(NowPlayingInfo.BigAlbumArt)]
-AlbumArt.Content = #NowPlayingInfo.BigAlbumArt #;
-AlbumArtShadow.Visible = AlbumArt.Content != null;</Script>
-      <Script>[DeclareTrigger(CurrentlyPlayingTrackMixAvailability.Available)]
-MixViewButton.Visible = util:FeatureEnablement.IsFeatureEnabled(zuneDBApi:Features.eMixview) &amp;&amp; #CurrentlyPlayingTrackMixAvailability.Available #;</Script>
-      <Script>/* UIB_0E57 */
-if (CurrentTrack == null)
-    goto UIB_0E6D;
-MoreInfoButton.Visible = CurrentTrack != null &amp;&amp; !zuneUI:GuidHelper.IsEmpty(CurrentTrack.ZuneMediaId);</Script>
-      <Script>AlbumArtShadow.ForceContentChange();
-LabelRoot.ForceContentChange();</Script>
-      <Script>[DeclareTrigger(ShowState.ChosenValue), DeclareTrigger(WindowState.InputActive)]
+      <Script><![CDATA[
+IsFaded = ShowState.ChosenValue == "Faded";
+]]></Script>
+      <Script><![CDATA[
+[DeclareTrigger(zuneUI:TransportControls.Instance.CurrentTrack)]
+CurrentTrack = zuneUI:TransportControls.Instance.CurrentTrack;
+]]></Script>
+      <Script><![CDATA[
+Form.Visible = CurrentTrack != null;
+]]></Script>
+      <Script><![CDATA[
+[DeclareTrigger(NowPlayingInfo.AlbumTitle)]
+AlbumTitle.Content = NowPlayingInfo.AlbumTitle;
+]]></Script>
+      <Script><![CDATA[
+[DeclareTrigger(NowPlayingInfo.TrackTitle)]
+TrackTitle.Content = NowPlayingInfo.TrackTitle;
+]]></Script>
+      <Script><![CDATA[
+[DeclareTrigger(NowPlayingInfo.ArtistName)]
+ArtistName.Content = NowPlayingInfo.ArtistName;
+]]></Script>
+      <Script><![CDATA[
+[DeclareTrigger(NowPlayingInfo.BigAlbumArt)]
+AlbumArt.Content = NowPlayingInfo.BigAlbumArt;
+AlbumArtShadow.Visible = AlbumArt.Content != null;
+]]></Script>
+      <Script><![CDATA[
+[DeclareTrigger(CurrentlyPlayingTrackMixAvailability.Available)]
+MixViewButton.Visible = util:FeatureEnablement.IsFeatureEnabled(zuneDBApi:Features.eMixview) && CurrentlyPlayingTrackMixAvailability.Available;
+]]></Script>
+      <Script><![CDATA[
+MoreInfoButton.Visible = CurrentTrack != null && !zuneUI:GuidHelper.IsEmpty(CurrentTrack.ZuneMediaId);
+]]></Script>
+      <Script><![CDATA[
+AlbumArtShadow.ForceContentChange();
+LabelRoot.ForceContentChange();
+]]></Script>
+      <Script><![CDATA[
+[DeclareTrigger(ShowState.ChosenValue), DeclareTrigger(WindowState.InputActive)]
 bool fadeOut = false;
 bool fadeIn = false;
-/* UIB_0D9D */
-if (!IsFaded)
-    goto UIB_0DCF;
-/* UIB_0DA8 */
-if (#WindowState.InputActive #)
-    goto UIB_0DBE;
-/* UIB_0DBE */
-if (!WindowState.InputActive &amp;&amp; #ShowState.ChosenValue # == "Faded")
-    goto UIB_0DCA;
-bool fadeIn = true;
-goto UIB_0DFB;
-/* UIB_0DDC */
-if (ShowState.ChosenValue != "Faded")
-    goto UIB_0DEF;
-/* UIB_0DEF */
-if (ShowState.ChosenValue != "Faded" || !!WindowState.InputActive)
-    goto UIB_0DFB;
-bool fadeOut = true;
-/* UIB_0DFE */
-if (!fadeOut)
-    goto UIB_0E18;
-IsFaded = true;
-Form.PlayAnimation(animations:Animations.NowPlayingGridFadeOut);
-goto UIB_0E30;
-/* UIB_0E1B */
-if (!fadeIn)
-    goto UIB_0E30;
-IsFaded = false;
-Form.PlayAnimation(animations:Animations.NowPlayingGridFadeIn);</Script>
+if (IsFaded)
+{
+    if (WindowState.InputActive || ShowState.ChosenValue != "Faded")
+    {
+        fadeIn = true;
+    }
+}
+else
+{
+    if (ShowState.ChosenValue == "Faded" && !WindowState.InputActive)
+    {
+        fadeOut = true;
+    }
+}
+
+if (fadeOut)
+{
+    IsFaded = true;
+    Form.PlayAnimation(animations:Animations.NowPlayingGridFadeOut);
+}
+else
+{
+    if (fadeIn)
+    {
+        IsFaded = false;
+        Form.PlayAnimation(animations:Animations.NowPlayingGridFadeIn);
+    }
+}
+]]></Script>
     </Scripts>
     <Content>
       <Panel Name="Form" Layout="Form" MaximumSize="0, 200">
@@ -525,24 +537,29 @@ Form.PlayAnimation(animations:Animations.NowPlayingGridFadeIn);</Script>
       <mixManager:CurrentlyPlayingTrackMixAvailability Name="CurrentlyPlayingTrackMixAvailability" />
     </Locals>
     <Scripts>
-      <Script>Model.Description = TooltipText;</Script>
-      <Script>[DeclareTrigger(CurrentlyPlayingTrackMixAvailability.Available)]
-Model.Available = #CurrentlyPlayingTrackMixAvailability.Available #;</Script>
-      <Script>[DeclareTrigger(Model.Invoked)]
-/* UIB_12A9 */
-if (!Model.Available)
-    goto UIB_12C4;
-CurrentlyPlayingTrackMixAvailability.UpdateMixSeed.Invoke();
-zuneUI:ZuneShell.DefaultInstance.CurrentPage.OverlayUI = mixManager:MixLayerManager.MixUI;</Script>
-      <Script>[DeclareTrigger(zuneUI:SingletonModelItem`1[ZuneUI.TransportControls].Instance.CurrentTrack)]
-object track = #zuneUI:SingletonModelItem`1[ZuneUI.TransportControls].Instance.CurrentTrack #;
-/* UIB_12D7 */
-if (track == null)
-    goto UIB_12EA;
-/* UIB_12EA */
-if (track == null || !!track.IsMusic)
-    goto UIB_12FA;
-zuneUI:ZuneShell.DefaultInstance.CurrentPage.OverlayUI = null;</Script>
+      <Script><![CDATA[
+Model.Description = TooltipText;
+]]></Script>
+      <Script><![CDATA[
+[DeclareTrigger(CurrentlyPlayingTrackMixAvailability.Available)]
+Model.Available = CurrentlyPlayingTrackMixAvailability.Available;
+]]></Script>
+      <Script><![CDATA[
+[DeclareTrigger(Model.Invoked)]
+if (Model.Available)
+{
+    CurrentlyPlayingTrackMixAvailability.UpdateMixSeed.Invoke();
+    zuneUI:ZuneShell.DefaultInstance.CurrentPage.OverlayUI = mixManager:MixLayerManager.MixUI;
+}
+]]></Script>
+      <Script><![CDATA[
+[DeclareTrigger(zuneUI:TransportControls.Instance.CurrentTrack)]
+zuneUI:PlaybackTrack track = zuneUI:TransportControls.Instance.CurrentTrack;
+if (track != null && !track.IsMusic)
+{
+    zuneUI:ZuneShell.DefaultInstance.CurrentPage.OverlayUI = null;
+}
+]]></Script>
     </Scripts>
   </UI>
   <UI Name="MoreInfoButton" Base="button:IconButton">
@@ -560,22 +577,24 @@ zuneUI:ZuneShell.DefaultInstance.CurrentPage.OverlayUI = null;</Script>
       <moreInfoActions:TrackMoreInfoActions Name="MoreInfoActions" />
     </Locals>
     <Scripts>
-      <Script>[DeclareTrigger(zuneUI:SingletonModelItem`1[ZuneUI.TransportControls].Instance.CurrentTrack)]
-CurrentTrack = #zuneUI:SingletonModelItem`1[ZuneUI.TransportControls].Instance.CurrentTrack #;</Script>
-      <Script>[DeclareTrigger(MoreInfoActions.PrimaryLinkCommand)]
-Model = #MoreInfoActions.PrimaryLinkCommand #;</Script>
-      <Script>/* UIB_13F7 */
-if (CurrentTrack == null)
-    goto UIB_140D;
-/* UIB_140D */
-if (CurrentTrack == null || !!zuneUI:GuidHelper.IsEmpty(CurrentTrack.ZuneMediaId))
-    goto UIB_1423;
-/* UIB_1423 */
-if ((CurrentTrack == null || !(!zuneUI:GuidHelper.IsEmpty(CurrentTrack.ZuneMediaId))) || (CurrentTrack.MediaType != zuneUI:MediaType.Track))
-    goto UIB_143A;
-MoreInfoActions.ZuneMediaId = CurrentTrack.ZuneMediaId;
-goto UIB_1444;
-MoreInfoActions.ZuneMediaId = zuneUI:GuidHelper.Empty;</Script>
+      <Script><![CDATA[
+[DeclareTrigger(zuneUI:TransportControls.Instance.CurrentTrack)]
+CurrentTrack = zuneUI:TransportControls.Instance.CurrentTrack;
+]]></Script>
+      <Script><![CDATA[
+[DeclareTrigger(MoreInfoActions.PrimaryLinkCommand)]
+Model = MoreInfoActions.PrimaryLinkCommand;
+]]></Script>
+      <Script><![CDATA[
+if ((CurrentTrack != null && !zuneUI:GuidHelper.IsEmpty(CurrentTrack.ZuneMediaId)) && (CurrentTrack.MediaType == zuneUI:MediaType.Track))
+{
+    MoreInfoActions.ZuneMediaId = CurrentTrack.ZuneMediaId;
+}
+else
+{
+    MoreInfoActions.ZuneMediaId = zuneUI:GuidHelper.Empty;
+}
+]]></Script>
     </Scripts>
   </UI>
   <UI Name="RatingButton" Base="nowPlayingNotification:RatingSelector">
@@ -601,7 +620,7 @@ MoreInfoActions.ZuneMediaId = zuneUI:GuidHelper.Empty;</Script>
       <Window Name="Window" />
       <nowPlayingAlbumGridDefs:GridDefs Name="C" />
       <nowPlayingMusicBackground:AlbumArtMachine Name="ArtMachine" />
-      <zuneUI:TransportControls Name="TransportControls" TransportControls="{zuneUI:SingletonModelItem`1[ZuneUI.TransportControls].Instance}" />
+      <zuneUI:TransportControls Name="TransportControls" TransportControls="{zuneUI:TransportControls.Instance}" />
       <Int32 Name="DesiredHorizontalBlocks" />
       <Int32 Name="DesiredVerticalBlocks" />
       <Random Name="Random" />
@@ -622,123 +641,76 @@ MoreInfoActions.ZuneMediaId = zuneUI:GuidHelper.Empty;</Script>
       <Int32 Name="NextBlockColumnToAdd" Int32="0" />
     </Locals>
     <Scripts>
-      <Script>/* UIB_15B9 */
-if (!UseEffects)
-    goto UIB_15C7;
-EffectsHost.RequestSource(typeof(nowPlayingMusicBackground:BlendedLightGraphic));</Script>
-      <Script>[DeclareTrigger(Window.ClientSize)]
-Size currentSize = #Window.ClientSize #;
+      <Script><![CDATA[
+if (UseEffects)
+{
+    EffectsHost.RequestSource(typeof(nowPlayingMusicBackground:BlendedLightGraphic));
+}
+]]></Script>
+      <Script><![CDATA[
+[DeclareTrigger(Window.ClientSize)]
+Size currentSize = Window.ClientSize;
 object widthOfFirstBlock = C.BlockSizeInPixels.Width + BackgroundOffset.Width;
 object heightOfFirstBlock = C.BlockSizeInPixels.Height + BackgroundOffset.Height;
 object fitHorizontalBlocks = (float)(currentSize.Width - widthOfFirstBlock) / (float)(C.BlockSizeInPixels.Width);
-((float)(currentSize.Width - widthOfFirstBlock)) / ((float)(C.BlockSizeInPixels.Width));
 object fitVerticalBlocks = (float)(currentSize.Height - heightOfFirstBlock) / (float)(C.BlockSizeInPixels.Height);
-((float)(currentSize.Height - heightOfFirstBlock)) / ((float)(C.BlockSizeInPixels.Height));
 object roundedFitHorizontalBlocks = (int)(fitHorizontalBlocks + 1) + 1;
-((int)(fitHorizontalBlocks + 1)) + 1;
 object roundedFitVerticalBlocks = (int)(fitVerticalBlocks + 1) + 1;
-((int)(fitVerticalBlocks + 1)) + 1;
-/* UIB_168E */
-if (roundedFitHorizontalBlocks &lt;= DesiredHorizontalBlocks)
-    goto UIB_169A;
-DesiredHorizontalBlocks = roundedFitHorizontalBlocks;
-/* UIB_16A4 */
-if (roundedFitVerticalBlocks &lt;= DesiredVerticalBlocks)
-    goto UIB_16B0;
-DesiredVerticalBlocks = roundedFitVerticalBlocks;
-/* UIB_16C0 */
-if (DesiredHorizontalBlocks &lt;= C.MaximumBlocks.Width)
-    goto UIB_16D2;
-DesiredHorizontalBlocks = C.MaximumBlocks.Width;
-/* UIB_16E2 */
-if (DesiredVerticalBlocks &lt;= C.MaximumBlocks.Height)
-    goto UIB_16F4;
-DesiredVerticalBlocks = C.MaximumBlocks.Height;</Script>
-      <Script></Script>
-      <Script>[DeclareTrigger(ArtMachine.EnoughAlbums)]
-/* UIB_1711 */
-if (!#ArtMachine.EnoughAlbums #)
-    goto UIB_18C8;
-ArtMachine.DesiredNumberOfAlbums = DesiredHorizontalBlocks * DesiredVerticalBlocks * C.CellsPerBlock;
-object size = new Size(DesiredHorizontalBlocks + 1 * C.BlockSizeInPixels.Width, DesiredVerticalBlocks + 1 * C.BlockSizeInPixels.Height);
-AnchorInput.Right.Offset = size.Width;
-AnchorInput.Bottom.Offset = size.Height;
-int y = NextBlockRowToAdd;
-/* UIB_1799 */
-if (y &gt;= DesiredVerticalBlocks)
-    goto UIB_180D;
-int x = 0;
-/* UIB_17AF */
-if (x &gt;= NextBlockColumnToAdd)
-    goto UIB_17F7;
-/* UIB_17C0 */
-if (!C.BlockDefinition.GetEnumerator().MoveNext())
-    goto UIB_17E0;
-nowPlayingAlbumGridDefs:GridAlbumInfo info = (nowPlayingAlbumGridDefs:GridAlbumInfo)C.BlockDefinition.GetEnumerator().Current;
-this.CreateCellAt(x, y, info);
-goto UIB_17BD;
-C.BlockDefinition.GetEnumerator();
-object x = x + 1;
-goto UIB_17A5;
-object y = y + 1;
-goto UIB_178F;
-int x = NextBlockColumnToAdd;
-/* UIB_1821 */
-if (x &gt;= DesiredHorizontalBlocks)
-    goto UIB_1895;
-int y = 0;
-/* UIB_1837 */
-if (y &gt;= DesiredVerticalBlocks)
-    goto UIB_187F;
-/* UIB_1848 */
-if (!C.BlockDefinition.GetEnumerator().MoveNext())
-    goto UIB_1868;
-nowPlayingAlbumGridDefs:GridAlbumInfo info = (nowPlayingAlbumGridDefs:GridAlbumInfo)C.BlockDefinition.GetEnumerator().Current;
-this.CreateCellAt(x, y, info);
-goto UIB_1845;
-C.BlockDefinition.GetEnumerator();
-object y = y + 1;
-goto UIB_182D;
-object x = x + 1;
-goto UIB_1817;
-NextBlockColumnToAdd = DesiredHorizontalBlocks;
-NextBlockRowToAdd = DesiredVerticalBlocks;
-/* UIB_18B1 */
-if (CellRepeater.Source != null)
-    goto UIB_18C0;
-CellRepeater.Source = CellList;
-goto UIB_18D0;
-CellRepeater.Source = null;</Script>
-      <Script>[DeclareTrigger(ShowState.ChosenValue)]
-/* UIB_18D4 */
-if (!UseEffects)
-    goto UIB_1926;
-/* UIB_18E6 */
-if (#ShowState.ChosenValue # != "Faded")
-    goto UIB_18F6;
-/* UIB_18F6 */
-if (ShowState.ChosenValue != "Faded" || !!IsFaded)
-    goto UIB_190E;
-IsFaded = true;
-EffectsHost.RequestSource(null);
-goto UIB_1926;
-/* UIB_1911 */
-if (!IsFaded)
-    goto UIB_1926;
-IsFaded = false;
-EffectsHost.RequestSource(typeof(nowPlayingMusicBackground:BlendedLightGraphic));</Script>
-      <Script>[DeclareTrigger(SwitchArtTimer.Tick)]
-/* UIB_192F */
-if (CellList == null)
-    goto UIB_1945;
-/* UIB_1945 */
-if ((CellList == null) || (CellList.Count &lt;= 0))
-    goto UIB_1983;
-object switchCell = Random.Next(0, CellList.Count - 1);
-nowPlayingAlbumGridDefs:CellModel model = (nowPlayingAlbumGridDefs:CellModel)CellList[switchCell];
-model.SwitchArt.Invoke();</Script>
-      <Script>[DeclareTrigger(ResetHideState.Invoked)]
-HideState.Value = false;</Script>
+if (roundedFitHorizontalBlocks > DesiredHorizontalBlocks)
+{
+    DesiredHorizontalBlocks = roundedFitHorizontalBlocks;
+}
+
+if (roundedFitVerticalBlocks > DesiredVerticalBlocks)
+{
+    DesiredVerticalBlocks = roundedFitVerticalBlocks;
+}
+
+if (DesiredHorizontalBlocks > C.MaximumBlocks.Width)
+{
+    DesiredHorizontalBlocks = C.MaximumBlocks.Width;
+}
+
+if (DesiredVerticalBlocks > C.MaximumBlocks.Height)
+{
+    DesiredVerticalBlocks = C.MaximumBlocks.Height;
+}
+]]></Script>
+      <Script><![CDATA[
+
+]]></Script>
+      <Script><![CDATA[
+[DeclareTrigger(ShowState.ChosenValue)]
+if (UseEffects)
+{
+    if (ShowState.ChosenValue == "Faded" && !IsFaded)
+    {
+        IsFaded = true;
+        EffectsHost.RequestSource(null);
+    }
+    else
+    {
+        if (IsFaded)
+        {
+            IsFaded = false;
+            EffectsHost.RequestSource(typeof(nowPlayingMusicBackground:BlendedLightGraphic));
+        }
+    }
+}
+]]></Script>
+      <Script><![CDATA[
+[DeclareTrigger(SwitchArtTimer.Tick)]
+if ((CellList != null) && (CellList.Count > 0))
+{
+    int switchCell = Random.Next(0, CellList.Count - 1);
+    nowPlayingAlbumGridDefs:CellModel model = (nowPlayingAlbumGridDefs:CellModel)CellList[switchCell];
+    model.SwitchArt.Invoke();
+}
+]]></Script>
+      <Script><![CDATA[
+[DeclareTrigger(ResetHideState.Invoked)]
+HideState.Value = false;
+]]></Script>
     </Scripts>
     <Methods><![CDATA[
 int CalculateCellLeft(nowPlayingAlbumGridDefs:CellModel model)
@@ -757,9 +729,7 @@ int CalculateCellTop(nowPlayingAlbumGridDefs:CellModel model)
 
 void CreateCellAt(int x, int y, nowPlayingAlbumGridDefs:GridAlbumInfo info)
 {
-    // Unsupported instruction: INIT 624
-    ;
-    object cell = new nowPlayingAlbumGridDefs:CellModel();
+    nowPlayingAlbumGridDefs:CellModel cell = new nowPlayingAlbumGridDefs:CellModel();
     cell.BlockCoords = new Point(x, y);
     cell.Info = info;
     CellList.Add(cell);
@@ -784,8 +754,10 @@ void CreateCellAt(int x, int y, nowPlayingAlbumGridDefs:GridAlbumInfo info)
       <nowPlayingEffects:BackgroundLightingWithBlend Name="BackgroundLighting" PalettePicker="{PalettePicker}" />
     </Locals>
     <Scripts>
-      <Script>Background.Effect = BackgroundLighting;
-PalettePicker.ChangeMood.Invoke();</Script>
+      <Script><![CDATA[
+Background.Effect = BackgroundLighting;
+PalettePicker.ChangeMood.Invoke();
+]]></Script>
     </Scripts>
     <Content>
       <Graphic Name="Background" SizingPolicy="SizeToConstraint" StretchingPolicy="Fill" Content="{styles:Styles.TransparentPixel}">
@@ -821,70 +793,79 @@ PalettePicker.ChangeMood.Invoke();</Script>
       <nowPlayingEffects:DesaturateEffect Name="MyEffect" />
     </Locals>
     <Scripts>
-      <Script>/* UIB_1D14 */
-if (iris:Application.RenderingType == iris:RenderingType.GDI)
-    goto UIB_1D27;
-/* UIB_1D27 */
-if ((iris:Application.RenderingType == iris:RenderingType.GDI) || (iris:Application.RenderingQuality != iris:RenderingQuality.MaxQuality))
-    goto UIB_1D45;
-AlbumArt.Effect = MyEffect;
-AlbumArt.Alpha = 0.35;
-goto UIB_1D4F;
-GDIFader.Visible = true;</Script>
-      <Script>[DeclareTrigger(ArtMachine.Ready)]
-/* UIB_1DA6 */
-if (!#ArtMachine.Ready #)
-    goto UIB_1DB5;
-Album = ArtMachine.OneMorePlease();</Script>
-      <Script>[DeclareTrigger(Album.AlbumArtSmall), DeclareTrigger(Album.AlbumArtLarge), DeclareTrigger(Album.AlbumArtSuperLarge)]
-/* UIB_1DBE */
-if (Album == null)
-    goto UIB_1DCD;
-/* UIB_1DCD */
-if (Album == null || !Album.HasAlbumArt)
-    goto UIB_1E4B;
-/* UIB_1DE5 */
-if (Model.Info.Size != C.OneByOne)
-    goto UIB_1DFC;
-AlbumArt.Content = #Album.AlbumArtSmall #;
-goto UIB_1E4B;
-/* UIB_1E0F */
-if (Model.Info.Size != C.ThreeByThree)
-    goto UIB_1E26;
-AlbumArt.Content = #Album.AlbumArtLarge #;
-goto UIB_1E4B;
-/* UIB_1E39 */
-if (Model.Info.Size != C.FourByFour)
-    goto UIB_1E4B;
-AlbumArt.Content = #Album.AlbumArtSuperLarge #;</Script>
-      <Script>[DeclareTrigger(ShowState.ChosenValue)]
-/* UIB_1D5D */
-if (#ShowState.ChosenValue # != "Faded")
-    goto UIB_1D6D;
-/* UIB_1D6D */
-if (ShowState.ChosenValue != "Faded" || !!IsFaded)
-    goto UIB_1D87;
-IsFaded = true;
-CellPanel.PlayAnimation(FadeOutAnimation);
-goto UIB_1D9F;
-/* UIB_1D8A */
-if (!IsFaded)
-    goto UIB_1D9F;
-IsFaded = false;
-CellPanel.PlayAnimation(FadeInAnimation);</Script>
-      <Script>[DeclareTrigger(Model.SwitchArt.Invoked)]
-/* UIB_1E59 */
-if (ShowState.ChosenValue == "Faded")
-    goto UIB_1E94;
-Album = ArtMachine.OneMorePlease();
-/* UIB_1E6E */
-if (!Album.HasAlbumArt)
-    goto UIB_1E94;
-HideState.Value = true;
-/* UIB_1E85 */
-if (ResetHideState == null)
-    goto UIB_1E94;
-ResetHideState.Invoke(iris:InvokePolicy.AsynchronousLowPri);</Script>
+      <Script><![CDATA[
+if ((iris:Application.RenderingType != iris:RenderingType.GDI) && (iris:Application.RenderingQuality == iris:RenderingQuality.MaxQuality))
+{
+    AlbumArt.Effect = MyEffect;
+    AlbumArt.Alpha = 0.35;
+}
+else
+{
+    GDIFader.Visible = true;
+}
+]]></Script>
+      <Script><![CDATA[
+[DeclareTrigger(ArtMachine.Ready)]
+if (ArtMachine.Ready)
+{
+    Album = ArtMachine.OneMorePlease();
+}
+]]></Script>
+      <Script><![CDATA[
+[DeclareTrigger(Album.AlbumArtSmall), DeclareTrigger(Album.AlbumArtLarge), DeclareTrigger(Album.AlbumArtSuperLarge)]
+if (Album != null && Album.HasAlbumArt)
+{
+    if (Model.Info.Size == C.OneByOne)
+    {
+        AlbumArt.Content = Album.AlbumArtSmall;
+    }
+    else
+    {
+        if (Model.Info.Size == C.ThreeByThree)
+        {
+            AlbumArt.Content = Album.AlbumArtLarge;
+        }
+        else
+        {
+            if (Model.Info.Size == C.FourByFour)
+            {
+                AlbumArt.Content = Album.AlbumArtSuperLarge;
+            }
+        }
+    }
+}
+]]></Script>
+      <Script><![CDATA[
+[DeclareTrigger(ShowState.ChosenValue)]
+if (ShowState.ChosenValue == "Faded" && !IsFaded)
+{
+    IsFaded = true;
+    CellPanel.PlayAnimation(FadeOutAnimation);
+}
+else
+{
+    if (IsFaded)
+    {
+        IsFaded = false;
+        CellPanel.PlayAnimation(FadeInAnimation);
+    }
+}
+]]></Script>
+      <Script><![CDATA[
+[DeclareTrigger(Model.SwitchArt.Invoked)]
+if (ShowState.ChosenValue != "Faded")
+{
+    Album = ArtMachine.OneMorePlease();
+    if (Album.HasAlbumArt)
+    {
+        HideState.Value = true;
+        if (ResetHideState != null)
+        {
+            ResetHideState.Invoke(iris:InvokePolicy.AsynchronousLowPri);
+        }
+    }
+}
+]]></Script>
     </Scripts>
     <Methods><![CDATA[
 Size CalculateTileSize()
@@ -940,40 +921,39 @@ Size CalculateTileSize()
       <Int32 Name="Index" Int32="0" />
       <schema:LibraryAlbumQuery Name="AlbumQuery" />
       <List Name="LocalAlbumArt" List="{null}" />
-      <zuneUI:TransportControls Name="TransportControls" TransportControls="{zuneUI:SingletonModelItem`1[ZuneUI.TransportControls].Instance}" />
+      <zuneUI:TransportControls Name="TransportControls" TransportControls="{zuneUI:TransportControls.Instance}" />
     </Locals>
     <Scripts>
-      <Script>[DeclareTrigger(AlbumQuery.Status), DeclareTrigger(#AlbumQuery.Result #.IsEmpty), DeclareTrigger(AlbumQuery.Result.Items.Count)]
-/* UIB_218A */
-if (!zuneUI:QueryHelper.HasCompleted(#AlbumQuery.Status #) || !!#AlbumQuery.Result #.IsEmpty #)
-    goto UIB_21A6;
-/* UIB_21A6 */
-if ((!(zuneUI:QueryHelper.HasCompleted(AlbumQuery.Status)) || !(!AlbumQuery.Result.IsEmpty)) || (#AlbumQuery.Result.Items #.Count # &lt;= 0))
-    goto UIB_21F2;
-LocalAlbumArt = TransportControls.CreateAlbumListForBackground(AlbumQuery.Result.Items, DesiredNumberOfAlbums);
-/* UIB_21C9 */
-if (LocalAlbumArt == null)
-    goto UIB_21DF;
-/* UIB_21DF */
-if ((LocalAlbumArt == null) || (LocalAlbumArt.Count &lt;= MinimumAlbumsNeeded))
-    goto UIB_21EB;
-EnoughAlbums = true;
-Ready = true;</Script>
+      <Script><![CDATA[
+[DeclareTrigger(AlbumQuery.Status), DeclareTrigger(AlbumQuery.Result.IsEmpty), DeclareTrigger(AlbumQuery.Result.Items.Count)]
+if ((zuneUI:QueryHelper.HasCompleted(AlbumQuery.Status) && !AlbumQuery.Result.IsEmpty) && (AlbumQuery.Result.Items.Count > 0))
+{
+    LocalAlbumArt = TransportControls.CreateAlbumListForBackground(AlbumQuery.Result.Items, DesiredNumberOfAlbums);
+    if ((LocalAlbumArt != null) && (LocalAlbumArt.Count > MinimumAlbumsNeeded))
+    {
+        EnoughAlbums = true;
+    }
+
+    Ready = true;
+}
+]]></Script>
     </Scripts>
     <Methods><![CDATA[
 schema:Album OneMorePlease()
 {
-    Null album = null;
-    /* UIB_2294 */
-    if (!!List.IsNullOrEmpty(LocalAlbumArt))
-        goto UIB_22DA;
-    /* UIB_22A6 */
-    if (Index < LocalAlbumArt.Count)
-        goto UIB_22B2;
-    Index = 0;
-    schema:Album album = (schema:Album)LocalAlbumArt[Index];
-    TransportControls.DisableSlowDataThumbnailExtraction(album);
-    Index = Index + 1;
+    object album = null;
+    if (!List.IsNullOrEmpty(LocalAlbumArt))
+    {
+        if (Index >= LocalAlbumArt.Count)
+        {
+            Index = 0;
+        }
+
+        album = (schema:Album)LocalAlbumArt[Index];
+        TransportControls.DisableSlowDataThumbnailExtraction(album);
+        Index = Index + 1;
+    }
+
     return album;
 }
 ]]></Methods>
