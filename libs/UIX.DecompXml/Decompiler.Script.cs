@@ -622,10 +622,6 @@ partial class Decompiler
     public string FormatSyntaxNode(SyntaxNode root, CancellationToken cancellationToken = default)
     {
         uint? scriptOffset = null;
-        ScriptDebugSymbols debugSymbols = new()
-        {
-            SourceMap = []
-        };
 
         root = root.NormalizeWhitespace();
 
@@ -636,7 +632,7 @@ partial class Decompiler
 
             var location = node.GetLocation();
 
-            debugSymbols.SourceMap[offset] = new(location.SourceSpan.Start, location.SourceSpan.End);
+            //debugSymbols.SourceMap[offset] = new(location.SourceSpan.Start, location.SourceSpan.End);
 
             if (scriptOffset is null && node is CompilationUnitSyntax)
                 scriptOffset = offset;
@@ -646,12 +642,7 @@ partial class Decompiler
             .SyntaxTree
             .GetText(cancellationToken);
 
-        debugSymbols.SourceCode = sourceText.ToString();
-
-        if (scriptOffset is not null)
-            _context.DebugSymbols.ScriptSymbols[scriptOffset.Value] = debugSymbols;
-
-        return debugSymbols.SourceCode;
+        return sourceText.ToString();
     }
 
     private bool TryDecompileExpression(Instruction instruction, Stack<object> stack, ControlFlowAnalyzer cfa = null)

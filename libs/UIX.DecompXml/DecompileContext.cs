@@ -62,7 +62,6 @@ internal class DecompileContext
         DebugSymbols = new()
         {
             CompiledFileName = _loadResult.ErrorContextUri,
-            ScriptSymbols = [],
         };
 
         _instructions = ObjectSection.Decode(_loadResult.ObjectSection)

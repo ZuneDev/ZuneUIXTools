@@ -143,7 +143,7 @@ public partial class Decompiler
         return xDoc;
     }
 
-    public string DecompileToSource()
+    public string DecompileToSource(bool generateDebugSymbols)
     {
         var xmlDoc = Decompile();
 
@@ -159,7 +159,47 @@ public partial class Decompiler
         {
             xmlDoc.WriteTo(writer);
         }
-        return sb.ToString();
+
+        var xmlStr = sb.ToString();
+
+        if (generateDebugSymbols)
+            PopulateDebugSymbolsWithXml(xmlDoc, xmlStr);
+
+        return xmlStr;
+    }
+
+    public void PopulateDebugSymbolsWithXml(XDocument xmlDoc, string xmlStr)
+    {
+        // Reparse the file to get line info
+        var xmlDocWithLineInfo = XDocument.Parse(xmlStr, LoadOptions.SetLineInfo);
+        var lineInfoNodes = xmlDocWithLineInfo.DescendantNodes();
+        var offsetInfoNodes = xmlDoc.DescendantNodes();
+
+        foreach (var (liNode, oiNode) in lineInfoNodes.Zip(offsetInfoNodes, (l, o) => (l, o)))
+        {
+            var offsetInfo = oiNode.Annotation<UIBOffsetXmlAnnotation>();
+            if (offsetInfo is null)
+                continue;
+            
+            if (liNode is not IXmlLineInfo lineInfo || !lineInfo.HasLineInfo())
+                continue;
+
+            var offset = offsetInfo.Offset;
+            var start = new SourcePosition(lineInfo.LineNumber, lineInfo.LinePosition);
+
+            var elementStr = oiNode.ToString();
+            var endLine = start.Line + elementStr.Count(c => c == '\n');
+            var endColumn = elementStr.Length;
+            var idxLastLine = elementStr.LastIndexOf('\n');
+            if (idxLastLine > 0)
+                endColumn -= idxLastLine;
+
+            var end = new SourcePosition(endLine, endColumn);
+
+            var span = new SourceSpan(start, end);
+
+            DebugSymbols.SourceMap.Xml[offset] = span;
+        }
     }
 
     public FileDebugSymbols DebugSymbols => _context.DebugSymbols;
@@ -189,7 +229,7 @@ public partial class Decompiler
 
                     case OpCode.ConstructObject:
                         var typeToCtor = _context.GetImportedType(instruction.Operands.ElementAt(0));
-                        var xObj = new XElement(_context.GetXName(typeToCtor));
+                        var xObj = new XElement(_context.GetXName(typeToCtor)).WithOffset(instruction);
                         stack.Push(new IrisObject(xObj, typeToCtor));
                         break;
 
@@ -213,7 +253,8 @@ public partial class Decompiler
                         var target = stack.Pop();
                         var xTarget = (XElement)ToXmlFriendlyObject(target);
 
-                        PropertyAssignOnXElement(xTarget, propertyToInit, IrisObject.Create(newPropValue, propertyToInit.PropertyType, _context, initType));
+                        var xPropSetter = PropertyAssignOnXElement(xTarget, propertyToInit, IrisObject.Create(newPropValue, propertyToInit.PropertyType, _context, initType));
+                        xPropSetter.SetOffset(instruction);
 
                         stack.Push(new IrisObject(xTarget, propertyToInit.Owner));
                         break;
@@ -231,10 +272,10 @@ public partial class Decompiler
                         var dictValueObj = IrisObject.Create(dictValue, dictValueType, _context, initType);
 
                         var targetDictPropertyIndex = (ushort)instruction.Operands.ElementAt(0).Value;
-                        if (targetDictPropertyIndex is ushort.MaxValue)
-                            PropertyDictionaryAddOnXElement(targetInstance, dictValueObj, key);
-                        else
-                            PropertyDictionaryAddOnXElement(targetInstance, _context.ImportTables.PropertyImports[targetDictPropertyIndex], dictValueObj, key);
+                        var xKeyValue = targetDictPropertyIndex is ushort.MaxValue
+                            ? PropertyDictionaryAddOnXElement(targetInstance, dictValueObj, key)
+                            : PropertyDictionaryAddOnXElement(targetInstance, _context.ImportTables.PropertyImports[targetDictPropertyIndex], dictValueObj, key);
+                        xKeyValue.SetOffset(instruction);
                         break;
 
                     case OpCode.PropertyListAdd:
@@ -252,6 +293,7 @@ public partial class Decompiler
 
                         var targetInstance2 = (XElement)ToXmlFriendlyObject(stack.Peek());
 
+                        XObject xListItem;
                         var targetListPropertyIndex = (ushort)instruction.Operands.First().Value;
                         if (targetListPropertyIndex != ushort.MaxValue)
                         {
@@ -264,12 +306,14 @@ public partial class Decompiler
                                 valueToAddObj = valueToAddObj with { Type = valueToAddType };
                             }
 
-                            PropertyListAddOnXElement(targetInstance2, targetListProperty, valueToAddObj);
+                            xListItem = PropertyListAddOnXElement(targetInstance2, targetListProperty, valueToAddObj);
                         }
                         else
                         {
-                            PropertyListAddOnXElement(targetInstance2, valueToAddObj);
+                            xListItem = PropertyListAddOnXElement(targetInstance2, valueToAddObj);
                         }
+
+                        xListItem.SetOffset(instruction);
                         break;
 
                     case OpCode.InitializeInstance:
