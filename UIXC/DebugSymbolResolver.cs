@@ -2,15 +2,15 @@
 
 namespace UIXC;
 
-public class DebugSymbolResolver(string symbolDir)
+public class DebugSymbolResolver(string symbolDir, string? sourceDir)
 {
     private readonly DirectoryInfo _symbolDir = new(symbolDir);
+    private readonly DirectoryInfo? _sourceDir = sourceDir is not null ? new(sourceDir) : null;
 
     public ApplicationDebugSymbols? GetForApplication(string application)
     {
         var fileName = $"{application}.asym.json";
-        var asymFile = _symbolDir.EnumerateFiles()
-            .FirstOrDefault(f => f.Name == fileName);
+        var asymFile = FindFile(fileName, _symbolDir);
 
         if (asymFile is null)
             return null;
@@ -23,13 +23,23 @@ public class DebugSymbolResolver(string symbolDir)
     public FileDebugSymbols? GetForFile(string file, string? application = null)
     {
         var fileName = $"{file}.fsym.json";
-        var fsymFile = FindFile(fileName);
+        var fsymFile = FindFile(fileName, _symbolDir);
 
         if (fsymFile is not null)
         {
             using var stream = fsymFile.OpenRead();
             using var reader = new StreamReader(stream);
-            return DebugSymbolsJsonParser.ParseForFile(reader.ReadToEnd());
+            var fsym = DebugSymbolsJsonParser.ParseForFile(reader.ReadToEnd());
+
+            var sourceFile = FindFile(file, _sourceDir);
+            if (sourceFile is not null)
+            {
+                using var sourceStream = sourceFile.OpenRead();
+                using var sourceReader = new StreamReader(sourceStream);
+                fsym.SetSourceCode(sourceReader.ReadToEnd());
+            }
+
+            return fsym;
         }
         
         if (application is null)
@@ -42,9 +52,9 @@ public class DebugSymbolResolver(string symbolDir)
         return asym.Files.FirstOrDefault(f => f.CompiledFileName == file || f.SourceFileName == file);
     }
 
-    private FileInfo? FindFile(string fileName)
+    private static FileInfo? FindFile(string fileName, DirectoryInfo? dir)
     {
-        return _symbolDir
+        return dir?
             .EnumerateFiles()
             .FirstOrDefault(f => AreEquivalentFileNames(f.Name, fileName));
     }

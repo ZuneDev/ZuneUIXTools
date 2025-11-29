@@ -100,28 +100,28 @@ public partial class Decompiler
 
             foreach (var syntaxTree in _context.GetScriptContents(export))
             {
-                var scriptText = FormatScript(syntaxTree);
-                XElement xScript = new(_nsUix + "Script", new XCData(Environment.NewLine + scriptText + Environment.NewLine));
+                XElement xScript = new(_nsUix + "Script", new XIrisScriptContent(syntaxTree.GetRoot()));
                 xScripts.Add(xScript);
             }
 
             if (!xScripts.HasElements)
                 xScripts.Remove();
 
-            List<string> methodsContent = [];
+            List<MethodDeclarationSyntax> methodsContent = [];
 
             foreach (var method in export.Methods.OfType<MarkupMethodSchema>())
             {
                 var methodSyntax = DecompileMethodDeclaration(method, export);
-                methodsContent.Add(FormatSyntaxNode(methodSyntax));
+                methodsContent.Add(methodSyntax);
             }
 
             if (methodsContent.Count > 0)
             {
-                var methodsContentStr = Environment.NewLine
-                    + string.Join(Environment.NewLine + Environment.NewLine, methodsContent)
-                    + Environment.NewLine;
-                XElement xMethods = new(_nsUix + "Methods", new XCData(methodsContentStr));
+                var methodsSyntax = CodeAnalysis.CSharp.SyntaxFactory
+                    .CompilationUnit()
+                    .AddMembers([.. methodsContent]);
+
+                XElement xMethods = new(_nsUix + "Methods", new XIrisScriptContent(methodsSyntax));
                 xExport.Add(xMethods);
             }
 
@@ -147,25 +147,9 @@ public partial class Decompiler
     {
         var xmlDoc = Decompile();
 
-        XmlWriterSettings writerSettings = new()
-        {
-            Indent = true,
-            NamespaceHandling = NamespaceHandling.OmitDuplicates,
-            Encoding = Encoding.UTF8,
-        };
+        using IrisXmlWriter writer = new(xmlDoc, generateDebugSymbols ? DebugSymbols : null);
 
-        StringBuilder sb = new();
-        using (XmlWriter writer = XmlWriter.Create(sb, writerSettings))
-        {
-            xmlDoc.WriteTo(writer);
-        }
-
-        var xmlStr = sb.ToString();
-
-        if (generateDebugSymbols)
-            PopulateDebugSymbolsWithXml(xmlDoc, xmlStr);
-
-        return xmlStr;
+        return writer.WriteToString();
     }
 
     public void PopulateDebugSymbolsWithXml(XDocument xmlDoc, string xmlStr)

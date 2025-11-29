@@ -3,11 +3,11 @@
         "UIXC": {
             "commandName": "Project",
 
-            "commandLineArgs": "debug --symbols E:\\Repos\\ZuneDev\\ZuneUIXTools\\test\\syms",
+            //"commandLineArgs": "debug --symbols E:\\Repos\\ZuneDev\\ZuneUIXTools\\test\\syms --sources E:\\Repos\\ZuneDev\\ZuneUIXTools\\test",
+            "commandLineArgs": "decompile E:\\Documents\\REProj\\Zune\\Resources\\ZuneShellResources48\\NOWPLAYINGMUSICBACKGROUND.UIX -l xml -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o E:\\Repos\\ZuneDev\\ZuneUIXTools\\test --symbols E:\\Repos\\ZuneDev\\ZuneUIXTools\\test\\syms",
 
             //"commandLineArgs": "decompile E:\\Documents\\REProj\\Zune\\Resources\\ZuneMarketplaceResources48\\MarketplaceData.schema.xml -l xml -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o E:\\Repos\\ZuneDev\\ZuneUIXTools\\test",
             //"commandLineArgs": "decompile E:\\Documents\\REProj\\Zune\\Resources\\ZuneShellResources48\\DeviceLandElements.uix -l xml -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o E:\\Repos\\ZuneDev\\ZuneUIXTools\\test",
-            //"commandLineArgs": "decompile E:\\Documents\\REProj\\Zune\\Resources\\ZuneShellResources48\\NOWPLAYINGMUSICBACKGROUND.UIX -l xml -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o E:\\Repos\\ZuneDev\\ZuneUIXTools\\test --symbols E:\\Repos\\ZuneDev\\ZuneUIXTools\\test\\syms",
             //"commandLineArgs": "decompile E:\\Repos\\ZuneDev\\ZuneShell.dll\\libs\\MicrosoftIris\\UIXcontrols\\Resources\\RCDATA\\STYLES.UIX -l xml -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o E:\\Repos\\ZuneDev\\ZuneShell.dll\\ZuneShell\\Resources\\RCDATA\\Dark\\Controls",
             //"commandLineArgs": "compile E:\\Repos\\ZuneDev\\ZuneUIXTools\\test\\ADDTOCOLLECTION.31_48.UIX -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o E:\\Repos\\ZuneDev\\ZuneUIXTools\\test",
             //"commandLineArgs": "compile E:\\Documents\\REProj\\Zune\\Resources\\ZuneMarketplaceResources31\\MARKETPLACEDATA.SCHEMA.31_48.XML -A ZuneShell.dll -A UIXControls.dll -A ZuneDBApi.dll -o E:\\Repos\\ZuneDev\\ZuneUIXTools\\test",

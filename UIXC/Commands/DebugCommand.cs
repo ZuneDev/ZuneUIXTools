@@ -1,4 +1,5 @@
 ﻿using Microsoft.Iris.Debug;
+using Microsoft.Iris.Debug.Symbols;
 using Microsoft.Iris.Debug.SystemNet;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -24,7 +25,7 @@ public class DebugCommand : Command<DebugCommand.Settings>
         if (settings.SymbolDir is not null)
         {
             Directory.CreateDirectory(settings.SymbolDir);
-            symbolResolver = new(settings.SymbolDir);
+            symbolResolver = new(settings.SymbolDir, settings.SourceDir);
         }
 
         AnsiConsole.MarkupLineInterpolated($"Connecting to '{settings.ServerUri}'...");
@@ -86,11 +87,26 @@ public class DebugCommand : Command<DebugCommand.Settings>
 
                         var line = int.Parse(inputParts[2]);
                         var column = int.Parse(inputParts[3]);
-                        breakOffset = fsym!.OffsetByLineAndColumn(line, column);
+                        var position = new SourcePosition(line, column);
+
+                        var location = fsym!.SourceMap.GetLocationFromPosition(position);
+                        if (location is null)
+                        {
+                            AnsiConsole.MarkupLineInterpolated($"[red]Line {line}, column {column} has known offset in '{fileName}'.[/]");
+                            break;
+                        }
+
+                        breakOffset = location.Value.Offset;
+
+                        if (fsym.HasSourceCode())
+                        {
+                            var sourceCode = fsym.GetSourceSubstring(location.Value.Span);
+                            AnsiConsole.Write(new Panel(sourceCode));
+                        }
                     }
 
-                    client.UpdateBreakpoint(new(path, breakOffset));
                     AnsiConsole.MarkupLineInterpolated($"[green]Breakpoint set in '{fileName}' at offset 0x{breakOffset:X4}.[/]");
+                    client.UpdateBreakpoint(new(path, breakOffset));
 
                     break;
 
@@ -114,6 +130,10 @@ public class DebugCommand : Command<DebugCommand.Settings>
         [Description("The directory containing pre-generated symbols.")]
         [CommandOption("-s|--symbols <symbolDir>")]
         public string? SymbolDir { get; init; }
+
+        [Description("The directory containing source code.")]
+        [CommandOption("--sources <sourceDir>")]
+        public string? SourceDir { get; init; }
 
         [Description("Whether to decompile the current file when a breakpoint is hit. Generated symbols will be written to the symbol directory if specified.")]
         [CommandOption("-d|--decompile")]

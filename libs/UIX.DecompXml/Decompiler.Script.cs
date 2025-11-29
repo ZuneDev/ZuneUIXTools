@@ -615,34 +615,17 @@ partial class Decompiler
         return SyntaxTree(root);
     }
 
-    public string FormatInlineExpression(ExpressionSyntax expr, CancellationToken token = default) => '{' + FormatSyntaxNode(expr, token) + '}';
+    public static string FormatInlineExpression(ExpressionSyntax expr, CancellationToken token = default) => '{' + FormatSyntaxNode(expr, token) + '}';
 
-    public string FormatScript(SyntaxTree tree, CancellationToken token = default) => FormatSyntaxNode(tree.GetRoot(token), token);
+    public static string FormatScript(SyntaxTree tree, CancellationToken token = default) => FormatSyntaxNode(tree.GetRoot(token), token);
 
-    public string FormatSyntaxNode(SyntaxNode root, CancellationToken cancellationToken = default)
+    public static string FormatSyntaxNode(SyntaxNode root, CancellationToken cancellationToken = default)
     {
-        uint? scriptOffset = null;
-
-        root = root.NormalizeWhitespace();
-
-        foreach (var node in root.GetAnnotatedNodes(UIBOffsetAnnotation.Kind))
-        {
-            var offsetAnnotation = node.GetAnnotations(UIBOffsetAnnotation.Kind).Single();
-            var offset = UIBOffsetAnnotation.GetOffset(offsetAnnotation);
-
-            var location = node.GetLocation();
-
-            //debugSymbols.SourceMap[offset] = new(location.SourceSpan.Start, location.SourceSpan.End);
-
-            if (scriptOffset is null && node is CompilationUnitSyntax)
-                scriptOffset = offset;
-        }
-
-        var sourceText = root
+        return root
+            .NormalizeWhitespace()
             .SyntaxTree
-            .GetText(cancellationToken);
-
-        return sourceText.ToString();
+            .GetText(cancellationToken)
+            .ToString();
     }
 
     private bool TryDecompileExpression(Instruction instruction, Stack<object> stack, ControlFlowAnalyzer cfa = null)
