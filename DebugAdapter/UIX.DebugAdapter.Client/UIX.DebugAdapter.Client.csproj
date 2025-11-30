@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>net461;net6.0;net6.0-windows10.0.22000</TargetFrameworks>
+        <LangVersion>12</LangVersion>
+        <RootNamespace>Microsoft.Iris.DebugAdapter.Client</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="OmniSharp.Extensions.DebugAdapter.Client" Version="0.19.9" />
+        <ProjectReference Include="..\..\libs\MicrosoftIris\UIX\UIX.csproj" />
+        <ProjectReference Include="..\UIX.DebugAdapter.Shared\UIX.DebugAdapter.Shared.csproj" />
+
+        <PackageReference Include="PolySharp" Version="1.15.0">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+</Project>

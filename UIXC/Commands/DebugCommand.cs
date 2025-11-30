@@ -1,6 +1,7 @@
 ﻿using Microsoft.Iris.Debug;
 using Microsoft.Iris.Debug.Symbols;
 using Microsoft.Iris.Debug.SystemNet;
+using Microsoft.Iris.DebugAdapter.Client;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using System.ComponentModel;
@@ -14,10 +15,28 @@ public class DebugCommand : Command<DebugCommand.Settings>
 
     public override int Execute(CommandContext context, Settings settings)
     {
-        if (settings.ServerUri is null)
+        if (settings.ConnectionString is null)
         {
-            AnsiConsole.MarkupLine("[red]Missing argument: must specify a debug server to connect to.[/]");
+            AnsiConsole.MarkupLine("[red]Missing argument, a connection string must be specified.[/]");
             return -1;
+        }
+
+        IDebuggerClient c;
+
+        if (Uri.TryCreate(settings.ConnectionString, UriKind.Absolute, out var connectionUri))
+        {
+            if (connectionUri.Scheme == "tcp")
+            {
+                c = new NetDebuggerClient(connectionUri);
+            }
+            else
+            {
+                throw new NotSupportedException();
+            }
+        }
+        else
+        {
+            c = new IrisDebugAdapterClient(settings.ConnectionString);
         }
 
         DebugSymbolResolver? symbolResolver = null;
@@ -28,10 +47,9 @@ public class DebugCommand : Command<DebugCommand.Settings>
             symbolResolver = new(settings.SymbolDir, settings.SourceDir);
         }
 
-        AnsiConsole.MarkupLineInterpolated($"Connecting to '{settings.ServerUri}'...");
-                
-        var c = new NetDebuggerClient(settings.ServerUri);
-        c.Connected += (s, e) =>
+        AnsiConsole.MarkupLineInterpolated($"Connecting to '{settings.ConnectionString}'...");
+
+        ((IRemoteDebuggerState)c).Connected += (s, e) =>
         {
             AnsiConsole.MarkupLine("[green]Connected[/]");
             Thread consoleThread = new(() => DebugConsole(c, symbolResolver));
@@ -117,11 +135,19 @@ public class DebugCommand : Command<DebugCommand.Settings>
                     client.DebuggerCommand = Microsoft.Iris.Debug.Data.InterpreterCommand.Continue;
                     break;
 
+                case "STEP" or "S":
+                    client.DebuggerCommand = Microsoft.Iris.Debug.Data.InterpreterCommand.Step;
+                    break;
+
+                case "ENABLE":
+
+                    break;
+
                 case "CLEAR":
                     // Not implemented yet, should clear all breakpoints
                     break;
 
-                case "EXIT":
+                case "EXIT" or "QUIT":
                     isRunning = false;
                     return 0;
             }
@@ -142,8 +168,8 @@ public class DebugCommand : Command<DebugCommand.Settings>
         [CommandOption("-d|--decompile")]
         public bool Decompile { get; init; }
 
-        [Description("The URI of the debug server to connect to.")]
+        [Description("The string used to connect to the debug server.")]
         [CommandOption("-u|--server <serverUri>")]
-        public Uri ServerUri { get; init; } = DebugRemoting.DEFAULT_TCP_URI;
+        public string ConnectionString { get; init; } = DebugRemoting.DEFAULT_TCP_URI.ToString();
     }
 }
