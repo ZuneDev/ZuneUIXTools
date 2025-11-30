@@ -152,40 +152,6 @@ public partial class Decompiler
         return writer.WriteToString();
     }
 
-    public void PopulateDebugSymbolsWithXml(XDocument xmlDoc, string xmlStr)
-    {
-        // Reparse the file to get line info
-        var xmlDocWithLineInfo = XDocument.Parse(xmlStr, LoadOptions.SetLineInfo);
-        var lineInfoNodes = xmlDocWithLineInfo.DescendantNodes();
-        var offsetInfoNodes = xmlDoc.DescendantNodes();
-
-        foreach (var (liNode, oiNode) in lineInfoNodes.Zip(offsetInfoNodes, (l, o) => (l, o)))
-        {
-            var offsetInfo = oiNode.Annotation<UIBOffsetXmlAnnotation>();
-            if (offsetInfo is null)
-                continue;
-            
-            if (liNode is not IXmlLineInfo lineInfo || !lineInfo.HasLineInfo())
-                continue;
-
-            var offset = offsetInfo.Offset;
-            var start = new SourcePosition(lineInfo.LineNumber, lineInfo.LinePosition);
-
-            var elementStr = oiNode.ToString();
-            var endLine = start.Line + elementStr.Count(c => c == '\n');
-            var endColumn = elementStr.Length;
-            var idxLastLine = elementStr.LastIndexOf('\n');
-            if (idxLastLine > 0)
-                endColumn -= idxLastLine;
-
-            var end = new SourcePosition(endLine, endColumn);
-
-            var span = new SourceSpan(start, end);
-
-            DebugSymbols.SourceMap.Xml[offset] = span;
-        }
-    }
-
     public FileDebugSymbols DebugSymbols => _context.DebugSymbols;
 
     private Stack<object> AnalyzeMethodForInit(uint startOffset, XElement elemToInit, MarkupTypeSchema initType, string methodName = "")

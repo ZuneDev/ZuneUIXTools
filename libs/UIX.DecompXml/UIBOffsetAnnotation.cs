@@ -1,5 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.Iris.Asm.Models;
+using System.Linq;
 using System.Xml.Linq;
 
 namespace Microsoft.Iris.DecompXml;
@@ -23,7 +24,13 @@ internal static class UIBOffsetAnnotation
         return node.WithOffset(instruction.Offset);
     }
 
-    public static uint GetOffset(SyntaxAnnotation offsetAnnotation) => uint.Parse(offsetAnnotation.Data);
+    public static uint? GetOffset(this SyntaxNode node)
+    {
+        var annotation = node.GetAnnotations(Kind).SingleOrDefault();
+        return annotation is null
+            ? null
+            : uint.Parse(annotation.Data);
+    }
 
     public static void SetOffset(this XObject xObj, uint offset) => xObj.AddAnnotation(new UIBOffsetXmlAnnotation(offset));
 

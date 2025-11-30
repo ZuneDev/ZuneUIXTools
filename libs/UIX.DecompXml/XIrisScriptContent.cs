@@ -1,4 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Text;
 using System;
 using System.Xml.Linq;
 
@@ -8,9 +9,12 @@ internal class XIrisScriptContent : XCData
 {
     public SyntaxNode Syntax { get; }
 
+    public SourceText Text { get; }
+
     public XIrisScriptContent(SyntaxNode syntax) : base("")
     {
         Syntax = syntax.NormalizeWhitespace();
-        Value = $"{Environment.NewLine}{Syntax.GetText()}{Environment.NewLine}";
+        Text = Syntax.GetText();
+        Value = $"{Environment.NewLine}{Text}{Environment.NewLine}";
     }
 }

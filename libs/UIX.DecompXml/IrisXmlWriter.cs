@@ -1,6 +1,6 @@
-﻿using Microsoft.Iris.Debug.Symbols;
+﻿using Microsoft.CodeAnalysis.Text;
+using Microsoft.Iris.Debug.Symbols;
 using System;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Xml;
 using System.Xml.Linq;
@@ -75,6 +75,20 @@ internal class IrisXmlWriter : IDisposable
         }
         else if (obj is XIrisScriptContent script)
         {
+            foreach (var node in script.Syntax.GetAnnotatedNodes(UIBOffsetAnnotation.Kind))
+            {
+                var expressionOffset = node.GetOffset();
+                if (expressionOffset is null)
+                    continue;
+
+                var location = node.GetLocation().GetLineSpan().Span;
+
+                SourceSpan span = new(
+                    RoslynToIrisPosition(location.Start, startPos.Line),
+                    RoslynToIrisPosition(location.End, startPos.Line));
+                _symbols.SourceMap[expressionOffset.Value] = span;
+            }
+
             _xmlWriter.WriteCData(script.Value);
         }
         else if (obj is XCData cdata)
@@ -86,7 +100,6 @@ internal class IrisXmlWriter : IDisposable
             _xmlWriter.WriteAttributeString(attribute.Name.LocalName, attribute.Name.NamespaceName, attribute.Value);
         }
 
-
         var offset = obj.GetOffset();
         if (offset is not null)
         {
@@ -94,7 +107,12 @@ internal class IrisXmlWriter : IDisposable
             var endPos = _textWriter.Position;
 
             var span = new SourceSpan(startPos, endPos);
-            _symbols.SourceMap.Xml[offset.Value] = span;
+            _symbols.SourceMap[offset.Value] = span;
         }
+    }
+
+    private static SourcePosition RoslynToIrisPosition(LinePosition linePosition, int currentLine)
+    {
+        return new(linePosition.Line + currentLine + 1, linePosition.Character + 1);
     }
 }
