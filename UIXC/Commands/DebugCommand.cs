@@ -85,6 +85,9 @@ public class DebugCommand : Command<DebugCommand.Settings>
                             break;
                         }
 
+                        if (fsym.OriginalFileName is not null)
+                            path = fsym.OriginalFileName;
+
                         var line = int.Parse(inputParts[2]);
                         var column = int.Parse(inputParts[3]);
                         var position = new SourcePosition(line, column);
@@ -96,17 +99,17 @@ public class DebugCommand : Command<DebugCommand.Settings>
                             break;
                         }
 
-                        breakOffset = location.Value.Offset;
+                        breakOffset = location.Offset;
 
                         if (fsym.HasSourceCode())
                         {
-                            var sourceCode = fsym.GetSourceSubstring(location.Value.Span);
-                            AnsiConsole.Write(new Panel(sourceCode));
+                            var sourceCode = fsym.GetSourceSubstring(location.Span);
+                            AnsiConsole.Write(new Panel(sourceCode.EscapeMarkup()));
                         }
                     }
 
-                    AnsiConsole.MarkupLineInterpolated($"[green]Breakpoint set in '{fileName}' at offset 0x{breakOffset:X4}.[/]");
                     client.UpdateBreakpoint(new(path, breakOffset));
+                    AnsiConsole.MarkupLineInterpolated($"[green]Breakpoint set in '{path}' at offset 0x{breakOffset:X4}.[/]");
 
                     break;
 
