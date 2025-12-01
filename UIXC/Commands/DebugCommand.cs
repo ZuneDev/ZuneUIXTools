@@ -9,11 +9,11 @@ using System.Globalization;
 
 namespace UIXC.Commands;
 
-public class DebugCommand : Command<DebugCommand.Settings>
+public class DebugCommand : AsyncCommand<DebugCommand.Settings>
 {
-    private bool isRunning = true;
+    private readonly TaskCompletionSource _exit = new();
 
-    public override int Execute(CommandContext context, Settings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
     {
         if (settings.ConnectionString is null)
         {
@@ -58,7 +58,7 @@ public class DebugCommand : Command<DebugCommand.Settings>
 
         c.Start();
 
-        while (isRunning) ;
+        await _exit.Task.ConfigureAwait(false);
 
         return 0;
     }
@@ -148,7 +148,7 @@ public class DebugCommand : Command<DebugCommand.Settings>
                     break;
 
                 case "EXIT" or "QUIT":
-                    isRunning = false;
+                    _exit.SetResult();
                     return 0;
             }
         }

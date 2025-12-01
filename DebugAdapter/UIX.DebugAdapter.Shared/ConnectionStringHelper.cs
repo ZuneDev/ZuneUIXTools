@@ -14,7 +14,20 @@ public static class ConnectionStringHelper
             ? connectionString
             : NamedPipeUtils.GenerateValidNamedPipeName();
 
-        input = NamedPipeUtils.CreateNamedPipe(pipeName, PipeDirection.InOut);
-        output = input;
+        var pipe = NamedPipeUtils.CreateNamedPipe(pipeName, PipeDirection.InOut);
+        pipe.WaitForConnection();
+
+        output = input = pipe;
+    }
+
+    public static void ConnectToString(string connectionString, out Stream input, out Stream output)
+    {
+        if (!connectionString.StartsWith(PIPE_PREFIX))
+            throw new System.NotSupportedException();
+
+        var pipe = new NamedPipeClientStream(connectionString);
+        pipe.Connect();
+
+        output = input = pipe;
     }
 }

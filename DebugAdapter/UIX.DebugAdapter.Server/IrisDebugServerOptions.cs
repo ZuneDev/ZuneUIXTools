@@ -2,7 +2,9 @@
 
 public class IrisDebugServerOptions
 {
-    public string SymbolDir { get; set; }
+    public required string ConnectionString { get; set; }
+
+    public required string SymbolDir { get; set; }
 
     public string? SourceDir { get; set; }
 }

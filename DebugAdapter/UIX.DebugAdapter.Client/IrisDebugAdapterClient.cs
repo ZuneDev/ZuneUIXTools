@@ -60,7 +60,7 @@ public class IrisDebugAdapterClient : IDebuggerClient, IRemoteDebuggerState, IDi
     {
         if (ConnectionString is not null)
         {
-            ConnectionStringHelper.CreateFromString(ConnectionString, out _inputStream, out _outputStream);
+            ConnectionStringHelper.ConnectToString(ConnectionString, out _inputStream, out _outputStream);
         }
 
         _debugAdapter = await DebugAdapterClient.From(options =>
@@ -70,10 +70,12 @@ public class IrisDebugAdapterClient : IDebuggerClient, IRemoteDebuggerState, IDi
                 .WithOutput(_outputStream)
                 .OnInitialize((server, _, cancellationToken) =>
                 {
+                    var __ = server.RequestDebugAdapterInitialize(new());
                     return Task.CompletedTask;
                 })
                 .OnInitialized((_, _, response, _) =>
                 {
+                    Connected?.Invoke(this, EventArgs.Empty);
                     return Task.CompletedTask;
                 })
                 .OnContinued(args =>
@@ -141,7 +143,16 @@ public class IrisDebugAdapterClient : IDebuggerClient, IRemoteDebuggerState, IDi
 
     public void Start()
     {
-        StartAsync().RunSynchronously();
-        Connected?.Invoke(this, EventArgs.Empty);
+        System.Threading.Thread clientThread = new(() =>
+        {
+            _ = StartAsync();
+            //.ContinueWith(t =>
+            //{
+            //    if (t.Exception is not null)
+            //        System.Diagnostics.Debug.WriteLine(t.Exception);
+            //});
+        });
+        clientThread.IsBackground = true;
+        clientThread.Start();
     }
 }

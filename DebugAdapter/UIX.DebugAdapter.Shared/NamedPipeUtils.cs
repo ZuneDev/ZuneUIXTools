@@ -147,5 +147,5 @@ public static class NamedPipeUtils
 #endif
         return $@"\\.\pipe\{pipeName}";
     }
-}
 #pragma warning restore IDE0022
+}

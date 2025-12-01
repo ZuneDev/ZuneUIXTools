@@ -1,34 +1,63 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Iris.Debug;
+using Microsoft.Iris.Debug.Data;
 using Microsoft.Iris.DebugAdapter.Server.Handlers;
+using OmniSharp.Extensions.DebugAdapter.Protocol.Events;
 using OmniSharp.Extensions.DebugAdapter.Server;
 using System;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Microsoft.Iris.DebugAdapter.Server;
 
-public class IrisDebugAdapterServer : IDisposable
+public class IrisDebugAdapterServer : IDebuggerServer, IRemoteDebuggerState, IDisposable
 {
-    private readonly Stream _inputStream;
-    private readonly Stream _outputStream;
     private readonly TaskCompletionSource<bool> _serverStopped;
+    private Stream _inputStream, _outputStream;
+    private InterpreterCommand _debuggerCommand;
 
-    public IrisDebugAdapterServer(
-        Stream inputStream,
-        Stream outputStream,
-        IrisDebugServerOptions options)
+    public IrisDebugAdapterServer(IrisDebugServerOptions options)
     {
-        _inputStream = inputStream;
-        _outputStream = outputStream;
         _serverStopped = new();
 
         Options = options;
+        ConnectionString = options.ConnectionString;
     }
 
     internal IrisDebugServerOptions Options { get; }
 
     internal DebugAdapterServer? Server { get; private set; }
+
+    public InterpreterCommand DebuggerCommand
+    {
+        get => _debuggerCommand;
+        set
+        {
+            _debuggerCommand = value;
+
+            if (Server is null)
+                return;
+
+            if (value is InterpreterCommand.Continue)
+            {
+                Server.SendContinued(new()
+                {
+                    ThreadId = Environment.CurrentManagedThreadId,
+                });
+            }
+            else if (value is InterpreterCommand.Break)
+            {
+                Server.SendStopped(new()
+                {
+                    Reason = new("unknown"),
+                    ThreadId = Environment.CurrentManagedThreadId,
+                });
+            }
+        }
+    }
+
+    public string ConnectionString { get; }
 
     /// <summary>
     /// Start the debug server listening.
@@ -36,7 +65,9 @@ public class IrisDebugAdapterServer : IDisposable
     /// <returns>A task that completes when the server is ready.</returns>
     public async Task StartAsync()
     {
-        Server = await DebugAdapterServer.From(options =>
+        ConnectionStringHelper.CreateFromString(ConnectionString, out _inputStream, out _outputStream);
+
+        Server = DebugAdapterServer.Create(options =>
         {
             // We need to let the PowerShell Context Service know that we are in a debug session
             // so that it doesn't send the powerShell/startDebugger message.
@@ -49,7 +80,7 @@ public class IrisDebugAdapterServer : IDisposable
                 .WithServices(serviceCollection =>
                     serviceCollection
                         .AddOptions()
-                        .AddIrisDebugServices(Options.SymbolDir, Options.SourceDir)
+                        .AddIrisDebugServices(this, Options.SymbolDir, Options.SourceDir)
                 )
                 // TODO: Consider replacing all WithHandler with AddSingleton
                 //.WithHandler<AttachHandler>()
@@ -98,7 +129,11 @@ public class IrisDebugAdapterServer : IDisposable
                     return Task.CompletedTask;
                 })
             ;
-        }).ConfigureAwait(false);
+        });
+        
+        await Server.Initialize(default).ConfigureAwait(false);
+
+        Connected?.Invoke(this, EventArgs.Empty);
     }
 
     public void Dispose()
@@ -116,6 +151,44 @@ public class IrisDebugAdapterServer : IDisposable
     public async Task WaitForShutdownAsync() => await _serverStopped.Task.ConfigureAwait(false);
 
     public event EventHandler? SessionEnded;
+    public event Action<IDebuggerState, object> Connected;
 
     internal void OnSessionEnded() => SessionEnded?.Invoke(this, EventArgs.Empty);
+
+    public MarkupLineNumberEntry[] OnLineNumberTableRequested(string uri)
+    {
+        return [];
+    }
+
+    public void LogInterpreterDecode(object context, InterpreterInstruction instruction)
+    {
+    }
+
+    public void LogInterpreterExecute(object context, InterpreterEntry entry)
+    {
+    }
+
+    public void LogDispatcher(string message)
+    {
+    }
+
+    public void WaitForContinue()
+    {
+        while (DebuggerCommand is InterpreterCommand.Break) ;
+    }
+
+    public void Start()
+    {
+        Thread serverThread = new(() =>
+        {
+            _ = StartAsync();
+            //.ContinueWith(t =>
+            //{
+            //    if (t.Exception is not null)
+            //        System.Diagnostics.Debug.WriteLine(t.Exception);
+            //});
+        });
+        serverThread.IsBackground = true;
+        serverThread.Start();
+    }
 }
