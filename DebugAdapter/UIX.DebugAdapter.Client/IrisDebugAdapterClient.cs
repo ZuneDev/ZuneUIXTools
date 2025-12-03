@@ -45,12 +45,6 @@ public class IrisDebugAdapterClient : IDebuggerClient, IRemoteDebuggerState, IDi
     public event Action<string> DispatcherStep;
     public event Action<IDebuggerState, object> Connected;
 
-    public IrisDebugAdapterClient(Stream inputStream, Stream outputStream)
-    {
-        _inputStream = inputStream;
-        _outputStream = outputStream;
-    }
-
     public IrisDebugAdapterClient(string connectionString)
     {
         ConnectionString = connectionString;
@@ -58,20 +52,14 @@ public class IrisDebugAdapterClient : IDebuggerClient, IRemoteDebuggerState, IDi
 
     public async Task StartAsync()
     {
-        if (ConnectionString is not null)
-        {
-            ConnectionStringHelper.ConnectToString(ConnectionString, out _inputStream, out _outputStream);
-        }
-
         _debugAdapter = await DebugAdapterClient.From(options =>
         {
             options
                 .WithInput(_inputStream)
                 .WithOutput(_outputStream)
-                .OnInitialize((server, _, cancellationToken) =>
+                .OnInitialize(async (server, _, cancellationToken) =>
                 {
-                    var __ = server.RequestDebugAdapterInitialize(new());
-                    return Task.CompletedTask;
+                    //await server.RequestDebugAdapterInitialize(new(), default);
                 })
                 .OnInitialized((_, _, response, _) =>
                 {
@@ -90,6 +78,9 @@ public class IrisDebugAdapterClient : IDebuggerClient, IRemoteDebuggerState, IDi
                 })
             ;
         }).ConfigureAwait(false);
+
+        var tcs = new TaskCompletionSource<object>();
+        await tcs.Task;
     }
 
     public void Dispose()
@@ -143,6 +134,11 @@ public class IrisDebugAdapterClient : IDebuggerClient, IRemoteDebuggerState, IDi
 
     public void Start()
     {
+        if (ConnectionString is not null)
+        {
+            ConnectionStringHelper.ConnectToString(ConnectionString, out _inputStream, out _outputStream);
+        }
+
         System.Threading.Thread clientThread = new(() =>
         {
             _ = StartAsync();

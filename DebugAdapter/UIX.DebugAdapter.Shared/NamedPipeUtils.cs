@@ -4,6 +4,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Pipes;
+using System.Diagnostics.CodeAnalysis;
+
 
 
 #if !NET
@@ -20,6 +22,8 @@ namespace Microsoft.Iris.DebugAdapter;
 /// </summary>
 public static class NamedPipeUtils
 {
+    private const string PIPE_PREFIX = @"\\.\pipe\";
+
 #if !NET
     // .NET Framework requires the buffer size to be specified
     private const int PipeBufferSize = 1024;
@@ -35,7 +39,7 @@ public static class NamedPipeUtils
             direction: pipeDirection,
             maxNumberOfServerInstances: 1,
             transmissionMode: PipeTransmissionMode.Byte,
-            options: PipeOptions.CurrentUserOnly | PipeOptions.Asynchronous);
+            options: PipeOptions.Asynchronous);
 #else
 
         // In .NET Framework, we must manually ACL the named pipes we create
@@ -114,6 +118,25 @@ public static class NamedPipeUtils
         }
 
         throw new IOException("Unable to create named pipe; no available names");
+    }
+
+    public static bool TryGetPipeName(string pipePath, [NotNullWhen(true)] out string? pipeName)
+    {
+        if (!IsPipeNameValid(pipePath))
+        {
+            pipeName = null;
+            return false;
+        }
+
+        pipeName = pipePath[PIPE_PREFIX.Length..];
+        return true;
+    }
+
+    public static string GetPipeName(string pipePath)
+    {
+        if (!TryGetPipeName(pipePath, out var pipeName))
+            throw new System.ArgumentException(nameof(pipePath));
+        return pipeName;
     }
 
     /// <summary>

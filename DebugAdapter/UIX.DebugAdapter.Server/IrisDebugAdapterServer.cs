@@ -65,8 +65,6 @@ public class IrisDebugAdapterServer : IDebuggerServer, IRemoteDebuggerState, IDi
     /// <returns>A task that completes when the server is ready.</returns>
     public async Task StartAsync()
     {
-        ConnectionStringHelper.CreateFromString(ConnectionString, out _inputStream, out _outputStream);
-
         Server = DebugAdapterServer.Create(options =>
         {
             // We need to let the PowerShell Context Service know that we are in a debug session
@@ -103,29 +101,13 @@ public class IrisDebugAdapterServer : IDebuggerServer, IRemoteDebuggerState, IDi
                 // https://microsoft.github.io/debug-adapter-protocol/specification#Requests_Initialize
                 .OnInitialize(async (server, _, cancellationToken) =>
                 {
-                    // Start the host if not already started, and enable debug mode (required
-                    // for remote debugging).
-                    //
-                    // TODO: We might need to fill in HostStartOptions here.
-                    //_startedPses = !await _psesHost.TryStartAsync(new HostStartOptions(), cancellationToken).ConfigureAwait(false);
-                    //_psesHost.DebugContext.EnableDebugMode();
-
-                    // Clear any existing breakpoints before proceeding.
-                    //BreakpointService breakpointService = server.GetService<BreakpointService>();
-                    //await breakpointService.RemoveAllBreakpointsAsync().ConfigureAwait(false);
+                    System.Diagnostics.Debug.WriteLine("SERVER: OnInitialize called");
+                    Console.WriteLine("SERVER: OnInitialize called");
                 })
-                // The OnInitialized delegate gets run right before the server responds to the _Initialize_ request:
-                // https://microsoft.github.io/debug-adapter-protocol/specification#Requests_Initialize
                 .OnInitialized((_, _, response, _) =>
                 {
-                    //response.SupportsConditionalBreakpoints = true;
-                    //response.SupportsConfigurationDoneRequest = true;
-                    //response.SupportsFunctionBreakpoints = true;
-                    //response.SupportsHitConditionalBreakpoints = true;
-                    //response.SupportsLogPoints = true;
-                    //response.SupportsSetVariable = true;
-                    //response.SupportsDelayedStackTraceLoading = true;
-
+                    System.Diagnostics.Debug.WriteLine("SERVER: OnInitialized called");
+                    Console.WriteLine("SERVER: OnInitialized called");
                     return Task.CompletedTask;
                 })
             ;
@@ -134,6 +116,8 @@ public class IrisDebugAdapterServer : IDebuggerServer, IRemoteDebuggerState, IDi
         await Server.Initialize(default).ConfigureAwait(false);
 
         Connected?.Invoke(this, EventArgs.Empty);
+
+        await WaitForShutdownAsync().ConfigureAwait(false);
     }
 
     public void Dispose()
@@ -179,6 +163,8 @@ public class IrisDebugAdapterServer : IDebuggerServer, IRemoteDebuggerState, IDi
 
     public void Start()
     {
+        ConnectionStringHelper.CreateFromString(ConnectionString, out _inputStream, out _outputStream);
+
         Thread serverThread = new(() =>
         {
             _ = StartAsync();
