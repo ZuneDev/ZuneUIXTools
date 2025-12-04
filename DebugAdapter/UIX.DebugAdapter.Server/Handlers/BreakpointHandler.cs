@@ -1,5 +1,6 @@
 ﻿using Microsoft.Iris.Debug.Symbols;
 using OmniSharp.Extensions.DebugAdapter.Protocol.Requests;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,7 +19,19 @@ internal class BreakpointHandler(DebugSymbolResolver symbolResolver)
 
         foreach (var requestedBreakpoint in request.Breakpoints)
         {
-            
+            var parts = requestedBreakpoint.InstructionReference.Split(['@'], 2);
+            var loadUri = parts[0];
+            var offset = Convert.ToUInt32(parts[1], 16);
+
+            IrisBreakpoint irisBreakpoint = new(loadUri, offset);
+            Application.DebugSettings.Breakpoints.Add(irisBreakpoint);
+
+            DapBreakpoint dapBreakpoint = new()
+            {
+                Id = irisBreakpoint.GetHashCode(),
+                InstructionReference = requestedBreakpoint.InstructionReference,
+            };
+            dapBreakpoints.Add(dapBreakpoint);
         }
 
         SetInstructionBreakpointsResponse response = new()

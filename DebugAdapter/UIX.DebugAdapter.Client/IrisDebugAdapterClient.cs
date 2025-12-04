@@ -79,8 +79,8 @@ public class IrisDebugAdapterClient : IDebuggerClient, IRemoteDebuggerState, IDi
             ;
         }).ConfigureAwait(false);
 
-        var tcs = new TaskCompletionSource<object>();
-        await tcs.Task;
+        // TODO: How to keep the thread alive while the debug adapter is running?
+        await Task.Delay(-1).ConfigureAwait(false);
     }
 
     public void Dispose()

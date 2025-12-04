@@ -86,43 +86,42 @@ public class DebugCommand : AsyncCommand<DebugCommand.Settings>
 
                     if (inputParts.Length >= 3 && inputParts[2].StartsWith("0x"))
                     {
-                        breakOffset = uint.Parse(inputParts[2][2..], NumberStyles.HexNumber);
+                        breakOffset = Convert.ToUInt32(inputParts[2], 16);
                     }
                     else
                     {
-                        if (symbolResolver is null)
-                        {
-                            AnsiConsole.MarkupLine("[red]Setting breakpoints via source code requires debug symbols. Use the --symbols argument to specify a directory.[/]");
-                            break;
-                        }
-
-                        var fsym = symbolResolver.GetForFile(fileName);
-                        if (fsym is null)
-                        {
-                            AnsiConsole.MarkupLineInterpolated($"[red]No symbols loaded for '{fileName}'.[/]");
-                            break;
-                        }
-
-                        if (fsym.OriginalFileName is not null)
-                            path = fsym.OriginalFileName;
-
                         var line = int.Parse(inputParts[2]);
                         var column = int.Parse(inputParts[3]);
-                        var position = new SourcePosition(line, column);
 
-                        var location = fsym!.SourceMap.GetLocationFromPosition(position);
-                        if (location is null)
+                        var fsym = symbolResolver?.GetForFile(fileName);
+                        if (fsym is null)
                         {
-                            AnsiConsole.MarkupLineInterpolated($"[red]Line {line}, column {column} has known offset in '{fileName}'.[/]");
+                            AnsiConsole.MarkupLineInterpolated($"[yellow]No symbols loaded for '{fileName}'.[/]");
+
+                            client.UpdateBreakpoint(new(path, line, column));
+                            AnsiConsole.MarkupLineInterpolated($"[green]Breakpoint set in '{path}' at line {line}, column {column}.[/]");
                             break;
                         }
-
-                        breakOffset = location.Offset;
-
-                        if (fsym.HasSourceCode())
+                        else
                         {
-                            var sourceCode = fsym.GetSourceSubstring(location.Span);
-                            AnsiConsole.Write(new Panel(sourceCode.EscapeMarkup()));
+                            if (fsym.OriginalFileName is not null)
+                                path = fsym.OriginalFileName;
+
+                            var position = new SourcePosition(line, column);
+                            var location = fsym!.SourceMap.GetLocationFromPosition(position);
+                            if (location is null)
+                            {
+                                AnsiConsole.MarkupLineInterpolated($"[red]Line {line}, column {column} has known offset in '{fileName}'.[/]");
+                                break;
+                            }
+
+                            breakOffset = location.Offset;
+
+                            if (fsym.HasSourceCode())
+                            {
+                                var sourceCode = fsym.GetSourceSubstring(location.Span);
+                                AnsiConsole.Write(new Panel(sourceCode.EscapeMarkup()));
+                            }
                         }
                     }
 
