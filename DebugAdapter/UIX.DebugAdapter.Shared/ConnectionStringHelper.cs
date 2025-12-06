@@ -7,22 +7,46 @@ namespace Microsoft.Iris.DebugAdapter;
 
 public static class ConnectionStringHelper
 {
+    private static readonly bool _useDuplex = false;
+
     public static void CreateFromString(string connectionString, out Stream input, out Stream output)
     {
         // TODO: Support other transports
         if (NamedPipeUtils.TryGetPipeName(connectionString, out var pipeName))
         {
-            var pipeToClient = NamedPipeUtils.CreateNamedPipe(pipeName + "_ToClient", PipeDirection.Out);
-            var pipeFromClient = NamedPipeUtils.CreateNamedPipe(pipeName + "_FromClient", PipeDirection.In);
+            Console.WriteLine($"Using pipe name {pipeName}");
+            if (_useDuplex)
+            {
+                var pipe = NamedPipeUtils.CreateNamedPipe(pipeName, PipeDirection.InOut);
 
-            pipeToClient.WaitForConnection();
-            pipeFromClient.WaitForConnection();
+                pipe.WaitForConnection();
 
-            var loggingInputStream = new LoggingStream(pipeFromClient, LoggingStream_OnRead, LoggingStream_OnWrite);
-            var loggingOutputStream = new LoggingStream(pipeToClient, LoggingStream_OnRead, LoggingStream_OnWrite);
+                var loggingStream = new LoggingStream(pipe, LoggingStream_OnRead, LoggingStream_OnWrite);
+                
+                input = loggingStream;
+                output = loggingStream;
+            }
+            else
+            {
+                var pipeToClientName = pipeName + "_ToClient";
+                var pipeToClient = NamedPipeUtils.CreateNamedPipe(pipeToClientName, PipeDirection.Out);
 
-            input = loggingInputStream;
-            output = loggingOutputStream;
+                var pipeFromClientName = pipeName + "_FromClient";
+                var pipeFromClient = NamedPipeUtils.CreateNamedPipe(pipeFromClientName, PipeDirection.In);
+
+                Console.WriteLine($"Waiting for simplex pipe connections, {pipeToClientName} & {pipeFromClientName}");
+
+                pipeToClient.WaitForConnection();
+                pipeFromClient.WaitForConnection();
+
+                Console.WriteLine("Pipes connected!");
+
+                var loggingInputStream = new LoggingStream(pipeFromClient, LoggingStream_OnRead, LoggingStream_OnWrite);
+                var loggingOutputStream = new LoggingStream(pipeToClient, LoggingStream_OnRead, LoggingStream_OnWrite);
+
+                input = loggingInputStream;
+                output = loggingOutputStream;
+            }
             return;
         }
         else if (Uri.TryCreate(connectionString, UriKind.Absolute, out var connectionUri))
@@ -31,6 +55,12 @@ public static class ConnectionStringHelper
             {
 
             }
+        }
+        else if (connectionString.Equals("std", StringComparison.InvariantCultureIgnoreCase))
+        {
+            input = Console.OpenStandardInput();
+            output = Console.OpenStandardOutput();
+            return;
         }
 
         throw new ArgumentException("Invalid connection string", nameof(connectionString));

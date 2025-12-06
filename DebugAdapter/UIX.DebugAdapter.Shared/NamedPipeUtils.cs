@@ -91,7 +91,7 @@ public static class NamedPipeUtils
             // In the simple prefix-less case, just test the pipe name
             if (prefixes == null)
             {
-                if (!IsPipeNameValid(pipeName))
+                if (!IsPipeNameAvailable(pipeName))
                 {
                     continue;
                 }
@@ -104,7 +104,7 @@ public static class NamedPipeUtils
             foreach (string prefix in prefixes)
             {
                 string prefixedPipeName = $"IrisUIX_{prefix}_{pipeName}";
-                if (!IsPipeNameValid(prefixedPipeName))
+                if (!IsPipeNameAvailable(prefixedPipeName))
                 {
                     allPipeNamesValid = false;
                     break;
@@ -122,7 +122,7 @@ public static class NamedPipeUtils
 
     public static bool TryGetPipeName(string pipePath, [NotNullWhen(true)] out string? pipeName)
     {
-        if (!IsPipeNameValid(pipePath))
+        if (!IsPipeNameAvailable(pipePath) || !pipePath.StartsWith(PIPE_PREFIX))
         {
             pipeName = null;
             return false;
@@ -144,7 +144,7 @@ public static class NamedPipeUtils
     /// </summary>
     /// <param name="pipeName">The named pipe name to validate. This should be a simple name rather than a path.</param>
     /// <returns>True if the named pipe name is valid, false otherwise.</returns>
-    public static bool IsPipeNameValid(string pipeName)
+    public static bool IsPipeNameAvailable(string pipeName)
     {
         if (string.IsNullOrEmpty(pipeName))
         {
