@@ -43,7 +43,7 @@ public class IrisDebugAdapterServer : IDebuggerServer, IRemoteDebuggerState, IDi
             {
                 Server.SendContinued(new()
                 {
-                    ThreadId = Environment.CurrentManagedThreadId,
+                    ThreadId = 0,
                 });
             }
             else if (value is InterpreterCommand.Break)
@@ -51,7 +51,7 @@ public class IrisDebugAdapterServer : IDebuggerServer, IRemoteDebuggerState, IDi
                 Server.SendStopped(new()
                 {
                     Reason = new("unknown"),
-                    ThreadId = Environment.CurrentManagedThreadId,
+                    ThreadId = 0,
                 });
             }
         }
@@ -81,11 +81,11 @@ public class IrisDebugAdapterServer : IDebuggerServer, IRemoteDebuggerState, IDi
                         .AddIrisDebugServices(this, Options.SymbolDir, Options.SourceDir)
                 )
                 // TODO: Consider replacing all WithHandler with AddSingleton
-                //.WithHandler<AttachHandler>()
+                .WithHandler<AttachHandler>()
                 //.WithHandler<DisconnectHandler>()
                 .WithHandler<BreakpointHandler>()
                 //.WithHandler<ConfigurationDoneHandler>()
-                //.WithHandler<ThreadsHandler>()
+                .WithHandler<ThreadsHandler>()
                 //.WithHandler<StackTraceHandler>()
                 //.WithHandler<ScopesHandler>()
                 //.WithHandler<VariablesHandler>()
