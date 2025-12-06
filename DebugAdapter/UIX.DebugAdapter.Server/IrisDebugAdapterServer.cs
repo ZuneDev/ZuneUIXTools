@@ -2,6 +2,7 @@
 using Microsoft.Iris.Debug;
 using Microsoft.Iris.Debug.Data;
 using Microsoft.Iris.DebugAdapter.Server.Handlers;
+using Newtonsoft.Json.Linq;
 using OmniSharp.Extensions.DebugAdapter.Protocol.Events;
 using OmniSharp.Extensions.DebugAdapter.Server;
 using System;
@@ -38,22 +39,6 @@ public class IrisDebugAdapterServer : IDebuggerServer, IRemoteDebuggerState, IDi
 
             if (Server is null)
                 return;
-
-            if (value is InterpreterCommand.Continue)
-            {
-                Server.SendContinued(new()
-                {
-                    ThreadId = 0,
-                });
-            }
-            else if (value is InterpreterCommand.Break)
-            {
-                Server.SendStopped(new()
-                {
-                    Reason = new("unknown"),
-                    ThreadId = 0,
-                });
-            }
         }
     }
 
@@ -86,7 +71,7 @@ public class IrisDebugAdapterServer : IDebuggerServer, IRemoteDebuggerState, IDi
                 .WithHandler<BreakpointHandler>()
                 //.WithHandler<ConfigurationDoneHandler>()
                 .WithHandler<ThreadsHandler>()
-                //.WithHandler<StackTraceHandler>()
+                .WithHandler<StackTraceHandler>()
                 //.WithHandler<ScopesHandler>()
                 //.WithHandler<VariablesHandler>()
                 .WithHandler<ContinueHandler>()
@@ -94,7 +79,7 @@ public class IrisDebugAdapterServer : IDebuggerServer, IRemoteDebuggerState, IDi
                 .WithHandler<PauseHandler>()
                 .WithHandler<StepInHandler>()
                 //.WithHandler<StepOutHandler>()
-                //.WithHandler<SourceHandler>()
+                .WithHandler<SourceHandler>()
                 //.WithHandler<SetVariableHandler>()
                 //.WithHandler<DebugEvaluateHandler>()
                 // The OnInitialize delegate gets run when we first receive the _Initialize_ request:
@@ -158,7 +143,22 @@ public class IrisDebugAdapterServer : IDebuggerServer, IRemoteDebuggerState, IDi
 
     public void WaitForContinue()
     {
+        System.Diagnostics.Debugger.Launch();
+        if (DebuggerCommand is InterpreterCommand.Break)
+        {
+            Server?.SendStopped(new()
+            {
+                Reason = new("unknown"),
+                ThreadId = 0,
+            });
+        }
+
         while (DebuggerCommand is InterpreterCommand.Break) ;
+
+        Server?.SendContinued(new()
+        {
+            ThreadId = 0,
+        });
     }
 
     public void Start()

@@ -31,6 +31,7 @@ internal class BreakpointHandler(DebugSymbolResolver symbolResolver)
             {
                 Id = irisBreakpoint.GetHashCode(),
                 InstructionReference = requestedBreakpoint.InstructionReference,
+                Verified = true,
             };
             dapBreakpoints.Add(dapBreakpoint);
         }
@@ -45,7 +46,7 @@ internal class BreakpointHandler(DebugSymbolResolver symbolResolver)
     public Task<SetBreakpointsResponse> Handle(SetBreakpointsArguments request, CancellationToken cancellationToken)
     {
         // Debug symbols are required for setting source (line:column) breakpoints
-        var fsym = symbolResolver?.GetForFile(request.Source.Path);
+        var fsym = symbolResolver?.GetForFile(request.Source.Name);
         if (fsym is null)
             return Task.FromResult(new SetBreakpointsResponse());
 
@@ -77,6 +78,7 @@ internal class BreakpointHandler(DebugSymbolResolver symbolResolver)
                 Column = location.Span.Start.Column,
                 EndLine = location.Span.End.Line,
                 EndColumn = location.Span.End.Column,
+                Verified = true,
             };
             dapBreakpoints.Add(dapBreakpoint);
         }
