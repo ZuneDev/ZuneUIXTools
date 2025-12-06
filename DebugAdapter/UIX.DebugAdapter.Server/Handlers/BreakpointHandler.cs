@@ -11,7 +11,8 @@ using IrisBreakpoint = Microsoft.Iris.Debug.Data.Breakpoint;
 namespace Microsoft.Iris.DebugAdapter.Server.Handlers;
 
 internal class BreakpointHandler(DebugSymbolResolver symbolResolver)
-    : ISetInstructionBreakpointsHandler, ISetBreakpointsHandler
+    : ISetInstructionBreakpointsHandler, ISetBreakpointsHandler, ISetExceptionBreakpointsHandler, ISetDataBreakpointsHandler,
+    ISetFunctionBreakpointsHandler
 {
     public Task<SetInstructionBreakpointsResponse> Handle(SetInstructionBreakpointsArguments request, CancellationToken cancellationToken)
     {
@@ -85,5 +86,20 @@ internal class BreakpointHandler(DebugSymbolResolver symbolResolver)
             Breakpoints = dapBreakpoints
         };
         return Task.FromResult(response);
+    }
+
+    public Task<SetExceptionBreakpointsResponse> Handle(SetExceptionBreakpointsArguments request, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(new SetExceptionBreakpointsResponse());
+    }
+
+    public Task<SetDataBreakpointsResponse> Handle(SetDataBreakpointsArguments request, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(new SetDataBreakpointsResponse());
+    }
+
+    public Task<SetFunctionBreakpointsResponse> Handle(SetFunctionBreakpointsArguments request, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(new SetFunctionBreakpointsResponse());
     }
 }
