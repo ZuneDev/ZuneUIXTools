@@ -19,25 +19,19 @@ internal class SourceHandler(DebugSymbolResolver symbolResolver) : ISourceHandle
         if (fsym is null)
             return new SourceResponse();
 
-        if (fsym.SourceFileName is not null && File.Exists(fsym.SourceFileName))
-        {
-            string text =
-#if NETCOREAPP2_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
-                await File.ReadAllTextAsync(fsym.SourceFileName, cancellationToken);
-#else
-                File.ReadAllText(fsym.SourceFileName);
-#endif
+        if (fsym.SourceFileName is null || !File.Exists(fsym.SourceFileName))
+            return new();
 
-            return new()
-            {
-                Content = text,
-                MimeType = MIME_IRIS_UIX_XML
-            };
-        }
+        string text =
+#if NETCOREAPP2_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            await File.ReadAllTextAsync(fsym.SourceFileName, cancellationToken);
+#else
+            File.ReadAllText(fsym.SourceFileName);
+#endif
 
         return new()
         {
-            Content = "<UIX>TEST SOURCE</UIX>",
+            Content = text,
             MimeType = MIME_IRIS_UIX_XML
         };
     }
