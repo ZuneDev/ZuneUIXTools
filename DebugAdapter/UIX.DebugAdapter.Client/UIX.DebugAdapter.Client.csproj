@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>net461;net6.0;net6.0-windows10.0.22000</TargetFrameworks>
+        <TargetFrameworks>net48;net8.0;net8.0-windows10.0.22000</TargetFrameworks>
         <LangVersion>12</LangVersion>
         <RootNamespace>Microsoft.Iris.DebugAdapter.Client</RootNamespace>
     </PropertyGroup>
