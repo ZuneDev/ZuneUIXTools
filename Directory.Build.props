@@ -1,0 +1,50 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project>
+    <PropertyGroup>
+        <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+        <Platform Condition=" '$(Platform)' == '' ">x64</Platform>
+        <ApplicationVersion>5.0.0.0</ApplicationVersion>
+        <AssemblyVersion>$(ApplicationVersion)</AssemblyVersion>
+        <FileVersion>$(ApplicationVersion)</FileVersion>
+        <LangVersion>latest</LangVersion>
+
+        <DefineConstants>$(DefineConstants);OPENZUNE</DefineConstants>
+
+        <NetCoreTarget>net8.0</NetCoreTarget>
+        <TargetFrameworks>$(NetCoreTarget)</TargetFrameworks>
+        <Platforms>AnyCPU;x64;x86</Platforms>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" $([MSBuild]::IsOsPlatform('Windows')) ">
+        <TargetFrameworks>$(TargetFrameworks);$(NetCoreTarget)-windows10.0.22000;net48</TargetFrameworks>
+    </PropertyGroup>
+
+    <Choose>
+        <When Condition=" $([MSBuild]::GetTargetPlatformIdentifier($(TargetFramework))) == 'windows' ">
+            <PropertyGroup>
+                <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
+                <TargetWindowsVersion>$([MSBuild]::GetTargetPlatformVersion($(TargetFramework)))</TargetWindowsVersion>
+
+                <DefineConstants Condition="$([MSBuild]::VersionGreaterThanOrEquals($(TargetWindowsVersion), '7.0'))">
+                    $(DefineConstants);WINDOWS7
+                </DefineConstants>
+                <DefineConstants Condition="$([MSBuild]::VersionGreaterThanOrEquals($(TargetWindowsVersion), '8.0'))">
+                    $(DefineConstants);WINDOWS8
+                </DefineConstants>
+                <DefineConstants Condition="$([MSBuild]::VersionGreaterThanOrEquals($(TargetWindowsVersion), '10.0'))">
+                    $(DefineConstants);WINDOWS10
+                </DefineConstants>
+            </PropertyGroup>
+        </When>
+
+        <When Condition=" $(TargetFramework.StartsWith('net4')) ">
+            <PropertyGroup>
+                <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
+
+                <DefineConstants Condition=" !$(TargetFramework.StartsWith('net40')) ">
+                    $(DefineConstants);NETSTANDARD1_0_OR_GREATER;NETSTANDARD2_0_OR_GREATER
+                </DefineConstants>
+            </PropertyGroup>
+        </When>
+    </Choose>
+</Project>

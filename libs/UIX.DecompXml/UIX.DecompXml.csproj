@@ -1,8 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>netstandard2.0;net8.0</TargetFrameworks>
-        <LangVersion>12</LangVersion>
+        <TargetFramework>$(NetCoreTarget)</TargetFramework>
         <RootNamespace>Microsoft.Iris.DecompXml</RootNamespace>
     </PropertyGroup>
 

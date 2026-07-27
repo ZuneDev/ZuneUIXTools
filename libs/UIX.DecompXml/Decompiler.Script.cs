@@ -273,9 +273,9 @@ partial class Decompiler
                         if (opCode is OpCode.JumpIfFalse)
                         {
                             // JMPF is used to evaluate the branch condition
-                            var ifBlockEndOffset = methodBody
+                            var ifBlockEndOffset = methodBody.AsEnumerable()
                                .Reverse()
-                               .SkipWhile(i => i.Offset >= jumpToOffset)
+                               .SkipWhile(i2 => i2.Offset >= jumpToOffset)
                                .First()
                                .Offset;
 
@@ -330,9 +330,9 @@ partial class Decompiler
                                 // End of if block, skipping over else block
 
                                 // Figure out where the else block ends by searching for the last instruction we skip
-                                var elseBlockEndOffset = methodBody
+                                var elseBlockEndOffset = methodBody.AsEnumerable()
                                     .Reverse()
-                                    .SkipWhile(i => i.Offset >= jumpOffset)
+                                    .SkipWhile(i2 => i2.Offset >= jumpOffset)
                                     .First()
                                     .Offset;
 
